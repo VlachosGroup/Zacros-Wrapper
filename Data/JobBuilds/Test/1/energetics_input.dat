@@ -1,0 +1,61 @@
+energetics
+
+################################################################################
+
+cluster A_point
+
+  sites 1
+  lattice_state
+    1 A*  1
+
+  variant A_Hex
+    site_types           StTp1 
+    graph_multiplicity   1
+    cluster_eng          -1.0
+  end_variant
+
+end_cluster
+
+################################################################################
+
+################################################################################
+
+cluster B_point
+
+  sites 1
+  lattice_state
+    1 B*  1
+
+  variant B_Hex
+    site_types           StTp1 
+    graph_multiplicity   1
+    cluster_eng          -2.0
+  end_variant
+
+end_cluster
+
+################################################################################
+
+################################################################################
+
+cluster A_Pair
+
+  sites 2
+  neighboring 1-2
+  lattice_state
+    1 A*  1
+    2 A*  1
+
+  variant Hex_Pair
+    site_types           StTp1 StTp1 
+    graph_multiplicity   2
+    cluster_eng          0.25
+  end_variant
+
+end_cluster
+
+################################################################################
+
+
+
+end_energetics

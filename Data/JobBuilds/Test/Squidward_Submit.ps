@@ -1,0 +1,77 @@
+#!/bin/bash
+#$ -cwd
+#$ -j y
+#$ -S /bin/bash
+#$ -q *@@3rd_gen
+#$ -pe threaded 1
+#
+# This job template should be used for code that includes OpenMP
+# parallelism.  Make a copy and edit.
+#
+# (1) Change "<nproc>" above to be the number of processors
+#     the code should use.  Note that you are limited to the
+#     number of processors _in a single node_ for OpenMP.
+#
+# (2) Optionally, you can tailor the other OpenMP environment
+#     variables in the OpenMP setup section of this script.
+#
+# (3) Edit the tail end of the copy to execute your OpenMP-
+#     enabled program.
+#
+
+
+#
+# (2) OpenMP setup
+#
+if [ -n "$NSLOTS" -a "$NSLOTS" -gt 1 ]; then
+  # These two variables should always be allowed to be set using the
+  # slot count provided by Grid Engine -- do not alter.
+  OMP_NUM_THREADS="$NSLOTS"; export OMP_NUM_THREADS
+  OMP_THREAD_LIMIT="$NSLOTS"; export OMP_THREAD_LIMIT
+  
+  # Uncomment the next line if you want to set a specific scheduling
+  # behavior (you may have something other than "dynamic" in mind):
+  # OMP_SCHEDULE="dynamic"; export OMP_SCHEDULE
+
+  # Uncomment the next line if you want to explicitly set the
+  # dynamicism of the OpenMP environment (can be "TRUE" or "FALSE"):
+  # OMP_DYNAMIC="FALSE"; export OMP_DYNAMIC
+
+  # The following are OpenMP v3.0 features and probably aren't
+  # available on Squidward:
+  #
+  # Nested parallelism?  ("TRUE" or "FALSE")
+  # OMP_NESTED="FALSE"; export OMP_NESTED
+  #
+  # For nested parallelism, how deep should nesting go?
+  # OMP_MAX_ACTIVE_LEVELS="2"
+  #
+  # Bind threads to processor cores? ("TRUE" or "FALSE")
+  # OMP_PROC_BIND="FALSE"; export OMP_PROC_BIND
+  #
+  # Explicit stack size for non-master OpenMP threads:
+  # OMP_STACKSIZE="10k"; export OMP_STACKSIZE
+  #
+  # Should unused OpenMP threads sleep ("PASSIVE") or spin ("ACTIVE"):
+  # OMP_WAIT_POLICY="PASSIVE"
+fi
+
+#
+# (3) Now, the rest of your job script, including the execution of
+#     your OpenMP-aware program!
+#
+USER_EXE="/home/vlachos/robieta/Zacros/Source/ZacrosBinaryOutput_1.02/build/zacros.x"
+##
+## Don't change anything past here!
+##
+HOST=`hostname`
+echo "GridEngine parameters:"
+echo "  nhosts          = $NHOSTS"
+echo "  nproc           = $NSLOTS"
+echo "  machines        = ${HOST}:${TMPDIR}/machines"
+echo "  executable      = $USER_EXE"
+echo "-- begin OpenMP run --"
+time $USER_EXE  
+echo "-- end OpenMP run --"
+
+
