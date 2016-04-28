@@ -84,46 +84,48 @@ class ReduceStiffness:
                 PickleName = 'Recondition'
                 if Name != '':
                     PickleName += '_' + str(Name)
-                KMCut.KMCUtilities().pickleCnd({'Cnd':Cnd,'SF':SFOut},PickleName)
+                KMCut.KMCUtilities().pickleCnd({'Cnd':Cnd,'SF':SFOut,'SFList':SFList},PickleName)
                 break
 
     def TestConvergence(self,SFList):
         Converged = False
+        MinRuns = 5
         MinPostSample = 5
         SFOut = ''
 
         nRuns = len(SFList)
-        SF = np.array(copy.copy(SFList))
-        nRxn = SF.shape[1]
-        TauMax = 0.
-        for i in range(nRxn):
-            Tau = KMCut.KMCUtilities().FindTau(np.log10(SF[:,i]))
-            if not np.isnan(Tau):
-                if Tau > TauMax:
-                    TauMax = copy.copy(Tau)
-        StartInd = int(np.ceil(TauMax*6))
-
-        if nRuns > StartInd:
-            TauMax2 = 0.
+        if nRuns >= MinRuns:
+            SF = np.array(copy.copy(SFList))
+            nRxn = SF.shape[1]
+            TauMax = 0.
             for i in range(nRxn):
-                Tau = KMCut.KMCUtilities().FindTau(np.log10(SF[StartInd:,i]))
+                Tau = KMCut.KMCUtilities().FindTau(np.log10(SF[:,i]))
                 if not np.isnan(Tau):
-                    if Tau > TauMax2:
-                        TauMax2 = copy.copy(Tau)
-            MinPostSample = np.max([np.ceil(TauMax2*3),MinPostSample])
-            Converged = (nRuns - StartInd) > MinPostSample
-            if Converged:
-                LSF = np.log10(np.array([[np.max([i,1]) for i in SF[j,:].tolist()] for j in range(StartInd,nRuns)]))
-                MLSF = np.mean(LSF,axis=0).tolist()
-                LSFCI = ut.GeneralUtilities().CI(LSF,axis=0).tolist()
-                MaxCIOverMean = 0
-                for i in range(len(MLSF)):
-                    if MLSF[i] > 1:
-                        MaxCIOverMean = np.max([MaxCIOverMean,LSFCI[i]/MLSF[i]])
-
-                if MaxCIOverMean > 1:
-                    Converged = False
-                    
+                    if Tau > TauMax:
+                        TauMax = copy.copy(Tau)
+            StartInd = int(np.ceil(TauMax*6))
+    
+            if nRuns > StartInd:
+                TauMax2 = 0.
+                for i in range(nRxn):
+                    Tau = KMCut.KMCUtilities().FindTau(np.log10(SF[StartInd:,i]))
+                    if not np.isnan(Tau):
+                        if Tau > TauMax2:
+                            TauMax2 = copy.copy(Tau)
+                MinPostSample = np.max([np.ceil(TauMax2*3),MinPostSample])
+                Converged = (nRuns - StartInd) > MinPostSample
+                if Converged:
+                    LSF = np.log10(np.array([[np.max([i,1]) for i in SF[j,:].tolist()] for j in range(StartInd,nRuns)]))
+                    MLSF = np.mean(LSF,axis=0).tolist()
+                    LSFCI = ut.GeneralUtilities().CI(LSF,axis=0).tolist()
+                    MaxCIOverMean = 0
+                    for i in range(len(MLSF)):
+                        if MLSF[i] > 1:
+                            MaxCIOverMean = np.max([MaxCIOverMean,LSFCI[i]/MLSF[i]])
+    
+                    if MaxCIOverMean > 1:
+                        Converged = False
+                        
         if Converged:
             SFOut = (10 ** np.array(MLSF)).tolist()
         return Converged,SFOut
@@ -245,8 +247,8 @@ class ReduceStiffness:
             SDF_out[StiffInd] = SDF
             
         for i in range(0,len(SDF_out)):
-            if SDF_out[i] < 1.0:
-                SDF_out[i] = 1.0    
+            if SDF_out[i] < 1.0 or np.isnan(SDF_out[i]):
+                SDF_out[i] = 1.0   
             
         SDDict = {'SDF':SDF_out,'SF':StiffnessFactor,'Mode':Mode}
         return SDDict

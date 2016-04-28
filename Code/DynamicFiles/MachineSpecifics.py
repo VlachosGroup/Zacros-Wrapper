@@ -36,7 +36,7 @@ class MachineSpecifics:
         
         if SystemInfo['OS'] == 'Linux':
             if SystemInfo['ComputerName'] == 'farber':
-                SystemInfo['Path']['ZacrosExecuteable'] = '/home/1486/Zacros/ZacrosBinaryOutput_1.02/build/'
+                SystemInfo['Path']['ZacrosExecuteable'] = '/home/1486/Zacros/ZacrosBinaryOutput_1.02/build-jeff/'
             else:
                 print 'cluster not implemented'
         else:

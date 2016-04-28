@@ -13,6 +13,7 @@ import os
 import pickle
 import re
 import ReadInputFiles as RI
+import shutil
 import sys
 
 sys.path.append("..")
@@ -21,40 +22,64 @@ from DynamicFiles.MachineSpecifics import MachineSpecifics as MS
 class ReadOutputFiles:
     def __init__(self):
         pass
+
+    def ReadAllJobs(self):
+        SystemInfo = ut.GeneralUtilities().SystemInformation()
+        BuildDir = SystemInfo['Path']['Data'] + 'JobBuilds/'
+        PickleDir = SystemInfo['Path']['Data'] + 'PickledJobOutput/'
+        JobList = ut.GeneralUtilities().GetDir(BuildDir)
+        for i in JobList:
+            CurrentDir = BuildDir + i + '/'
+            Dir = ut.GeneralUtilities().GetDir(CurrentDir)
+            Complete = True
+            Parsed = os.path.isfile(CurrentDir + 'CndList.p')
+            for j in Dir:
+                if not self.CheckComplete(CurrentDir + j + '/'):
+                    Complete = False
+            if Complete and not Parsed:
+                self.ReadJobOutput(CurrentDir)
+            if Complete:
+                CopyCndList = not ut.GeneralUtilities().CompareFileSize(
+                                CurrentDir + 'CndList.p',PickleDir + i + '.p')
+                if CopyCndList:
+                    shutil.copy(CurrentDir + 'CndList.p',PickleDir + i + '.p')
+        
     
     def ReadJobOutput(self,Path):
-        DirList = ut.GeneralUtilities().GetDir(Path)
-
-        nDir = len(DirList)
-        if os.path.isfile(Path + 'CndList.p'):
-            CndList = pickle.load(open( Path + 'CndList.p', "rb" ))
+        if os.path.isdir(Path):
+            DirList = ut.GeneralUtilities().GetDir(Path)
+    
+            nDir = len(DirList)
+            if os.path.isfile(Path + 'CndList.p'):
+                CndList = pickle.load(open( Path + 'CndList.p', "rb" ))
+            else:
+                CndList = ['' for i in range(nDir)]
+                for i in range(nDir):
+                    RunPath = Path + DirList[i] + '/'
+                    CndList[i]  = KMCut.KMCUtilities().InitializeCnd()
+                    CndList[i] = RI.ReadInputFiles().ReadAll(RunPath,CndList[i])
+                    CndList[i] = self.ReadAll(RunPath,CndList[i])
+                    print str(i+1) + ' / ' + str(nDir)
+                pickle.dump( CndList, open( Path + 'CndList.p', "wb" ) )
         else:
-            CndList = ['' for i in range(nDir)]
-            for i in range(nDir):
-                RunPath = Path + DirList[i] + '/'
-                CndList[i]  = KMCut.KMCUtilities().InitializeCnd()
-                CndList[i] = RI.ReadInputFiles().ReadAll(RunPath,CndList[i])
-                CndList[i] = self.ReadAll(RunPath,CndList[i])
-                print str(i+1) + ' / ' + str(nDir)
-            pickle.dump( CndList, open( Path + 'CndList.p', "wb" ) )
+            SystemInfo = ut.GeneralUtilities().SystemInformation()
+            PickleDir = SystemInfo['Path']['Data'] + 'PickledJobOutput/'
+            CndList = pickle.load(open( PickleDir + Path + '.p', "rb" ))
         return CndList
             
-        
-            
-    
     def ReadAll(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
         # Note on computational efficiency:
         #    Testing indicates that python passes arguements to functions
         #    using pointers. (expected) This means that a large Cnd dictionary
         #    should not significantly impede performance even if it is passed
         #    between functions multiple times.
-    
-        Cnd = self.GetGeneral(Path,Cnd)
-        Cnd = self.GetProcstat(Path,Cnd)
-        Cnd = self.GetSpecnum(Path,Cnd)
-        Cnd = self.GetBinaries(Path,Cnd)
-        Cnd = self.GetHistory(Path,Cnd)
-        Cnd = KMCut.KMCUtilities().CndToTau(Cnd)
+        if self.CheckComplete(Path):
+            Cnd = self.GetGeneral(Path,Cnd)
+            Cnd = self.GetProcstat(Path,Cnd)
+            Cnd = self.GetSpecnum(Path,Cnd)
+            Cnd = self.GetBinaries(Path,Cnd)
+            Cnd = self.GetHistory(Path,Cnd)
+            Cnd = KMCut.KMCUtilities().CndToTau(Cnd)
         return Cnd
     
     def GetGeneral(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
@@ -86,6 +111,16 @@ class ReadOutputFiles:
             if os.path.isfile(Path + 'PropCounter_output.bin'):
                 self.ReadProp(Path,Cnd,1)
         return Cnd
+  
+    def CheckComplete(self,Path):
+        Complete = False
+        if os.path.isfile(Path + 'general_output.txt'):
+            with open(Path + 'general_output.txt','r') as txt:
+                RawTxt = txt.readlines()
+            for i in RawTxt:
+                if re.search('Normal termination',i):
+                    Complete = True
+        return Complete
   
     def ReadGeneral(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
         with open(Path + 'general_output.txt','r') as txt:

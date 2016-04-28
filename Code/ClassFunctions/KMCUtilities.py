@@ -128,7 +128,26 @@ class KMCUtilities:
         
         return Cnd
         
+    def SetMaxEventNumber(self,Cnd,ETsS,nRare):
+        # ETsS = Estimated Timescale Separation (log10)
+        MaxLen = MS().MaxOutputEntries()
+        MaxEvents = (10 ** ETsS) * nRare
+        Cnd['Conditions']['MaxStep'] = int(MaxEvents)
+        Cnd['Conditions']['SimTime']['Max'] = 'inf'
+        Cnd['Conditions']['WallTime']['Max'] = 'inf'
+        EstimatedSimTime = (Cnd['Conditions']['SimTime']['Actual']
+                            /Cnd['Conditions']['nEvents']*MaxEvents)
+        Space1 = EstimatedSimTime / MaxLen
+        Exponent = int(np.floor(np.log10(Space1)))
+        Space2 = np.round(Space1 / 10 ** Exponent,0) * 10 ** Exponent
         
+        Cnd['Report']['specnum']                = ['time',Space2]
+        Cnd['Report']['procstat']               = ['time',Space2]
+        Cnd['Report']['hist']                   = ['time',Space2*100]
+        
+        return Cnd
+        
+    
     def InitializeScaleDown(self):
         SDDict = {'SDF':'','SF':'','Mode':''}  
         return SDDict
@@ -189,6 +208,12 @@ class KMCUtilities:
             shutil.copy(RunDir + 'Run/' + i,NewDir + i)
          
     def FindTau(self,InVec,tSpace=1,CoarseGrain = False):
+        Tau = self.RegressTau(InVec,tSpace,CoarseGrain)
+        if InVec.shape[0] > Tau * 2 and Tau > 2:
+            Tau = self.RegressTau(InVec[:int(Tau*2)],tSpace,CoarseGrain)
+        return Tau
+        
+    def RegressTau(self,InVec,tSpace=1,CoarseGrain = False):
         if np.min(InVec) == np.max(InVec): #Catch invariant species
             Tau = 0.
         else:
@@ -202,11 +227,9 @@ class KMCUtilities:
             SSError = lambda p,x,AutoCorr: sum((np.exp(-x/p)-AutoCorr
             ) ** 2)
             p1, success = optimize.leastsq(SSError, 1., args=(xVec,AutoCorr))
-            Tau = float(p1 * tSpace)  
-#            if Tau > 500:
-#                pass
-#                plt.plot(xVec,AutoCorr)
-
+            Tau = float(p1 * tSpace) 
+            if np.isnan(Tau):
+                Tau = 0
         return Tau
        
     def acf(self,InVec,lags=-1,Space=1):
@@ -225,7 +248,7 @@ class KMCUtilities:
     def CndToTau(self,Cnd):
         if Cnd['Report']['specnum'][0] == 'time':
             if Cnd['Specnum']['spec'] != '':
-                nCalc = 4
+                nCalc = 3+1
                 SpecnumArray = np.array(Cnd['Specnum']['spec'])[:,:Cnd['Species']['n_surf']]
                 TauList = [[[],[],[]] for i in range(nCalc)]
                 MaxTauList = [['','',''] for i in range(nCalc)]
@@ -257,9 +280,6 @@ class KMCUtilities:
                                        
                     if j < (nCalc-1):
                         BurnInTauSepList.append(int(np.ceil(np.max([i for i in MaxTauList[j] if i != '']))))
-                        BurnInTau = np.max([i for i in MaxTauList[j] if i != ''])
-    #                    ThreeTauBurnIn = int(np.ceil(BurnInTau*3))
-                        ThreeTauBurnIn = int(np.ceil(BurnInTau))
                 
                 Cnd['ACF']['Spacing']['Value'] = Cnd['Specnum']['Spacing']
                 if Cnd['ACF']['Spacing']['Value'] == 1:

@@ -165,3 +165,13 @@ class GeneralUtilities:
         CI = np.std(Data,axis=axis) * stats.t.isf(p,nPts-1)/np.sqrt(nPts)
         return CI
         
+    def CompareFileSize(self,Path1,Path2):
+        if os.path.isfile(Path1) and os.path.isfile(Path2):        
+            Size1 = os.stat(Path1).st_size
+            Size2 = os.stat(Path2).st_size
+            if Size1 == Size2:
+                return True
+            else:
+                return False
+        else:
+            return False

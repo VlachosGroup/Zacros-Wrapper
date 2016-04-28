@@ -54,6 +54,7 @@ class BuildInputFiles():
             txt.write('for i in $(echo ./*/);do\n')
             txt.write(' submit="${i}Zacros.ps"\n')
             txt.write(' cp ./$JobScriptName $submit\n')
+            txt.write('sleep 1\n')
             txt.write(' cd $i;qsub Zacros.ps;cd ..\n')
             txt.write('done\n')
     
@@ -259,7 +260,10 @@ class BuildInputFiles():
                 txt.write('max_time            infinity\n')
             else:
                 txt.write('max_time            ' + str(Cnd['Conditions']['SimTime']['Max']) + '\n')
-            txt.write('\nwall_time           ' + str(Cnd['Conditions']['WallTime']['Max']) + '\n\n')
+            if Cnd['Conditions']['WallTime']['Max'] == '' or re.search('inf',str(Cnd['Conditions']['WallTime']['Max'])):
+                txt.write('\nwall_time           ' + str(3600*24*365*10) + '\n\n')
+            else:
+                txt.write('\nwall_time           ' + str(Cnd['Conditions']['WallTime']['Max']) + '\n\n')
             
             if not Cnd['Conditions']['restart']:
                 txt.write('no_restart\n')
