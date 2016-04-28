@@ -29,7 +29,7 @@ to the Demo.p file for later use
 #Cnd = KMCut().InitializeCnd()
 #Cnd = RI().ReadAll(Path,Cnd)
 #Cnd = RO().ReadAll(Path,Cnd)
-#KMCut().pickleCnd(Cnd,'ToyProblem')
+#KMCut().pickleCnd(Cnd,'Demo')
 
 
 
@@ -66,7 +66,7 @@ the given reduction modes and saves the result in a .p file
 
 """
 This section builds jobs on Farber based on the prior stiffness reduction and
-submits them
+submits them (Farber only)
 """
 #nRareSample = 500
 #nRuns = 10
