@@ -111,6 +111,16 @@ class KMCUtilities:
   
         return Cnd
         
+    def BuildEmptyFolders(self):
+        sysinfo = ut.GeneralUtilities().SystemInformation()
+        print sysinfo['Path']['LocalRunDir']
+        if not os.path.isdir(sysinfo['Path']['LocalRunDir']):
+            os.mkdir(sysinfo['Path']['LocalRunDir'])
+            os.mkdir(sysinfo['Path']['LocalRunDir'] + 'Build/')
+            os.mkdir(sysinfo['Path']['LocalRunDir'] + 'Run/')
+            os.mkdir(sysinfo['Path']['LocalRunDir'] + 'IntermediateRuns/')
+        
+        
     def AdjustRuntime(self,Cnd,WallTime=24*3600):
         MaxLen = MS().MaxOutputEntries()
         EstimatedSimTime =  (Cnd['Conditions']['SimTime']['Actual']*WallTime/
@@ -197,6 +207,7 @@ class KMCUtilities:
         pass
     
     def CacheIntermediate(self,Name):
+        self.BuildEmptyFolders()
         Name = str(Name)
         RunDir = ut.GeneralUtilities().SystemInformation()['Path']['LocalRunDir']
         Files = ut.GeneralUtilities().GetFiles(RunDir + 'Run/')

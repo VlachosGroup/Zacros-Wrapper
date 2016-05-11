@@ -15,7 +15,7 @@ import shutil
 
 class BuildInputFiles():
     def __init__(self):
-        pass
+        KMCut.KMCUtilities().BuildEmptyFolders()
     
     def BuildJob(self,Cnd,SDDict = KMCut.KMCUtilities().InitializeScaleDown(),Name='',nRuns=1):
         SystemInfo = ut.GeneralUtilities().SystemInformation()
