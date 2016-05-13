@@ -244,6 +244,13 @@ if (specnum_on_event) then
                   specnumnum, curstep-1_8, prevtime,temp+tramp*prevtime,globalenergy, &
                   (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs), &
                   (gasspecsnums(i),i=1,ngasspecs)
+				  
+			!Edit: Taylor Robie
+			!02/22/2016
+			write(PropCountfnum) (propCountvec(i),i=1,nSAparams)
+			write(clusteroccwrite) (clusterOcc(i)/clustergraphmultipl(i),i=1,nclusters)
+			write(Ewrite) globalenergy	
+			write(Propfnum) (propvec(i),i=1,nSAparams)								! Make this contain sum of propensities
 				
 			write(*,*) 'What about here?'			
 				do i = 1,nclusters
@@ -261,8 +268,15 @@ if (specnum_on_event) then
                 write(ispecnum,'(I20,1x,I20,1x,ES30.16,1x,ES30.16,1x,ES30.16,' // trim(int2str(nsurfspecs+ngasspecs)) // '(I20,1x))') &
                   specnumnum, curstep-1_8, prevtime,temp+tramp*prevtime,globalenergy, &
                   (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs), &
-                  (gasspecsnums(i),i=1,ngasspecs)        
-        
+                  (gasspecsnums(i),i=1,ngasspecs)   
+				  
+			!Edit: Taylor Robie
+			!02/22/2016
+			write(PropCountfnum) (propCountvec(i),i=1,nSAparams)
+			write(clusteroccwrite) (clusterOcc(i)/clustergraphmultipl(i),i=1,nclusters)
+			write(Ewrite) globalenergy	
+			write(Propfnum) (propvec(i),i=1,nSAparams)								! Make this contain sum of propensities
+			
         do i = 1,nclusters
 				  write(iglbenergdbg,'(a)') trim(int2str(clusterOcc(i)/clustergraphmultipl(i)))
 				end do
@@ -304,13 +318,24 @@ else
 			! Record cluster occurrences and energies 			
 			write(clusteroccwrite) (clusterOcc(i)/clustergraphmultipl(i),i=1,nclusters)
 			write(Ewrite) globalenergy	
-			write(Propfnum) (f(i),i=1,nSAparams)								! Make this contain sum of propensities
-			
+			write(Propfnum) (propvec(i),i=1,nSAparams)								! Make this contain sum of propensities
+			!Edit: Taylor Robie
+			!02/22/2016
+			write(PropCountfnum) (propCountvec(i),i=1,nSAparams)
         enddo
+		
 
     endif
 
 endif    
+
+!Edit: Taylor Robie
+!02/22/2016
+do i = 1,nelemsteps
+	if (dtPrior > 0.d0) then
+			propCountvec(i) = propCountvec(i) + propvec(i) * dtPrior
+	endif
+end do
 
 end subroutine save_specnums
 

@@ -235,7 +235,6 @@ allocate(clustergraphmultipl(nclusters))
 
 ! clusterSC(i1) gives the occurrences of each cluster
 allocate(clusterOcc(nclusters))
-
 ! clusterlevels(i1,i2) gives the graph level of the pattern corresponding 
 !   to the cluster i1 if we start from the sites of molecule i2
 allocate(clusterlevels(nclusters,clusternmxsites))
@@ -297,7 +296,6 @@ do i = 1,nclusters
     enddo
     clusterenrg(i) = 0.d0
     clustergraphmultipl(i) = 1
-	clusterOcc(i) = 0
 enddo
 do i = 0,nsurfspecs
     nspecclusterparticip(i) = 0

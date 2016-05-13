@@ -37,7 +37,7 @@ integer, allocatable :: adsorprocparticip(:,:,:)
 real(8), allocatable :: event_times_heap(:)
 real(8), allocatable :: procpropenst0(:)
 real(8), allocatable :: procdeltaenrg(:)
-real(8), allocatable :: f(:)
+real(8), allocatable :: propvec(:)
 integer :: MPNi
 
 ! Declares a type which is singularly used to hold work arrays.
@@ -220,7 +220,7 @@ integer, dimension(0:1) :: adsexclude
 heapcapacity0 = 5*maxcoord*nsites
 nprocesses = 0
 
-allocate(f(nSAparams))
+allocate(propvec(nSAparams))
 allocate(event_times_heap(heapcapacity0))
 allocate(event_times_labels(heapcapacity0))
 allocate(event_times_indexes(heapcapacity0))
@@ -331,16 +331,17 @@ subroutine realize_process(mproc)
       mprocsitemap(i) = proctypesites(mproc,i)
   enddo
 
+  
   ! Compute the new value of W for each parameter
   do MPNi = 1,nSAparams  
-   f(MPNi) = 0				   
+   propvec(MPNi) = 0				   
   end do
 
-	! Fill in the f values
+	! Fill in the propvec values
 	DO i = 1, nprocesses
-		f(proctypesites(i,0)) = f(proctypesites(i,0)) + procpropenst0(i)			! add the propensity of each reaction to the appropriate place in the vector
+		propvec(proctypesites(i,0)) = propvec(proctypesites(i,0)) + procpropenst0(i)			! add the propensity of each reaction to the appropriate place in the vector
 	END DO
-
+  
   ! Time and KMC step advancing is taken care of in the main program
   if (report_events) then
       write(iwrite,'(a)') 'KMC step ' // trim(int82str(curstep))

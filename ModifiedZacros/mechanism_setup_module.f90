@@ -45,6 +45,10 @@ real(8), allocatable :: elemstep_avgtime(:)
 real(8), allocatable :: elemstepangles(:,:)
 real(8), allocatable :: elemsteporientationangles(:)
 
+!Edit: Taylor Robie
+!02/22/2016
+real(8), allocatable :: propCountvec(:)
+
 logical, allocatable :: preexpisconst(:)
 logical, allocatable :: elemstepnomirrorimgs(:)
 logical, allocatable :: elemstepabslorientat(:)
@@ -218,6 +222,10 @@ allocate(elemstepnames(nelemsteps))
 allocate(elemstep_noccur(0:nelemsteps))
 allocate(elemstep_avgtime(0:nelemsteps))
 
+!Edit: Taylor Robie
+!02/22/2016
+allocate(propCountvec(1:nelemsteps))
+
 ! reverselemstep(i1) gives the reverse step of elementary step i1. If step i1 is
 ! irreversible reverselemstep(i1) == 0
 allocate(reverselemstep(nelemsteps))
@@ -306,6 +314,13 @@ do i = 0,nelemsteps
     elemstep_noccur(i) = 0_8
     elemstep_avgtime(i) = 0.d0
 enddo
+
+do i = 1,nelemsteps
+	!Edit: Taylor Robie
+	!02/22/2016
+	propCountvec(i) = 0.d0
+enddo
+
 do i = 1,nelemsteps
     elemstepnames(i) = 'No_name'
     elemstepnsites(i) = 0

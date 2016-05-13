@@ -118,7 +118,6 @@ integer, parameter :: Ewrite = 106
 ! Contains energies
 character(30), parameter :: Histfname = 'Hist.bin'
 integer, parameter :: Histwrite = 107
-
 ! restart file
 character(30), parameter :: crestartfname = 'restart.inf'
 integer, parameter :: irestart = 201
@@ -146,6 +145,12 @@ integer, parameter :: ispecnum = 206
 ! output file for properties we want to do SA on
 character(30), parameter :: Propfname = 'Prop_output.bin'
 integer, parameter :: Propfnum = 208
+
+!Edit: Taylor Robie
+!02/22/2016
+! Running counter of reaction propensity * dt
+character(30), parameter :: PropCountfname = 'PropCounter_output.bin'
+integer, parameter :: PropCountfnum = 209
 
 ! process debug data output file
 character(30), parameter :: cprocdbgfname = 'process_debug.txt'
