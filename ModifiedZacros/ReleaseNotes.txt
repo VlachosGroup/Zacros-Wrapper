@@ -1,0 +1,47 @@
+Zacros v1.02:
+~~~~~~~~~~~~~
+- ENHANCEMENT: 
+  Support for periodic explicitly defined lattices: the original implementation of the "explicit" lattice (custom lattice structure), supported only non-periodic lattices. Thus, Zacros would not detect a bimolecular reaction with one adsorbate say at the bottom and one at the top of the lattice. The definition of explicit lattices has now been enhanced with the introduction of the cell_vectors keyword optionally in the lattice_input.dat file. If this keyword is detected, Zacros now understands that the explicitly defined lattice is intended as a periodic structure, and uses the vectors given to define the "simulation box".
+
+- BUGFIX: 
+  * Bug Description: reaction rates for some events were not correctly reported in the "Mechanism setup" section of general_output.txt. 
+  * More details and consequences: two bugs were found: 1) For an irreversible step, only the pre-exponential was reported. 2) The multiplication with the gas phase molar fraction was done incorrectly for elementary steps involving gas phase species. These bugs affect only the reporting of kinetic constants of elementary events in the "Mechanism setup" section of general_output.txt. The calculations in the main loop of the program were done correctly.
+  * Who might be affected: the 1st bug manifests in reaction mechanisms containing reversible steps; the 2nd bug for elementary steps with gas species.
+  * Solution: 1) The problem was that for such a step, the array reverselemstep(i) would return 0 and not i, as originally implied in the first condition of the if statement. The latter was changed appropriately. 2) The gas phase molar fraction is already done in the subroutine that calculates preexpfac, so there is no need to repeat it in the code responsible for the reporting of the rates. These lines were deleted. These changes have been incorporated in Zacros 1.02.
+
+- BUGFIX:
+  * Bug Description: the angles, mirror-image, and absolute orientation specifications were not passed in the reverse step of an elementary event.
+  * More details and consequences: the geometric information (angles, mirror-image, and absolute orientation specifications) must be the same for the forward and reverse step of an elementary event, otherwise, one could end up violating microscopic reversibility. Previously, this information was not copied to the reverse step.
+  * Who might be affected: reaction mechanisms containing reversible elementary steps and the angles keyword suffer from this bug and must use the updated Zacros version.
+  * Solution: the problem was in the parsing section of the program. The geometric information is now copied in the reverse step as appropriate. 
+  
+Zacros Manual:
+~~~~~~~~~~~~~~
+- Corrected error on page 19: Inside a periodic lattice block -> Inside an explicit lattice block.
+- Added information about the cell_vectors keyword in explicit lattice specifications.
+
+
+******************************************************************************************
+
+
+Zacros v1.01:
+~~~~~~~~~~~~~
+- MINOR ENHANCEMENT: 
+  Cluster patterns and elementary steps are now numbered when reported in general_output.txt.
+
+- BUGFIX: 
+  * Bug Description: variable cntrpatrn in subroutine find_valid_patterns was being left un-initialized if (nobjsites < npatrnsites) was true. 
+  * More details and consequences: when the algorithm tries to find valid reaction patterns, it looks around the neighbourhood of an adsorbate by creating a list of neighbouring sites up to a specific depth. Then it iterates through permutations of these sites for valid reaction patterns to be found. If the list of neighbouring sites contained a number of sites that was less than the number of sites to be assigned in the pattern, subroutine find_valid_patterns returned without setting cntrpatrn to zero. This created problems in the execution and resulted in abnormal termination with a severe error, or just crashing.
+  * Who might be affected: the problem first manifested in a reaction network containing elementary events with several sites highly connected in the pattern. For specific sites in the lattice that had a low number of neighbors, attempting to detect this pattern resulted in the aforementioned problem. The problematic elementary event involved a multidentate species (bidentate), although this does not seem to have a causal relationship with this issue.
+  * Solution: changing the order of the cntrpatrn = 0 and the (nobjsites < npatrnsites) check fixed the issue. This change has been incorporated in Zacros 1.01.
+
+Zacros Manual:
+~~~~~~~~~~~~~~
+- Updated citation to J. Chem. Phys. 2013 paper.
+- Corrected error on page 16: triangular -> hexagonal.
+- Added information about how to define time-dependent pre-exponentials.
+- Corrected error on page 32 (33 in new version): 3rd dentate -> 1st dentate.
+- Corrected error on page 32 (33 in new version): end_step -> end_reversible_step.
+- Deleted limitation 3 from page 43 (44 in new version), pertinent to geometric criteria for elementary events. Such criteria were supported in Zacros v1.0 as well.
+- The references were updated with the latest information and the full list of authors was included.
+- Corrected typos throughout.
