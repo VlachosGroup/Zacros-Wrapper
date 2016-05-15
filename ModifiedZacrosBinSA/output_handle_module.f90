@@ -221,7 +221,7 @@ use state_setup_module, only: nadsorb
 
 implicit none
 
-integer i, mproc
+integer i, mproc, i2
 
 if (.not.output_specnum) return
 
@@ -238,6 +238,10 @@ if (specnum_on_event) then
                   specnumnum, curstep-1_8, prevtime,temp+tramp*prevtime,globalenergy, &
                   (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs), &
                   (gasspecsnums(i),i=1,ngasspecs)
+				  
+				! Sensitivity analysis output      
+				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
+				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
         endif
         
     else
@@ -252,6 +256,10 @@ if (specnum_on_event) then
                   (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs), &
                   (gasspecsnums(i),i=1,ngasspecs)        
         
+			! Sensitivity analysis output      
+				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
+				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+		
         endif
         
     endif
@@ -269,6 +277,11 @@ else
                   specnumnum, curstep-1_8, specnumtime,temp+tramp*specnumtime,globalenergy, &
                   (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs), &
                   (gasspecsnums(i),i=1,ngasspecs)
+				  
+			! Sensitivity analysis output      
+				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
+				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+				  
             specnumtime = specnumtime*dtspecnum
 
         enddo
@@ -284,6 +297,11 @@ else
                   specnumnum, curstep-1_8, specnumtime,temp+tramp*specnumtime,globalenergy, &
                   (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs), &
                   (gasspecsnums(i),i=1,ngasspecs)
+				  
+			! Sensitivity analysis output      
+				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
+				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+				  
             specnumtime = specnumtime + dtspecnum
 
         enddo

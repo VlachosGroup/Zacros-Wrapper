@@ -131,6 +131,14 @@ integer, parameter :: iprocstat = 205
 character(30), parameter :: cspecnumfname = 'specnum_output.txt'
 integer, parameter :: ispecnum = 206
 
+! output file for computing sensitivity coefficients
+character(30), parameter :: SAfname = 'SA_output.bin'
+integer, parameter :: SAfnum = 207
+
+! output file for species numbers in binary
+character(30), parameter :: Specfname = 'specnum_output.bin'
+integer, parameter :: Specfnum = 208
+
 ! process debug data output file
 character(30), parameter :: cprocdbgfname = 'process_debug.txt'
 integer, parameter :: iprocdbg = 301

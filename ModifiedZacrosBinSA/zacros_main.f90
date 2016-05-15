@@ -126,6 +126,11 @@ write(iwrite,'(a)')   '~~~~~~~~~~~~~~~~~~~~~~'
 
 call Cpu_Time(t1) ! function for calculating elapsed CPU time
 
+! Open the output files for the sensitivity analysis data
+open(unit = SAfnum, status='unknown',file=trim(SAfname),form='unformatted',ACCESS='STREAM')
+open(unit = Specfnum, status='unknown',file=trim(Specfname),form='unformatted',ACCESS='STREAM')
+
+
 do while (curtime < maxtime .and. curstep < maxsteps)
     
     call system_clock(count=actim2)
@@ -247,6 +252,8 @@ close(iwrite)
 close(ihistory)
 close(iprocstat)
 close(iprocdbg)
+close(SAfnum)
+close(Specfnum)
 
 stop
 

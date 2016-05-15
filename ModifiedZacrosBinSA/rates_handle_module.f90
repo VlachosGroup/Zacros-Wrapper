@@ -7,7 +7,7 @@
 module rates_handle_module
 
 use constants_module
-use mechanism_setup_module, only: calculate_preex_factor, tempfun
+use mechanism_setup_module, only: calculate_preex_factor, tempfun, nSAparams
 
 implicit none
 
@@ -99,7 +99,7 @@ contains
 
 subroutine calculate_elemstep_rate( jelemstep, latsitesmap, activenrg,         &
                                     activenrg0, deltaenrg, deltaenrg0,         &
-                                    deltalattenerg, eventpropensity0,          &
+                                    deltalattenerg, eventpropensity0, der,          &
                                     eventtime, randnum)
 use random_deviates_module, only: expon_dev_from_uniform
 use simulation_setup_module, only: inewtonstats, rnewtonstats, tpdsim, curtime,&
@@ -120,9 +120,10 @@ real(8), intent(out) :: activenrg, activenrg0
 real(8), intent(out) :: deltaenrg, deltaenrg0
 real(8), intent(out) :: deltalattenerg
 real(8), intent(out) :: eventpropensity0
+real(8), dimension(nSAparams), intent(out) :: der							! the derivative of propensity with respect to some parameter
 real(8), intent(out) :: eventtime
 
-integer i, k
+integer i, k, i2
 
 real(8) r1, lninvphi, tgp, integral_eventpropensity, err1, err2, timetemp0
 real(8) incremeventtime, incremeventtimeprev, preexpfac, eventpropensity
@@ -136,6 +137,15 @@ eventpropensity0 = (preexpfac*timeconv)                                        &
                    * dexp(-(activenrg/enrgconv)/kboltz/temp)            
 
 if (.not.tpdsim) then
+
+	! Compute the derivative for sensitivity analysis, key place where analytical derivative information is included
+	do i2 = 1,nSAparams
+      IF (i2 == jelemstep) THEN
+        der(i2) = eventpropensity0				! da/dlnk = a
+      ELSE
+        der(i2) = 0								! 0 if the rate constant and reaction type do not match
+      ENDIF
+    end do
 
     eventpropensity = eventpropensity0
     

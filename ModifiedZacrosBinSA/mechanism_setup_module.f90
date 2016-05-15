@@ -15,7 +15,7 @@ use simulation_setup_module
 
 implicit none
 
-integer nelemsteps, nreversible, elemstepnmxsites, elemstepnmxcoord, elemstepnmxgas, elemstepnmxangles
+integer nelemsteps, nSAparams, nreversible, elemstepnmxsites, elemstepnmxcoord, elemstepnmxgas, elemstepnmxangles
 
 integer, allocatable :: reverselemstep(:) 
 integer, allocatable :: elemstepnsites(:) ! Number of species involved in step i
@@ -209,6 +209,8 @@ if (nelemsteps == 0) then
     moreinfo = 'File does not appear to contain any elementary step information.'
     call error(3001)
 endif
+
+nSAparams = nelemsteps				! This is how many parameters we are doing sensitivity analysis on
 
 ! elemstepnames(i1) gives the name of elementary step i1
 allocate(elemstepnames(nelemsteps))

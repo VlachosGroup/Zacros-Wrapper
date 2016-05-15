@@ -36,6 +36,9 @@ integer, allocatable :: adsorprocparticip(:,:,:)
 
 real(8), allocatable :: event_times_heap(:)
 real(8), allocatable :: procpropenst0(:)
+real(8), allocatable :: derivatives(:,:)					! Matrix values of da/dk, derivative of each propensity with respect to each parameter 
+real(8), allocatable :: W(:)
+integer :: par_ind											! Index of each parameter 
 real(8), allocatable :: procdeltaenrg(:)
 
 ! Declares a type which is singularly used to hold work arrays.
@@ -218,6 +221,13 @@ integer, dimension(0:1) :: adsexclude
 heapcapacity0 = 5*maxcoord*nsites
 nprocesses = 0
 
+allocate(W(nSAparams)) 			! Allocate the sensitivity analysis variables		
+
+! Initialize the sensitivity analysis variables 
+do i = 1,nSAparams
+	W(i) = 0
+end do
+
 allocate(event_times_heap(heapcapacity0))
 allocate(event_times_labels(heapcapacity0))
 allocate(event_times_indexes(heapcapacity0))
@@ -233,6 +243,7 @@ allocate(procpropenst0(heapcapacity0))
 ! for debugging purposes) Note that this does not include the change in the
 ! energy of the gas species!
 allocate(procdeltaenrg(heapcapacity0))
+allocate(derivatives(nSAparams,heapcapacity0))						! derivative variable follows propensity around
 ! nadsorprocparticip(i1) gives the number of processes in which adsorbate/entity
 ! i1 participates
 allocate(nadsorprocparticip(nsites))
@@ -299,6 +310,8 @@ subroutine realize_process(mproc)
           eventpropensity0, eventtime, globenergbefore, globenergafter,        &
           procdeltaenergy
 
+  real(8), dimension(nSAparams) :: der
+		  
   type(shared_workarray_type), pointer:: workarray
 !$ type(threaded_workarray_type), pointer:: work_threaded
 !$ integer :: nbthreads, t
@@ -328,6 +341,11 @@ subroutine realize_process(mproc)
       mprocsitemap(i) = proctypesites(mproc,i)
   enddo
 
+  ! Update the value of W
+  do par_ind = 1,nSAparams
+    W(par_ind) = W(par_ind) + derivatives(par_ind,mproc) / procpropenst0(mproc) - sum(derivatives(par_ind,:)) * (curtime-prevtime)
+  end do
+  
   ! Time and KMC step advancing is taken care of in the main program
   if (report_events) then
       write(iwrite,'(a)') 'KMC step ' // trim(int82str(curstep))
@@ -611,7 +629,7 @@ subroutine realize_process(mproc)
                                       proctypesites(iproc,1:elemstepnmxsites), &
                                       activenrg, activenrg0, deltaenrg,        &
                                       deltaenrg0, deltalattenerg,              &
-                                      eventpropensity0, eventtime,             &
+                                      eventpropensity0, der, eventtime,             &
                                       workarray%randnumbrealize(i))
 
 !$      work_threaded%nb = work_threaded%nb + 1
@@ -640,6 +658,10 @@ subroutine realize_process(mproc)
 !$      activenrg0 = work_prv(t)%activenrg0(i)
 !$      deltaenrg = work_prv(t)%deltaenrg(i)
 !$      deltaenrg0 = work_prv(t)%deltaenrg0(i)
+
+		do par_ind = 1,nSAparams
+		  derivatives(par_ind,iproc) = der(par_ind)			 
+		end do
 
         procpropenst0(iproc) = eventpropensity0
         procdeltaenrg(iproc) = deltalattenerg
@@ -819,6 +841,7 @@ type(shared_workarray_type), pointer:: workarray
 real(8) activenrg, activenrg0, deltaenrg, deltaenrg0, deltalattenerg,          &
         eventpropensity0, eventtime
 
+real(8), dimension(nSAparams) :: der
 
 ! gets a work array from the module.
 workarray => get_shared_workarray()
@@ -907,11 +930,11 @@ elemsteps: do j = 1,nspecparticip(kspec)
         call calculate_elemstep_rate( jelemstep, workarray%validpatrns(k,:),   &
                                       activenrg, activenrg0, deltaenrg,        &
                                       deltaenrg0, deltalattenerg,              &
-                                      eventpropensity0, eventtime,             &
+                                      eventpropensity0, der, eventtime,             &
                                       workarray%randnumbadd(k) )
 
         call add_process( jelemstep, nspat, workarray%validpatrns(k,:),        &
-                          eventpropensity0, deltalattenerg, eventtime )
+                          eventpropensity0, der, deltalattenerg, eventtime )
         
         if (debug_report_processes) then
             write(iprocdbg,'(a)') 'Process ' // trim(int2str(nprocesses))      &
@@ -953,7 +976,7 @@ end subroutine add_species_related_processes
 
 !@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-subroutine add_process( jelemstep, nspat, validpattern, eventpropensity0,      &
+subroutine add_process( jelemstep, nspat, validpattern, eventpropensity0, der,      &
                         deltalattenerg, eventtime)
 
 implicit none
@@ -962,6 +985,7 @@ integer jelemstep, nspat, ipatrnsite, ilattcsite, m, p
 integer validpattern(:)
 
 real(8) eventpropensity0, deltalattenerg, eventtime
+real(8), dimension(nSAparams) :: der
 
 ! Add the new time of the process to the heap
 call heap_insert_element(event_times_heap,event_times_labels, &
@@ -973,6 +997,11 @@ do m = 1,nspat
     proctypesites(nprocesses,m) = validpattern(m)
 enddo
 procpropenst0(nprocesses) = eventpropensity0
+
+do par_ind = 1,nSAparams
+  derivatives(par_ind,nprocesses) = der(par_ind)			 
+end do
+
 procdeltaenrg(nprocesses) = deltalattenerg
 
 ! In the array that gives the processes in which a molecule/entity participates,
@@ -1048,6 +1077,10 @@ do i = 1,procsrem(0)
     procpropenst0(iprocrem) = -1.d0
     procdeltaenrg(iprocrem) = -1.d0
     
+	do par_ind = 1,nSAparams
+ 	  derivatives(par_ind,iprocrem) = 0			! putting it as 0 will not affect the formulas we use
+    end do
+	
     if (debug_report_processes) then
         write(iprocdbg,'(a)') 'Process ' // trim(int2str(iprocrem))            &
                               // ' was removed.'
@@ -1067,6 +1100,10 @@ do i = 1,procsrem(0)
         procpropenst0(iprocrem) = procpropenst0(nlastprocess)
         procdeltaenrg(iprocrem) = procdeltaenrg(nlastprocess)
         
+		do par_ind = 1,nSAparams
+ 		  derivatives(par_ind,iprocrem) = derivatives(par_ind,nlastprocess)
+ 	    end do
+		
         do m = 1,elemstepreactnts(jelemstep,0) ! For all reactant molecules...
             
             ! find the lattice site in which the 1st dentate sits
