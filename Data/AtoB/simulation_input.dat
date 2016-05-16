@@ -1,0 +1,33 @@
+# KMC simulation specification
+# This mechanism should have one RDS (A* -> B). This is for the purposes of testing sensitivity analysis
+
+random_seed               791859
+
+temperature               500.0
+pressure                  1.00
+
+n_gas_species             2
+gas_specs_names           A B 
+gas_energies               0.000 0.000 	
+gas_molec_weights         28.0102 	28.0102  
+gas_molar_fracs            1.00 	0.00  
+
+n_surf_species            2
+surf_specs_names          A*  B* 
+surf_specs_dent           1    1 
+
+####################### Simulation Parameters ##############################
+
+snapshots                 on time 0.1
+process_statistics        on time 0.01
+species_numbers           on time 0.01
+
+max_steps                 infinity
+max_time                  10.0
+wall_time                 600
+
+event_report              off
+
+no_restart
+
+finish
