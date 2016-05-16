@@ -40,6 +40,8 @@ real(8), allocatable :: derivatives(:,:)					! Matrix values of da/dk, derivativ
 real(8), allocatable :: W(:)
 integer :: par_ind											! Index of each parameter 
 real(8), allocatable :: procdeltaenrg(:)
+real(8), allocatable :: propvec(:)
+integer :: MPNi
 
 ! Declares a type which is singularly used to hold work arrays.
 ! The issue is that some functions are called over and over. We do not want to
@@ -228,6 +230,7 @@ do i = 1,nSAparams
 	W(i) = 0
 end do
 
+allocate(propvec(nSAparams))
 allocate(event_times_heap(heapcapacity0))
 allocate(event_times_labels(heapcapacity0))
 allocate(event_times_indexes(heapcapacity0))
@@ -292,7 +295,7 @@ end subroutine catalogue_all_processes
 
 subroutine realize_process(mproc)
 
-  use energetics_setup_module, only: clustermaxlevel, clusternmxsites
+  use energetics_setup_module, only: clustermaxlevel, clusternmxsites, clusterOcc, nclusters, clustergraphmultipl
   use state_setup_module, only: nadsorb
   use random_deviates_module, only: uniform_filt_dev
   use lattice_setup_module, only: siteneighb1
@@ -341,6 +344,16 @@ subroutine realize_process(mproc)
       mprocsitemap(i) = proctypesites(mproc,i)
   enddo
 
+  ! Fill in propensity values
+  do MPNi = 1,nSAparams  
+   propvec(MPNi) = 0				   
+  end do
+
+  ! Fill in the propvec values
+  DO i = 1, nprocesses
+	propvec(proctypesites(i,0)) = propvec(proctypesites(i,0)) + procpropenst0(i)			! add the propensity of each reaction to the appropriate place in the vector
+  END DO
+  
   ! Update the value of W
   do par_ind = 1,nSAparams
     W(par_ind) = W(par_ind) + derivatives(par_ind,mproc) / procpropenst0(mproc) - sum(derivatives(par_ind,:)) * (curtime-prevtime)

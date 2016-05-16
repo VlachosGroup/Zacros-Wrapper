@@ -35,6 +35,7 @@ character(nnam0), allocatable :: clusternames(:)
 
 logical, allocatable :: clusternomirrorimgs(:)
 logical, allocatable :: clusterabslorientat(:)
+integer, allocatable :: clusterOcc(:)
 
 contains
 
@@ -231,6 +232,9 @@ allocate(specclusterparticip(0:nsurfspecs,clusternmxsites*nclusters,2))
 
 ! clustergraphmultipl(i1) gives the stoichiometric multiplicity of cluster i1
 allocate(clustergraphmultipl(nclusters))
+
+! clusterSC(i1) gives the occurrences of each cluster
+allocate(clusterOcc(nclusters))
 
 ! clusterlevels(i1,i2) gives the graph level of the pattern corresponding 
 !   to the cluster i1 if we start from the sites of molecule i2

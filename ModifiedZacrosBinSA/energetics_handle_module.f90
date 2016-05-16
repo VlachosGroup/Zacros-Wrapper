@@ -86,12 +86,12 @@ subroutine initialize_energetics()
 
 use simulation_setup_module, only: debug_report_globenerg
 use energetics_setup_module, only: clusterenrg, clusterlatticestate,           &
-                                   clusternsites, clusternmxsites, nclusters
+                                   clusternsites, clusternmxsites, nclusters, clusterOcc, clustergraphmultipl
 use simulation_setup_module, only: debug_check_globenerg
 use constants_module, only: iglbenergdbg
 use lattice_setup_module, only: nsites, maxcoord
 use state_setup_module, only: nadsorb
-use parser_module, only: dbl2str
+use parser_module, only: dbl2str, int2str
 
 implicit none
 
@@ -199,7 +199,7 @@ use energetics_setup_module, only: clusterangles, specclusterparticip,         &
                                    clusterenrg, clusterlatticestate,           &
                                    clusternanglessequenc, clusterneigh,        &
                                    clusternmxangles, clusternmxcoord,          &
-                                   clusternames
+                                   clusternames, clusterOcc
 use parser_module, only: int2str, dbl2str
 use constants_module, only: iglbenergdbg
 use graph_functions_module, only: find_dlevel_neighbors
@@ -328,6 +328,8 @@ clusters: do j = 1, nspecclusterparticip(kspec)
                                      / clustergraphmultipl(jcluster) ) )
         endif
 
+		clusterOcc(jcluster) = clusterOcc(jcluster) + 1
+		
     enddo patternloop
     
 enddo clusters ! loop over all clusters for species kspec
@@ -385,7 +387,7 @@ subroutine remove_energetics(energrem)
 
 use energetics_setup_module, only: clustergraphmultipl, clusterenrg,          &
                                    clusteradsorbpos, clusternsites,           &
-                                   clusterspecs
+                                   clusterspecs, clusterOcc
 use simulation_setup_module, only: debug_report_globenerg
 use constants_module, only: iglbenergdbg
 use lattice_handle_module, only: latticestate
@@ -449,7 +451,8 @@ do i = 1,energrem(0)
         write(iglbenergdbg,'(a)') 'Cluster ' // trim(int2str(iclustrem))       &
                                   // ' was removed.'
     endif
-    
+    clusterOcc(jcluster) = clusterOcc(jcluster) - 1
+	
     ! Relabel if necessary
     if (iclustrem < nlastcluster) then
         

@@ -44,6 +44,7 @@ real(8), allocatable :: omega(:)
 real(8), allocatable :: elemstep_avgtime(:)
 real(8), allocatable :: elemstepangles(:,:)
 real(8), allocatable :: elemsteporientationangles(:)
+real(8), allocatable :: propCountvec(:)
 
 logical, allocatable :: preexpisconst(:)
 logical, allocatable :: elemstepnomirrorimgs(:)
@@ -219,6 +220,8 @@ allocate(elemstepnames(nelemsteps))
 allocate(elemstep_noccur(0:nelemsteps))
 allocate(elemstep_avgtime(0:nelemsteps))
 
+allocate(propCountvec(1:nelemsteps))
+
 ! reverselemstep(i1) gives the reverse step of elementary step i1. If step i1 is
 ! irreversible reverselemstep(i1) == 0
 allocate(reverselemstep(nelemsteps))
@@ -307,6 +310,11 @@ do i = 0,nelemsteps
     elemstep_noccur(i) = 0_8
     elemstep_avgtime(i) = 0.d0
 enddo
+
+do i = 1,nelemsteps
+	propCountvec(i) = 0.d0
+enddo
+
 do i = 1,nelemsteps
     elemstepnames(i) = 'No_name'
     elemstepnsites(i) = 0
@@ -532,6 +540,14 @@ do i = 1,nelemsteps
     if (reverselemstep(i) == 0 .or. reverselemstep(i) > i) then ! forward step of a reversible reaction or irreversible step
         write(iwrite,'(1x,"A(Tini) = ",ES11.4E2,3x,"Ea = ",F5.2,3x)',advance='no')  preexpfac, acteng(i)
         ktemp = preexpfac*dexp(-acteng(i)/enrgconv/kboltz/temp)
+		
+		do j = 1,elemstepgases(i,0)
+            if (elemstepgases(i,2*j) < 0) then
+                kspec = elemstepgases(i,2*j-1)
+                ktemp = ktemp*gasmolfracs(j)
+            endif
+        enddo
+		
         write(iwrite,'(1x,"k(Tini) = ",ES11.4E2,2x,"Reaction:",1x)',advance='no')  ktemp
     
     else

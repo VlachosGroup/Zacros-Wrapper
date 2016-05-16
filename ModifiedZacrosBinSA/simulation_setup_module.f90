@@ -32,6 +32,7 @@ integer(8), allocatable :: gasspecsnums(:)
 real(8) temp, tramp, pres, maxtime, curtime, prevtime, etol1, etol2
 real(8) snaptime, dtsnap, procstattime, dtprocstat, specnumtime, dtspecnum
 
+real(8) dtPrior
 real(8), allocatable :: gasmolfracs(:)
 real(8), allocatable :: gasmolweights(:)
 real(8), allocatable :: gasenergies(:)

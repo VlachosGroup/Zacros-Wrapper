@@ -139,6 +139,26 @@ integer, parameter :: SAfnum = 207
 character(30), parameter :: Specfname = 'specnum_output.bin'
 integer, parameter :: Specfnum = 208
 
+! output file for reaction propensities
+character(30), parameter :: Propfname = 'Prop_output.bin'
+integer, parameter :: Propfnum = 209
+
+! Running counter of reaction propensity * dt
+character(30), parameter :: PropCountfname = 'PropCounter_output.bin'
+integer, parameter :: PropCountfnum = 210
+
+! cluster occupancy matrix
+character(30), parameter :: clusoccfname = 'clusterocc.bin'
+integer, parameter :: clusteroccwrite = 211
+
+! total energies
+character(30), parameter :: Efname = 'E.bin'
+integer, parameter :: Ewrite = 212
+
+! lattice states
+character(30), parameter :: Histfname = 'Hist.bin'
+integer, parameter :: Histwrite = 213
+
 ! process debug data output file
 character(30), parameter :: cprocdbgfname = 'process_debug.txt'
 integer, parameter :: iprocdbg = 301

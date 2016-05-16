@@ -129,7 +129,11 @@ call Cpu_Time(t1) ! function for calculating elapsed CPU time
 ! Open the output files for the sensitivity analysis data
 open(unit = SAfnum, status='unknown',file=trim(SAfname),form='unformatted',ACCESS='STREAM')
 open(unit = Specfnum, status='unknown',file=trim(Specfname),form='unformatted',ACCESS='STREAM')
-
+open(unit = clusteroccwrite, status='unknown',file=trim(clusoccfname),form='unformatted',ACCESS='STREAM')
+open(unit = Ewrite, status='unknown',file=trim(Efname),form='unformatted',ACCESS='STREAM')
+open(unit = Histwrite, status='unknown',file=trim(Histfname),form='unformatted',ACCESS='STREAM')
+open(unit = Propfnum, status='unknown',file=trim(Propfname),form='unformatted',ACCESS='STREAM')
+open(unit = PropCountfnum, status='unknown',file=trim(PropCountfname),form='unformatted',ACCESS='STREAM')
 
 do while (curtime < maxtime .and. curstep < maxsteps)
     
@@ -154,6 +158,7 @@ do while (curtime < maxtime .and. curstep < maxsteps)
     endif
     
     mproc = event_times_labels(1)
+	dtPrior = curtime - prevtime
     prevtime = curtime
     curtime = event_times_heap(1)
     if (curtime<prevtime) then

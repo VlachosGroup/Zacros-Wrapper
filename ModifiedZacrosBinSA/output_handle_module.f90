@@ -9,6 +9,7 @@ module output_handle_module
 use lattice_setup_module
 use simulation_setup_module
 use mechanism_setup_module
+use energetics_setup_module, only: nclusters, clusterOcc, clustergraphmultipl
 
 use kmc_simulation_handle_module
 use energetics_handle_module, only: globalenergy
@@ -100,6 +101,12 @@ else
             write(ihistory,'(a,I20,1x,I20,1x,ES30.16,1x,ES30.16,1x,ES30.16)') 'configuration ', snapshnum, curstep-1_8, snaptime, temp+tramp*snaptime, globalenergy
             do i = 1,nsites
                 write(ihistory,'(4(I10,1x))') i,(latticestate(i,j), j = 1,3)
+				
+				write(Histwrite) i
+				write(Histwrite) latticestate(i,1)
+				write(Histwrite) latticestate(i,2)
+				write(Histwrite) latticestate(i,3)
+				
             enddo
             write(ihistory,'('//int2str(ngasspecs)//'(I20,1x))') (gasspecsnums(j), j = 1,ngasspecs)
             snaptime = snaptime + dtsnap
@@ -242,6 +249,12 @@ if (specnum_on_event) then
 				! Sensitivity analysis output      
 				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
 				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+				
+				! Extra binary output
+				write(PropCountfnum) (propCountvec(i),i=1,nSAparams)
+				write(clusteroccwrite) (clusterOcc(i)/clustergraphmultipl(i),i=1,nclusters)
+				write(Ewrite) globalenergy	
+				write(Propfnum) (propvec(i),i=1,nSAparams)
         endif
         
     else
@@ -259,6 +272,12 @@ if (specnum_on_event) then
 			! Sensitivity analysis output      
 				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
 				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+		
+			! Extra binary output
+				write(PropCountfnum) (propCountvec(i),i=1,nSAparams)
+				write(clusteroccwrite) (clusterOcc(i)/clustergraphmultipl(i),i=1,nclusters)
+				write(Ewrite) globalenergy	
+				write(Propfnum) (propvec(i),i=1,nSAparams)
 		
         endif
         
@@ -282,6 +301,12 @@ else
 				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
 				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
 				  
+			! Extra binary output
+				write(PropCountfnum) (propCountvec(i),i=1,nSAparams)
+				write(clusteroccwrite) (clusterOcc(i)/clustergraphmultipl(i),i=1,nclusters)
+				write(Ewrite) globalenergy	
+				write(Propfnum) (propvec(i),i=1,nSAparams)
+				  
             specnumtime = specnumtime*dtspecnum
 
         enddo
@@ -302,6 +327,12 @@ else
 				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
 				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
 				  
+			! Extra binary output
+				write(PropCountfnum) (propCountvec(i),i=1,nSAparams)
+				write(clusteroccwrite) (clusterOcc(i)/clustergraphmultipl(i),i=1,nclusters)
+				write(Ewrite) globalenergy	
+				write(Propfnum) (propvec(i),i=1,nSAparams)
+				  
             specnumtime = specnumtime + dtspecnum
 
         enddo
@@ -309,6 +340,12 @@ else
     endif
 
 endif    
+
+do i = 1,nelemsteps
+	if (dtPrior > 0.d0) then
+		propCountvec(i) = propCountvec(i) + propvec(i) * dtPrior
+	endif
+end do
 
 end subroutine save_specnums
 
