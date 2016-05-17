@@ -100,6 +100,7 @@ class KMCUtilities:
             Cnd['Binary']['cluster']                = ''
             Cnd['Binary']['prop']                   = ''
             Cnd['Binary']['propCounter']            = ''
+            Cnd['Binary']['W_sen_anal']             = ''
             
             Cnd['ACF']                              = {}
             Cnd['ACF']['Spacing']                   = {}
