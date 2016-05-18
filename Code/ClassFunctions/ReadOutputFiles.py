@@ -110,8 +110,6 @@ class ReadOutputFiles:
                 self.ReadProp(Path,Cnd,0)
             if os.path.isfile(Path + 'PropCounter_output.bin'):
                 self.ReadProp(Path,Cnd,1)
-            if os.path.isfile(Path + 'SA_output.bin'):
-                self.ReadSA(Path,Cnd)
         return Cnd
   
     def CheckComplete(self,Path):
@@ -379,16 +377,27 @@ class ReadOutputFiles:
         del virtual_arr
         return Cnd
     
-    def ReadSA(self,Path,Cnd):
-        dt=np.dtype(np.float64)
-        FileName = 'SA_output.bin'
-        virtual_arr = np.memmap(Path + FileName, dt, "r")
-        nRxn = len(Cnd['Reactions']['Nu'])
-        nNum = virtual_arr.shape[0]
-        nNum = nNum - (nNum % nRxn)
-        virtual_arr = virtual_arr[:nNum]
-        Cnd['Binary']['W_sen_anal'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
-        Cnd['Binary']['W_sen_anal'] = np.array(Cnd['Binary']['W_sen_anal'][::Cnd['Specnum']['Spacing']])
-            
-        del virtual_arr
-        return Cnd
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
