@@ -100,7 +100,6 @@ class KMCUtilities:
             Cnd['Binary']['cluster']                = ''
             Cnd['Binary']['prop']                   = ''
             Cnd['Binary']['propCounter']            = ''
-            Cnd['Binary']['W_sen_anal']             = ''
             
             Cnd['ACF']                              = {}
             Cnd['ACF']['Spacing']                   = {}
@@ -114,7 +113,6 @@ class KMCUtilities:
         
     def BuildEmptyFolders(self):
         sysinfo = ut.GeneralUtilities().SystemInformation()
-        print sysinfo['Path']['LocalRunDir']
         if not os.path.isdir(sysinfo['Path']['LocalRunDir']):
             os.mkdir(sysinfo['Path']['LocalRunDir'])
             os.mkdir(sysinfo['Path']['LocalRunDir'] + 'Build/')
@@ -276,14 +274,14 @@ class KMCUtilities:
                         TauList[j][0].append(self.FindTau(SpecnumArray[StartInd:,i],1,CoarseGrain = True))
                     MaxTauList[j][0] = np.max(TauList[j][0])
                     
-                    if Cnd['Binary']['cluster'] != '':
+                    if len(Cnd['Binary']['cluster'])>0:
                         if j==0:
                             ClusterArray = np.array(Cnd['Binary']['cluster'])
                         for i in range(ClusterArray.shape[1]):
                             TauList[j][1].append(self.FindTau(ClusterArray[StartInd:,i],1,CoarseGrain = True))
                         MaxTauList[j][1] = np.max(TauList[j][1])
                      
-                    if Cnd['Binary']['prop'] != '':
+                    if len(Cnd['Binary']['prop'])>0:
                         if j==0:
                             PropArray = np.array(Cnd['Binary']['prop'])
                         for i in range(PropArray.shape[1]):
