@@ -17,29 +17,33 @@ class RunZacros:
     def __init__(self):
         pass
     
-    def Run(self):
+    def Run(self,path=''):
         sysinfo = ut.GeneralUtilities().SystemInformation()
-        RunPath = sysinfo['Path']['LocalRunDir']
-        
-        try:
-            Files = ut.GeneralUtilities().GetFiles(RunPath + 'Run/')
-            #Purge Directory
-            for i in Files:
-                os.remove(RunPath + 'Run/' + i)
+        if path == '':
+            RunPath = sysinfo['Path']['LocalRunDir']
             
-            Files = ut.GeneralUtilities().GetFiles(RunPath + 'Build/')
-            for i in Files:
-                shutil.move(RunPath + 'Build/' + i,RunPath + 'Run/' + i)  
-        except:
-            raise NameError('Failed to initialize run directory.\n' + 
-                            'Check processes to see if zacros subprocess is still running')
-        
+            try:
+                Files = ut.GeneralUtilities().GetFiles(RunPath + 'Run/')
+                #Purge Directory
+                for i in Files:
+                    os.remove(RunPath + 'Run/' + i)
+                
+                Files = ut.GeneralUtilities().GetFiles(RunPath + 'Build/')
+                for i in Files:
+                    shutil.move(RunPath + 'Build/' + i,RunPath + 'Run/' + i)  
+            except:
+                raise NameError('Failed to initialize run directory.\n' + 
+                                'Check processes to see if zacros subprocess is still running')
+            RunPath2 = RunPath + 'Run/'
+        else:
+            RunPath2 = path
+
         exePath = sysinfo['Path']['ZacrosExecuteable']
         
             
         if sysinfo['OS'] == 'Windows':
             with tempfile.NamedTemporaryFile() as iofile:
-                p = subprocess.Popen(["cmd","/c","cd",RunPath + 'Run/','&',
+                p = subprocess.Popen(["cmd","/c","cd",RunPath2,'&',
                                       exePath + 'zacros_64_BinOutputExtended.exe'], 
                                      shell=False, stdout=iofile, stderr=iofile)    
             while True:
@@ -52,7 +56,7 @@ class RunZacros:
                 raise NameError('Zacros exe did not run\nReturn code: ' + str(p.returncode) + 
                 '\nEnsure all dependencies are installed and restart Spyder.')
         elif sysinfo['OS'] == 'Linux':
-            p = subprocess.Popen("cd " + RunPath + "Run/; " + exePath + "zacros.x"
+            p = subprocess.Popen("cd " + RunPath2 + "; " + exePath + "zacros.x"
                     , stdout=subprocess.PIPE,shell=True).wait()
                             
                                               
