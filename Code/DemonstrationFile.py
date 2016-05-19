@@ -25,12 +25,12 @@ import matplotlib.pyplot as plt
 This section of the code reads the files from a given path and writes the info
 to the Demo.p file for later use
 """
-##Path is given as an example
-#Path = 'C:/Users/robieta/Downloads/ZacrosWrapper-master/ZacrosWrapper-master/Data/AtoB/'
-#Cnd = KMCut().InitializeCnd()
-#Cnd = RI().ReadAll(Path,Cnd)
-#Cnd = RO().ReadAll(Path,Cnd)
-#KMCut().pickleCnd(Cnd,'AtoB')
+#Path is given as an example
+Path = ut().SystemInformation()['Path']['Data'] + 'AtoB/'
+Cnd = KMCut().InitializeCnd()
+Cnd = RI().ReadAll(Path,Cnd)
+Cnd = RO().ReadAll(Path,Cnd)
+KMCut().pickleCnd(Cnd,'AtoB')
 
 
 
