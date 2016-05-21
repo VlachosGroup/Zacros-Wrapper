@@ -64,6 +64,7 @@ class ReadOutputFiles:
         else:
             SystemInfo = ut.GeneralUtilities().SystemInformation()
             PickleDir = SystemInfo['Path']['Data'] + 'PickledJobOutput/'
+            print PickleDir
             CndList = pickle.load(open( PickleDir + Path + '.p', "rb" ))
         return CndList
             
@@ -110,7 +111,7 @@ class ReadOutputFiles:
                 self.ReadProp(Path,Cnd,0)
             if os.path.isfile(Path + 'PropCounter_output.bin'):
                 self.ReadProp(Path,Cnd,1)
-			if os.path.isfile(Path + 'SA_output.bin'):
+            if os.path.isfile(Path + 'SA_output.bin'):
                 self.ReadSA(Path,Cnd)
         return Cnd
   
@@ -379,7 +380,7 @@ class ReadOutputFiles:
         del virtual_arr
         return Cnd
     
-	def ReadSA(self,Path,Cnd):
+    def ReadSA(self,Path,Cnd):
         dt=np.dtype(np.float64)
         FileName = 'SA_output.bin'
         virtual_arr = np.memmap(Path + FileName, dt, "r")
