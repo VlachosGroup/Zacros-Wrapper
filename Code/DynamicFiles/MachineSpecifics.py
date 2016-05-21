@@ -30,13 +30,13 @@ class MachineSpecifics:
     def PathInfo(self,SystemInfo):
         SystemInfo['Path'] = {}
         SystemInfo['Path']['pwd'] = os.getcwd() + '/'
-        SystemInfo['Path']['LocalRunDir'] = SystemInfo['Path']['pwd'] + 'LocalRun/'
+        SystemInfo['Path']['LocalRunDir'] = 'C:\Users\mpnun\Dropbox\ZacrosWrapperData\LocalRun/'
         SystemInfo['Path']['DynamicFileDir'] = SystemInfo['Path']['pwd'] + 'DynamicFiles/'
-        SystemInfo['Path']['Data'] = SystemInfo['Path']['pwd'] + '../Data/'
+        SystemInfo['Path']['Data'] = 'C:\Users\mpnun\Dropbox\ZacrosWrapperData/'
         
         if SystemInfo['OS'] == 'Linux':
             if SystemInfo['ComputerName'] == 'farber':
-                SystemInfo['Path']['ZacrosExecuteable'] = '/home/1486/Zacros/ZacrosBinaryOutput_1.02/build-jeff/'
+                SystemInfo['Path']['ZacrosExecuteable'] = '../Executables/'
             else:
                 print 'cluster not implemented'
         else:
