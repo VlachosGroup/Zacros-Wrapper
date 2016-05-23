@@ -64,7 +64,6 @@ class ReadOutputFiles:
         else:
             SystemInfo = ut.GeneralUtilities().SystemInformation()
             PickleDir = SystemInfo['Path']['Data'] + 'PickledJobOutput/'
-            print PickleDir
             CndList = pickle.load(open( PickleDir + Path + '.p', "rb" ))
         return CndList
             

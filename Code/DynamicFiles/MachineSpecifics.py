@@ -20,8 +20,8 @@ class MachineSpecifics:
         MaxLen = np.int(MaxLen)
         return MaxLen
         
-    def MinACFCoarseGrain(self):
-        # This function sets the minimum number of points for coarse grained
+    def MinACFSubsample(self):
+        # This function sets the minimum number of points for subsampled
         # ACF analysis
         nMin = 1e3
         nMin = int(nMin)
@@ -30,9 +30,9 @@ class MachineSpecifics:
     def PathInfo(self,SystemInfo):
         SystemInfo['Path'] = {}
         SystemInfo['Path']['pwd'] = os.getcwd() + '/'
-        SystemInfo['Path']['LocalRunDir'] = 'C:\Users\mpnun\Dropbox\ZacrosWrapperData\LocalRun/'
+        SystemInfo['Path']['LocalRunDir'] = 'C:\Users\Marcel\Dropbox\ZacrosWrapperData\LocalRun/'
         SystemInfo['Path']['DynamicFileDir'] = SystemInfo['Path']['pwd'] + 'DynamicFiles/'
-        SystemInfo['Path']['Data'] = 'C:\Users\mpnun\Dropbox\ZacrosWrapperData/'
+        SystemInfo['Path']['Data'] = 'C:\Users\Marcel\Dropbox\ZacrosWrapperData/'
         
         if SystemInfo['OS'] == 'Linux':
             if SystemInfo['ComputerName'] == 'farber':

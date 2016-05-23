@@ -38,10 +38,10 @@ class ProcessOutput:
                 SimToWall[j,i] = SimTime/WallTime
     
         ScaleDown = (10 ** np.floor(np.log10(np.max(np.max(np.abs(
-                        np.abs(Mean)+CI),axis=2),axis=1)))).tolist()  
+                        np.abs(Mean)+CI),axis=2),axis=1)))).tolist() 
         ScaleDown.append(10 ** np.floor(np.log10(np.max(np.max(np.abs(
                         np.abs(PropMean)+PropCI))))))
-#        ScaleDown = [1 for i in range(len(ScaleDown))]
+        ScaleDown = [1 for i in range(len(ScaleDown))]
         
         plt.close('all')
         nSubplot = len(Stoich) + [1 if PropStoich != '' else 0][0]
@@ -70,6 +70,7 @@ class ProcessOutput:
             plt.ylabel(YStr)
             plt.xlabel('Run time / Simulation time')
             plt.title(TitleStr)
+            plt.gca().set_ylim(bottom=0)
             if not np.array_equal([0,0],ForceYAxis):
                 plt.ylim(np.array(ForceYAxis)/ScaleDown[k])
     
@@ -79,9 +80,11 @@ class ProcessOutput:
             
         RateList = []
         PropRateList = []
+        WList = np.zeros((len(CndIn),len(CndIn[1]['Reactions']['Names'])))      # number of runs x number of reactions
+        ind = 0
         for Cnd in CndIn:        
             #Check if run is out of burn in period
-            PostBurnIn = len(['' for i in Cnd['ACF']['TauSep']['PostBurnIn'] if i != -1])>0
+            PostBurnIn = len(['' for i in Cnd['ACF']['TauSep']['PostBurnIn'] if i != -1])>0    
 
             if PostBurnIn:
                 nRecord = len(Cnd['Specnum']['spec'])
@@ -114,10 +117,32 @@ class ProcessOutput:
                                 (PostBurnInThreeTauSep * (Cnd['Specnum']['t'][1] - Cnd['Specnum']['t'][0])))
                         for i in PropRateAppend:
                             PropRateList.append(i)
+                            
+                # Store sesitiivty analysis data
+                WList[ind,:] = np.array(Cnd['Binary']['W_sen_anal'][-1,:])
+                ind += 1
+                
+            else:
+                print 'Warning: Run did not exceed the burn-in period. It was not processed.'
+            
+        # Compute averages and confidence intervals
         Mean = np.mean(np.array(RateList),axis=0)/nSites
         PropMean = np.mean(PropRateList)/nSites
         CI = ut.GeneralUtilities().CI(np.array(RateList),axis=0)/nSites
         PropCI = ut.GeneralUtilities().CI(np.array(PropRateList),axis=0)/nSites
-        Output = {'Mean':Mean,'CI':CI,'PropMean':PropMean,'PropCI':PropCI}
+        
+        print CndIn[1]['Reactions']['Names']
+        print CndIn[1]['Reactions']['Nu']
+        print CndIn[1]['Reactions']['UniqNu']       
+        
+        print CndIn[1]['StiffnessRecondition']['Mode']
+        print CndIn[1]['StiffnessRecondition']['APSdF']
+        
+        # Compute terminal sensitivity values
+#        print WList         # need to group these by reaction class and exclude the reactions which have been scaled down
+        SenCoeff = []
+        SenCoeffCI = []
+        
+        Output = {'Mean':Mean,'CI':CI,'PropMean':PropMean,'PropCI':PropCI,'SenCoeff':SenCoeff,'SenCoeff':SenCoeffCI}
 
         return Output

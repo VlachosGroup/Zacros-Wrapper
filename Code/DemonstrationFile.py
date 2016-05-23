@@ -25,7 +25,6 @@ import matplotlib.pyplot as plt
 This section of the code reads the files from a given path and writes the info
 to the Demo.p file for later use
 """
-#Path is given as an example
 #Path = ut().SystemInformation()['Path']['Data'] + 'AtoB/'
 #Cnd = KMCut().InitializeCnd()
 #Cnd = RI().ReadAll(Path,Cnd)
@@ -49,18 +48,20 @@ with the Demo.p file
 This section of the code perfoms a stiffness reduction on the Demo system for 
 the given reduction modes and saves the result in a .p file
 """
-TypeName = 'AtoB'
 #ModeList = ['linear_1_2','linear_2_4','tanh_1_2','tanh_2_4']
-#
-#WallTimeList = [90]*len(ModeList)
-#for i in range(len(ModeList)):
-#    Mode = ModeList[i]
-#    WallTime = WallTimeList[i]
-#
-#    if not os.path.isfile(ut().SystemInformation()['Path']['Data'] + 
-#        'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'):
-#        RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode 
-#                            ,RunParam = {'Event':1e3,'WallTime':WallTime,'Mode':Mode})
+
+TypeName = 'AtoB'
+ModeList = ['linear_1_2','linear_1.5_3','linear_2_4']
+
+WallTimeList = [90]*len(ModeList)
+for i in range(len(ModeList)):
+    Mode = ModeList[i]
+    WallTime = WallTimeList[i]
+
+    if not os.path.isfile(ut().SystemInformation()['Path']['Data'] + 
+        'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'):
+        RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode 
+                            ,RunParam = {'Event':1e3,'WallTime':WallTime,'Mode':Mode})
 
 
 
@@ -114,16 +115,17 @@ This line reads the output of a parsed job which can then be processed.
 This section takes the various stiffness reduction runs and plots them to show
 the effect of stiffness reduction on observed rate.
 """
-nSites = 50
-RxnStoich = [-1,1]
-PropensityStoich = [-1,1,0,0]
-LineColors = ['k','b']
 #yLim = [0,0.0015]
 #RegFun = ['linear_','tanh_']
 #Modes = ['1_2','2_4']
-RegFun = ['linear_']
-Modes = ['1_2','1.5_3','2_4']
-PO().PlotReductionComparison(TypeName + '_',Modes,RegFun,nSites,RxnStoich,PropensityStoich,LineColors)#,yLim)
+
+#nSites = 1
+#RxnStoich = [-1,1]
+#PropensityStoich = [-1,1,0,0]
+#LineColors = ['k','b']
+#RegFun = ['linear_']
+#Modes = ['1_2','1.5_3','2_4']
+#PO().PlotReductionComparison(TypeName + '_',Modes,RegFun,nSites,RxnStoich,PropensityStoich,LineColors)
                             
                             
                             

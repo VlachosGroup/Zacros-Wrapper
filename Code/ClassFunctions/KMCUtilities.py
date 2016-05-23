@@ -218,19 +218,19 @@ class KMCUtilities:
         for i in Files:
             shutil.copy(RunDir + 'Run/' + i,NewDir + i)
          
-    def FindTau(self,InVec,tSpace=1,CoarseGrain = False):
-        Tau = self.RegressTau(InVec,tSpace,CoarseGrain)
+    def FindTau(self,InVec,tSpace=1,Subsample = False):
+        Tau = self.RegressTau(InVec,tSpace,Subsample)
         if InVec.shape[0] > Tau * 2 and Tau > 2:
-            Tau = self.RegressTau(InVec[:int(Tau*2)],tSpace,CoarseGrain)
+            Tau = self.RegressTau(InVec[:int(Tau*2)],tSpace,Subsample)
         return Tau
         
-    def RegressTau(self,InVec,tSpace=1,CoarseGrain = False):
+    def RegressTau(self,InVec,tSpace=1,Subsample = False):
         if np.min(InVec) == np.max(InVec): #Catch invariant species
             Tau = 0.
         else:
             Space = 1
-            if CoarseGrain:
-                nMin = MS().MinACFCoarseGrain()
+            if Subsample:
+                nMin = MS().MinACFSubsample()
                 if len(InVec) > nMin:
                     Space = len(InVec)/nMin     # Use integer aritmetic
             AutoCorr = self.acf(InVec,Space=Space)
@@ -272,21 +272,21 @@ class KMCUtilities:
                             break
                         
                     for i in range(SpecnumArray.shape[1]):
-                        TauList[j][0].append(self.FindTau(SpecnumArray[StartInd:,i],1,CoarseGrain = True))
+                        TauList[j][0].append(self.FindTau(SpecnumArray[StartInd:,i],1,Subsample = True))
                     MaxTauList[j][0] = np.max(TauList[j][0])
                     
                     if len(Cnd['Binary']['cluster'])>0:
                         if j==0:
                             ClusterArray = np.array(Cnd['Binary']['cluster'])
                         for i in range(ClusterArray.shape[1]):
-                            TauList[j][1].append(self.FindTau(ClusterArray[StartInd:,i],1,CoarseGrain = True))
+                            TauList[j][1].append(self.FindTau(ClusterArray[StartInd:,i],1,Subsample = True))
                         MaxTauList[j][1] = np.max(TauList[j][1])
                      
                     if len(Cnd['Binary']['prop'])>0:
                         if j==0:
                             PropArray = np.array(Cnd['Binary']['prop'])
                         for i in range(PropArray.shape[1]):
-                            TauList[j][2].append(self.FindTau(PropArray[StartInd:,i],1,CoarseGrain = True))
+                            TauList[j][2].append(self.FindTau(PropArray[StartInd:,i],1,Subsample = True))
                         MaxTauList[j][2] = np.max(TauList[j][2])
                                        
                     if j < (nCalc-1):

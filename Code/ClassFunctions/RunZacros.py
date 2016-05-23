@@ -18,6 +18,9 @@ class RunZacros:
         pass
     
     def Run(self,path=''):
+        
+        print '--- Running Zacros job ---'        
+        
         sysinfo = ut.GeneralUtilities().SystemInformation()
         if path == '':
             RunPath = sysinfo['Path']['LocalRunDir']
