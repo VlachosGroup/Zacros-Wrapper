@@ -79,7 +79,7 @@ class ReduceStiffness:
             SFList.append(self.CalculateScaleDown(CndList[i+1],RunParam['Mode'])['SF'])
             print SFList[-1]
             Converged,SFOut = self.TestConvergence(SFList)
-            print 'Pass ' + str(i)
+            print 'Rescaling iteration ' + str(i+1)
             if Converged:
                 PickleName = 'Recondition'
                 if Name != '':

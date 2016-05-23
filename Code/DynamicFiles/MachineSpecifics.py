@@ -30,7 +30,7 @@ class MachineSpecifics:
     def PathInfo(self,SystemInfo):
         SystemInfo['Path'] = {}
         SystemInfo['Path']['pwd'] = os.getcwd() + '/'
-        SystemInfo['Path']['LocalRunDir'] = 'C:\Users\Marcel\Dropbox\ZacrosWrapperData\LocalRun/'
+        SystemInfo['Path']['LocalRunDir'] = 'C:\Users\Marcel\Desktop\LocalRun/'
         SystemInfo['Path']['DynamicFileDir'] = SystemInfo['Path']['pwd'] + 'DynamicFiles/'
         SystemInfo['Path']['Data'] = 'C:\Users\Marcel\Dropbox\ZacrosWrapperData/'
         

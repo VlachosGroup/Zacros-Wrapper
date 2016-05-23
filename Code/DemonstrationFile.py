@@ -20,7 +20,6 @@ import subprocess
 import pickle
 import matplotlib.pyplot as plt
 
-
 """
 This section of the code reads the files from a given path and writes the info
 to the Demo.p file for later use
@@ -38,10 +37,8 @@ to the Demo.p file for later use
 This section of the code retreives and displays the python structure associated
 with the Demo.p file
 """
-#Cnd = KMCut().unpickleCnd('Demo')
+#Cnd = KMCut().unpickleCnd('AtoB')
 #ut().PrintDict(Cnd)
-
-
 
 
 """
@@ -51,18 +48,22 @@ the given reduction modes and saves the result in a .p file
 #ModeList = ['linear_1_2','linear_2_4','tanh_1_2','tanh_2_4']
 
 TypeName = 'AtoB'
-ModeList = ['linear_1_2','linear_1.5_3','linear_2_4']
-
-WallTimeList = [90]*len(ModeList)
-for i in range(len(ModeList)):
-    Mode = ModeList[i]
-    WallTime = WallTimeList[i]
-
-    if not os.path.isfile(ut().SystemInformation()['Path']['Data'] + 
-        'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'):
-        RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode 
-                            ,RunParam = {'Event':1e3,'WallTime':WallTime,'Mode':Mode})
-
+#ModeList = ['linear_1_2','linear_1.5_3','linear_2_4']
+#
+#WallTimeList = [90]*len(ModeList)
+#for i in range(len(ModeList)):
+#    Mode = ModeList[i]
+#    WallTime = WallTimeList[i]
+#
+#    if not os.path.isfile(ut().SystemInformation()['Path']['Data'] + 
+#        'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'):
+#        print Mode        
+#        print 'Starting reconditioning'        
+#        RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode 
+#                            ,RunParam = {'Event':1e3,'WallTime':WallTime,'Mode':Mode})
+#    else:
+#        print Mode        
+#        print 'Reconditioning has already been done.'
 
 
 
@@ -102,7 +103,7 @@ submits them
 This line goes through the job build folder, detects which jobs have completed
 but have not been parsed, parses them, and saves the result
 """
-#RO().ReadAllJobs()
+RO().ReadAllJobs()
 
 
 """
@@ -119,13 +120,13 @@ the effect of stiffness reduction on observed rate.
 #RegFun = ['linear_','tanh_']
 #Modes = ['1_2','2_4']
 
-#nSites = 1
-#RxnStoich = [-1,1]
-#PropensityStoich = [-1,1,0,0]
-#LineColors = ['k','b']
-#RegFun = ['linear_']
-#Modes = ['1_2','1.5_3','2_4']
-#PO().PlotReductionComparison(TypeName + '_',Modes,RegFun,nSites,RxnStoich,PropensityStoich,LineColors)
+nSites = 1
+RxnStoich = [-1,1]
+PropensityStoich = [-1,1,0,0]
+LineColors = ['k','b']
+RegFun = ['linear_']
+Modes = ['1_2','1.5_3']
+PO().PlotReductionComparison(TypeName + '_',Modes,RegFun,nSites,RxnStoich,PropensityStoich,LineColors)
                             
                             
                             
