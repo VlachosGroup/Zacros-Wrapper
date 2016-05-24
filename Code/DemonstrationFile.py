@@ -103,7 +103,7 @@ submits them
 This line goes through the job build folder, detects which jobs have completed
 but have not been parsed, parses them, and saves the result
 """
-RO().ReadAllJobs()
+#RO().ReadAllJobs()
 
 
 """
