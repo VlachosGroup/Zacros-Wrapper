@@ -24,6 +24,9 @@ class ProcessOutput:
             for j,M in enumerate(Mode):
                 CndList = RO.ReadOutputFiles().ReadJobOutput(ID + M2 + M)
                 Output = self.CalcRate(CndList,nSites,Stoich,PropStoich)
+                
+                print Output['SenCoeff']
+                
                 for k,S in enumerate(Stoich):
                     Mean[k,j,i] = Output['Mean'][k]
                     CI[k,j,i] = Output['CI'][k]
@@ -78,9 +81,11 @@ class ProcessOutput:
         if type(CndIn) == dict:
             CndIn = [CndIn]
             
-        RateList = []
-        PropRateList = []
-        WList = np.zeros((len(CndIn),len(CndIn[1]['Reactions']['Names'])))      # number of runs x number of reactions
+        RateList = []               # Rates computed from changes in species numbers
+        PropRateList = []           # Rates computed from integral propensities, for every tau interval
+        n_rxns = len(CndIn[1]['Reactions']['Names'])
+        WList = np.zeros((len(CndIn),n_rxns))      # number of runs x number of reactions
+        rate_obj = np.zeros((len(CndIn)))      # number of runs x number of reactions
         ind = 0
         for Cnd in CndIn:        
             #Check if run is out of burn in period
@@ -110,8 +115,10 @@ class ProcessOutput:
                         for i,PS in enumerate(Cnd['Reactions']['Nu']):
                             if np.array_equal(PS,PropStoich):
                                 PropRateTemp += Cnd['Binary']['propCounter'][:,i]
+                                rate_obj[ind] += Cnd['Binary']['prop'][-1,i]            # add the propensity at the final time to the list
                             elif np.array_equal(PS,-np.array(PropStoich)):
                                 PropRateTemp -= Cnd['Binary']['propCounter'][:,i]
+                                rate_obj[ind] -= Cnd['Binary']['prop'][-1,i]            # add the propensity at the final time to the list
                         PropRateTemp2 = PropRateTemp[BurnInTotal:][::PostBurnInThreeTauSep]
                         PropRateAppend =  ((PropRateTemp2[1:] - PropRateTemp2[:-1])/
                                 (PostBurnInThreeTauSep * (Cnd['Specnum']['t'][1] - Cnd['Specnum']['t'][0])))
@@ -129,20 +136,28 @@ class ProcessOutput:
         Mean = np.mean(np.array(RateList),axis=0)/nSites
         PropMean = np.mean(PropRateList)/nSites
         CI = ut.GeneralUtilities().CI(np.array(RateList),axis=0)/nSites
-        PropCI = ut.GeneralUtilities().CI(np.array(PropRateList),axis=0)/nSites
+        PropCI = ut.GeneralUtilities().CI(np.array(PropRateList),axis=0)/nSites        
         
-        print CndIn[1]['Reactions']['Names']
-        print CndIn[1]['Reactions']['Nu']
-        print CndIn[1]['Reactions']['UniqNu']       
+        # Compute sensitivity coefficients
+        n_rxns_2 = n_rxns / 2
+        SenCoeff = np.zeros(n_rxns_2)
+        SenCoeffCI = np.zeros(n_rxns_2)
         
-        print CndIn[1]['StiffnessRecondition']['Mode']
-        print CndIn[1]['StiffnessRecondition']['APSdF']
+        for i in range(0,n_rxns_2):
+            if CndIn[1]['StiffnessRecondition']['APSdF'][i] > 1:                # Reaction is fast and unimportant
+                SenCoeff[i] = 0
+                SenCoeffCI[i] = 0
+            else:                                                               # Reaction is slow and may be important
+                W = WList[:,2*i] + WList[:,2*i+1]                               # need to group these by reaction class
+                cov_mat = np.cov(W,rate_obj)
+                SenCoeff[i] = cov_mat[0,1] / np.mean(rate_obj)                  # normalize by the rate
+                
+                # need to add another term (1?) if the rate is the same reaction as the rate constant being perturbed                
+                
+                SenCoeffCI[i] = 0   # need to implement statistical bootstrapping to estimate the confidence interval
+                
+
         
-        # Compute terminal sensitivity values
-#        print WList         # need to group these by reaction class and exclude the reactions which have been scaled down
-        SenCoeff = []
-        SenCoeffCI = []
-        
-        Output = {'Mean':Mean,'CI':CI,'PropMean':PropMean,'PropCI':PropCI,'SenCoeff':SenCoeff,'SenCoeff':SenCoeffCI}
+        Output = {'Mean':Mean,'CI':CI,'PropMean':PropMean,'PropCI':PropCI,'SenCoeff':SenCoeff,'SenCoeffCI':SenCoeffCI}
 
         return Output
