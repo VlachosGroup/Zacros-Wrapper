@@ -47,7 +47,7 @@ class RunZacros:
         if sysinfo['OS'] == 'Windows':
             with tempfile.NamedTemporaryFile() as iofile:     
                 
-                print '--- Zacros run starting ---'   
+#                print '--- Zacros run starting ---'   
                 p = subprocess.Popen(["cmd","/c","cd",RunPath2,'&',
                                       exePath + 'zacros_64_BinOutputExtended.exe'], 
                                      shell=False, stdout=iofile, stderr=iofile)    
@@ -63,8 +63,8 @@ class RunZacros:
             if p.returncode != 0:
                 raise NameError('Zacros exe did not run\nReturn code: ' + str(p.returncode) + 
                 '\nEnsure all dependencies are installed and restart Spyder.')
-            else :
-                print '--- Zacros run completed ---'                
+#            else :
+#                print '--- Zacros run completed ---'                
                 
                 
         elif sysinfo['OS'] == 'Linux':

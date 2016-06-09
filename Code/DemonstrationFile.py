@@ -24,11 +24,11 @@ import matplotlib.pyplot as plt
 This section of the code reads the files from a given path and writes the info
 to the Demo.p file for later use
 """
-#Path = ut().SystemInformation()['Path']['Data'] + 'AtoB/'
+#Path = ut().SystemInformation()['Path']['Data'] + 'NH3/'
 #Cnd = KMCut().InitializeCnd()
 #Cnd = RI().ReadAll(Path,Cnd)
 #Cnd = RO().ReadAll(Path,Cnd)
-#KMCut().pickleCnd(Cnd,'AtoB')
+#KMCut().pickleCnd(Cnd,'NH3')
 
 
 
@@ -45,25 +45,18 @@ with the Demo.p file
 This section of the code perfoms a stiffness reduction on the Demo system for 
 the given reduction modes and saves the result in a .p file
 """
-#ModeList = ['linear_1_2','linear_2_4','tanh_1_2','tanh_2_4']
+#ModeList = ['linear_1_2','linear_1.5_3']
 
 TypeName = 'AtoB'
-#ModeList = ['linear_1_2','linear_1.5_3','linear_2_4']
-#
-#WallTimeList = [90]*len(ModeList)
-#for i in range(len(ModeList)):
-#    Mode = ModeList[i]
-#    WallTime = WallTimeList[i]
-#
-#    if not os.path.isfile(ut().SystemInformation()['Path']['Data'] + 
-#        'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'):
-#        print Mode        
-#        print 'Starting reconditioning'        
-#        RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode 
-#                            ,RunParam = {'Event':1e3,'WallTime':WallTime,'Mode':Mode})
-#    else:
-#        print Mode        
-#        print 'Reconditioning has already been done.'
+Mode = 'linear_1_2'
+MaxEvents = 10000
+
+# See if the reconditioning has already been done
+if os.path.isfile(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'): 
+    os.remove(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p')
+    
+print 'Starting reconditioning'        
+RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode,RunParam = {'Event':1e3,'MaxEvents':MaxEvents,'Mode':Mode})
 
 
 
@@ -120,13 +113,13 @@ the effect of stiffness reduction on observed rate.
 #RegFun = ['linear_','tanh_']
 #Modes = ['1_2','2_4']
 
-nSites = 1
-RxnStoich = [-1,1]
-PropensityStoich = [-1,1,0,0]
-LineColors = ['k','b']
-RegFun = ['linear_']
-Modes = ['1_2','1.5_3']
-PO().PlotReductionComparison(TypeName + '_',Modes,RegFun,nSites,RxnStoich,PropensityStoich,LineColors)
+#nSites = 1
+#RxnStoich = [-1,1]
+#PropensityStoich = [-1,1,0,0]
+#LineColors = ['k','b']
+#RegFun = ['linear_']
+#Modes = ['1_2','1.5_3']
+#PO().PlotReductionComparison(TypeName + '_',Modes,RegFun,nSites,RxnStoich,PropensityStoich,LineColors)
                             
                             
                             
