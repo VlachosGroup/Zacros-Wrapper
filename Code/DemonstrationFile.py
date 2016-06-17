@@ -45,18 +45,17 @@ with the Demo.p file
 This section of the code perfoms a stiffness reduction on the Demo system for 
 the given reduction modes and saves the result in a .p file
 """
-#ModeList = ['linear_1_2','linear_1.5_3']
 
-TypeName = 'AtoB'
-Mode = 'linear_1_2'
-MaxEvents = 10000
-
-# See if the reconditioning has already been done
-if os.path.isfile(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'): 
-    os.remove(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p')
-    
-print 'Starting reconditioning'        
-RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode,RunParam = {'Event':1e3,'MaxEvents':MaxEvents,'Mode':Mode})
+#TypeName = 'AtoB'
+#Mode = 'linear_1_2'
+#MaxEvents = 10000
+#
+## See if the reconditioning has already been done
+#if os.path.isfile(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'): 
+#    os.remove(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p')
+#    
+#print 'Starting reconditioning'        
+#RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode,RunParam = {'Event':1e3,'MaxEvents':MaxEvents,'Mode':Mode})
 
 
 
@@ -64,30 +63,35 @@ RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mo
 This section builds jobs on Farber based on the prior stiffness reduction and
 submits them
 """
-#nRareSample = 500 # Estimate, can be off depending on the system
-#nRuns = 5
+#nRuns = 1000
 #
-#for i in range(len(ModeList)):
-#    Mode = ModeList[i]
-#    OutList = KMCut().unpickleCnd('Recondition_' + TypeName+'_' + Mode)
-#    SDDict = KMCut().InitializeScaleDown()
-#    SDDict['SF'] = OutList['SF']
-#    SDDict['Mode'] = OutList['Cnd']['StiffnessRecondition']['Mode']
-#    SDDict['SDF'] = RS().CalculateScaleDown(BaseCnd='',Mode=SDDict['Mode'],SFIn=SDDict['SF'])['SDF']
-#    Cnd = OutList['Cnd']
+#Mode = 'linear_1_2'
+#OutList = KMCut().unpickleCnd('Recondition_' + TypeName+'_' + Mode)
+#Cnd = OutList['Cnd']
+#
+#SDDict = KMCut().InitializeScaleDown()
+#SDDict['SF'] = OutList['SF']
+#SDDict['Mode'] = OutList['Cnd']['StiffnessRecondition']['Mode']
+#SDDict['SDF'] = OutList['SFList'][-1]
+#
+#
+## Set conditions
+#Cnd['Conditions']['MaxStep'] = 'inf'
+#Cnd['Conditions']['SimTime']['Max'] = 0.5
+#Cnd['Conditions']['WallTime']['Max'] = 'inf'
+#Cnd['Report']['specnum'] = ['time',0.005]
+#Cnd['StateInput']['Type'] = ''
 #    
-#    ETsS = np.log10(np.sum(SDDict['SF']/SDDict['SDF'])) # Estimated Timescale separation (for run time estimates)
-#    Cnd = KMCut().SetMaxEventNumber(Cnd,ETsS,nRareSample)
-#    JobPath = ut().SystemInformation()['Path']['Data'] + 'JobBuilds/' + TypeName+'_' + Mode + '/'
-#    if not os.path.isdir(JobPath):
-#        BI().BuildJob(Cnd,SDDict=SDDict,nRuns=nRuns,Name = TypeName+'_' + Mode)    
-#        if ut().SystemInformation()['OS'] == 'Linux':        
-#            p = subprocess.Popen("cd " + JobPath + "; " + "chmod 744 ./SubmitKMC.sh;./SubmitKMC.sh"
-#                            , stdout=subprocess.PIPE,shell=True)
-#            sys.stdout.flush()
-#        else:
-#            for j in ut().GetDir(JobPath):
-#                RunZacros().Run(JobPath + j + '/')
+#JobPath = ut().SystemInformation()['Path']['Data'] + 'JobBuilds/' + TypeName +'_' + Mode + '/'
+#if not os.path.isdir(JobPath):
+#    BI().BuildJob(Cnd,SDDict=SDDict,nRuns=nRuns,Name = TypeName+'_' + Mode)    
+#    if ut().SystemInformation()['OS'] == 'Linux':        
+#        p = subprocess.Popen("cd " + JobPath + "; " + "chmod 744 ./SubmitKMC.sh;./SubmitKMC.sh"
+#                        , stdout=subprocess.PIPE,shell=True)
+#        sys.stdout.flush()
+#    else:
+#        for j in ut().GetDir(JobPath):
+#            RunZacros().Run(JobPath + j + '/')
 
 
 
@@ -100,31 +104,14 @@ but have not been parsed, parses them, and saves the result
 
 
 """
-This line reads the output of a parsed job which can then be processed.
-"""
-#CndList = RO().ReadJobOutput('Demo_linear_1_2')
-
-
-"""
 This section takes the various stiffness reduction runs and plots them to show
 the effect of stiffness reduction on observed rate.
 """
-#yLim = [0,0.0015]
-#RegFun = ['linear_','tanh_']
-#Modes = ['1_2','2_4']
+nSites = 1
+PropensityStoich = [0,-1,0,1]
+CndList = RO().ReadJobOutput('AtoB_linear_1_2')   
+output = PO().CalcRateTransient(CndList, nSites, PropensityStoich)
 
-#nSites = 1
-#RxnStoich = [-1,1]
-#PropensityStoich = [-1,1,0,0]
-#LineColors = ['k','b']
-#RegFun = ['linear_']
-#Modes = ['1_2','1.5_3']
-#PO().PlotReductionComparison(TypeName + '_',Modes,RegFun,nSites,RxnStoich,PropensityStoich,LineColors)
-                            
-                            
-                            
-                            
-                            
-                            
-                            
-                            
+print output['Mean']
+print output['CI']
+print output['SenCoeff']

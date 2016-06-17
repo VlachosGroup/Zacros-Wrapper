@@ -174,6 +174,7 @@ class KMCUtilities:
     def unpickleCnd(self,Name):
         sysinfo = ut.GeneralUtilities().SystemInformation()
         Path = sysinfo['Path']['Data'] + 'PickledRunStructures/'
+        print Path + Name + '.p'
         if os.path.isfile(Path + Name + '.p'):
             Cnd = pickle.load(open( Path + Name + '.p', "rb" ))
         else:

@@ -32,7 +32,7 @@ class MachineSpecifics:
         SystemInfo['Path']['pwd'] = os.getcwd() + '/'
         SystemInfo['Path']['LocalRunDir'] = 'C:\Users\Marcel\Desktop\LocalRun/'
         SystemInfo['Path']['DynamicFileDir'] = SystemInfo['Path']['pwd'] + 'DynamicFiles/'
-        SystemInfo['Path']['Data'] = 'C:\Users\Marcel\Dropbox\ZacrosWrapperData/'
+        SystemInfo['Path']['Data'] = 'C:\Users\Marcel\Desktop\BigJobs/'
         
         if SystemInfo['OS'] == 'Linux':
             if SystemInfo['ComputerName'] == 'farber':

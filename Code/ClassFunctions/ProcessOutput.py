@@ -25,6 +25,7 @@ class ProcessOutput:
                 CndList = RO.ReadOutputFiles().ReadJobOutput(ID + M2 + M)
                 Output = self.CalcRate(CndList,nSites,Stoich,PropStoich)
                 
+                print '\nSensitivity Coefficients'
                 print Output['SenCoeff']
                 
                 for k,S in enumerate(Stoich):
@@ -77,19 +78,19 @@ class ProcessOutput:
             if not np.array_equal([0,0],ForceYAxis):
                 plt.ylim(np.array(ForceYAxis)/ScaleDown[k])
     
-    def CalcRate(self,CndIn,nSites,Stoich,PropStoich=''):
+    def CalcRate(self,CndIn,nSites,Stoich,PropStoich=''):       # change the name of this function to reflect the fact that it only works for steady-state
         if type(CndIn) == dict:
             CndIn = [CndIn]
             
         RateList = []               # Rates computed from changes in species numbers
         PropRateList = []           # Rates computed from integral propensities, for every tau interval
-        n_rxns = len(CndIn[1]['Reactions']['Names'])
+        n_rxns = len(CndIn[0]['Reactions']['Names'])
         WList = np.zeros((len(CndIn),n_rxns))      # number of runs x number of reactions
         rate_obj = np.zeros((len(CndIn)))      # number of runs x number of reactions
         ind = 0
         for Cnd in CndIn:        
-            #Check if run is out of burn in period
-            PostBurnIn = len(['' for i in Cnd['ACF']['TauSep']['PostBurnIn'] if i != -1])>0    
+            
+            PostBurnIn = len(['' for i in Cnd['ACF']['TauSep']['PostBurnIn'] if i != -1])>0     #Check if run is out of burn in period
 
             if PostBurnIn:
                 nRecord = len(Cnd['Specnum']['spec'])
@@ -125,7 +126,7 @@ class ProcessOutput:
                         for i in PropRateAppend:
                             PropRateList.append(i)
                             
-                # Store sesitiivty analysis data
+                # Store sesitivity analysis data
                 WList[ind,:] = np.array(Cnd['Binary']['W_sen_anal'][-1,:])
                 ind += 1
                 
@@ -143,6 +144,9 @@ class ProcessOutput:
         SenCoeff = np.zeros(n_rxns_2)
         SenCoeffCI = np.zeros(n_rxns_2)
         
+        print '\nTotal scaledown factor'
+        print CndIn[0]['StiffnessRecondition']['APSdF']        
+        
         for i in range(0,n_rxns_2):
             if CndIn[1]['StiffnessRecondition']['APSdF'][i] > 1:                # Reaction is fast and unimportant
                 SenCoeff[i] = 0
@@ -157,7 +161,60 @@ class ProcessOutput:
                 SenCoeffCI[i] = 0   # need to implement statistical bootstrapping to estimate the confidence interval
                 
 
-        
         Output = {'Mean':Mean,'CI':CI,'PropMean':PropMean,'PropCI':PropCI,'SenCoeff':SenCoeff,'SenCoeffCI':SenCoeffCI}
+
+        return Output
+        
+        
+    def CalcRateTransient(self,CndIn,nSites=1,PropStoich=''):
+        if type(CndIn) == dict:
+            CndIn = [CndIn]
+            
+        n_rxns = len(CndIn[0]['Reactions']['Names'])
+        WList = np.zeros((len(CndIn),n_rxns))      # number of runs x number of reactions
+        rate_obj = np.zeros((len(CndIn)))      # number of runs x number of reactions
+        ind = 0
+        for Cnd in CndIn:        
+                
+            if PropStoich != '':               
+                
+                for i,PS in enumerate(Cnd['Reactions']['Nu']):
+                    if np.array_equal(PS,PropStoich):
+                        rate_obj[ind] += Cnd['Binary']['prop'][-1,i]            # add the propensity at the final time to the list
+                    elif np.array_equal(PS,-np.array(PropStoich)):
+                        rate_obj[ind] -= Cnd['Binary']['prop'][-1,i]            # add the propensity at the final time to the list
+            else:
+                print 'Reaction rate stoichiometry not specified'
+                        
+            # Store sesitivity analysis data
+            WList[ind,:] = np.array(Cnd['Binary']['W_sen_anal'][-1,:])
+            ind += 1
+
+            
+        # Compute averages and confidence intervals
+        rate_obj = rate_obj / nSites            # normalize the observable by the number of active sites
+        Mean = np.mean(rate_obj)
+        CI = ut.GeneralUtilities().CI(np.array(rate_obj),axis=0)          
+        
+        # Compute sensitivity coefficients
+        n_rxns_2 = n_rxns / 2
+        SenCoeff = np.zeros(n_rxns_2)
+        SenCoeffCI = np.zeros(n_rxns_2)
+        
+        for i in range(0,n_rxns_2):
+            if CndIn[0]['StiffnessRecondition']['APSdF'][i] > 1:                # Reaction is fast and unimportant
+                SenCoeff[i] = 0
+                SenCoeffCI[i] = 0
+            else:                                                               # Reaction is slow and may be important
+                W = WList[:,2*i] + WList[:,2*i+1]                               # need to group these by reaction class
+                cov_mat = np.cov(W,rate_obj)
+                SenCoeff[i] = cov_mat[0,1] / Mean                  # normalize by the rate
+                
+                # need to add another term (1?) if the rate is the same reaction as the rate constant being perturbed                
+                
+                SenCoeffCI[i] = 0   # need to implement statistical bootstrapping to estimate the confidence interval
+                
+
+        Output = {'Mean':Mean,'CI':CI,'SenCoeff':SenCoeff,'SenCoeffCI':SenCoeffCI}
 
         return Output

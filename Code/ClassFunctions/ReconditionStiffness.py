@@ -20,10 +20,10 @@ class ReduceStiffness:
         pass
     
     def DefaultRunParam(self):
-        RunParam = {'Event':1e4,'WallTime':60,'Mode':'tanh_2_4'}
+        RunParam = {'Event':1e3,'MaxEvents':1e5,'Mode':'tanh_2_4'}
         return RunParam
         
-    def ReconditionCnd(self,CndIn,RunParam = '',nSim = 50,Name=''):
+    def ReconditionCnd(self,CndIn,RunParam = '',nSim = 15,Name=''):
         RunBool = KMCut.KMCUtilities().IsRun(CndIn)
 
         RunPath = ut.GeneralUtilities().SystemInformation()['Path']['LocalRunDir'] + 'Run/'
@@ -38,7 +38,7 @@ class ReduceStiffness:
                         
         ReportCheck2 = (CndIn['Report']['specnum'][1] == CndIn['Report']['procstat'][1] and
                         CndIn['Report']['specnum'][1] == CndIn['Report']['hist'][1]
-                        and CndIn['Report']['specnum'][1] == RunParam['WallTime'])
+                        and CndIn['Report']['specnum'][1] == RunParam['MaxEvents'])
                         
         ReportCheck3 = not ut.GeneralUtilities().isblank(CndIn['History']['Final'])
                       
@@ -53,7 +53,9 @@ class ReduceStiffness:
             RunBool = False               
         
         if not RunBool:
-            CndIn['Conditions']['WallTime']['Max'] = RunParam['WallTime']
+            CndIn['Conditions']['WallTime']['Max'] = 600        # 10 minute walltime    
+            CndIn['Conditions']['MaxStep'] = RunParam['MaxEvents']
+            CndIn['Conditions']['SimTime']['Max'] = 'inf'
             BI.BuildInputFiles().BuildFiles(CndIn)
             RunZacros.RunZacros().Run()
             CndIn = RO.ReadOutputFiles().ReadAll(RunPath,CndIn)
@@ -65,74 +67,43 @@ class ReduceStiffness:
         KMCut.KMCUtilities().CleanIntermediateRuns()
         Converged = False
         for i in range(0,nSim):
+            print '\n------------- Rescaling iteration ' + str(i+1) + ' -------------'
             SDDict = self.CalculateScaleDown(CndList[i],RunParam['Mode'])
             Cnd = copy.copy(CndClean)
             Cnd['StateInput']['Type'] = 'history'
             Cnd['StateInput']['Struct'] = CndList[i]['History']['Final']
-            Cnd['Conditions']['Seed'] = ''            
+            Cnd['Conditions']['Seed'] = ''
             BI.BuildInputFiles().BuildFiles(Cnd,SDDict = SDDict)
             RunZacros.RunZacros().Run()
             KMCut.KMCUtilities().CacheIntermediate(i+1)
             Cnd = RI.ReadInputFiles().ReadAll(RunPath)
             Cnd = RO.ReadOutputFiles().ReadAll(RunPath,Cnd)
             CndList.append(copy.copy(Cnd))
-            SFList.append(self.CalculateScaleDown(CndList[i+1],RunParam['Mode'])['SF'])
-            print SFList[-1]
-            Converged,SFOut = self.TestConvergence(SFList)
-            print 'Rescaling iteration ' + str(i+1)
+            
+            # Show reaction frequencies
+            print 'Number of reaction firings'
+            print Cnd['Procstat']['events'][-1]
+            
+            SFList.append(self.CalculateScaleDown(CndList[i+1],RunParam['Mode'])['SDF'])
+            
+            # Test convergence
+            if i > 0:
+                scaledowns = np.abs(np.log10(SFList[-1] / SFList[-2]))       
+                if np.max(scaledowns) < 0.1:
+                    Converged = True   
+            
+            # Exit the scaledown loop
             if Converged:
                 PickleName = 'Recondition'
                 if Name != '':
                     PickleName += '_' + str(Name)
-                KMCut.KMCUtilities().pickleCnd({'Cnd':Cnd,'SF':SFOut,'SFList':SFList},PickleName)
+                KMCut.KMCUtilities().pickleCnd({'Cnd':Cnd,'SF':'','SFList':SFList},PickleName)       # SFList needs to be renamed 
+                
                 break
-
-    def TestConvergence(self,SFList):
-        Converged = False
-        MinRuns = 5
-        MinPostSample = 5
-        SFOut = ''
-
-        nRuns = len(SFList)
-        if nRuns >= MinRuns:
-            SF = np.array(copy.copy(SFList))
-            nRxn = SF.shape[1]
-            TauMax = 0.
-            for i in range(nRxn):
-                Tau = KMCut.KMCUtilities().FindTau(np.log10(SF[:,i]))
-                if not np.isnan(Tau):
-                    if Tau > TauMax:
-                        TauMax = copy.copy(Tau)
-            StartInd = int(np.ceil(TauMax*6))
-    
-            if nRuns > StartInd:
-                TauMax2 = 0.
-                for i in range(nRxn):
-                    Tau = KMCut.KMCUtilities().FindTau(np.log10(SF[StartInd:,i]))
-                    if not np.isnan(Tau):
-                        if Tau > TauMax2:
-                            TauMax2 = copy.copy(Tau)
-                MinPostSample = np.max([np.ceil(TauMax2*3),MinPostSample])
-                Converged = (nRuns - StartInd) > MinPostSample
-                if Converged:
-                    LSF = np.log10(np.array([[np.max([i,1]) for i in SF[j,:].tolist()] for j in range(StartInd,nRuns)]))
-                    MLSF = np.mean(LSF,axis=0).tolist()
-                    LSFCI = ut.GeneralUtilities().CI(LSF,axis=0).tolist()
-                    MaxCIOverMean = 0
-                    for i in range(len(MLSF)):
-                        if MLSF[i] > 1:
-                            MaxCIOverMean = np.max([MaxCIOverMean,LSFCI[i]/MLSF[i]])
-    
-                    if MaxCIOverMean > 1:
-                        Converged = False
-                        
-        if Converged:
-            SFOut = (10 ** np.array(MLSF)).tolist()
-        return Converged,SFOut
-
         
+        if not Converged:
+            print 'Stiffness reconditioning did not converge within the maximum number or iterations.'
 
-    
     def CalculateScaleDown(self,BaseCnd,Mode,SFIn = ''):
         TransformFunction = Mode.split('_')[0]
         Cutoff = float(Mode.split('_')[1])
@@ -202,6 +173,11 @@ class ReduceStiffness:
                                     - BaseCnd['Binary']['propCounter'][-1,1::2])/
                                     (BaseCnd['Binary']['propCounter'][-1,0::2] 
                                     + BaseCnd['Binary']['propCounter'][-1,1::2]+1./nEvents/APSdF))
+                                    
+            PartialEquilib = BaseCnd['Binary']['propCounter'][-1,0::2] / (BaseCnd['Binary']['propCounter'][-1,0::2] + BaseCnd['Binary']['propCounter'][-1,1::2])
+            
+            print '\nPartialEquilib'
+            print PartialEquilib
     
             IntRxnSpeed = np.max(GroupProp_ScaleupCorrected,axis=1)
             PropSlowScale = np.max(IntRxnSpeed)     
@@ -249,6 +225,9 @@ class ReduceStiffness:
         for i in range(0,len(SDF_out)):
             if SDF_out[i] < 1.0 or np.isnan(SDF_out[i]):
                 SDF_out[i] = 1.0   
+        
+        print '\nScaledown factor'
+        print SDF_out            
             
         SDDict = {'SDF':SDF_out,'SF':StiffnessFactor,'Mode':Mode}
         return SDDict
