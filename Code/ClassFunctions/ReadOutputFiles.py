@@ -391,28 +391,4 @@ class ReadOutputFiles:
         Cnd['Binary']['W_sen_anal'] = np.array(Cnd['Binary']['W_sen_anal'][::Cnd['Specnum']['Spacing']])
             
         del virtual_arr
-        return Cnd 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+        return Cnd

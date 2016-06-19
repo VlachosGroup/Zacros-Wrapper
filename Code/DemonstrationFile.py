@@ -109,9 +109,17 @@ the effect of stiffness reduction on observed rate.
 """
 nSites = 1
 PropensityStoich = [0,-1,0,1]
-CndList = RO().ReadJobOutput('AtoB_linear_1_2')   
+CndList = RO().ReadJobOutput('AtoB_linear_1_2')
 output = PO().CalcRateTransient(CndList, nSites, PropensityStoich)
 
+print '\nReaction rate'
 print output['Mean']
+
+print '\nError'
 print output['CI']
+
+print '\nUnique Reaction stoichiometries'
+print CndList[0]['Reactions']['UniqNu'][0::2]
+
+print '\nNormalized sensitivity coefficients'
 print output['SenCoeff']
