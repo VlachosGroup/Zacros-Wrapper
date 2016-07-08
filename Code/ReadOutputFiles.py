@@ -17,7 +17,7 @@ import shutil
 import sys
 
 sys.path.append("..")
-from DynamicFiles.MachineSpecifics import MachineSpecifics as MS
+from MachineSpecifics import MachineSpecifics as MS
 
 class ReadOutputFiles:
     def __init__(self):

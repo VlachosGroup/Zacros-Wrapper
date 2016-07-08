@@ -30,9 +30,9 @@ class MachineSpecifics:
     def PathInfo(self,SystemInfo):
         SystemInfo['Path'] = {}
         SystemInfo['Path']['pwd'] = os.getcwd() + '/'
-        SystemInfo['Path']['LocalRunDir'] = 'C:\Users\Marcel\Desktop\LocalRun/'
-        SystemInfo['Path']['DynamicFileDir'] = SystemInfo['Path']['pwd'] + 'DynamicFiles/'
-        SystemInfo['Path']['Data'] = 'C:\Users\Marcel\Desktop\BigJobs/'
+        SystemInfo['Path']['DynamicFileDir'] = SystemInfo['Path']['pwd']            # keep in the same directory as all the other codes
+        SystemInfo['Path']['LocalRunDir'] = 'C:\Users\mpnun\OneDrive\Documents\Local_research_files\ZacrosWrapper\LocalRun/'    # where to run the stiffness reductions     
+        SystemInfo['Path']['Data'] = 'C:\Users\mpnun\OneDrive\Documents\Local_research_files\ZacrosWrapper\BigJobs/'                 # where to do the long runs
         
         if SystemInfo['OS'] == 'Linux':
             if SystemInfo['ComputerName'] == 'farber':

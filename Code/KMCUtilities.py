@@ -16,7 +16,7 @@ import shutil
 import sys
 
 sys.path.append("..")
-from DynamicFiles.MachineSpecifics import MachineSpecifics as MS
+from MachineSpecifics import MachineSpecifics as MS
 
 
 class KMCUtilities:
