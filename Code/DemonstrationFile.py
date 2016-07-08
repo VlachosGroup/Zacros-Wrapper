@@ -5,14 +5,14 @@ Created on Wed Mar 02 14:00:23 2016
 @author: robieta
 """
 
-from ClassFunctions.BuildInputFiles import BuildInputFiles as BI
-from ClassFunctions.KMCUtilities import KMCUtilities as KMCut
-from ClassFunctions.ProcessOutput import ProcessOutput as PO
-from ClassFunctions.ReadInputFiles import ReadInputFiles as RI
-from ClassFunctions.ReadOutputFiles import ReadOutputFiles as RO
-from ClassFunctions.ReconditionStiffness import ReduceStiffness as RS
-from ClassFunctions.RunZacros import RunZacros
-from ClassFunctions.GeneralUtilities import GeneralUtilities as ut
+from BuildInputFiles import BuildInputFiles as BI
+from KMCUtilities import KMCUtilities as KMCut
+from ProcessOutput import ProcessOutput as PO
+from ReadInputFiles import ReadInputFiles as RI
+from ReadOutputFiles import ReadOutputFiles as RO
+from ReconditionStiffness import ReduceStiffness as RS
+from RunZacros import RunZacros
+from GeneralUtilities import GeneralUtilities as ut
 import sys
 import os
 import numpy as np
@@ -37,7 +37,7 @@ to the Demo.p file for later use
 This section of the code retreives and displays the python structure associated
 with the Demo.p file
 """
-#Cnd = KMCut().unpickleCnd('AtoB')
+#Cnd = KMCut().unpickleCnd('NH3')
 #ut().PrintDict(Cnd)
 
 
@@ -46,9 +46,9 @@ This section of the code perfoms a stiffness reduction on the Demo system for
 the given reduction modes and saves the result in a .p file
 """
 
-#TypeName = 'AtoB'
+#TypeName = 'NH3'
 #Mode = 'linear_1_2'
-#MaxEvents = 10000
+#MaxEvents = 100000
 #
 ## See if the reconditioning has already been done
 #if os.path.isfile(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'): 
