@@ -94,10 +94,7 @@ class ReduceStiffness:
             
             # Exit the scaledown loop
             if Converged:
-                PickleName = 'Recondition'
-                if Name != '':
-                    PickleName += '_' + str(Name)
-                KMCut.KMCUtilities().pickleCnd({'Cnd':Cnd,'SF':'','SFList':SFList},PickleName)       # SFList needs to be renamed 
+                KMCut.KMCUtilities().pickleCnd({'Cnd':Cnd,'SF':'','SFList':SFList},Name)       # SFList needs to be renamed 
                 
                 break
         

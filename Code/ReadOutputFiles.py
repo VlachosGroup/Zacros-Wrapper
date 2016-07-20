@@ -23,6 +23,7 @@ class ReadOutputFiles:
     def __init__(self):
         pass
 
+    # Reads all jobs in the JobBuilds folder
     def ReadAllJobs(self):
         SystemInfo = ut.GeneralUtilities().SystemInformation()
         BuildDir = SystemInfo['Path']['Data'] + 'JobBuilds/'
@@ -44,7 +45,7 @@ class ReadOutputFiles:
                 if CopyCndList:
                     shutil.copy(CurrentDir + 'CndList.p',PickleDir + i + '.p')
         
-    
+    # Reads a specified job in the JobBuilds folder
     def ReadJobOutput(self,Path):
         if os.path.isdir(Path):
             DirList = ut.GeneralUtilities().GetDir(Path)
@@ -63,7 +64,7 @@ class ReadOutputFiles:
                 pickle.dump( CndList, open( Path + 'CndList.p', "wb" ) )
         else:
             SystemInfo = ut.GeneralUtilities().SystemInformation()
-            PickleDir = SystemInfo['Path']['Data'] + 'PickledJobOutput/'
+            PickleDir = SystemInfo['Path']['Data'] + 'Pickles/'
             CndList = pickle.load(open( PickleDir + Path + '.p', "rb" ))
         return CndList
             

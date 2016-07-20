@@ -20,53 +20,33 @@ import subprocess
 import pickle
 import matplotlib.pyplot as plt
 
+
+SystemName = 'AtoB'
+Mode = 'linear_1_2'
+JobPath = ut().SystemInformation()['Path']['Data'] + 'JobBuilds/' + SystemName + '/'
+
+
 """
-This section of the code reads the files from a given path and writes the info
-to the Demo.p file for later use
+Read the files from a given path and writes the info to the Demo.p file for later use
 """
-#Path = ut().SystemInformation()['Path']['Data'] + 'NH3/'
+#Path = ut().SystemInformation()['Path']['Data'] + SystemName + '/'
 #Cnd = KMCut().InitializeCnd()
 #Cnd = RI().ReadAll(Path,Cnd)
 #Cnd = RO().ReadAll(Path,Cnd)
-#KMCut().pickleCnd(Cnd,'NH3')
-
-
-
-
-"""
-This section of the code retreives and displays the python structure associated
-with the Demo.p file
-"""
-#Cnd = KMCut().unpickleCnd('NH3')
-#ut().PrintDict(Cnd)
-
-
-"""
-This section of the code perfoms a stiffness reduction on the Demo system for 
-the given reduction modes and saves the result in a .p file
-"""
-
-#TypeName = 'NH3'
-#Mode = 'linear_1_2'
-#MaxEvents = 100000
+#KMCut().pickleCnd(Cnd, SystemName)
 #
-## See if the reconditioning has already been done
-#if os.path.isfile(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p'): 
-#    os.remove(ut().SystemInformation()['Path']['Data'] + 'PickledRunStructures/' + 'Recondition_' + TypeName +'_' + Mode + '.p')
-#    
+#Cnd = KMCut().unpickleCnd(SystemName)       # retreive and displays the python structure associated with the Demo.p file     
+#ut().PrintDict(Cnd)                         # print out information for the user to see
+#
 #print 'Starting reconditioning'        
-#RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(TypeName),Name=TypeName+'_' + Mode,RunParam = {'Event':1e3,'MaxEvents':MaxEvents,'Mode':Mode})
-
-
-
-"""
-This section builds jobs on Farber based on the prior stiffness reduction and
-submits them
-"""
-#nRuns = 1000
+#RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(SystemName), Name = SystemName + '_unstiff',RunParam = {'Event':1e3,'MaxEvents': 100000,'Mode':Mode})
 #
-#Mode = 'linear_1_2'
-#OutList = KMCut().unpickleCnd('Recondition_' + TypeName+'_' + Mode)
+#
+#"""
+#Build jobs based on the prior stiffness reduction
+#"""
+
+#OutList = KMCut().unpickleCnd(SystemName + '_unstiff')
 #Cnd = OutList['Cnd']
 #
 #SDDict = KMCut().InitializeScaleDown()
@@ -74,52 +54,46 @@ submits them
 #SDDict['Mode'] = OutList['Cnd']['StiffnessRecondition']['Mode']
 #SDDict['SDF'] = OutList['SFList'][-1]
 #
-#
 ## Set conditions
+#nRuns = 1000
+#n_time_points = 100;                        # number of time sampled points to take
 #Cnd['Conditions']['MaxStep'] = 'inf'
-#Cnd['Conditions']['SimTime']['Max'] = 0.5
 #Cnd['Conditions']['WallTime']['Max'] = 'inf'
-#Cnd['Report']['specnum'] = ['time',0.005]
+#Cnd['Conditions']['SimTime']['Max'] = 0.5       # Need to choose this based off of the stiffness reduction
+#Cnd['Report']['specnum'] = ['time', Cnd['Conditions']['SimTime']['Max'] / n_time_points]
 #Cnd['StateInput']['Type'] = ''
 #    
-#JobPath = ut().SystemInformation()['Path']['Data'] + 'JobBuilds/' + TypeName +'_' + Mode + '/'
-#if not os.path.isdir(JobPath):
-#    BI().BuildJob(Cnd,SDDict=SDDict,nRuns=nRuns,Name = TypeName+'_' + Mode)    
-#    if ut().SystemInformation()['OS'] == 'Linux':        
-#        p = subprocess.Popen("cd " + JobPath + "; " + "chmod 744 ./SubmitKMC.sh;./SubmitKMC.sh"
-#                        , stdout=subprocess.PIPE,shell=True)
-#        sys.stdout.flush()
-#    else:
-#        for j in ut().GetDir(JobPath):
-#            RunZacros().Run(JobPath + j + '/')
-
-
-
+#BI().BuildJob(Cnd,SDDict=SDDict,nRuns=nRuns,Name = SystemName)
+#
+## Run all jobs (Windows only), alternatively transfer to Squidward and use job array
+#for j in ut().GetDir(JobPath):
+#    RunZacros().Run(JobPath + j + '/')
 
 """
-This line goes through the job build folder, detects which jobs have completed
-but have not been parsed, parses them, and saves the result
+Read KMC outputs
 """
-#RO().ReadAllJobs()
-
+#CndList = RO().ReadJobOutput(JobPath)                    # Use this if CndList does not exist yet
 
 """
-This section takes the various stiffness reduction runs and plots them to show
+Take the various stiffness reduction runs and plots them to show
 the effect of stiffness reduction on observed rate.
 """
-nSites = 1
-PropensityStoich = [0,-1,0,1]
-CndList = RO().ReadJobOutput('AtoB_linear_1_2')
-output = PO().CalcRateTransient(CndList, nSites, PropensityStoich)
 
-print '\nReaction rate'
-print output['Mean']
-
-print '\nError'
-print output['CI']
-
-print '\nUnique Reaction stoichiometries'
-print CndList[0]['Reactions']['UniqNu'][0::2]
-
-print '\nNormalized sensitivity coefficients'
-print output['SenCoeff']
+#nSites = 1
+#PropensityStoich = [0,-1,0,1]
+#
+#CndList = pickle.load(open( JobPath + 'CndList.p', "rb" ))
+#ut().PrintDict(CndList[0])
+#output = PO().CalcRateTransient(CndList, nSites, PropensityStoich)
+#
+#print '\nReaction rate'
+#print output['Mean']
+#
+#print '\nError'
+#print output['CI']
+#
+#print '\nUnique Reaction stoichiometries'
+#print CndList[0]['Reactions']['UniqNu'][0::2]
+#
+#print '\nNormalized sensitivity coefficients'
+#print output['SenCoeff']
