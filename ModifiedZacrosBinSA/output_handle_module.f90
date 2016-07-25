@@ -298,7 +298,7 @@ else
                   (gasspecsnums(i),i=1,ngasspecs)
 				  
 			! Sensitivity analysis output      
-				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
+				write(SAfnum) (W(i) - sum(derivatives(i,:)) * (specnumtime - prevtime),i=1,nSAparams)				! Record W 
 				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
 				  
 			! Extra binary output
@@ -324,7 +324,7 @@ else
                   (gasspecsnums(i),i=1,ngasspecs)
 				  
 			! Sensitivity analysis output      
-				write(SAfnum) (W(i),i=1,nSAparams)				! Record W 
+				write(SAfnum) (W(i) - sum(derivatives(i,:)) * (specnumtime - prevtime),i=1,nSAparams)				! Record W 
 				write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
 				  
 			! Extra binary output
