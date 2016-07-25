@@ -21,7 +21,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-SystemName = 'AtoB'
+SystemName = 'WGS'
 Mode = 'linear_1_2'
 JobPath = ut().SystemInformation()['Path']['Data'] + 'JobBuilds/' + SystemName + '/'
 
@@ -37,11 +37,11 @@ Read the files from a given path and writes the info to the Demo.p file for late
 #
 #Cnd = KMCut().unpickleCnd(SystemName)       # retreive and displays the python structure associated with the Demo.p file     
 #ut().PrintDict(Cnd)                         # print out information for the user to see
-#
+
 #print 'Starting reconditioning'        
 #RS().ReconditionCnd(CndIn = KMCut().unpickleCnd(SystemName), Name = SystemName + '_unstiff',RunParam = {'Event':1e3,'MaxEvents': 100000,'Mode':Mode})
-#
-#
+
+
 #"""
 #Build jobs based on the prior stiffness reduction
 #"""
@@ -79,21 +79,22 @@ Take the various stiffness reduction runs and plots them to show
 the effect of stiffness reduction on observed rate.
 """
 
-#nSites = 1
-#PropensityStoich = [0,-1,0,1]
-#
-#CndList = pickle.load(open( JobPath + 'CndList.p', "rb" ))
-#ut().PrintDict(CndList[0])
-#output = PO().CalcRateTransient(CndList, nSites, PropensityStoich)
-#
-#print '\nReaction rate'
-#print output['Mean']
-#
-#print '\nError'
-#print output['CI']
-#
-#print '\nUnique Reaction stoichiometries'
-#print CndList[0]['Reactions']['UniqNu'][0::2]
-#
-#print '\nNormalized sensitivity coefficients'
-#print output['SenCoeff']
+nSites = 1
+#PropensityStoich = [0,-1,0,1]          # A-> B
+PropensityStoich = [0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 1, 0]        # WGS
+
+CndList = pickle.load(open( JobPath + 'CndList.p', "rb" ))
+ut().PrintDict(CndList[0])
+output = PO().CalcRateTransient(CndList, nSites, PropensityStoich)
+
+print '\nReaction rate'
+print output['Mean']
+
+print '\nError'
+print output['CI']
+
+print '\nUnique Reaction stoichiometries'
+print CndList[0]['Reactions']['UniqNu'][0::2]
+
+print '\nNormalized sensitivity coefficients'
+print output['SenCoeff']

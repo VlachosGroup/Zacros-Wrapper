@@ -205,14 +205,19 @@ class ProcessOutput:
         SenCoeffCI = np.zeros(n_rxns)
         
         for i in range(0,n_rxns):
-            if CndIn[0]['StiffnessRecondition']['APSdF'][int(np.floor(i/2))] > 1:       # Reaction is fast and unimportant 
-                SenCoeffraw[i] = 0
-                SenCoeffCI[i] = 0
-            else:                                           # Reaction is slow and may be important
-                W = WList[:,i]                              # need to group these by reaction class
-                cov_mat = np.cov(W,rate_obj)
-                SenCoeffraw[i] = cov_mat[0,1] / Mean                   # normalize by the rate
-                SenCoeffCI[i] = 0                                   # need to implement statistical bootstrapping to estimate the confidence interval
+#            if CndIn[0]['StiffnessRecondition']['APSdF'][int(np.floor(i/2))] > 1:       # Reaction is fast and unimportant 
+#                SenCoeffraw[i] = 0
+#                SenCoeffCI[i] = 0
+#            else:                                           # Reaction is slow and may be important
+#                W = WList[:,i]                              # need to group these by reaction class
+#                cov_mat = np.cov(W,rate_obj)
+#                SenCoeffraw[i] = cov_mat[0,1] / Mean                   # normalize by the rate
+#                SenCoeffCI[i] = 0                                   # need to implement statistical bootstrapping to estimate the confidence interval
+        
+            W = WList[:,i]                              # need to group these by reaction class
+            cov_mat = np.cov(W,rate_obj)
+            SenCoeffraw[i] = cov_mat[0,1] / Mean                   # normalize by the rate
+            SenCoeffCI[i] = 0                                   # need to implement statistical bootstrapping to estimate the confidence interval        
         
         SenCoeffraw = SenCoeffraw + rate_fracs    # Add extra term which accounts for changes in the rate constant changing the propensity value      
         
