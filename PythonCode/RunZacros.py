@@ -49,7 +49,7 @@ class RunZacros:
                 
                 print '\n--- Zacros run starting ---'   
                 p = subprocess.Popen(["cmd","/c","cd",RunPath2,'&',
-                                      exePath + 'zacros_64_BinOutputExtended.exe'], 
+                                      exePath + 'zacros.exe'], 
                                      shell=False, stdout=iofile, stderr=iofile)    
                                      
                                               

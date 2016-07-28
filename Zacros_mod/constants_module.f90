@@ -159,6 +159,10 @@ integer, parameter :: Ewrite = 212
 character(30), parameter :: Histfname = 'Hist.bin'
 integer, parameter :: Histwrite = 213
 
+! process statistics
+character(30), parameter :: procstatfname = 'procstat.bin'
+integer, parameter :: procstatfnum = 214
+
 ! process debug data output file
 character(30), parameter :: cprocdbgfname = 'process_debug.txt'
 integer, parameter :: iprocdbg = 301
