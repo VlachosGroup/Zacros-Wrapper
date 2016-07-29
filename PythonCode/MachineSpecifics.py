@@ -36,10 +36,10 @@ class MachineSpecifics:
         
         if SystemInfo['OS'] == 'Linux':
             if SystemInfo['ComputerName'] == 'farber':
-                SystemInfo['Path']['ZacrosExecuteable'] = '../Executables/'
+                SystemInfo['Path']['ZacrosExecuteable'] = '../Zacros_mod/'
             else:
                 print 'cluster not implemented'
         else:
-            SystemInfo['Path']['ZacrosExecuteable'] = SystemInfo['Path']['pwd'] + '../Executables/'
+            SystemInfo['Path']['ZacrosExecuteable'] = SystemInfo['Path']['pwd'] + '../Zacros_mod/'
             
         return SystemInfo

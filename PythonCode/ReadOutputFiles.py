@@ -22,97 +22,43 @@ from MachineSpecifics import MachineSpecifics as MS
 class ReadOutputFiles:
     def __init__(self):
         pass
-
-    # Reads all jobs in the JobBuilds folder
-    def ReadAllJobs(self):
-        SystemInfo = ut.GeneralUtilities().SystemInformation()
-        BuildDir = SystemInfo['Path']['Data'] + 'JobBuilds/'
-        PickleDir = SystemInfo['Path']['Data'] + 'PickledJobOutput/'
-        JobList = ut.GeneralUtilities().GetDir(BuildDir)
-        for i in JobList:
-            CurrentDir = BuildDir + i + '/'
-            Dir = ut.GeneralUtilities().GetDir(CurrentDir)
-            Complete = True
-            Parsed = os.path.isfile(CurrentDir + 'CndList.p')
-            for j in Dir:
-                if not self.CheckComplete(CurrentDir + j + '/'):
-                    Complete = False
-            if Complete and not Parsed:
-                self.ReadJobOutput(CurrentDir)
-            if Complete:
-                CopyCndList = not ut.GeneralUtilities().CompareFileSize(
-                                CurrentDir + 'CndList.p',PickleDir + i + '.p')
-                if CopyCndList:
-                    shutil.copy(CurrentDir + 'CndList.p',PickleDir + i + '.p')
         
-    # Reads a specified job in the JobBuilds folder
-    def ReadJobOutput(self,Path):
-        if os.path.isdir(Path):
+    def ReadMultipleRuns(self,Path):
+        summary_fname = 'BatchSummary.p'
+        if os.path.isfile(Path + summary_fname):                              # Runs have already been read
+            CndList = pickle.load(open( Path + summary_fname, "rb" ))
+        else:                                                               # Go through each directory and read the data
             DirList = ut.GeneralUtilities().GetDir(Path)
-    
             nDir = len(DirList)
-            if os.path.isfile(Path + 'CndList.p'):
-                CndList = pickle.load(open( Path + 'CndList.p', "rb" ))
-            else:
-                CndList = ['' for i in range(nDir)]
-                for i in range(nDir):
-                    RunPath = Path + DirList[i] + '/'
-                    CndList[i]  = KMCut.KMCUtilities().InitializeCnd()
-                    CndList[i] = RI.ReadInputFiles().ReadAll(RunPath,CndList[i])
-                    CndList[i] = self.ReadAll(RunPath,CndList[i])
-                    print str(i+1) + ' / ' + str(nDir)
-                pickle.dump( CndList, open( Path + 'CndList.p', "wb" ) )
-        else:
-            SystemInfo = ut.GeneralUtilities().SystemInformation()
-            PickleDir = SystemInfo['Path']['Data'] + 'Pickles/'
-            CndList = pickle.load(open( PickleDir + Path + '.p', "rb" ))
+            CndList = ['' for i in range(nDir)]
+            for i in range(nDir):
+                RunPath = Path + DirList[i] + '/'
+                CndList[i]  = KMCut
+                CndList[i] = RI.ReadInputFiles().ReadAllInput(RunPath,CndList[i])        # Read input files
+                CndList[i] = self.ReadSingleRun(RunPath,CndList[i])                       # Read output files
+                print 'Reading run # ' + str(i+1) + ' / ' + str(nDir)
+            pickle.dump( CndList, open( Path + summary_fname, "wb" ) )
         return CndList
             
-    def ReadAll(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
+    def ReadSingleRun(self,Path,Cnd = KMCut()):
         # Note on computational efficiency:
         #    Testing indicates that python passes arguements to functions
         #    using pointers. (expected) This means that a large Cnd dictionary
         #    should not significantly impede performance even if it is passed
         #    between functions multiple times.
+    
         if self.CheckComplete(Path):
-            Cnd = self.GetGeneral(Path,Cnd)
-            Cnd = self.GetProcstat(Path,Cnd)
-            Cnd = self.GetSpecnum(Path,Cnd)
-            Cnd = self.GetBinaries(Path,Cnd)
-            Cnd = self.GetHistory(Path,Cnd)
-            Cnd = KMCut.KMCUtilities().CndToTau(Cnd)
-        return Cnd
-    
-    def GetGeneral(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
-        if os.path.isfile(Path + 'general_output.txt'):
             Cnd = self.ReadGeneral(Path,Cnd)
-        return Cnd
-        
-    def GetHistory(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
-        if os.path.isfile(Path + 'history_output.txt'):
-            Cnd = self.ReadHistory(Path,Cnd)
-        return Cnd
-    
-    def GetProcstat(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
-        if os.path.isfile(Path + 'procstat_output.txt'):
             Cnd = self.ReadProcstat(Path,Cnd)
-        return Cnd
-        
-    def GetSpecnum(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
-        if os.path.isfile(Path + 'specnum_output.txt'):
             Cnd = self.ReadSpecnum(Path,Cnd)
-        return Cnd
-        
-    def GetBinaries(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
-        if Cnd['Cluster'] != '' and Cnd['Reactions'] != '' and Cnd['Specnum'] != '' and Cnd['Procstat'] != '':
-            if os.path.isfile(Path + 'clusterocc.bin'):
-                self.ReadCluster(Path,Cnd)
-            if os.path.isfile(Path + 'Prop_output.bin'):
-                self.ReadProp(Path,Cnd,0)
-            if os.path.isfile(Path + 'PropCounter_output.bin'):
-                self.ReadProp(Path,Cnd,1)
-            if os.path.isfile(Path + 'SA_output.bin'):
-                self.ReadSA(Path,Cnd)
+            Cnd = self.ReadHistory(Path,Cnd)
+            
+            Cnd = self.ReadCluster(Path,Cnd)
+            Cnd = self.ReadProp(Path,Cnd,0)            
+            Cnd = self.ReadProp(Path,Cnd,1)            
+            Cnd = self.ReadSA(Path,Cnd)
+        else:
+            print 'general_output.txt not found in ' + Path
         return Cnd
   
     def CheckComplete(self,Path):
@@ -125,7 +71,7 @@ class ReadOutputFiles:
                     Complete = True
         return Complete
   
-    def ReadGeneral(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
+    def ReadGeneral(self,Path,Cnd = KMCut()):
         with open(Path + 'general_output.txt','r') as txt:
             RawTxt = txt.readlines()
 
@@ -251,7 +197,7 @@ class ReadOutputFiles:
         Output = [state,inc]
         return Output
     
-    def ReadHistory(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
+    def ReadHistory(self,Path,Cnd = KMCut()):
         Cnd['History']['Final'] = self.ReadSnapshot(Path,-1)           
         return Cnd
              
@@ -273,7 +219,7 @@ class ReadOutputFiles:
         return SnapshotArray
      
         
-    def ReadProcstat(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
+    def ReadProcstat(self,Path,Cnd = KMCut()):
         MaxLen = MS().MaxOutputEntries()    
         with open(Path + 'procstat_output.txt','r') as txt:
             RawTxt = txt.readlines()
@@ -305,7 +251,7 @@ class ReadOutputFiles:
         
         return Cnd
     
-    def ReadSpecnum(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
+    def ReadSpecnum(self,Path,Cnd = KMCut()):
         MaxLen = MS().MaxOutputEntries()
         with open(Path + 'specnum_output.txt','r') as txt:
             RawTxt = txt.readlines()
@@ -383,13 +329,15 @@ class ReadOutputFiles:
     def ReadSA(self,Path,Cnd):
         dt=np.dtype(np.float64)
         FileName = 'SA_output.bin'
-        virtual_arr = np.memmap(Path + FileName, dt, "r")
-        nRxn = len(Cnd['Reactions']['Nu'])
-        nNum = virtual_arr.shape[0]
-        nNum = nNum - (nNum % nRxn)
-        virtual_arr = virtual_arr[:nNum]
-        Cnd['Binary']['W_sen_anal'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
-        Cnd['Binary']['W_sen_anal'] = np.array(Cnd['Binary']['W_sen_anal'][::Cnd['Specnum']['Spacing']])
-            
-        del virtual_arr
+        if os.path.isfile(Path + FileName):
+            virtual_arr = np.memmap(Path + FileName, dt, "r")
+            nRxn = len(Cnd['Reactions']['Nu'])
+            nNum = virtual_arr.shape[0]
+            nNum = nNum - (nNum % nRxn)
+            virtual_arr = virtual_arr[:nNum]
+            Cnd['Binary']['W_sen_anal'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
+            Cnd['Binary']['W_sen_anal'] = np.array(Cnd['Binary']['W_sen_anal'][::Cnd['Specnum']['Spacing']])  
+            del virtual_arr
+        else:
+            print 'No sensitivity analysis output file'
         return Cnd

@@ -15,40 +15,18 @@ class ReadInputFiles:
     def __init__(self):
         pass
     
-    def ReadAll(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
-        Cnd = self.GetSimIn(Path,Cnd)
-        Cnd = self.GetStateInput(Path,Cnd)
-        Cnd = self.GetMechIn(Path,Cnd)
-        Cnd = self.GetEngIn(Path,Cnd)
-        Cnd = self.GetLattice(Path,Cnd)
-        return Cnd
-    
-    def GetEngIn(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()): 
-        if os.path.isfile(Path + 'energetics_input.dat'):
-            Cnd = self.ReadEngIn(Path,Cnd)
-        return Cnd
+    def ReadAllInput(self,Path,Cnd = KMCut()):
         
-    def GetLattice(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()): 
-        if os.path.isfile(Path + 'lattice_input.dat'):
-            Cnd = self.ReadLatticeIn(Path,Cnd)
-        return Cnd
-        
-    def GetStateInput(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
+        Cnd = self.ReadSimIn(Path,Cnd)
+        Cnd = self.ReadLatticeIn(Path,Cnd)
+        Cnd = self.ReadEngIn(Path,Cnd)
+        Cnd = self.ReadMechIn(Path,Cnd)
+       
         if os.path.isfile(Path + 'state_input.dat'):
             Cnd = self.ReadStateInput(Path,Cnd)
         return Cnd
-    
-    def GetMechIn(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()): 
-        if os.path.isfile(Path + 'mechanism_input.dat'):
-            Cnd = self.ReadMechIn(Path,Cnd)
-        return Cnd
-        
-    def GetSimIn(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
-        if os.path.isfile(Path + 'simulation_input.dat'):
-            Cnd = self.ReadSimIn(Path,Cnd)
-        return Cnd
       
-    def ReadEngIn(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()): 
+    def ReadEngIn(self,Path,Cnd = KMCut()): 
         RawTxt = ut.GeneralUtilities().ReadWithoutBlankLines(Path + 'energetics_input.dat',CommentLines=False)
         nLines = len(RawTxt)
         
@@ -114,7 +92,7 @@ class ReadInputFiles:
         Cnd['Cluster']['nClusterVariant'] = nClusterTotal
         return Cnd
         
-    def ReadLatticeIn(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
+    def ReadLatticeIn(self,Path,Cnd = KMCut()):
         Cnd['Lattice']['Input'] = []
         with open(Path + 'lattice_input.dat','r') as Txt:
             RawTxt = Txt.readlines()   
@@ -122,7 +100,7 @@ class ReadInputFiles:
             Cnd['Lattice']['Input'].append(i.split('\n')[0])
         return Cnd
     
-    def ReadStateInput(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()): 
+    def ReadStateInput(self,Path,Cnd = KMCut()): 
         Cnd['StateInput']['Struct'] = []
         with open(Path + 'state_input.dat','r') as Txt:
             RawTxt = Txt.readlines()   
@@ -132,7 +110,7 @@ class ReadInputFiles:
         
         return Cnd
     
-    def ReadMechIn(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()): 
+    def ReadMechIn(self,Path,Cnd = KMCut()): 
         RawTxt = ut.GeneralUtilities().ReadWithoutBlankLines(Path + 'mechanism_input.dat',CommentLines=True)
         nLines = len(RawTxt)
         StiffCorrLine = -1
@@ -229,7 +207,7 @@ class ReadInputFiles:
         Cnd['Reactions']['Input'] = MechDict
         return Cnd        
         
-    def ReadSimIn(self,Path,Cnd = KMCut.KMCUtilities().InitializeCnd()):
+    def ReadSimIn(self,Path,Cnd = KMCut()):
         with open(Path + 'simulation_input.dat','r') as txt:
             RawTxt = txt.readlines()
             
