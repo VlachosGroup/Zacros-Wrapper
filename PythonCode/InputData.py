@@ -11,9 +11,57 @@ import numpy as np
 import os
 import re
 
-class ReadInputFiles:
+class :
     def __init__(self):
-        pass
+        # --------------- Input data ---------------
+        self.Info['Conditions']                       = {}
+        self.Info['Conditions']['T']                  = ''
+        self.Info['Conditions']['P']                  = ''
+        self.Info['Conditions']['Seed']               = ''
+        self.Info['Conditions']['restart']            = ''
+        self.Info['Conditions']['SimTime']            = {}
+        self.Info['Conditions']['SimTime']['Max']     = ''
+        self.Info['Conditions']['SimTime']['Actual']  = ''
+        self.Info['Conditions']['WallTime']           = {}
+        self.Info['Conditions']['WallTime']['Max']    = ''
+        self.Info['Conditions']['WallTime']['Actual'] = ''
+        self.Info['Conditions']['CPUTime']            = ''
+        self.Info['Conditions']['nEvents']            = ''
+        self.Info['Conditions']['MaxStep']            = ''
+    
+        self.Info['Species']                          = {}
+        self.Info['Species']['n_gas']                 = ''
+        self.Info['Species']['gas_spec']              = ''
+        self.Info['Species']['gas_eng']               = ''
+        self.Info['Species']['gas_MW']                = ''
+        self.Info['Species']['gas_molfrac']           = ''
+        self.Info['Species']['n_surf']                = ''
+        self.Info['Species']['surf_spec']             = ''
+        self.Info['Species']['surf_dent']             = ''
+    
+        self.Info['Report']                           = {}
+        self.Info['Report']['specnum']                = ['','']
+        self.Info['Report']['procstat']               = ['','']
+        self.Info['Report']['hist']                   = ['','']
+        self.Info['Report']['event']                  = ''
+    
+        self.Info['Cluster']                          = {}
+        self.Info['Cluster']['nCluster']              = ''
+        self.Info['Cluster']['nClusterVariant']       = ''
+        self.Info['Cluster']['Input']                 = ''
+        
+        self.Info['Reactions']                        = {}
+        self.Info['Reactions']['Names']               = ''
+        self.Info['Reactions']['Nu']                  = ''
+        self.Info['Reactions']['UniqNu']              = ''
+        self.Info['Reactions']['Input']               = ''
+        
+        self.Info['StateInput']                       = {}
+        self.Info['StateInput']['Type']               = ''
+        self.Info['StateInput']['Struct']             = ''
+        
+        self.Info['Lattice']                          = {}
+        self.Info['Lattice']['Input']                 = ''
     
     def ReadAllInput(self,Path,Cnd = KMCut()):
         

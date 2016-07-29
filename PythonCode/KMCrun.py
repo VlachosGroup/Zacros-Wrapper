@@ -5,13 +5,11 @@ Created on Thu Mar 03 14:54:26 2016
 @author: robieta
 """
 
-import copy
 import GeneralUtilities as ut
 import numpy as np
 import os
 import pickle
 import random
-from scipy import optimize
 import shutil
 import sys
 
@@ -25,59 +23,7 @@ class KMCUtilities:
         
         self.Info = {}             # Dictionary class variable holds all simulation information       
         
-        # --------------- Input data ---------------
-        self.Info['Conditions']                       = {}
-        self.Info['Conditions']['T']                  = ''
-        self.Info['Conditions']['P']                  = ''
-        self.Info['Conditions']['Seed']               = ''
-        self.Info['Conditions']['restart']            = ''
-        self.Info['Conditions']['SimTime']            = {}
-        self.Info['Conditions']['SimTime']['Max']     = ''
-        self.Info['Conditions']['SimTime']['Actual']  = ''
-        self.Info['Conditions']['WallTime']           = {}
-        self.Info['Conditions']['WallTime']['Max']    = ''
-        self.Info['Conditions']['WallTime']['Actual'] = ''
-        self.Info['Conditions']['CPUTime']            = ''
-        self.Info['Conditions']['nEvents']            = ''
-        self.Info['Conditions']['MaxStep']            = ''
-    
-        self.Info['Species']                          = {}
-        self.Info['Species']['n_gas']                 = ''
-        self.Info['Species']['gas_spec']              = ''
-        self.Info['Species']['gas_eng']               = ''
-        self.Info['Species']['gas_MW']                = ''
-        self.Info['Species']['gas_molfrac']           = ''
-        self.Info['Species']['n_surf']                = ''
-        self.Info['Species']['surf_spec']             = ''
-        self.Info['Species']['surf_dent']             = ''
-    
-        self.Info['Report']                           = {}
-        self.Info['Report']['specnum']                = ['','']
-        self.Info['Report']['procstat']               = ['','']
-        self.Info['Report']['hist']                   = ['','']
-        self.Info['Report']['event']                  = ''
-    
-        self.Info['Cluster']                          = {}
-        self.Info['Cluster']['nCluster']              = ''
-        self.Info['Cluster']['nClusterVariant']       = ''
-        self.Info['Cluster']['Input']                 = ''
         
-        self.Info['Reactions']                        = {}
-        self.Info['Reactions']['Names']               = ''
-        self.Info['Reactions']['Nu']                  = ''
-        self.Info['Reactions']['UniqNu']              = ''
-        self.Info['Reactions']['Input']               = ''
-        
-        self.Info['StateInput']                       = {}
-        self.Info['StateInput']['Type']               = ''
-        self.Info['StateInput']['Struct']             = ''
-        
-        self.Info['Lattice']                          = {}
-        self.Info['Lattice']['Input']                 = ''
-        
-        self.Info['StiffnessRecondition']             = {}
-        self.Info['StiffnessRecondition']['Mode']     = ''
-        self.Info['StiffnessRecondition']['APSdF']    = ''
         
         # --------------- Output data ---------------
         self.Info['Specnum']                          = {}
@@ -100,8 +46,9 @@ class KMCUtilities:
         self.Info['Binary']['cluster']                = ''
         self.Info['Binary']['prop']                   = ''
         self.Info['Binary']['propCounter']            = ''
-        self.Info['Binary']['W_sen_anal']             = ''
-        
+        self.Info['Binary']['W_sen_anal']             = ''        
+  
+        # --------------- Analysis data ---------------  
         self.Info['ACF']                              = {}
         self.Info['ACF']['Spacing']                   = {}
         self.Info['ACF']['Spacing']['Value']          = ''
@@ -109,9 +56,17 @@ class KMCUtilities:
         self.Info['ACF']['TauSep']                    = {}
         self.Info['ACF']['TauSep']['BurnIn']          = ''
         self.Info['ACF']['TauSep']['PostBurnIn']      = ''
-  
-        # --------------- Analysis data ---------------  
+        
+        self.Info['Product']                          = ''
+        self.Info['TOF']                              = ''
+        self.Info['TOF error']                        = ''
+        self.Info['NSC']                              = ''
+        self.Info['NSC error']                        = ''
 
+        # --------------- Special ---------------  
+        self.Info['StiffnessRecondition']             = {}
+        self.Info['StiffnessRecondition']['Mode']     = ''
+        self.Info['StiffnessRecondition']['APSdF']    = ''
         
     def BuildEmptyFolders(self):
         sysinfo = ut.GeneralUtilities().SystemInformation()
