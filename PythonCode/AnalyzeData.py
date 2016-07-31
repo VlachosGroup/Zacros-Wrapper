@@ -5,79 +5,28 @@ Created on Sun Apr 03 15:20:36 2016
 @author: robieta
 """
 
-import GeneralUtilities as ut
-import ReadOutputFiles as RO
-import matplotlib.pyplot as plt
-import numpy as np
+#import GeneralUtilities as ut
+##import ReadOutputFiles as RO
+#import matplotlib.pyplot as plt
+#import numpy as np
 
-class ProcessOutput:
+class AnalyzeData:
+    
     def __init__(self):
-        pass
-    
-    def PlotReductionComparison(self,ID,Mode,Mode2,nSites,Stoich,PropStoich='',ColorMat='',ForceYAxis=[0,0]):
-        Mean = np.zeros([len(Stoich),len(Mode),len(Mode2)])
-        PropMean = np.zeros([len(Mode),len(Mode2)])
-        CI = np.zeros([len(Stoich),len(Mode),len(Mode2)])
-        PropCI = np.zeros([len(Mode),len(Mode2)])
-        SimToWall = np.array([[0.]*len(Mode2)]*len(Mode))
-        for i,M2 in enumerate(Mode2):
-            for j,M in enumerate(Mode):
-                CndList = RO.ReadOutputFiles().ReadJobOutput(ID + M2 + M)
-                Output = self.CalcRate(CndList,nSites,Stoich,PropStoich)
-                
-                print '\nSensitivity Coefficients'
-                print Output['SenCoeff']
-                
-                for k,S in enumerate(Stoich):
-                    Mean[k,j,i] = Output['Mean'][k]
-                    CI[k,j,i] = Output['CI'][k]
-                if PropStoich != '':
-                    PropMean[j,i] = Output['PropMean']
-                    PropCI[j,i] = Output['PropCI']
-                SimTime = 0
-                WallTime = 0
-                for Cnd in CndList:
-                    SimTime += Cnd['Conditions']['SimTime']['Actual']
-                    WallTime += Cnd['Conditions']['WallTime']['Actual']
-                SimToWall[j,i] = SimTime/WallTime
-    
-        ScaleDown = (10 ** np.floor(np.log10(np.max(np.max(np.abs(
-                        np.abs(Mean)+CI),axis=2),axis=1)))).tolist() 
-        ScaleDown.append(10 ** np.floor(np.log10(np.max(np.max(np.abs(
-                        np.abs(PropMean)+PropCI))))))
-        ScaleDown = [1 for i in range(len(ScaleDown))]
+        self.ACF                              = {}
+        self.ACF['Spacing']                   = {}
+        self.ACF['Spacing']['Value']          = ''
+        self.ACF['Spacing']['String']         = ''
+        self.ACF['TauSep']                    = {}
+        self.ACF['TauSep']['BurnIn']          = ''
+        self.ACF['TauSep']['PostBurnIn']      = ''
         
-        plt.close('all')
-        nSubplot = len(Stoich) + [1 if PropStoich != '' else 0][0]
-        for k in range(nSubplot):
-            ax = plt.subplot(1,nSubplot,k+1)
-            ax.set_xscale("log", nonposx='clip')
-            for i,M2 in enumerate(Mode2):
-                x=1/SimToWall[:,i]    
-                if k < len(Stoich):
-                    y=Mean[k,:,i]/ScaleDown[k]
-                    ErrorBar=CI[k,:,i]/ScaleDown[k]
-                    TitleStr = Cnd['Species']['gas_spec'][k]
-                else:
-                    y = PropMean[:,i]/ScaleDown[k]
-                    ErrorBar=PropCI[:,i]/ScaleDown[k]
-                    TitleStr = 'Propensity'
-
-                    
-                H = plt.errorbar(x,y,ErrorBar, fmt='.', capthick=2)
-                if len(ColorMat) > 0:
-                    plt.setp(H,'color',ColorMat[i])
-            YStr = 'TOF '
-            if ScaleDown[k] != 1:
-                YStr += 'x 10^' + str(np.int(-np.log10(ScaleDown[k]))) + ' '
-            YStr += '(1/s)'
-            plt.ylabel(YStr)
-            plt.xlabel('Run time / Simulation time')
-            plt.title(TitleStr)
-            plt.gca().set_ylim(bottom=0)
-            if not np.array_equal([0,0],ForceYAxis):
-                plt.ylim(np.array(ForceYAxis)/ScaleDown[k])
-    
+        self.Product                          = ''
+        self.TOF                              = ''
+        self.TOF error                        = ''
+        self.NSC                              = ''
+        self.NSC error                        = ''
+"""   
     def CalcRate(self,CndIn,nSites,Stoich,PropStoich=''):       # change the name of this function to reflect the fact that it only works for steady-state
         if type(CndIn) == dict:
             CndIn = [CndIn]
@@ -238,3 +187,4 @@ class ProcessOutput:
         Output = {'Mean':Mean,'CI':CI,'SenCoeff':SenCoeffCombined,'SenCoeffCI':SenCoeffCI}
 
         return Output
+"""

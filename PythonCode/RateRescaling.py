@@ -5,20 +5,23 @@ Created on Sun Mar 27 20:28:48 2016
 @author: RDX
 """
 
-import BuildInputFiles as BI
-import copy
-import GeneralUtilities as ut
-import KMCUtilities as KMCut
-import numpy as np
-import os
-import ReadInputFiles as RI
-import ReadOutputFiles as RO
-import RunZacros as RunZacros
+#import BuildInputFiles as BI
+#import copy
+#import GeneralUtilities as ut
+#import numpy as np
+#import os
+#import ReadInputFiles as RI
+#import ReadOutputFiles as RO
+#import RunZacros as RunZacros
 
-class ReduceStiffness:
-    def __init__(self):
-        pass
+class RateRescaling:
     
+    def __init__(self):
+
+        self.InfoStiffnessRecondition             = {}
+        self.InfoStiffnessRecondition['Mode']     = ''
+        self.InfoStiffnessRecondition['APSdF']    = ''
+"""  
     def DefaultRunParam(self):
         RunParam = {'Event':1e3,'MaxEvents':1e5,'Mode':'tanh_2_4'}
         return RunParam
@@ -229,9 +232,4 @@ class ReduceStiffness:
         SDDict = {'SDF':SDF_out,'SF':StiffnessFactor,'Mode':Mode}
         return SDDict
         
-
-
-
-
-
-
+"""

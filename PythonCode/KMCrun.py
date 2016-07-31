@@ -5,69 +5,36 @@ Created on Thu Mar 03 14:54:26 2016
 @author: robieta
 """
 
-import GeneralUtilities as ut
-import numpy as np
-import os
-import pickle
-import random
-import shutil
-import sys
+from InputData import InputData
+from OutputData import OutputData
+from RateRescaling import RateRescaling
+from AnalyzeData import AnalyzeData
 
-sys.path.append("..")
-from MachineSpecifics import MachineSpecifics as MS
+#import GeneralUtilities as ut
+#import numpy as np
+#import os
+#import pickle
+#import random
+#import shutil
+#import sys
+#
+#sys.path.append("..")
+#from MachineSpecifics import MachineSpecifics as MS
 
 
-class KMCUtilities:
+class KMCrun:
     
     def __init__(self):
         
-        self.Info = {}             # Dictionary class variable holds all simulation information       
+        self.output = OutputData()
+        self.rescaling = RateRescaling()
+        self.analysis = AnalyzeData()
+ 
         
-        
-        
-        # --------------- Output data ---------------
-        self.Info['Specnum']                          = {}
-        self.Info['Specnum']['Spacing']               = ''
-        self.Info['Specnum']['t']                     = ''
-        self.Info['Specnum']['nEvents']               = ''
-        self.Info['Specnum']['T']                     = ''
-        self.Info['Specnum']['E']                     = ''
-        self.Info['Specnum']['spec']                  = ''
-        
-        self.Info['Procstat']                         = {}
-        self.Info['Procstat']['Spacing']              = ''
-        self.Info['Procstat']['t']                    = ''
-        self.Info['Procstat']['events']               = ''
-        
-        self.Info['History']                          = {}
-        self.Info['History']['Final']                 = ''
-        
-        self.Info['Binary']                           = {}
-        self.Info['Binary']['cluster']                = ''
-        self.Info['Binary']['prop']                   = ''
-        self.Info['Binary']['propCounter']            = ''
-        self.Info['Binary']['W_sen_anal']             = ''        
-  
-        # --------------- Analysis data ---------------  
-        self.Info['ACF']                              = {}
-        self.Info['ACF']['Spacing']                   = {}
-        self.Info['ACF']['Spacing']['Value']          = ''
-        self.Info['ACF']['Spacing']['String']         = ''
-        self.Info['ACF']['TauSep']                    = {}
-        self.Info['ACF']['TauSep']['BurnIn']          = ''
-        self.Info['ACF']['TauSep']['PostBurnIn']      = ''
-        
-        self.Info['Product']                          = ''
-        self.Info['TOF']                              = ''
-        self.Info['TOF error']                        = ''
-        self.Info['NSC']                              = ''
-        self.Info['NSC error']                        = ''
+"""
 
-        # --------------- Special ---------------  
-        self.Info['StiffnessRecondition']             = {}
-        self.Info['StiffnessRecondition']['Mode']     = ''
-        self.Info['StiffnessRecondition']['APSdF']    = ''
-        
+
+      
     def BuildEmptyFolders(self):
         sysinfo = ut.GeneralUtilities().SystemInformation()
         if not os.path.isdir(sysinfo['Path']['LocalRunDir']):
@@ -174,3 +141,5 @@ class KMCUtilities:
         os.mkdir(NewDir)
         for i in Files:
             shutil.copy(RunDir + 'Run/' + i,NewDir + i)
+            
+"""

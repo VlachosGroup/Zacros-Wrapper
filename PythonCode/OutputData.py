@@ -5,140 +5,75 @@ Created on Thu Mar 03 13:32:13 2016
 @author: robieta
 """
 
-import GeneralUtilities as ut
-import KMCUtilities as KMCut
-import linecache
-import numpy as np
 import os
-import pickle
 import re
-import ReadInputFiles as RI
-import shutil
-import sys
+import numpy as np
+import GeneralUtilities as ut
+import linecache
+from InputData import InputData
 
-sys.path.append("..")
-from MachineSpecifics import MachineSpecifics as MS
-
-class ReadOutputFiles:
-    def __init__(self):
-        pass
-        
-    def ReadMultipleRuns(self,Path):
-        summary_fname = 'BatchSummary.p'
-        if os.path.isfile(Path + summary_fname):                              # Runs have already been read
-            CndList = pickle.load(open( Path + summary_fname, "rb" ))
-        else:                                                               # Go through each directory and read the data
-            DirList = ut.GeneralUtilities().GetDir(Path)
-            nDir = len(DirList)
-            CndList = ['' for i in range(nDir)]
-            for i in range(nDir):
-                RunPath = Path + DirList[i] + '/'
-                CndList[i]  = KMCut
-                CndList[i] = RI.ReadInputFiles().ReadAllInput(RunPath,CndList[i])        # Read input files
-                CndList[i] = self.ReadSingleRun(RunPath,CndList[i])                       # Read output files
-                print 'Reading run # ' + str(i+1) + ' / ' + str(nDir)
-            pickle.dump( CndList, open( Path + summary_fname, "wb" ) )
-        return CndList
-            
-    def ReadSingleRun(self,Path,Cnd = KMCut()):
-        # Note on computational efficiency:
-        #    Testing indicates that python passes arguements to functions
-        #    using pointers. (expected) This means that a large Cnd dictionary
-        #    should not significantly impede performance even if it is passed
-        #    between functions multiple times.
+class OutputData:
     
-        if self.CheckComplete(Path):
-            Cnd = self.ReadGeneral(Path,Cnd)
-            Cnd = self.ReadProcstat(Path,Cnd)
-            Cnd = self.ReadSpecnum(Path,Cnd)
-            Cnd = self.ReadHistory(Path,Cnd)
+    def __init__(self):
+
+        self.Path = ''
+
+        self.input = InputData()
+
+        self.Specnum                          = {}
+        self.Specnum['Spacing']               = ''
+        self.Specnum['t']                     = ''
+        self.Specnum['nEvents']               = ''
+        self.Specnum['T']                     = ''
+        self.Specnum['E']                     = ''
+        self.Specnum['spec']                  = ''
+        
+        self.Procstat                         = {}
+        self.Procstat['Spacing']              = ''
+        self.Procstat['t']                    = ''
+        self.Procstat['events']               = ''
+        
+        self.History                          = {}
+        self.History['Final']                 = ''
+        
+        self.Binary                           = {}
+        self.Binary['cluster']                = ''
+        self.Binary['prop']                   = ''
+        self.Binary['propCounter']            = ''
+        self.Binary['W_sen_anal']             = ''  
+          
+    def ReadAllOutput(self):
+        
+        self.input.Path = self.Path
+        self.input.ReadAllInput()
+        
+        print 'Reading output files in ' + self.Path
+        if self.CheckComplete():
+            self.ReadGeneral()
+            self.ReadProcstat()
+            self.ReadSpecnum()
+            self.ReadHistory()
             
-            Cnd = self.ReadCluster(Path,Cnd)
-            Cnd = self.ReadProp(Path,Cnd,0)            
-            Cnd = self.ReadProp(Path,Cnd,1)            
-            Cnd = self.ReadSA(Path,Cnd)
+            self.ReadCluster()
+            self.ReadProp(0)            
+            self.ReadProp(1)            
+            self.ReadSA()
         else:
-            print 'general_output.txt not found in ' + Path
-        return Cnd
+            print 'general_output.txt not found in ' + self.Path
   
-    def CheckComplete(self,Path):
+    def CheckComplete(self):
         Complete = False
-        if os.path.isfile(Path + 'general_output.txt'):
-            with open(Path + 'general_output.txt','r') as txt:
+        if os.path.isfile(self.Path + 'general_output.txt'):
+            with open(self.Path + 'general_output.txt','r') as txt:
                 RawTxt = txt.readlines()
             for i in RawTxt:
                 if re.search('Normal termination',i):
                     Complete = True
         return Complete
-  
-    def ReadGeneral(self,Path,Cnd = KMCut()):
-        with open(Path + 'general_output.txt','r') as txt:
-            RawTxt = txt.readlines()
 
-        Cnd['Conditions']['restart'] = 'true'
-        for i in RawTxt:
-            if re.search('Temperature:',i):
-                Cnd['Conditions']['T']          = np.float(i.split(':')[1])
-            elif re.search('Pressure:',i):
-                Cnd['Conditions']['P']          = np.float(i.split(':')[1])
-            elif re.search('Random sequence with seed:',i):
-                Cnd['Conditions']['Seed']       = np.int(i.split(':')[1])
-            elif re.search('Keyword no_restart parsed.',i):
-                Cnd['Conditions']['restart'] = 'false'
-            
-
-            elif re.search('Gas species names:',i):
-                Cnd['Species']['gas_spec']      = i.split(':')[1].split()
-                Cnd['Species']['n_gas']         = len(Cnd['Species']['gas_spec'])
-            elif re.search('Gas species energies:',i):
-                Cnd['Species']['gas_eng']       = []
-                for j in i.split(':')[1].split():
-                    Cnd['Species']['gas_eng'].append(np.float(j))
-            elif re.search('Gas species molecular weights:',i):
-                Cnd['Species']['gas_MW']        = []
-                for j in i.split(':')[1].split():
-                    Cnd['Species']['gas_MW'].append(np.float(j))
-            elif re.search('Gas species molar fractions:',i):
-                Cnd['Species']['gas_molfrac']   = []
-                for j in i.split(':')[1].split():
-                    Cnd['Species']['gas_molfrac'].append(np.float(j))
-                    
-            elif re.search('Surface species names:',i):
-                Cnd['Species']['surf_spec']     = i.split(':')[1].split()
-                Cnd['Species']['n_surf']        = len(Cnd['Species']['surf_spec'])
-            elif re.search('Surface species dentation:',i):
-                Cnd['Species']['surf_dent']     = []
-                for j in i.split(':')[1].split():
-                    Cnd['Species']['surf_dent'].append(np.int(j))
-            
-            elif re.search('Snapshots will be saved',i) or re.search('Snapshot saving',i):
-                Cnd['Report']['hist']           = self.StateInc(i)
-            elif re.search('Process statistics will be reported',i) or re.search('Process statistics reporting',i):
-                Cnd['Report']['procstat']       = self.StateInc(i)         
-            elif re.search('Species number will be reported',i) or re.search('Species numbers reporting',i):
-                Cnd['Report']['specnum']        = self.StateInc(i)
-            elif re.search('Event reporting',i):
-                Cnd['Report']['event']          = i.split()[-1]
-                
-            elif re.search('Max simulated time:',i):
-                if re.search('maximum allowed value',i):
-                    Cnd['Conditions']['SimTime']['Max'] = 'infinity'
-                else:
-                    Cnd['Conditions']['SimTime']['Max'] = np.float(i.split()[-1])
-            elif re.search('Current KMC time:',i):
-                Cnd['Conditions']['SimTime']['Actual'] = np.float(i.split(':')[1])
-            elif re.search('Allowed walltime in seconds:',i):
-                Cnd['Conditions']['WallTime']['Max'] = np.int(i.split(':')[1])
-            elif re.search('Elapsed clock time:',i):
-                Cnd['Conditions']['WallTime']['Actual'] = np.float(i.split(':')[1].split()[0])
-            elif re.search('Elapsed CPU time:',i):
-                Cnd['Conditions']['CPUTime'] = np.float(i.split(':')[1].split()[0])
-            elif re.search('Events occurred:',i):
-                Cnd['Conditions']['nEvents'] = np.int(i.split(':')[1])
-                
-            elif re.search('Number of clusters:',i):
-                Cnd['Cluster']['nClusterVariant'] = np.int(i.split(':')[1])
-                
+    def ReadGeneral(self):
+        with open(self.Path + 'general_output.txt','r') as txt:
+            RawTxt = txt.readlines()                
                 
         for i in range(0,len(RawTxt)):
             if re.search('Number of elementary steps:',RawTxt[i]):
@@ -158,7 +93,7 @@ class ReadOutputFiles:
             RxnNameList.append(RxnName)
             RxnStr = RawTxt[i][re.search('Reaction:', RawTxt[i]).end():]
             RxnStrList = RxnStr.split()
-            nu = [0] * (Cnd['Species']['n_surf'] + Cnd['Species']['n_gas'])
+            nu = [0] * (self.input.Species['n_surf'] + self.input.Species['n_gas'])
             for j in range(0,len(RxnStrList)):
                 if RxnStrList[j] == '->':
                     ArrowInd = j
@@ -171,19 +106,18 @@ class ReadOutputFiles:
                 if re.search('\(',RxnStrList[j]):
                     SurfIden = re.sub(r'\([^)]*\)', '', RxnStrList[j])                    
                     if SurfIden != '*':
-                        SurfInd = [k for k in range(0,len(Cnd['Species']['surf_spec'])) if SurfIden == Cnd['Species']['surf_spec'][k]][0]
+                        SurfInd = [k for k in range(0,len(self.input.Species['surf_spec'])) if SurfIden == self.input.Species['surf_spec'][k]][0]
                         nu[SurfInd] += Sign
                 elif RxnStrList[j] != '->' and RxnStrList[j] != '+':
-                    GasInd = [k for k in range(0,len(Cnd['Species']['gas_spec'])) if RxnStrList[j] == Cnd['Species']['gas_spec'][k]][0]
-                    nu[Cnd['Species']['n_surf'] + GasInd] += Sign
+                    GasInd = [k for k in range(0,len(self.input.Species['gas_spec'])) if RxnStrList[j] == self.input.Species['gas_spec'][k]][0]
+                    nu[self.input.Species['n_surf'] + GasInd] += Sign
             nuList.append(nu)
 
-        Cnd['Reactions']['Names']   = RxnNameList   
-        Cnd['Reactions']['Nu']      = nuList
-        Cnd['Reactions']['UniqNu']  = ut.GeneralUtilities().ReturnUnique(nuList).tolist()
+        self.input.Reactions['Names']   = RxnNameList
+        self.input.Reactions['Nu']      = nuList
+        self.input.Reactions['UniqNu']  = ut.GeneralUtilities().ReturnUnique(nuList).tolist()
                 
-        return Cnd
- 
+
     def StateInc(self,i):
         if re.search('turned off',i):
             state = 'off'
@@ -197,16 +131,15 @@ class ReadOutputFiles:
         Output = [state,inc]
         return Output
     
-    def ReadHistory(self,Path,Cnd = KMCut()):
-        Cnd['History']['Final'] = self.ReadSnapshot(Path,-1)           
-        return Cnd
+    def ReadHistory(self):
+        self.History['Final'] = self.ReadSnapshot(-1)           
              
-    def ReadSnapshot(self,Path,Snapshot):
-        with open(Path + 'lattice_output.txt','r') as txt:
+    def ReadSnapshot(self,Snapshot):
+        with open(self.Path + 'lattice_output.txt','r') as txt:
             RawTxt = txt.readlines()
         nSites = len(RawTxt) - 2
         SnapshotArray = np.array([[0]*4]*nSites)
-        HistPath = Path + 'history_output.txt'
+        HistPath = self.Path + 'history_output.txt'
         nLines = ut.GeneralUtilities().rawbigcount(HistPath)
         nSnapshot = np.float(nLines-6)/(nSites+2)
         if nSnapshot != int(nSnapshot):
@@ -219,9 +152,9 @@ class ReadOutputFiles:
         return SnapshotArray
      
         
-    def ReadProcstat(self,Path,Cnd = KMCut()):
-        MaxLen = MS().MaxOutputEntries()    
-        with open(Path + 'procstat_output.txt','r') as txt:
+    def ReadProcstat(self):
+        MaxLen = np.int(2e4)
+        with open(self.Path + 'procstat_output.txt','r') as txt:
             RawTxt = txt.readlines()
 
         if len(RawTxt) - 1 > MaxLen * 3: # Procstat uses 3 lines per outputs
@@ -245,15 +178,13 @@ class ReadOutputFiles:
                 eventsTemp[j] = np.int(eventsTemp[j])
             events.append(eventsTemp)
         
-        Cnd['Procstat']['Spacing'] = Spacing
-        Cnd['Procstat']['t'] = t
-        Cnd['Procstat']['events'] = events
-        
-        return Cnd
+        self.Procstat['Spacing'] = Spacing
+        self.Procstat['t'] = t
+        self.Procstat['events'] = events
     
-    def ReadSpecnum(self,Path,Cnd = KMCut()):
-        MaxLen = MS().MaxOutputEntries()
-        with open(Path + 'specnum_output.txt','r') as txt:
+    def ReadSpecnum(self):
+        MaxLen = np.int(2e4)
+        with open(self.Path + 'specnum_output.txt','r') as txt:
             RawTxt = txt.readlines()
 
         if len(RawTxt) - 1 > MaxLen:
@@ -282,27 +213,24 @@ class ReadOutputFiles:
                 specTemp[j] = np.int(specTemp[j])
             spec.append(specTemp)
         
-        Cnd['Specnum']['Spacing'] = Spacing 
-        Cnd['Specnum']['nEvents']   = nEvents
-        Cnd['Specnum']['t']         = t
-        Cnd['Specnum']['T']         = T
-        Cnd['Specnum']['E']         = E
-        Cnd['Specnum']['spec']      = spec
-
-        return Cnd
+        self.Specnum['Spacing'] = Spacing 
+        self.Specnum['nEvents']   = nEvents
+        self.Specnum['t']         = t
+        self.Specnum['T']         = T
+        self.Specnum['E']         = E
+        self.Specnum['spec']      = spec
     
-    def ReadCluster(self,Path,Cnd):
+    def ReadCluster(self):
         dt=np.dtype(np.int32)
-        virtual_arr = np.memmap(Path + 'clusterocc.bin', dt, "r")
-        nCluster = Cnd['Cluster']['nClusterVariant']
+        virtual_arr = np.memmap(self.Path + 'clusterocc.bin', dt, "r")
+        nCluster = self.input.Cluster['nClusterVariant']
         nNum = virtual_arr.shape[0]
         nNum = nNum - (nNum % nCluster)
         virtual_arr = virtual_arr[:nNum]
-        Cnd['Binary']['cluster'] = np.array(np.reshape(virtual_arr,[nNum/nCluster,nCluster])[::Cnd['Specnum']['Spacing']])
+        self.Binary['cluster'] = np.array(np.reshape(virtual_arr,[nNum/nCluster,nCluster])[::self.Specnum['Spacing']])
         del virtual_arr
-        return Cnd
     
-    def ReadProp(self,Path,Cnd,Mode):
+    def ReadProp(self,Mode):
         dt=np.dtype(np.float64)
         if Mode==0:     #Instantaneous propensities
             FileName = 'Prop_output.bin'
@@ -310,34 +238,32 @@ class ReadOutputFiles:
         elif Mode==1:   #Integral propensities
             FileName = 'PropCounter_output.bin'
         
-        virtual_arr = np.memmap(Path + FileName, dt, "r")
-        nRxn = len(Cnd['Reactions']['Nu'])
+        virtual_arr = np.memmap(self.Path + FileName, dt, "r")
+        nRxn = len(self.input.Reactions['Nu'])
         nNum = virtual_arr.shape[0]
         nNum = nNum - (nNum % nRxn)
         virtual_arr = virtual_arr[:nNum]
             
         if Mode==0:
-            Cnd['Binary']['prop'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
-            Cnd['Binary']['prop'] = np.array(Cnd['Binary']['prop'][::Cnd['Procstat']['Spacing']])
+            self.Binary['prop'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
+            self.Binary['prop'] = np.array(self.Binary['prop'][::self.Procstat['Spacing']])
         if Mode==1:
-            Cnd['Binary']['propCounter'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
-            Cnd['Binary']['propCounter'] = np.array(Cnd['Binary']['propCounter'][::Cnd['Procstat']['Spacing']])
+            self.Binary['propCounter'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
+            self.Binary['propCounter'] = np.array(self.Binary['propCounter'][::self.Procstat['Spacing']])
         
         del virtual_arr
-        return Cnd
     
-    def ReadSA(self,Path,Cnd):
+    def ReadSA(self):
         dt=np.dtype(np.float64)
         FileName = 'SA_output.bin'
-        if os.path.isfile(Path + FileName):
-            virtual_arr = np.memmap(Path + FileName, dt, "r")
-            nRxn = len(Cnd['Reactions']['Nu'])
+        if os.path.isfile(self.Path + FileName):
+            virtual_arr = np.memmap(self.Path + FileName, dt, "r")
+            nRxn = len(self.input.Reactions['Nu'])
             nNum = virtual_arr.shape[0]
             nNum = nNum - (nNum % nRxn)
             virtual_arr = virtual_arr[:nNum]
-            Cnd['Binary']['W_sen_anal'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
-            Cnd['Binary']['W_sen_anal'] = np.array(Cnd['Binary']['W_sen_anal'][::Cnd['Specnum']['Spacing']])  
+            self.Binary['W_sen_anal'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
+            self.Binary['W_sen_anal'] = np.array(self.Binary['W_sen_anal'][::self.Specnum['Spacing']])  
             del virtual_arr
         else:
             print 'No sensitivity analysis output file'
-        return Cnd

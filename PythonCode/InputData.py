@@ -5,77 +5,85 @@ Created on Fri Mar 18 14:37:02 2016
 @author: robieta
 """
 
-import GeneralUtilities as ut
-import KMCUtilities as KMCut
-import numpy as np
 import os
+import GeneralUtilities as ut
+import numpy as np
 import re
 
-class :
+class InputData:
+    
     def __init__(self):
-        # --------------- Input data ---------------
-        self.Info['Conditions']                       = {}
-        self.Info['Conditions']['T']                  = ''
-        self.Info['Conditions']['P']                  = ''
-        self.Info['Conditions']['Seed']               = ''
-        self.Info['Conditions']['restart']            = ''
-        self.Info['Conditions']['SimTime']            = {}
-        self.Info['Conditions']['SimTime']['Max']     = ''
-        self.Info['Conditions']['SimTime']['Actual']  = ''
-        self.Info['Conditions']['WallTime']           = {}
-        self.Info['Conditions']['WallTime']['Max']    = ''
-        self.Info['Conditions']['WallTime']['Actual'] = ''
-        self.Info['Conditions']['CPUTime']            = ''
-        self.Info['Conditions']['nEvents']            = ''
-        self.Info['Conditions']['MaxStep']            = ''
-    
-        self.Info['Species']                          = {}
-        self.Info['Species']['n_gas']                 = ''
-        self.Info['Species']['gas_spec']              = ''
-        self.Info['Species']['gas_eng']               = ''
-        self.Info['Species']['gas_MW']                = ''
-        self.Info['Species']['gas_molfrac']           = ''
-        self.Info['Species']['n_surf']                = ''
-        self.Info['Species']['surf_spec']             = ''
-        self.Info['Species']['surf_dent']             = ''
-    
-        self.Info['Report']                           = {}
-        self.Info['Report']['specnum']                = ['','']
-        self.Info['Report']['procstat']               = ['','']
-        self.Info['Report']['hist']                   = ['','']
-        self.Info['Report']['event']                  = ''
-    
-        self.Info['Cluster']                          = {}
-        self.Info['Cluster']['nCluster']              = ''
-        self.Info['Cluster']['nClusterVariant']       = ''
-        self.Info['Cluster']['Input']                 = ''
         
-        self.Info['Reactions']                        = {}
-        self.Info['Reactions']['Names']               = ''
-        self.Info['Reactions']['Nu']                  = ''
-        self.Info['Reactions']['UniqNu']              = ''
-        self.Info['Reactions']['Input']               = ''
+        self.Path                             = ''
         
-        self.Info['StateInput']                       = {}
-        self.Info['StateInput']['Type']               = ''
-        self.Info['StateInput']['Struct']             = ''
-        
-        self.Info['Lattice']                          = {}
-        self.Info['Lattice']['Input']                 = ''
+        self.Conditions                       = {}
+        self.Conditions['T']                  = ''
+        self.Conditions['P']                  = ''
+        self.Conditions['Seed']               = ''
+        self.Conditions['restart']            = ''
+        self.Conditions['SimTime']            = {}
+        self.Conditions['SimTime']['Max']     = ''
+        self.Conditions['SimTime']['Actual']  = ''
+        self.Conditions['WallTime']           = {}
+        self.Conditions['WallTime']['Max']    = ''
+        self.Conditions['WallTime']['Actual'] = ''
+        self.Conditions['CPUTime']            = ''
+        self.Conditions['nEvents']            = ''
+        self.Conditions['MaxStep']            = ''
     
-    def ReadAllInput(self,Path,Cnd = KMCut()):
+        self.Species                          = {}
+        self.Species['n_gas']                 = ''
+        self.Species['gas_spec']              = ''
+        self.Species['gas_eng']               = ''
+        self.Species['gas_MW']                = ''
+        self.Species['gas_molfrac']           = ''
+        self.Species['n_surf']                = ''
+        self.Species['surf_spec']             = ''
+        self.Species['surf_dent']             = ''
+    
+        self.Report                           = {}
+        self.Report['specnum']                = ['','']
+        self.Report['procstat']               = ['','']
+        self.Report['hist']                   = ['','']
+        self.Report['event']                  = ''
+    
+        self.Cluster                          = {}
+        self.Cluster['nCluster']              = ''
+        self.Cluster['nClusterVariant']       = ''
+        self.Cluster['Input']                 = ''
         
-        Cnd = self.ReadSimIn(Path,Cnd)
-        Cnd = self.ReadLatticeIn(Path,Cnd)
-        Cnd = self.ReadEngIn(Path,Cnd)
-        Cnd = self.ReadMechIn(Path,Cnd)
+        self.Reactions                        = {}
+        self.Reactions['Input']               = ''
+        self.Reactions['Names']               = ''
+        self.Reactions['Nu']                  = ''
+        self.Reactions['UniqNu']              = ''        
+        
+        self.StateInput                       = {}
+        self.StateInput['Type']               = ''
+        self.StateInput['Struct']             = ''
+        
+        self.Lattice                          = {}
+        self.Lattice['Input']                 = ''
+
+        # Will deal with this later
+        self.InfoStiffnessRecondition             = {}
+        self.InfoStiffnessRecondition['Mode']     = ''
+        self.InfoStiffnessRecondition['APSdF']    = ''
+
+    def ReadAllInput(self):
+    
+        print 'Reading input files in ' + self.Path    
+    
+        self.ReadSimIn()
+        self.ReadLatticeIn()
+        self.ReadEngIn()
+        self.ReadMechIn()
        
-        if os.path.isfile(Path + 'state_input.dat'):
-            Cnd = self.ReadStateInput(Path,Cnd)
-        return Cnd
-      
-    def ReadEngIn(self,Path,Cnd = KMCut()): 
-        RawTxt = ut.GeneralUtilities().ReadWithoutBlankLines(Path + 'energetics_input.dat',CommentLines=False)
+        if os.path.isfile(self.Path + 'state_input.dat'):
+            self.ReadStateInput()
+    
+    def ReadEngIn(self): 
+        RawTxt = ut.GeneralUtilities().ReadWithoutBlankLines(self.Path + 'energetics_input.dat',CommentLines=False)
         nLines = len(RawTxt)
         
         nCluster = 0
@@ -135,31 +143,27 @@ class :
                     elif RawTxt[i].split()[0]=='cluster_eng':
                         ClusterDict[j]['variant'][k]['eng'] = RawTxt[i].split()[1]
         
-        Cnd['Cluster']['Input'] = ClusterDict
-        Cnd['Cluster']['nCluster'] = len(ClusterDict)
-        Cnd['Cluster']['nClusterVariant'] = nClusterTotal
-        return Cnd
+        self.Cluster['Input'] = ClusterDict
+        self.Cluster['nCluster'] = len(ClusterDict)
+        self.Cluster['nClusterVariant'] = nClusterTotal
         
-    def ReadLatticeIn(self,Path,Cnd = KMCut()):
-        Cnd['Lattice']['Input'] = []
-        with open(Path + 'lattice_input.dat','r') as Txt:
+    def ReadLatticeIn(self):
+        self.Lattice['Input'] = []
+        with open(self.Path + 'lattice_input.dat','r') as Txt:
             RawTxt = Txt.readlines()   
         for i in RawTxt:
-            Cnd['Lattice']['Input'].append(i.split('\n')[0])
-        return Cnd
+            self.Lattice['Input'].append(i.split('\n')[0])
     
-    def ReadStateInput(self,Path,Cnd = KMCut()): 
-        Cnd['StateInput']['Struct'] = []
-        with open(Path + 'state_input.dat','r') as Txt:
+    def ReadStateInput(self): 
+        self.StateInput['Struct'] = []
+        with open(self.Path + 'state_input.dat','r') as Txt:
             RawTxt = Txt.readlines()   
         for i in RawTxt:
-            Cnd['StateInput']['Struct'].append(i.split('\n')[0])
-        Cnd['StateInput']['Type'] = 'StateInput'
-        
-        return Cnd
+            self.StateInput['Struct'].append(i.split('\n')[0])
+        self.StateInput['Type'] = 'StateInput'
     
-    def ReadMechIn(self,Path,Cnd = KMCut()): 
-        RawTxt = ut.GeneralUtilities().ReadWithoutBlankLines(Path + 'mechanism_input.dat',CommentLines=True)
+    def ReadMechIn(self): 
+        RawTxt = ut.GeneralUtilities().ReadWithoutBlankLines(self.Path + 'mechanism_input.dat',CommentLines=True)
         nLines = len(RawTxt)
         StiffCorrLine = -1
         
@@ -173,8 +177,8 @@ class :
                 StiffCorrLine = i
                 
         if StiffCorrLine != -1:
-            Cnd['StiffnessRecondition']['Mode'] = RawTxt[StiffCorrLine+1].split(':')[1].split('\n')[0].split()[0]
-            Cnd['StiffnessRecondition']['APSdF'] = [np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
+            self.StiffnessRecondition['Mode'] = RawTxt[StiffCorrLine+1].split(':')[1].split('\n')[0].split()[0]
+            self.StiffnessRecondition['APSdF'] = [np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
         
         MechInd = np.array([[0,0]]*nMech)
         Count = 0
@@ -252,74 +256,76 @@ class :
                         print 'Unparsed line in mechanism variant:'
                         print RawTxt[i]
         
-        Cnd['Reactions']['Input'] = MechDict
-        return Cnd        
+        self.Reactions['Input'] = MechDict    
         
-    def ReadSimIn(self,Path,Cnd = KMCut()):
-        with open(Path + 'simulation_input.dat','r') as txt:
+        # Find unique reactions
+#        Cnd['Reactions']['Names']   = RxnNameList   
+#        Cnd['Reactions']['Nu']      = nuList
+#        Cnd['Reactions']['UniqNu']  = ut.GeneralUtilities().ReturnUnique(nuList).tolist()
+        
+    def ReadSimIn(self):
+        with open(self.Path + 'simulation_input.dat','r') as txt:
             RawTxt = txt.readlines()
             
-        Cnd['Conditions']['restart'] = True
+        self.Conditions['restart'] = True
         for i in RawTxt:
             if len(i.split())>0:
                 if i[0] != '#':
                     i=i.split('#')[0] # Don't parse comments
                     if i.split()[0] == 'temperature':
-                        Cnd['Conditions']['T']          = np.float(i.split()[1])
+                        self.Conditions['T']          = np.float(i.split()[1])
                     elif i.split()[0] == 'pressure':
-                        Cnd['Conditions']['P']          = np.float(i.split()[1])
+                        self.Conditions['P']          = np.float(i.split()[1])
                     elif i.split()[0] == 'random_seed':
-                        Cnd['Conditions']['Seed']       = np.int(i.split()[1])
+                        self.Conditions['Seed']       = np.int(i.split()[1])
                     elif i.split()[0] == 'no_restart':
-                        Cnd['Conditions']['restart'] = False
+                        self.Conditions['restart'] = False
                     elif i.split()[0] == 'gas_specs_names':
-                        Cnd['Species']['gas_spec']      = i.split()[1:]
-                        Cnd['Species']['n_gas']         = len(Cnd['Species']['gas_spec'])
+                        self.Species['gas_spec']      = i.split()[1:]
+                        self.Species['n_gas']         = len(self.Species['gas_spec'])
                     elif i.split()[0] == 'gas_energies':
-                        Cnd['Species']['gas_eng']       = []
+                        self.Species['gas_eng']       = []
                         for j in i.split()[1:]:
-                            Cnd['Species']['gas_eng'].append(np.float(j))
+                            self.Species['gas_eng'].append(np.float(j))
                     elif i.split()[0] == 'gas_molec_weights':
-                        Cnd['Species']['gas_MW']        = []
+                        self.Species['gas_MW']        = []
                         for j in i.split()[1:]:
-                            Cnd['Species']['gas_MW'].append(np.float(j))
+                            self.Species['gas_MW'].append(np.float(j))
                     elif i.split()[0] == 'gas_molar_fracs':
-                        Cnd['Species']['gas_molfrac']   = []
+                        self.Species['gas_molfrac']   = []
                         for j in i.split()[1:]:
-                            Cnd['Species']['gas_molfrac'].append(np.float(j))
+                            self.Species['gas_molfrac'].append(np.float(j))
                     elif i.split()[0] == 'surf_specs_names':
-                        Cnd['Species']['surf_spec']     = i.split()[1:]
-                        Cnd['Species']['n_surf']        = len(Cnd['Species']['surf_spec'])
+                        self.Species['surf_spec']     = i.split()[1:]
+                        self.Species['n_surf']        = len(self.Species['surf_spec'])
                     elif i.split()[0] == 'surf_specs_dent':
-                        Cnd['Species']['surf_dent']     = []
+                        self.Species['surf_dent']     = []
                         for j in i.split()[1:]:
-                            Cnd['Species']['surf_dent'].append(np.int(j))
+                            self.Species['surf_dent'].append(np.int(j))
                     
                     elif i.split()[0] == 'event_report':
-                        Cnd['Report']['event'] = i.split()[1]
+                        self.Report['event'] = i.split()[1]
                     elif i.split()[0] == 'snapshots':
-                        Cnd['Report']['hist']           = self.StateInc(i)
+                        self.Report['hist']           = self.StateInc(i)
                     elif i.split()[0] == 'process_statistics':
-                        Cnd['Report']['procstat']       = self.StateInc(i) 
+                        self.Report['procstat']       = self.StateInc(i) 
                     elif i.split()[0] == 'species_numbers':
-                        Cnd['Report']['specnum']        = self.StateInc(i)
+                        self.Report['specnum']        = self.StateInc(i)
                     
                     elif i.split()[0] == 'max_time':
-                        Cnd['Conditions']['SimTime']['Max'] = np.float(i.split()[1])
+                        self.Conditions['SimTime']['Max'] = np.float(i.split()[1])
                     elif i.split()[0] == 'max_steps':
                         if i.split()[1] == 'infinity':
-                            Cnd['Conditions']['MaxStep'] = 'inf'
+                            self.Conditions['MaxStep'] = 'inf'
                         else:
-                            Cnd['Conditions']['MaxStep'] = int(i.split()[1])
+                            self.Conditions['MaxStep'] = int(i.split()[1])
                     elif i.split()[0] == 'wall_time':
-                        Cnd['Conditions']['WallTime']['Max'] = np.int(i.split()[1])
+                        self.Conditions['WallTime']['Max'] = np.int(i.split()[1])
                     elif i.split()[0] == 'finish' or i.split()[0] == 'n_gas_species' or i.split()[0] == 'n_surf_species':
                         pass
                     else:
                         print 'Unparsed line in simulation_input.dat:'
                         print i
-            
-        return Cnd
         
     def StateInc(self,i):
         if re.search('off',i):
