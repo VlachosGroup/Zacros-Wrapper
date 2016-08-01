@@ -5,13 +5,11 @@ Created on Thu Mar 03 14:54:26 2016
 @author: robieta
 """
 
-from InputData import InputData
 from OutputData import OutputData
 from RateRescaling import RateRescaling
-from AnalyzeData import AnalyzeData
+import numpy as np
 
 #import GeneralUtilities as ut
-#import numpy as np
 #import os
 #import pickle
 #import random
@@ -28,8 +26,41 @@ class KMCrun:
         
         self.output = OutputData()
         self.rescaling = RateRescaling()
-        self.analysis = AnalyzeData()
- 
+
+    def PlotSpecVsTime(self):
+        print 'Plot species vs. time'
+        
+    def PlotElemStepFreqs(self):
+        print 'Plot elementary step frequencies'
+    
+    def ComputeTOF(self,Product):                       # return TOF and TOF error
+        
+        # Find the index of the product species
+        product_ind = -1       
+        for i in enumerate(self.output.input.Species['gas_spec']):
+            if i[1] == Product:
+                product_ind = i[0]
+        
+        # Make sure the index has been found
+        if product_ind == -1:
+            print 'Product species not found'
+        else:
+            product_ind = product_ind + self.output.input.Species['n_surf']         # Adjust index to account for surface species   
+        
+        
+        nRxns = len(self.output.input.Reactions['Nu'])        
+        TOF_contributions = [0 for i in range(nRxns)]              # number of product molecules produced in each reaction        
+        for i, elem_stoich in enumerate(self.output.input.Reactions['Nu']):
+            TOF_stoich = elem_stoich[product_ind]
+            r = self.output.Binary['propCounter'][-1,i] / self.output.Specnum['t'][-1]
+            TOF_contributions[i] = TOF_stoich * r
+
+#            print TOF_stoich
+#            print TOF            
+            
+        print TOF_contributions    
+        TOF = np.sum(TOF_contributions)
+        return TOF        
         
 """
 

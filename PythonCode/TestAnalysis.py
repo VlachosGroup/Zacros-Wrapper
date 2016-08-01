@@ -5,8 +5,9 @@ Created on Thu Jul 28 13:48:34 2016
 @author: mpnun
 """
 
-#from KMCrun import KMCrun
+from KMCrun import KMCrun
 from OutputData import OutputData
+from AnalyzeData import AnalyzeData
 
 #import sys
 import os
@@ -21,8 +22,16 @@ os.system('cls')
 RunPath = 'C:/Users/mpnun/Desktop/test/1/'
 
 ## Test output ----------------
-y = OutputData()
-y.Path = RunPath
-y.ReadAllOutput()
+y = KMCrun()
+y.output.Path = RunPath
+y.output.ReadAllOutput()
+TOF = y.ComputeTOF('B')
+print TOF
 
-print y.Binary['W_sen_anal']
+#
+#print y.Binary['W_sen_anal']
+
+## Test analysis ----------------
+#x = AnalyzeData()
+#x.ReadMultipleRuns(RunPath)
+#x.runList[0].ComputeTOF('B')
