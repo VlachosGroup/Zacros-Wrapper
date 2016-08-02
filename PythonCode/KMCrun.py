@@ -8,6 +8,8 @@ Created on Thu Mar 03 14:54:26 2016
 from OutputData import OutputData
 from RateRescaling import RateRescaling
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mat
 
 #import GeneralUtilities as ut
 #import os
@@ -27,11 +29,48 @@ class KMCrun:
         self.output = OutputData()
         self.rescaling = RateRescaling()
 
-    def PlotSpecVsTime(self):
-        print 'Plot species vs. time'
+    def PlotOptions(self):
+        mat.rcParams['mathtext.default'] = 'regular'
+        mat.rcParams['text.latex.unicode'] = 'False'
+        mat.rcParams['legend.numpoints'] = 1
+        mat.rcParams['lines.linewidth'] = 4
+        mat.rcParams['lines.markersize'] = 16
+
+    def PlotSurfSpecVsTime(self):
+        self.PlotOptions
+            
+        for i in range (len(self.output.input.Species['surf_spec'])):
+            plt.plot(self.output.Specnum['t'], self.output.Specnum['spec'][:,i])    
         
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('time (s)',size=24)
+        plt.ylabel('spec. pop.',size=24)
+        plt.legend(self.output.input.Species['surf_spec'],loc=2,prop={'size':20},frameon=False)        
+        plt.show()
+    
+    def PlotGasSpecVsTime(self):
+        self.PlotOptions
+            
+        for i in range (len(self.output.input.Species['gas_spec'])):
+            ind = i + len(self.output.input.Species['surf_spec'])
+            plt.plot(self.output.Specnum['t'], self.output.Specnum['spec'][:,ind])    
+        
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('time (s)',size=24)
+        plt.ylabel('spec. pop.',size=24)
+        plt.legend(self.output.input.Species['gas_spec'],loc=2,prop={'size':20},frameon=False)        
+        plt.show()    
+    
     def PlotElemStepFreqs(self):
-        print 'Plot elementary step frequencies'
+                
+        for i in range (len(self.output.input.Reactions['Names'])):
+            if self.output.Procstat['events'][-1,i] > 0:
+                plt.barh(i, self.output.Procstat['events'][-1,i])
+#                plt.yticks(i,self.output.input.Reactions['Names'],size=24)
+    
+        plt.xlabel('frequency',size=24)
     
     def ComputeTOF(self,Product):                       # return TOF and TOF error
         
@@ -53,14 +92,12 @@ class KMCrun:
         for i, elem_stoich in enumerate(self.output.input.Reactions['Nu']):
             TOF_stoich = elem_stoich[product_ind]
             r = self.output.Binary['propCounter'][-1,i] / self.output.Specnum['t'][-1]
-            TOF_contributions[i] = TOF_stoich * r
-
-#            print TOF_stoich
-#            print TOF            
-            
-        print TOF_contributions    
+            TOF_contributions[i] = TOF_stoich * r         
+               
         TOF = np.sum(TOF_contributions)
-        return TOF        
+        TOF_fracs = TOF_contributions / TOF             # will need this for sensitivity analysis
+        return TOF
+#        return {'TOF', TOF, 'TOF_fracs', TOF_fracs}        
         
 """
 

@@ -52,7 +52,7 @@ class OutputData:
             self.ReadGeneral()
             self.ReadProcstat()
             self.ReadSpecnum()
-            self.ReadHistory()
+#            self.ReadHistory()
             
             self.ReadCluster()
             self.ReadProp(0)            
@@ -179,8 +179,8 @@ class OutputData:
             events.append(eventsTemp)
         
         self.Procstat['Spacing'] = Spacing
-        self.Procstat['t'] = t
-        self.Procstat['events'] = events
+        self.Procstat['t'] = np.asarray(t)
+        self.Procstat['events'] = np.asarray(events)
     
     def ReadSpecnum(self):
         MaxLen = np.int(2e4)
@@ -214,11 +214,11 @@ class OutputData:
             spec.append(specTemp)
         
         self.Specnum['Spacing'] = Spacing 
-        self.Specnum['nEvents']   = nEvents
-        self.Specnum['t']         = t
-        self.Specnum['T']         = T
-        self.Specnum['E']         = E
-        self.Specnum['spec']      = spec
+        self.Specnum['nEvents']   = np.asarray(nEvents)
+        self.Specnum['t']         = np.asarray(t)
+        self.Specnum['T']         = np.asarray(T)
+        self.Specnum['E']         = np.asarray(E)
+        self.Specnum['spec']      = np.asarray(spec)
     
     def ReadCluster(self):
         dt=np.dtype(np.int32)

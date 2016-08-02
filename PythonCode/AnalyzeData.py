@@ -9,10 +9,10 @@ from KMCrun import KMCrun
 import GeneralUtilities as ut
 import os
 import pickle
+import numpy as np
 
 ##import ReadOutputFiles as RO
 #import matplotlib.pyplot as plt
-#import numpy as np
 
 class AnalyzeData:
     
@@ -55,82 +55,72 @@ class AnalyzeData:
                 self.runList[i].output.ReadAllOutput()                               # Read input and output files
             pickle.dump( self.runList, open( Path + summary_fname, "wb" ) )          
 
+    # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
-        self.runAvg = self.runList[0]       # Placeholder: Really want to average all of the runs, not just copy the first one
         
-"""   
+        # Initialize run average with information from first run, then set data to zero
+        self.runAvg = KMCrun()      
+        self.runAvg.output.input = self.runList[0].output.input
+        self.runAvg.output.Specnum['t'] = self.runList[0].output.Specnum['t']
+             
+        self.runAvg.output.Specnum['spec'] = self.runList[0].output.Specnum['spec'] - self.runList[0].output.Specnum['spec']         
+        self.runAvg.output.Procstat['events'] = self.runList[0].output.Procstat['events'] - self.runList[0].output.Procstat['events']
+        self.runAvg.output.Binary['cluster'] = self.runList[0].output.Binary['cluster'] - self.runList[0].output.Binary['cluster']
+        self.runAvg.output.Binary['prop'] = self.runList[0].output.Binary['prop'] - self.runList[0].output.Binary['prop']
+        self.runAvg.output.Binary['propCounter'] = self.runList[0].output.Binary['propCounter'] - self.runList[0].output.Binary['propCounter']        
         
-    # Should perhaps make the sensitivity analysis a separate function so we can use it for both the transient and steady-state analysis    
-    def CalcRateTransient(self,CndIn,nSites=1,PropStoich=''):
-        if type(CndIn) == dict:
-            CndIn = [CndIn]
-            
-        n_rxns = len(CndIn[0]['Reactions']['Names'])
-        WList = np.zeros((len(CndIn),n_rxns))      # number of runs x number of reactions
-        rate_contributions = np.zeros((len(CndIn),n_rxns))      # number of runs x number of reactions
-        ind = 0
-
-        for Cnd in CndIn:        
-                
-            if PropStoich != '':               
-                
-                for i,PS in enumerate(Cnd['Reactions']['Nu']):
-                    if np.array_equal(PS,PropStoich):
-                        rate_contributions[ind,i] = Cnd['Binary']['prop'][-1,i]
-                    elif np.array_equal(PS,-np.array(PropStoich)):
-                        rate_contributions[ind,i] = -Cnd['Binary']['prop'][-1,i]
-                    else:
-                        rate_contributions[ind,i] = 0
-            else:
-                print 'Reaction rate stoichiometry not specified'                        
-            WList[ind,:] = np.array(Cnd['Binary']['W_sen_anal'][-1,:])      # Store sesitivity analysis data
-            ind += 1
-            
-        avg_rates = np.mean(rate_contributions,axis=0)
-        rate_fracs = avg_rates / np.sum(avg_rates)
-        rate_obj = np.sum(rate_contributions,axis=1)        
+        self.runAvg.output.Specnum['spec'] = self.runAvg.output.Specnum['spec'].astype(float)     
+        self.runAvg.output.Procstat['events'] = self.runAvg.output.Procstat['events'].astype(float) 
+        self.runAvg.output.Binary['cluster'] = self.runAvg.output.Binary['cluster'].astype(float)         
         
-        # Compute averages and confidence intervals
-        rate_obj = rate_obj / nSites            # normalize the observable by the number of active sites
-        Mean = np.mean(rate_obj)
-        CI = ut.GeneralUtilities().CI(np.array(rate_obj),axis=0)          
-        
-        # Compute sensitivity coefficients
-        SenCoeffraw = np.zeros(n_rxns)
-        SenCoeffCI = np.zeros(n_rxns)
-        
+        # Add data from each run
+        n_runs = len(self.runList)
+        for run in self.runList:
+            self.runAvg.output.Specnum['spec'] = self.runAvg.output.Specnum['spec'] + run.output.Specnum['spec'].astype(float) / n_runs         
+            self.runAvg.output.Procstat['events'] = self.runAvg.output.Procstat['events'] + run.output.Procstat['events'].astype(float) / n_runs 
+            self.runAvg.output.Binary['cluster'] = self.runAvg.output.Binary['cluster'] + run.output.Binary['cluster'].astype(float) / n_runs 
+            self.runAvg.output.Binary['prop'] = self.runAvg.output.Binary['prop'] + run.output.Binary['prop'] / n_runs 
+            self.runAvg.output.Binary['propCounter'] = self.runAvg.output.Binary['propCounter'] + run.output.Binary['propCounter'] / n_runs 
+     
+        n_rxns = len(self.runList[0].output.input.Reactions['Names'])
         for i in range(0,n_rxns):
-#            if CndIn[0]['StiffnessRecondition']['APSdF'][int(np.floor(i/2))] > 1:       # Reaction is fast and unimportant 
-#                SenCoeffraw[i] = 0
-#                SenCoeffCI[i] = 0
-#            else:                                           # Reaction is slow and may be important
-#                W = WList[:,i]                              # need to group these by reaction class
-#                cov_mat = np.cov(W,rate_obj)
-#                SenCoeffraw[i] = cov_mat[0,1] / Mean                   # normalize by the rate
-#                SenCoeffCI[i] = 0                                   # need to implement statistical bootstrapping to estimate the confidence interval
+            print ' '
+            print self.runList[0].output.input.Reactions['Names'][i]
+            print self.runAvg.output.Procstat['events'][-1,i]
+            print self.runAvg.output.Binary['propCounter'][-1,i] 
+     
+    def ComputeStats(self,product):
+        self.TOF = self.runAvg.ComputeTOF(product)
         
-            W = WList[:,i]                              # need to group these by reaction class
-            cov_mat = np.cov(W,rate_obj)
-            SenCoeffraw[i] = cov_mat[0,1] / Mean                   # normalize by the rate
-            SenCoeffCI[i] = 0                                   # need to implement statistical bootstrapping to estimate the confidence interval        
+        print 'TOF'
+        print self.TOF        
         
-        SenCoeffraw = SenCoeffraw + rate_fracs    # Add extra term which accounts for changes in the rate constant changing the propensity value      
-        
-        # Combine NSCs for like reactions
-        
-        unique_rxns = CndIn[0]['Reactions']['UniqNu']
-        SenCoeffCombined = np.zeros(int(len(unique_rxns)/2))
-        for i in range(0,len(SenCoeffCombined)):
-            for j,PS in enumerate(CndIn[0]['Reactions']['Nu']):
-                if np.array_equal(PS,unique_rxns[2*i]) | np.array_equal(PS,unique_rxns[2*i+1]):
-                    SenCoeffCombined[i] = SenCoeffCombined[i] + SenCoeffraw[j]
-                        
-#            print unique_rxns[2*i]
-#            print unique_rxns[2*i+1]
-#            print 'hi'
-            # unique reactions are in a weird order...
+        n_runs = len(self.runList)
+        n_rxns = len(self.runList[0].output.input.Reactions['Names'])
+        Wdata = np.zeros((n_runs,n_rxns))      # number of runs x number of reactions
+        TOFdata = np.zeros((n_runs))
+        ind = 0
+        for run in self.runList:
+#            Wdata[ind,:] = run.output.Binary['W_sen_anal'][-1,:]
+#            Wdata[ind,:] = run.output.Procstat['events'][-1,:] - run.output.Binary['propCounter'][-1,:]
+            Wdata[ind,:] = run.output.Binary['W_sen_anal'][-1,:]            
             
-        Output = {'Mean':Mean,'CI':CI,'SenCoeff':SenCoeffCombined,'SenCoeffCI':SenCoeffCI}
-
-        return Output
-"""
+                               
+            
+            TOFdata[ind] = run.ComputeTOF(product)
+            ind = ind + 1      
+        
+        print ' '
+        print 'NSC'        
+        
+        NSC = np.zeros((n_rxns/2,1))
+        NSC_ci = np.zeros((n_rxns/2,1))
+        for i in range(0,n_rxns/2):
+            W = Wdata[:,2*i] + Wdata[:,2*i+1]
+            cov_mat = np.cov(W, TOFdata)
+            NSC[i] = cov_mat[0,1] / self.TOF                   # normalize by the rate
+            NSC_ci[i] = 0                                   # need to implement statistical bootstrapping to estimate the confidence interval
+            
+            print ' '            
+            print self.runList[0].output.input.Reactions['Names'][2*i]
+            print NSC[i]

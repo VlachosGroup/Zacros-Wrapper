@@ -66,9 +66,9 @@ class InputData:
         self.Lattice['Input']                 = ''
 
         # Will deal with this later
-        self.InfoStiffnessRecondition             = {}
-        self.InfoStiffnessRecondition['Mode']     = ''
-        self.InfoStiffnessRecondition['APSdF']    = ''
+        self.StiffnessRecondition             = {}
+        self.StiffnessRecondition['Mode']     = ''
+        self.StiffnessRecondition['APSdF']    = ''
 
     def ReadAllInput(self):
     

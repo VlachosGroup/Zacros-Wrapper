@@ -253,7 +253,7 @@ if (specnum_on_event) then
 			write(Ewrite) globalenergy
 			write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
-			write(procstatfnum) (elemstep_noccur(i), i = 0, nelemsteps)																		! Write process statistics info			
+			write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
 			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
 			
         endif
@@ -277,7 +277,7 @@ if (specnum_on_event) then
 			write(Ewrite) globalenergy
 			write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
-			write(procstatfnum) (elemstep_noccur(i), i = 0, nelemsteps)																		! Write process statistics info			
+			write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
 			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
 		
         endif
@@ -305,7 +305,7 @@ else
 			write(Ewrite) globalenergy
 			write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
-			write(procstatfnum) (elemstep_noccur(i), i = 0, nelemsteps)																		! Write process statistics info			
+			write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
 			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
 			
             specnumtime = specnumtime * dtspecnum
@@ -331,7 +331,7 @@ else
 			write(Ewrite) globalenergy
 			write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
-			write(procstatfnum) (elemstep_noccur(i), i = 0, nelemsteps)																		! Write process statistics info			
+			write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
 			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
 				  
             specnumtime = specnumtime + dtspecnum
