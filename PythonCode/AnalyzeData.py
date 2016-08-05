@@ -10,6 +10,8 @@ import GeneralUtilities as ut
 import os
 import pickle
 import numpy as np
+import matplotlib.pyplot as plt
+from Stats import Stats
 
 ##import ReadOutputFiles as RO
 #import matplotlib.pyplot as plt
@@ -34,7 +36,7 @@ class AnalyzeData:
         self.TOF                              = ''
         self.TOF_error                        = ''
         self.NSC                              = ''
-        self.NSC_error                        = ''
+        self.NSC_ci                           = ''
         
         
     def ReadMultipleRuns(self,Path):
@@ -81,19 +83,10 @@ class AnalyzeData:
             self.runAvg.output.Binary['cluster'] = self.runAvg.output.Binary['cluster'] + run.output.Binary['cluster'].astype(float) / n_runs 
             self.runAvg.output.Binary['prop'] = self.runAvg.output.Binary['prop'] + run.output.Binary['prop'] / n_runs 
             self.runAvg.output.Binary['propCounter'] = self.runAvg.output.Binary['propCounter'] + run.output.Binary['propCounter'] / n_runs 
-     
-        n_rxns = len(self.runList[0].output.input.Reactions['Names'])
-        for i in range(0,n_rxns):
-            print ' '
-            print self.runList[0].output.input.Reactions['Names'][i]
-            print self.runAvg.output.Procstat['events'][-1,i]
-            print self.runAvg.output.Binary['propCounter'][-1,i] 
+
      
     def ComputeStats(self,product):
-        self.TOF = self.runAvg.ComputeTOF(product)
-        
-        print 'TOF'
-        print self.TOF        
+        self.TOF = self.runAvg.ComputeTOF(product)     
         
         n_runs = len(self.runList)
         n_rxns = len(self.runList[0].output.input.Reactions['Names'])
@@ -108,19 +101,39 @@ class AnalyzeData:
                                
             
             TOFdata[ind] = run.ComputeTOF(product)
-            ind = ind + 1      
+            ind = ind + 1             
         
-        print ' '
-        print 'NSC'        
-        
-        NSC = np.zeros((n_rxns/2,1))
-        NSC_ci = np.zeros((n_rxns/2,1))
+        self.NSC = np.zeros((n_rxns/2,1))
+        self.NSC_ci = np.zeros((n_rxns/2,1))
         for i in range(0,n_rxns/2):
             W = Wdata[:,2*i] + Wdata[:,2*i+1]
-            cov_mat = np.cov(W, TOFdata)
-            NSC[i] = cov_mat[0,1] / self.TOF                   # normalize by the rate
-            NSC_ci[i] = 0                                   # need to implement statistical bootstrapping to estimate the confidence interval
-            
-            print ' '            
-            print self.runList[0].output.input.Reactions['Names'][2*i]
-            print NSC[i]
+#            cov_mat = np.cov(W, TOFdata / self.TOF)     # normalize by the rate
+#            self.NSC[i] = cov_mat[0,1]    
+#            self.NSC_ci[i] = 0.1               
+            ci_info = Stats().cov_ci(W, TOFdata / self.TOF)
+            self.NSC[i] = ci_info[0]
+            self.NSC_ci[i] = ci_info[1]
+                                               
+    def PlotSensitivities(self): 
+        
+        self.runAvg.PlotOptions()
+        width = 0.8
+        ind = 0
+        yvals = []
+        ylabels = []
+        nrxns = len(self.runAvg.output.input.Reactions['Names'])
+        for i in range (nrxns/2):
+            cutoff = 0.05
+            if self.NSC[i] + self.NSC_ci[i] > cutoff or self.NSC[i] - self.NSC_ci[i] < -cutoff:     
+                plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')
+                ylabels.append(self.runAvg.output.input.Reactions['Input'][i]['Name'])              
+                yvals.append(ind-0.6)                
+                ind = ind - 1
+
+        plt.plot([0, 0], [0, ind], color='k')
+        plt.xlim([-1 ,1])
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('NSC',size=24)
+        plt.yticks(yvals, ylabels)
+        plt.show()

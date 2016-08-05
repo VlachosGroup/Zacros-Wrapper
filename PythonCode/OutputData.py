@@ -71,7 +71,7 @@ class OutputData:
                     Complete = True
         return Complete
 
-    def ReadGeneral(self):
+    def ReadGeneral(self):          # general_output.txt
         with open(self.Path + 'general_output.txt','r') as txt:
             RawTxt = txt.readlines()                
                 

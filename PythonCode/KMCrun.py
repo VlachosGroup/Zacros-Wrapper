@@ -49,6 +49,23 @@ class KMCrun:
         plt.legend(self.output.input.Species['surf_spec'],loc=2,prop={'size':20},frameon=False)        
         plt.show()
     
+    def PlotWVsTime(self):      # Helps analyze the sensitiivty analysis
+        self.PlotOptions
+            
+        labels = []
+        for i in range (len(self.output.input.Reactions['Names'])):
+            if np.max(np.abs(self.output.Binary['W_sen_anal'][:,i])) > 0:
+                plt.plot(self.output.Specnum['t'], self.output.Binary['W_sen_anal'][:,i]) 
+#                plt.plot(self.output.Specnum['t'], self.output.Procstat['events'][:,i] - self.output.Binary['propCounter'][:,i]) 
+                labels.append(self.output.input.Reactions['Names'][i])
+        
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('time (s)',size=24)
+        plt.ylabel('W',size=24)
+        plt.legend(self.output.input.Reactions['Names'],loc=2,prop={'size':20},frameon=False)        
+        plt.show()    
+    
     def PlotGasSpecVsTime(self):
         self.PlotOptions
             
@@ -64,13 +81,31 @@ class KMCrun:
         plt.show()    
     
     def PlotElemStepFreqs(self):
-                
-        for i in range (len(self.output.input.Reactions['Names'])):
-            if self.output.Procstat['events'][-1,i] > 0:
-                plt.barh(i, self.output.Procstat['events'][-1,i])
-#                plt.yticks(i,self.output.input.Reactions['Names'],size=24)
-    
+        
+        width = 0.2
+        ind = 0
+        yvals = []
+        ylabels = []
+        nRnxs = len(self.output.input.Reactions['Names'])
+        for i in range (nRnxs/2):            
+            if self.output.Procstat['events'][-1,2*i] + self.output.Procstat['events'][-1,2*i+1] > 0:
+                net_freq = abs(self.output.Procstat['events'][-1,2*i] - self.output.Procstat['events'][-1,2*i+1])               
+                if self.output.Procstat['events'][-1,2*i] > 0:              
+                    plt.barh(ind-0.4, self.output.Procstat['events'][-1,2*i], width, color='r')
+                if self.output.Procstat['events'][-1,2*i+1] > 0:
+                    plt.barh(ind-0.6, self.output.Procstat['events'][-1,2*i+1], width, color='b')
+                if net_freq > 0:
+                    plt.barh(ind-0.8, net_freq, width, color='g')
+                ylabels.append(self.output.input.Reactions['Input'][i]['Name'])                
+                yvals.append(ind-0.6)                
+                ind = ind - 1
+
+        plt.xticks(size=20)
+        plt.yticks(size=20)
         plt.xlabel('frequency',size=24)
+        plt.xscale('log')
+        plt.yticks(yvals, ylabels)
+        plt.show()
     
     def ComputeTOF(self,Product):                       # return TOF and TOF error
         

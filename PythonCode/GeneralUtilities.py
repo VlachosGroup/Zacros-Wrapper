@@ -160,11 +160,6 @@ class GeneralUtilities:
             nLines = sum( buf.count(b'\n') for buf in bufgen if buf )
         return nLines
         
-    def CI(self,Data,axis,p=0.025):
-        nPts = Data.shape[axis]
-        CI = np.std(Data,axis=axis) * stats.t.isf(p,nPts-1)/np.sqrt(nPts)
-        return CI
-        
     def CompareFileSize(self,Path1,Path2):
         if os.path.isfile(Path1) and os.path.isfile(Path2):        
             Size1 = os.stat(Path1).st_size

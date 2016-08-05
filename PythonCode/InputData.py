@@ -53,6 +53,7 @@ class InputData:
         self.Cluster['Input']                 = ''
         
         self.Reactions                        = {}
+        self.Reactions['nrxns']               = ''
         self.Reactions['Input']               = ''
         self.Reactions['Names']               = ''
         self.Reactions['Nu']                  = ''
