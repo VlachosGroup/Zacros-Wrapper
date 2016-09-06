@@ -21,12 +21,12 @@ import matplotlib.pyplot as plt
 
 os.system('cls')
 #RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0111/'
-RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/111/'
-BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/'
+#RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/111/'
+#BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/'
 #BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/'
-#BatchPath = 'C:/Users/mpnun/Desktop/test/'
+BatchPath = 'C:/Users/mpnun/Desktop/WGS_mass/'
 
-## Test single run ----------------
+''' Single run '''
 #y = KMCrun()
 #y.output.Path = RunPath
 #y.output.ReadAllOutput()
@@ -35,10 +35,26 @@ BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs
 #y.PlotGasSpecVsTime()
 #y.PlotElemStepFreqs()
 
+''' Group of runs '''
+
 # Test batch of runs ----------------
 x = AnalyzeData()
 x.ReadMultipleRuns(BatchPath)
 x.AverageRuns()
-#x.ComputeStats('B')
+
+
+x.runAvg.PlotSurfSpecVsTime()
+x.runAvg.PlotGasSpecVsTime()
+x.runAvg.PlotElemStepFreqs()
+x.WvarCheck() 
+
 x.ComputeStats('CO2')
+#x.ComputeStats('B')
 x.PlotSensitivities()
+
+print 'Sensitivities'
+print x.NSC
+print x.NSC_ci
+
+'Turnover frequency'
+print x.TOF

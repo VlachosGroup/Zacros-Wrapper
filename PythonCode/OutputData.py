@@ -263,7 +263,8 @@ class OutputData:
             nNum = nNum - (nNum % nRxn)
             virtual_arr = virtual_arr[:nNum]
             self.Binary['W_sen_anal'] = np.reshape(virtual_arr,[nNum/nRxn,nRxn])
-            self.Binary['W_sen_anal'] = np.array(self.Binary['W_sen_anal'][::self.Specnum['Spacing']])  
+            self.Binary['W_sen_anal'] = np.array(self.Binary['W_sen_anal'][::self.Specnum['Spacing']])
+            
             del virtual_arr
         else:
             print 'No sensitivity analysis output file'

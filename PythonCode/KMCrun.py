@@ -33,24 +33,76 @@ class KMCrun:
         mat.rcParams['mathtext.default'] = 'regular'
         mat.rcParams['text.latex.unicode'] = 'False'
         mat.rcParams['legend.numpoints'] = 1
-        mat.rcParams['lines.linewidth'] = 4
+        mat.rcParams['lines.linewidth'] = 2
         mat.rcParams['lines.markersize'] = 16
 
     def PlotSurfSpecVsTime(self):
-        self.PlotOptions
-            
+        self.PlotOptions()
+        plt.figure()        
+        
         for i in range (len(self.output.input.Species['surf_spec'])):
-            plt.plot(self.output.Specnum['t'], self.output.Specnum['spec'][:,i])    
+            plt.plot(self.output.Specnum['t'], self.output.Specnum['spec'][:,i]/600)    
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('spec. pop.',size=24)
-        plt.legend(self.output.input.Species['surf_spec'],loc=2,prop={'size':20},frameon=False)        
+#        plt.ylabel('coverage',size=24)
+        plt.legend(self.output.input.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)        
         plt.show()
     
-    def PlotWVsTime(self):      # Helps analyze the sensitiivty analysis
+    def PlotGasSpecVsTime(self):
+        self.PlotOptions()
+        plt.figure()          
+          
+        for i in range (len(self.output.input.Species['gas_spec'])):
+            ind = i + len(self.output.input.Species['surf_spec'])
+            plt.plot(self.output.Specnum['t'], self.output.Specnum['spec'][:,ind])    
+        
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('time (s)',size=24)
+        plt.ylabel('spec. pop.',size=24)
+        plt.legend(self.output.input.Species['gas_spec'],loc=2,prop={'size':20},frameon=False)        
+        plt.show()     
+    
+    def PlotPropsVsTime(self):      # Helps analyze the sensitivty analysis
         self.PlotOptions
+        plt.figure()            
+            
+        labels = []
+        for i in range (len(self.output.input.Reactions['Names'])):
+            if np.max(np.abs(self.output.Binary['prop'][:,i])) > 0:
+                plt.plot(self.output.Specnum['t'], self.output.Binary['prop'][:,i]) 
+                labels.append(self.output.input.Reactions['Names'][i])
+        
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('time (s)',size=24)
+        plt.ylabel('props',size=24)
+        plt.legend(self.output.input.Reactions['Names'],loc=2,prop={'size':20},frameon=False)        
+        plt.show()
+        
+    def PlotIntPropsVsTime(self):      # Helps analyze the sensitivty analysis
+        self.PlotOptions
+        plt.figure()            
+            
+        labels = []
+        for i in range (len(self.output.input.Reactions['Names'])):
+            if np.max(np.abs(self.output.Binary['propCounter'][:,i])) > 0:
+                plt.plot(self.output.Specnum['t'], self.output.Binary['propCounter'][:,i]) 
+                labels.append(self.output.input.Reactions['Names'][i])
+        
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('time (s)',size=24)
+        plt.ylabel('integral props',size=24)
+        plt.legend(self.output.input.Reactions['Names'],loc=2,prop={'size':20},frameon=False)        
+        plt.show()
+    
+    def PlotWVsTime(self):      # Helps analyze the sensitivty analysis
+        self.PlotOptions
+        plt.figure()            
             
         labels = []
         for i in range (len(self.output.input.Reactions['Names'])):
@@ -64,30 +116,19 @@ class KMCrun:
         plt.xlabel('time (s)',size=24)
         plt.ylabel('W',size=24)
         plt.legend(self.output.input.Reactions['Names'],loc=2,prop={'size':20},frameon=False)        
-        plt.show()    
-    
-    def PlotGasSpecVsTime(self):
-        self.PlotOptions
-            
-        for i in range (len(self.output.input.Species['gas_spec'])):
-            ind = i + len(self.output.input.Species['surf_spec'])
-            plt.plot(self.output.Specnum['t'], self.output.Specnum['spec'][:,ind])    
-        
-        plt.xticks(size=20)
-        plt.yticks(size=20)
-        plt.xlabel('time (s)',size=24)
-        plt.ylabel('spec. pop.',size=24)
-        plt.legend(self.output.input.Species['gas_spec'],loc=2,prop={'size':20},frameon=False)        
-        plt.show()    
+        plt.show()       
     
     def PlotElemStepFreqs(self):
+        self.PlotOptions
+        plt.figure()        
         
         width = 0.2
         ind = 0
         yvals = []
         ylabels = []
         nRnxs = len(self.output.input.Reactions['Names'])
-        for i in range (nRnxs/2):            
+        print self.output.Procstat['events'][-1,:]
+        for i in range (nRnxs/2): 
             if self.output.Procstat['events'][-1,2*i] + self.output.Procstat['events'][-1,2*i+1] > 0:
                 net_freq = abs(self.output.Procstat['events'][-1,2*i] - self.output.Procstat['events'][-1,2*i+1])               
                 if self.output.Procstat['events'][-1,2*i] > 0:              
@@ -126,13 +167,14 @@ class KMCrun:
         TOF_contributions = [0 for i in range(nRxns)]              # number of product molecules produced in each reaction        
         for i, elem_stoich in enumerate(self.output.input.Reactions['Nu']):
             TOF_stoich = elem_stoich[product_ind]
-            r = self.output.Binary['propCounter'][-1,i] / self.output.Specnum['t'][-1]
+            r = self.output.Binary['propCounter'][-1,i] / self.output.Specnum['t'][-1]      # ergodic average
+#            r = self.output.Binary['prop'][-1,i]                                           # non-ergodic average
             TOF_contributions[i] = TOF_stoich * r         
                
         TOF = np.sum(TOF_contributions)
         TOF_fracs = TOF_contributions / TOF             # will need this for sensitivity analysis
-        return TOF
-#        return {'TOF', TOF, 'TOF_fracs', TOF_fracs}        
+#        return TOF
+        return {'TOF': TOF, 'TOF_fracs': TOF_fracs}        
         
 """
 

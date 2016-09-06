@@ -301,7 +301,7 @@ else
 			! Extra binary output
 			write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
 			write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
-			write(Ewrite) specnumtime	
+			write(Ewrite) specnumtime
 			write(Ewrite) globalenergy
 			write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
