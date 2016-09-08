@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 from Stats import Stats
 
 ##import ReadOutputFiles as RO
-#import matplotlib.pyplot as plt
 
 class AnalyzeData:
     
@@ -86,7 +85,9 @@ class AnalyzeData:
 
      
     def ComputeStats(self,product):
-        self.TOF = self.runAvg.ComputeTOF(product)     
+        Tof_out = self.runAvg.ComputeTOF(product)
+        self.TOF = Tof_out['TOF']     
+        tof_fracs = Tof_out['TOF_fracs']          
         
         n_runs = len(self.runList)
         n_rxns = len(self.runList[0].output.input.Reactions['Names'])
@@ -95,13 +96,13 @@ class AnalyzeData:
         ind = 0
         for run in self.runList:
 #            Wdata[ind,:] = run.output.Binary['W_sen_anal'][-1,:]
-#            Wdata[ind,:] = run.output.Procstat['events'][-1,:] - run.output.Binary['propCounter'][-1,:]
-            Wdata[ind,:] = run.output.Binary['W_sen_anal'][-1,:]            
+            Wdata[ind,:] = run.output.Procstat['events'][-1,:] - run.output.Binary['propCounter'][-1,:]
+#            Wdata[ind,:] = run.output.Binary['W_sen_anal'][-1,:]            
             
                                
-            
-            TOFdata[ind] = run.ComputeTOF(product)
-            ind = ind + 1             
+            TOF_output = run.ComputeTOF(product)
+            TOFdata[ind] = TOF_output['TOF']
+            ind = ind + 1
         
         self.NSC = np.zeros((n_rxns/2,1))
         self.NSC_ci = np.zeros((n_rxns/2,1))
@@ -111,12 +112,48 @@ class AnalyzeData:
 #            self.NSC[i] = cov_mat[0,1]    
 #            self.NSC_ci[i] = 0.1               
             ci_info = Stats().cov_ci(W, TOFdata / self.TOF)
-            self.NSC[i] = ci_info[0]
+            self.NSC[i] = ci_info[0] + tof_fracs[2*i] + tof_fracs[2*i+1]
             self.NSC_ci[i] = ci_info[1]
-                                               
+                                   
+    def WvarCheck(self): 
+        
+        ''' Compute trajectory derivative variances vs. time '''        
+        
+        W_dims = self.runList[0].output.Binary['W_sen_anal'].shape
+        n_timepoints = W_dims[0]
+        n_rxns = W_dims[1]
+        n_runs = len(self.runList)        
+        
+        Wvars = np.zeros((n_timepoints,n_rxns))
+        for i in range(0,n_timepoints):
+            for j in range(0,n_rxns):
+                data_vec = np.zeros((n_runs))
+                for k in range(0,n_runs):
+                    data_vec[k] = self.runList[k].output.Binary['W_sen_anal'][i,j]
+                Wvars[i,j] = np.var(data_vec)
+        
+        ''' Plot results '''        
+        
+        self.runList[0].PlotOptions()
+        plt.figure()            
+            
+        labels = []
+        for i in range (len(self.runList[0].output.input.Reactions['Names'])):
+            if np.max(np.abs( Wvars[:,i] )) > 0:
+                plt.plot(self.runList[0].output.Specnum['t'], Wvars[:,i])
+                labels.append(self.runList[0].output.input.Reactions['Names'][i])
+        
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+#        plt.xlabel('time (s)',size=24)
+#        plt.ylabel('var(W)',size=24)
+#        plt.legend(self.runList[0].output.input.Reactions['Names'],loc=4,prop={'size':20},frameon=False)        
+        plt.show()
+        
     def PlotSensitivities(self): 
         
         self.runAvg.PlotOptions()
+        plt.figure()
         width = 0.8
         ind = 0
         yvals = []
@@ -131,7 +168,7 @@ class AnalyzeData:
                 ind = ind - 1
 
         plt.plot([0, 0], [0, ind], color='k')
-        plt.xlim([-1 ,1])
+        plt.xlim([0,1])
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('NSC',size=24)

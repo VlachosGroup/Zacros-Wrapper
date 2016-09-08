@@ -69,7 +69,7 @@ class InputData:
         # Will deal with this later
         self.StiffnessRecondition             = {}
         self.StiffnessRecondition['Mode']     = ''
-        self.StiffnessRecondition['APSdF']    = ''
+        self.StiffnessRecondition['SDF']    = ''
 
     def ReadAllInput(self):
     
@@ -179,7 +179,9 @@ class InputData:
                 
         if StiffCorrLine != -1:
             self.StiffnessRecondition['Mode'] = RawTxt[StiffCorrLine+1].split(':')[1].split('\n')[0].split()[0]
-            self.StiffnessRecondition['APSdF'] = [np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
+            self.StiffnessRecondition['SDF'] = [np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
+        
+        self.Reactions['nrxns'] = 0        
         
         MechInd = np.array([[0,0]]*nMech)
         Count = 0
@@ -237,6 +239,9 @@ class InputData:
                 if RawTxt[i].split()[0]=='end_variant':
                     variantInd[Count,1] = i
                     Count +=1
+            
+            self.Reactions['nrxns'] += nVariant
+            
             for k in range(0,nVariant):
                 for i in range(variantInd[k,0],variantInd[k,1]):
                     if RawTxt[i].split()[0]=='variant':
@@ -256,6 +261,9 @@ class InputData:
                     else:
                         print 'Unparsed line in mechanism variant:'
                         print RawTxt[i]
+        
+        if StiffCorrLine == -1:
+            self.StiffnessRecondition['SDF'] = np.ones(self.Reactions['nrxns'])    
         
         self.Reactions['Input'] = MechDict    
         

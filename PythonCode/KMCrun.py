@@ -41,7 +41,7 @@ class KMCrun:
         plt.figure()        
         
         for i in range (len(self.output.input.Species['surf_spec'])):
-            plt.plot(self.output.Specnum['t'], self.output.Specnum['spec'][:,i]/600)    
+            plt.plot(self.output.Specnum['t'], self.output.Specnum['spec'][:,i])    
         
         plt.xticks(size=20)
         plt.yticks(size=20)
