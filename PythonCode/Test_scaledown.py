@@ -22,22 +22,29 @@ import matplotlib.pyplot as plt
 os.system('cls')
 
 #RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0111/'
-RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/111/'
+#RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/111/'
 #RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/LocalRun/Run/'
+RunPath1 = 'C:/Users/mpnun/Desktop/fldr1/'
+RunPath2 = 'C:/Users/mpnun/Desktop/fldr2/'
 
 ''' Single run '''
 y = KMCrun()
-y.output.Path = RunPath
-y.output.ReadAllOutput()
+y.data.Path = RunPath1
+y.data.ReadAllOutput()
 
-print 'Mode'
-print y.output.input.StiffnessRecondition['Mode']
+y.data.Path = RunPath2
+y.data.WriteAllInput()
 
-print 'APSDF'
-print y.output.input.StiffnessRecondition['SDF']
+y.PlotWVsTime()
 
-#print y.output.input.Reactions['Input']
-print y.output.input.Reactions['nrxns']
+#print 'Mode'
+#print y.output.input.StiffnessRecondition['Mode']
+#
+#print 'Scaledown factor'
+#print y.output.input.StiffnessRecondition['SDF']
+#
+##print y.output.input.Reactions['Input']
+#print y.output.input.Reactions['nrxns']
 
 #TOF = y.ComputeTOF('B')
 #y.PlotSurfSpecVsTime()

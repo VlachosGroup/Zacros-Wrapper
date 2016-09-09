@@ -18,19 +18,14 @@ from Stats import Stats
 class AnalyzeData:
     
     def __init__(self):
-                
+             
+        # Folder info
         self.ParentFolder                     = ''
         self.runList                          = []      
-        self.runAvg                           = KMCrun()            # Values are averages of all runs        
+        self.runAvg                           = KMCrun()            # Values are averages of all runs                
+        self.n_runs = 0        
         
-        self.ACF                              = {}
-        self.ACF['Spacing']                   = {}
-        self.ACF['Spacing']['Value']          = ''
-        self.ACF['Spacing']['String']         = ''
-        self.ACF['TauSep']                    = {}
-        self.ACF['TauSep']['BurnIn']          = ''
-        self.ACF['TauSep']['PostBurnIn']      = ''
-        
+        # Analysis
         self.Product                          = ''
         self.TOF                              = ''
         self.TOF_error                        = ''
@@ -52,36 +47,36 @@ class AnalyzeData:
                 print 'Reading run # ' + str(i+1) + ' / ' + str(nDir)
                 RunPath = Path + DirList[i] + '/'
                 self.runList[i]  = KMCrun()
-                self.runList[i].output.Path = RunPath
-                self.runList[i].output.ReadAllOutput()                               # Read input and output files
-            pickle.dump( self.runList, open( Path + summary_fname, "wb" ) )          
+                self.runList[i].data.Path = RunPath
+                self.runList[i].data.ReadAllOutput()                               # Read input and output files
+            pickle.dump( self.runList, open( Path + summary_fname, "wb" ) )  
+        self.n_runs = len(self.runList)
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
         
         # Initialize run average with information from first run, then set data to zero
         self.runAvg = KMCrun()      
-        self.runAvg.output.input = self.runList[0].output.input
-        self.runAvg.output.Specnum['t'] = self.runList[0].output.Specnum['t']
+        self.runAvg.data = self.runList[0].data
+        self.runAvg.data.Specnum['t'] = self.runList[0].data.Specnum['t']
              
-        self.runAvg.output.Specnum['spec'] = self.runList[0].output.Specnum['spec'] - self.runList[0].output.Specnum['spec']         
-        self.runAvg.output.Procstat['events'] = self.runList[0].output.Procstat['events'] - self.runList[0].output.Procstat['events']
-        self.runAvg.output.Binary['cluster'] = self.runList[0].output.Binary['cluster'] - self.runList[0].output.Binary['cluster']
-        self.runAvg.output.Binary['prop'] = self.runList[0].output.Binary['prop'] - self.runList[0].output.Binary['prop']
-        self.runAvg.output.Binary['propCounter'] = self.runList[0].output.Binary['propCounter'] - self.runList[0].output.Binary['propCounter']        
+        self.runAvg.data.Specnum['spec'] = self.runList[0].data.Specnum['spec'] - self.runList[0].data.Specnum['spec']         
+        self.runAvg.data.Procstat['events'] = self.runList[0].data.Procstat['events'] - self.runList[0].data.Procstat['events']
+        self.runAvg.data.Binary['cluster'] = self.runList[0].data.Binary['cluster'] - self.runList[0].data.Binary['cluster']
+        self.runAvg.data.Binary['prop'] = self.runList[0].data.Binary['prop'] - self.runList[0].data.Binary['prop']
+        self.runAvg.data.Binary['propCounter'] = self.runList[0].data.Binary['propCounter'] - self.runList[0].data.Binary['propCounter']        
         
-        self.runAvg.output.Specnum['spec'] = self.runAvg.output.Specnum['spec'].astype(float)     
-        self.runAvg.output.Procstat['events'] = self.runAvg.output.Procstat['events'].astype(float) 
-        self.runAvg.output.Binary['cluster'] = self.runAvg.output.Binary['cluster'].astype(float)         
+        self.runAvg.data.Specnum['spec'] = self.runAvg.data.Specnum['spec'].astype(float)     
+        self.runAvg.data.Procstat['events'] = self.runAvg.data.Procstat['events'].astype(float) 
+        self.runAvg.data.Binary['cluster'] = self.runAvg.data.Binary['cluster'].astype(float)         
         
         # Add data from each run
-        n_runs = len(self.runList)
         for run in self.runList:
-            self.runAvg.output.Specnum['spec'] = self.runAvg.output.Specnum['spec'] + run.output.Specnum['spec'].astype(float) / n_runs         
-            self.runAvg.output.Procstat['events'] = self.runAvg.output.Procstat['events'] + run.output.Procstat['events'].astype(float) / n_runs 
-            self.runAvg.output.Binary['cluster'] = self.runAvg.output.Binary['cluster'] + run.output.Binary['cluster'].astype(float) / n_runs 
-            self.runAvg.output.Binary['prop'] = self.runAvg.output.Binary['prop'] + run.output.Binary['prop'] / n_runs 
-            self.runAvg.output.Binary['propCounter'] = self.runAvg.output.Binary['propCounter'] + run.output.Binary['propCounter'] / n_runs 
+            self.runAvg.data.Specnum['spec'] = self.runAvg.data.Specnum['spec'] + run.data.Specnum['spec'].astype(float) / self.n_runs     
+            self.runAvg.data.Procstat['events'] = self.runAvg.data.Procstat['events'] + run.data.Procstat['events'].astype(float) / self.n_runs
+            self.runAvg.data.Binary['cluster'] = self.runAvg.data.Binary['cluster'] + run.data.Binary['cluster'].astype(float) / self.n_runs
+            self.runAvg.data.Binary['prop'] = self.runAvg.data.Binary['prop'] + run.data.Binary['prop'] / self.n_runs
+            self.runAvg.data.Binary['propCounter'] = self.runAvg.data.Binary['propCounter'] + run.data.Binary['propCounter'] / self.n_runs
 
      
     def ComputeStats(self,product):
@@ -89,16 +84,13 @@ class AnalyzeData:
         self.TOF = Tof_out['TOF']     
         tof_fracs = Tof_out['TOF_fracs']          
         
-        n_runs = len(self.runList)
-        n_rxns = len(self.runList[0].output.input.Reactions['Names'])
-        Wdata = np.zeros((n_runs,n_rxns))      # number of runs x number of reactions
-        TOFdata = np.zeros((n_runs))
+        n_rxns = len(self.runList[0].data.Reactions['Names'])
+        Wdata = np.zeros((self.n_runs,n_rxns))      # number of runs x number of reactions
+        TOFdata = np.zeros((self.n_runs))
         ind = 0
         for run in self.runList:
-#            Wdata[ind,:] = run.output.Binary['W_sen_anal'][-1,:]
-            Wdata[ind,:] = run.output.Procstat['events'][-1,:] - run.output.Binary['propCounter'][-1,:]
-#            Wdata[ind,:] = run.output.Binary['W_sen_anal'][-1,:]            
-            
+#            Wdata[ind,:] = run.data.Binary['W_sen_anal'][-1,:]
+            Wdata[ind,:] = run.data.Procstat['events'][-1,:] - run.data.Binary['propCounter'][-1,:]            
                                
             TOF_output = run.ComputeTOF(product)
             TOFdata[ind] = TOF_output['TOF']
@@ -119,17 +111,16 @@ class AnalyzeData:
         
         ''' Compute trajectory derivative variances vs. time '''        
         
-        W_dims = self.runList[0].output.Binary['W_sen_anal'].shape
+        W_dims = self.runList[0].data.Binary['W_sen_anal'].shape
         n_timepoints = W_dims[0]
-        n_rxns = W_dims[1]
-        n_runs = len(self.runList)        
+        n_rxns = W_dims[1]       
         
         Wvars = np.zeros((n_timepoints,n_rxns))
         for i in range(0,n_timepoints):
             for j in range(0,n_rxns):
-                data_vec = np.zeros((n_runs))
-                for k in range(0,n_runs):
-                    data_vec[k] = self.runList[k].output.Binary['W_sen_anal'][i,j]
+                data_vec = np.zeros((self.n_runs))
+                for k in range(0,self.n_runs):
+                    data_vec[k] = self.runList[k].data.Binary['W_sen_anal'][i,j]
                 Wvars[i,j] = np.var(data_vec)
         
         ''' Plot results '''        
@@ -138,16 +129,16 @@ class AnalyzeData:
         plt.figure()            
             
         labels = []
-        for i in range (len(self.runList[0].output.input.Reactions['Names'])):
+        for i in range (len(self.runList[0].data.Reactions['Names'])):
             if np.max(np.abs( Wvars[:,i] )) > 0:
-                plt.plot(self.runList[0].output.Specnum['t'], Wvars[:,i])
-                labels.append(self.runList[0].output.input.Reactions['Names'][i])
+                plt.plot(self.runList[0].data.Specnum['t'], Wvars[:,i])
+                labels.append(self.runList[0].data.Reactions['Names'][i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
 #        plt.xlabel('time (s)',size=24)
 #        plt.ylabel('var(W)',size=24)
-#        plt.legend(self.runList[0].output.input.Reactions['Names'],loc=4,prop={'size':20},frameon=False)        
+#        plt.legend(self.runList[0].data.Reactions['Names'],loc=4,prop={'size':20},frameon=False)        
         plt.show()
         
     def PlotSensitivities(self): 
@@ -158,12 +149,12 @@ class AnalyzeData:
         ind = 0
         yvals = []
         ylabels = []
-        nrxns = len(self.runAvg.output.input.Reactions['Names'])
+        nrxns = len(self.runAvg.data.Reactions['Names'])
         for i in range (nrxns/2):
             cutoff = 0.05
             if self.NSC[i] + self.NSC_ci[i] > cutoff or self.NSC[i] - self.NSC_ci[i] < -cutoff:     
                 plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')
-                ylabels.append(self.runAvg.output.input.Reactions['Input'][i]['Name'])              
+                ylabels.append(self.runAvg.data.Reactions['Input'][i]['Name'])              
                 yvals.append(ind-0.6)                
                 ind = ind - 1
 
