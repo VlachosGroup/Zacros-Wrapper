@@ -6,7 +6,6 @@ Created on Thu Mar 03 14:54:26 2016
 """
 
 from KMCrun_data import KMCrun_data
-from RateRescaling import RateRescaling
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mat
@@ -27,7 +26,6 @@ class KMCrun:
     def __init__(self):
         
         self.data = KMCrun_data()
-        self.rescaling = RateRescaling()
 
     def PlotOptions(self):
         mat.rcParams['mathtext.default'] = 'regular'

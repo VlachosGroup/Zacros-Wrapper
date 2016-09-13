@@ -6,11 +6,11 @@ Created on Thu Jul 28 13:48:34 2016
 """
 
 from KMCrun import KMCrun
-from OutputData import OutputData
 from AnalyzeData import AnalyzeData
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from RateRescaling import RateRescaling
 
 #import sys
 #import subprocess
@@ -21,21 +21,18 @@ import matplotlib.pyplot as plt
 
 os.system('cls')
 
-#RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0111/'
+RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0111/'
 #RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/111/'
 #RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/LocalRun/Run/'
-RunPath1 = 'C:/Users/mpnun/Desktop/fldr1/'
-RunPath2 = 'C:/Users/mpnun/Desktop/fldr2/'
 
 ''' Single run '''
 y = KMCrun()
-y.data.Path = RunPath1
+y.data.Path = RunPath
 y.data.ReadAllOutput()
 
-y.data.Path = RunPath2
-y.data.WriteAllInput()
-
-y.PlotWVsTime()
+z = RateRescaling()
+z.KMC_system = y
+z.PerformScaledown()
 
 #print 'Mode'
 #print y.output.input.StiffnessRecondition['Mode']
