@@ -34,34 +34,34 @@ class RateRescaling:
         max_events = 1e5
         converged = False
         iteration = 0        
-        cutoff = 0.5                # If a rate constant is changing by a half-order of magnititude or more, continue        
+        cutoff = 0.5                # If a rate constant is changing by a half-order of magnititude or more, continue
         
         self.SDF_mat = self.KMC_system.data.scaledown_factors
         
         while not converged and iteration < max_iterations:
-            print 'Iteration number ' + str(iteration)
-            print self.KMC_system.data.scaledown_factors
-            print '\n'
-            iteration += 1
             
-            # Run KMC simulation
+            iteration += 1
+            print 'Iteration number ' + str(iteration) + '\n'
+            
+            self.KMC_system.data.WriteAllInput()
+            self.KMC_system.Run_sim()
+            self.KMC_system.data.ReadAllOutput()
             delta_sdf = self.ProcessStepFreqs()         # compute change in scaledown factors based on simulation result
             # Check convergence
-#            if np.max(np.log10(delta_sdf)) < cutoff:             # if delta_sdf's are small
-#                converged = True
+            if np.max(np.abs(np.log10(delta_sdf))) < cutoff:             # converged if changes to rate constants are small enough
+                converged = True
+                                   
+            for rxn_ind in range (self.KMC_system.data.Reactions['nrxns']):            
+                self.KMC_system.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.KMC_system.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
+                self.KMC_system.data.scaledown_factors[rxn_ind] = self.KMC_system.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
             
             self.SDF_mat = np.vstack([self.SDF_mat,self.KMC_system.data.scaledown_factors])            
-            for i in range (len(self.KMC_system.data.Reactions['nrxns'])):            
-            
-            
-        self.PlotStiffnessReduction()
-        print self.SDF_mat
+
         # return time-scale information, use this to set a good sampling time for big run
                   
-    def ProcessStepFreqs(self):
-        # Process KMC output and determine how to further scale down reactions
-        print 'Rescaling rate constants\n'
-        self.KMC_system.data.ReadAllOutput()
+    def ProcessStepFreqs(self):                 # Process KMC output and determine how to further scale down reactions
+        stiff_cut = 100                     # minimum time scale separation
+        # data analysis
         delta_sdf = np.ones(self.KMC_system.data.Reactions['nrxns'])
         return delta_sdf
  
@@ -75,14 +75,14 @@ class RateRescaling:
     
     def PlotStiffnessReduction(self):
         
-        ''' Data '''
-        iterations = np.array([0, 1, 2, 3, 4, 5])
-        COads_SDF = np.array([1, 1.1e-2, 8.9e-4, 5.0e-4, 3.3e-4, 3.1e-4])
-        H2Oads_SDF = np.array([1, 8.2e-3, 1.1e-4, 9.3e-6, 3.3e-6, 2.1e-6])
-        slow_rxn = np.array([1, 1, 1, 1, 1, 1])
+        # Data
+        SDF_dims = self.SDF_mat.shape
+        n_iterations = SDF_dims[0]
+        n_rxns = SDF_dims[1]
+        iterations = range(n_iterations)
+        rxn_labels = []
         
-        ''' Plotting '''
-        
+        # Plotting
         mat.rcParams['mathtext.default'] = 'regular'
         mat.rcParams['text.latex.unicode'] = 'False'
         mat.rcParams['legend.numpoints'] = 1
@@ -91,15 +91,15 @@ class RateRescaling:
         
         plt.figure()
         
-        plt.plot(iterations, COads_SDF, 'o-', markersize = 15)
-        plt.plot(iterations, H2Oads_SDF, 'o-', markersize = 15)
-        plt.plot(iterations, slow_rxn, 'o-', markersize = 15)
+        for i in range(n_rxns):
+            plt.plot(iterations, np.transpose(self.SDF_mat[:,i]), 'o-', markersize = 15)
+            rxn_labels.append(self.KMC_system.data.Reactions['Input'][i]['Name'])   
         
         plt.xticks(size=24)
-        plt.yticks([1e-6, 1e-4, 1e-2, 1e0], size=24)            # not working
+        plt.yticks(size=24)
         plt.xlabel('iterations',size=30)
         plt.ylabel('scaledown factor',size=30)
-        plt.legend(['CO ads.', '$H_2O$  $ads.$', 'slow rxns'],loc=1,prop={'size':20},frameon=False)
+        plt.legend(rxn_labels,loc=1,prop={'size':20},frameon=False)
         plt.show()
         
         plt.yscale('log')

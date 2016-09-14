@@ -16,6 +16,7 @@ class KMC_lattice:
         
         self.workingdir = ''
         self.lattice_matrix = np.zeros((2,2))         # each row is a lattice vector
+        self.repeat = [1,1]
         self.site_type_names = ''
         self.site_type_inds = ''
         self.frac_coords = ''
@@ -24,6 +25,10 @@ class KMC_lattice:
         self.mol_dat = ''                           # ASE-compatible object for the atomic positions
 
     def PlotLattice(self):
+        
+        cart_coords = np.dot(self.frac_coords,self.lattice_matrix)      
+        border = np.dot(np.array([[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0],[0.0,0.0]]),self.lattice_matrix)             
+        
         mat.rcParams['mathtext.default'] = 'regular'
         mat.rcParams['text.latex.unicode'] = 'False'
         mat.rcParams['legend.numpoints'] = 1
@@ -32,7 +37,10 @@ class KMC_lattice:
         
         plt.figure()
         
-        plt.plot([1,2,3,4],[1,4,9,16])    
+        plt.plot(border[:,0], border[:,1], '--k', linewidth = 4)                  # cell border 
+        plt.plot(cart_coords[:,0], cart_coords[:,1], 'o', markersize = 15)          # sites     
+        for pair in self.neighbor_list:                                             # neighbors
+            plt.plot([cart_coords[pair[0]-1,0],cart_coords[pair[1]-1,0]], [cart_coords[pair[0]-1,1],cart_coords[pair[1]-1,1]], '-k', linewidth = 2)
         
         plt.xticks(size=20)
         plt.yticks(size=20)
@@ -45,7 +53,7 @@ class KMC_lattice:
         # Plot lines between nearest-neighbors        
         
     def Read_lattice_KMC(self):
-        print 'Reading lattice_input.dat and lattice_output.txt'
+        print 'Reading lattice_input.dat'
     
     def Write_lattice_input(self):
         with open(self.workingdir + '/lattice_input.dat', 'w') as txt:
@@ -55,7 +63,7 @@ class KMC_lattice:
             txt.write('\t {0:.3f} \t {0:.3f} \n'.format(self.lattice_matrix[0,0],str(self.lattice_matrix[0,1])))
             txt.write('\t {0:.3f} \t {0:.3f} \n\n'.format(self.lattice_matrix[1,0],str(self.lattice_matrix[1,1])))
 
-            txt.write('repeat_cell\t 1 \t 1 \n\n')
+            txt.write('repeat_cell\t {} \t {} \n\n'.format(self.repeat[0],self.repeat[1]))
 
             txt.write('n_cell_sites \t {} \n'.format(len(self.site_type_inds)))
             txt.write('n_site_types \t {} \n'.format(len(self.site_type_names)))

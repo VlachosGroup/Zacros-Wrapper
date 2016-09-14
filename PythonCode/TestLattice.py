@@ -24,7 +24,7 @@ os.system('cls')
 ''' Define and print lattice '''
 lat = KMC_lattice()
 lat.workingdir = 'C:\Users\mpnun\Desktop\lat_test'
-lat.lattice_matrix = np.array([[1.0,0.0],[0.0,1.0]])
+lat.lattice_matrix = np.array([[3.0,0.0],[0.0,3.0]])
 lat.site_type_names = ['top','fcc']
 lat.site_type_inds = [1,1,1,1,1,1,2,2,2]
 lat.frac_coords = np.array([[0.0,0.0],[0.3,0.0],[0.6,0.0],[0.0,0.3],[0.3,0.3],[0.6,0.3],[0.0,0.6],[0.3,0.6],[0.6,0.6]])

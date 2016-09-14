@@ -8,6 +8,7 @@ Created on Thu Sep 08 16:58:21 2016
 import os
 import GeneralUtilities as ut
 import KMCUtilities as KMCut
+from KMC_lattice import KMC_lattice
 import numpy as np
 import re
 import linecache
@@ -66,6 +67,7 @@ class KMCrun_data:
         
         self.Lattice                          = {}
         self.Lattice['Input']                 = ''
+        self.KMC_lat = ''
 
         self.scaledown_factors    = ''
 
@@ -254,9 +256,9 @@ class KMCrun_data:
                             MechDict[j]['final'][k] = MechDict[j]['final'][k].split('\n')[0]
                     for k in range(0,nSites):
                         StateLine.append(i+1+k)
-                elif not InVariant and i not in StateLine:
-                    print 'Unparsed line in mechanism input:'
-                    print RawTxt[i]
+#                elif not InVariant and i not in StateLine:
+#                    print 'Unparsed line in mechanism input:'
+#                    print RawTxt[i]
             nVariant = Count  
             MechDict[j]['variant']=[{'Name':'','site_types':'','pre_expon':'','pe_ratio':'','activ_eng':'','prox_factor':''} for k in range(0,nVariant)]     
             variantInd = np.array([[0,0]]*nVariant)
@@ -286,9 +288,9 @@ class KMCrun_data:
                         MechDict[j]['variant'][k]['prox_factor'] = float(RawTxt[i].split()[1])
                     elif RawTxt[i].split()[0] == '#':
                         pass
-                    else:
-                        print 'Unparsed line in mechanism variant:'
-                        print RawTxt[i]
+#                    else:
+#                        print 'Unparsed line in mechanism variant:'
+#                        print RawTxt[i]
         
         if StiffCorrLine == -1:
             self.scaledown_factors = np.ones(self.Reactions['nrxns'])    
@@ -355,9 +357,9 @@ class KMCrun_data:
                         self.Conditions['WallTime']['Max'] = np.int(i.split()[1])
                     elif i.split()[0] == 'finish' or i.split()[0] == 'n_gas_species' or i.split()[0] == 'n_surf_species':
                         pass
-                    else:
-                        print 'Unparsed line in simulation_input.dat:'
-                        print i
+#                    else:
+#                        print 'Unparsed line in simulation_input.dat:'
+#                        print i
         
     def StateInc(self,i):
         if re.search('off',i):

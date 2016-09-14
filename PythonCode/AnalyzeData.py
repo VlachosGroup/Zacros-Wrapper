@@ -22,7 +22,7 @@ class AnalyzeData:
         # Folder info
         self.ParentFolder                     = ''
         self.runList                          = []      
-        self.runAvg                           = KMCrun()            # Values are averages of all runs                
+        self.runAvg                           = KMCrun()            # Values are averages of all runs
         self.n_runs = 0        
         
         # Analysis
@@ -84,21 +84,20 @@ class AnalyzeData:
         self.TOF = Tof_out['TOF']     
         tof_fracs = Tof_out['TOF_fracs']          
         
-        n_rxns = len(self.runList[0].data.Reactions['Names'])
-        Wdata = np.zeros((self.n_runs,n_rxns))      # number of runs x number of reactions
+        Wdata = np.zeros((self.n_runs,2*self.runList[0].data.Reactions['nrxns']))      # number of runs x number of reactions
         TOFdata = np.zeros((self.n_runs))
         ind = 0
         for run in self.runList:
-#            Wdata[ind,:] = run.data.Binary['W_sen_anal'][-1,:]
-            Wdata[ind,:] = run.data.Procstat['events'][-1,:] - run.data.Binary['propCounter'][-1,:]            
+            Wdata[ind,:] = run.data.Binary['W_sen_anal'][-1,:]
+#            Wdata[ind,:] = run.data.Procstat['events'][-1,:] - run.data.Binary['propCounter'][-1,:]            
                                
             TOF_output = run.ComputeTOF(product)
             TOFdata[ind] = TOF_output['TOF']
             ind = ind + 1
         
-        self.NSC = np.zeros((n_rxns/2,1))
-        self.NSC_ci = np.zeros((n_rxns/2,1))
-        for i in range(0,n_rxns/2):
+        self.NSC = np.zeros((self.runList[0].data.Reactions['nrxns'],1))
+        self.NSC_ci = np.zeros((self.runList[0].data.Reactions['nrxns'],1))
+        for i in range(0,self.runList[0].data.Reactions['nrxns']):
             W = Wdata[:,2*i] + Wdata[:,2*i+1]
 #            cov_mat = np.cov(W, TOFdata / self.TOF)     # normalize by the rate
 #            self.NSC[i] = cov_mat[0,1]    
@@ -123,10 +122,10 @@ class AnalyzeData:
                     data_vec[k] = self.runList[k].data.Binary['W_sen_anal'][i,j]
                 Wvars[i,j] = np.var(data_vec)
         
-        ''' Plot results '''        
+        ''' Plot results '''
         
         self.runList[0].PlotOptions()
-        plt.figure()            
+        plt.figure()
             
         labels = []
         for i in range (len(self.runList[0].data.Reactions['Names'])):
@@ -136,9 +135,9 @@ class AnalyzeData:
         
         plt.xticks(size=20)
         plt.yticks(size=20)
-#        plt.xlabel('time (s)',size=24)
-#        plt.ylabel('var(W)',size=24)
-#        plt.legend(self.runList[0].data.Reactions['Names'],loc=4,prop={'size':20},frameon=False)        
+        plt.xlabel('time (s)',size=24)
+        plt.ylabel('var(W)',size=24)
+        plt.legend(self.runList[0].data.Reactions['Names'],loc=4,prop={'size':20},frameon=False)        
         plt.show()
         
     def PlotSensitivities(self): 
@@ -149,8 +148,7 @@ class AnalyzeData:
         ind = 0
         yvals = []
         ylabels = []
-        nrxns = len(self.runAvg.data.Reactions['Names'])
-        for i in range (nrxns/2):
+        for i in range (self.runList[0].data.Reactions['nrxns']):
             cutoff = 0.05
             if self.NSC[i] + self.NSC_ci[i] > cutoff or self.NSC[i] - self.NSC_ci[i] < -cutoff:     
                 plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')

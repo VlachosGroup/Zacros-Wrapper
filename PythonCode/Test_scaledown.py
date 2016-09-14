@@ -21,18 +21,20 @@ from RateRescaling import RateRescaling
 
 os.system('cls')
 
-RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0111/'
+#RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0111/'
 #RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/111/'
 #RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/LocalRun/Run/'
+RunPath = 'C:/Users/mpnun/Desktop/rescale_test/'
 
 ''' Single run '''
 y = KMCrun()
 y.data.Path = RunPath
-y.data.ReadAllOutput()
+y.data.ReadAllInput()
 
 z = RateRescaling()
 z.KMC_system = y
 z.PerformScaledown()
+z.PlotStiffnessReduction()
 
 #print 'Mode'
 #print y.output.input.StiffnessRecondition['Mode']
