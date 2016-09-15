@@ -29,12 +29,15 @@ RunPath = 'C:/Users/mpnun/Desktop/rescale_test/'
 ''' Single run '''
 y = KMCrun()
 y.data.Path = RunPath
-y.data.ReadAllInput()
+#y.data.ReadAllInput()
+y.data.ReadAllOutput()
 
 z = RateRescaling()
 z.KMC_system = y
-z.PerformScaledown()
-z.PlotStiffnessReduction()
+delta_sdf = z.ProcessStepFreqs()
+print delta_sdf
+#z.PerformScaledown()
+#z.PlotStiffnessReduction()
 
 #print 'Mode'
 #print y.output.input.StiffnessRecondition['Mode']

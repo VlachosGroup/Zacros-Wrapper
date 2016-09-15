@@ -378,10 +378,10 @@ class KMCrun_data:
 
     def WriteAllInput(self):
         
-        #Purge Directory\
-        Files = ut.GeneralUtilities().GetFiles(self.Path)
-        for i in Files:
-            os.remove(self.Path + i)
+        #Purge Directory
+#        Files = ut.GeneralUtilities().GetFiles(self.Path)
+#        for i in Files:
+#            os.remove(self.Path + i)
             
         self.WriteSimIn()
         self.WriteMechanism()

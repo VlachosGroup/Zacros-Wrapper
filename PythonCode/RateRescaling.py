@@ -62,6 +62,8 @@ class RateRescaling:
     def ProcessStepFreqs(self):                 # Process KMC output and determine how to further scale down reactions
         stiff_cut = 100                     # minimum time scale separation
         # data analysis
+        freqs = self.KMC_system.data.Procstat['events'][-1,:]
+        print freqs
         delta_sdf = np.ones(self.KMC_system.data.Reactions['nrxns'])
         return delta_sdf
  

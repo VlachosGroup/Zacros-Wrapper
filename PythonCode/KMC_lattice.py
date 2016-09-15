@@ -50,10 +50,14 @@ class KMC_lattice:
         plt.show()
         # Plot periodic cell
         # Plot points for each of the lattice sites
-        # Plot lines between nearest-neighbors        
+        # Plot lines between nearest-neighbors
         
     def Read_lattice_KMC(self):
-        print 'Reading lattice_input.dat'
+        input_text = []
+        with open(self.workingdir + '/lattice_input.dat','r') as Txt:
+            RawTxt = Txt.readlines()   
+        for i in RawTxt:
+            input_text.append(i.split('\n')[0])
     
     def Write_lattice_input(self):
         with open(self.workingdir + '/lattice_input.dat', 'w') as txt:
