@@ -10,7 +10,7 @@ import numpy as np
 
 class Species(object):
     
-    def __init__(self,name,phase): 
+    def __init__(self, name = '', phase = 'surface', E = 0, vibs = []): 
         
         self.phase = phase      # surface, non-linear gas, linear gas, TS
         self.name = name
@@ -21,28 +21,28 @@ class Species(object):
         self.Q_vib = 1.0
         self.Q_rot = 1.0
         self.Q_trans = 1.0
-        self.E = 0
+        self.E = E
         self.E_ZPE = 0
-        self.vibs = []              # cm^-1
+        self.vibs = vibs.astype(float)              # cm^-1
         
-    def Q(self):
-        self.Q_vib() = self.Q_elect * self.Q_vib * self.Q_rot * self.Q_trans
+    def calc_Q(self):
+        self.Q = self.Q_elect * self.Q_vib * self.Q_rot * self.Q_trans
     
-    def Q_elect(self):
+    def calc_Q_elect(self):
         self.Q_elect = np.exp(-self.E / (const().kB * const().T_stp))        
     
-    def ZPE(self):
+    def calc_ZPE(self):
         self.E_ZPE = self.E + np.sum(const().h * const().c * self.vibs)
     
-    def Q_vib(self):
+    def calc_Q_vib(self):
         x = const().h * const().c * self.vibs / (const().kB * const().T_stp)
         q_conts = np.exp(-x/2) / (1 - np.exp(-x)); 
-        self.Qvib = np.prod(q_conts)
+        self.Q_vib = np.prod(q_conts)
         
-    def Q_rot(self):
+    def calc_Q_rot(self):
         # will differ for linear and 
         self.Q_rot = 1.0
         
-    def Q_trans(self):
+    def calc_Q_trans(self):
         # Have a 2D option in here
         self.Q_trans =  1.0

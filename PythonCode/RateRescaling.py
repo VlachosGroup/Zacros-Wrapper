@@ -31,12 +31,16 @@ class RateRescaling:
         print 'Rescaling rate constants\n'
         
         max_iterations = 15
-        max_events = 1e5
+        max_events = int(1e5)
         converged = False
         iteration = 0        
         cutoff = 0.5                # If a rate constant is changing by a half-order of magnititude or more, continue
         
         self.SDF_mat = self.KMC_system.data.scaledown_factors
+        
+        # Set numerical parameters
+        self.KMC_system.data.Conditions['MaxStep'] = max_events
+        self.KMC_system.data.Report['procstat'] = ['event', max_events/10]
         
         while not converged and iteration < max_iterations:
             
@@ -59,12 +63,23 @@ class RateRescaling:
 
         # return time-scale information, use this to set a good sampling time for big run
                   
-    def ProcessStepFreqs(self):                 # Process KMC output and determine how to further scale down reactions
+    def ProcessStepFreqs(self):                 # Process KMC output and determine how to further scale down reactions        
         stiff_cut = 100                     # minimum time scale separation
+        delta_sdf = np.ones(self.KMC_system.data.Reactions['nrxns'])    # initialize the marginal scaledown factors        
+        
         # data analysis
         freqs = self.KMC_system.data.Procstat['events'][-1,:]
-        print freqs
-        delta_sdf = np.ones(self.KMC_system.data.Reactions['nrxns'])
+        fwd_freqs = freqs[0::2]
+        bwd_freqs = freqs[1::2]
+        net_freqs = fwd_freqs - bwd_freqs
+        tot_freqs = fwd_freqs + bwd_freqs
+        frac_total = tot_freqs.astype(float) / (np.sum(tot_freqs) + 1)
+        for i in range(len(tot_freqs)):
+            if frac_total[i] > (1.0 - 1.0 / stiff_cut):
+                other_events = np.sum(tot_freqs) + 1 - tot_freqs[i]
+                freq_desired = 99 * other_events
+                delta_sdf[i] = freq_desired.astype(float) / tot_freqs[i]
+        
         return delta_sdf
  
     def WriteScaledownSummary(self,flname):

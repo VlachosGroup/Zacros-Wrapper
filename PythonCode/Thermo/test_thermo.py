@@ -6,16 +6,12 @@ Created on Thu Aug 04 15:02:26 2016
 """
 
 import os
-from surf_spec import surf_spec
 from Species import Species
 import numpy as np
 
 os.system('cls')
 
-x = surf_spec()
-
+x = Species('CO',phase='surface')
 x.vibs = np.array([100.0, 200.0, 300.0, 400.0])
-print x.Q_vib()
-
-#y = Species()
-#print y.name
+x.calc_Q_vib()
+print x.Q_vib

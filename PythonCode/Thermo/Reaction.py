@@ -15,6 +15,7 @@ class Reaction:
         self.reactants = []         # list of reactant species
         self.products = []          # list of product species
         self.TS = []                # single transition state
+        self.delE = 0
       
     def K_rxn(self):
         Q_prod = 1.0
@@ -26,8 +27,20 @@ class Reaction:
             Q_react = Q_react * react_spec.Q()
             
         return Q_prod / Q_react
+    
+    def calc_delE(self):        # set TS information using BEP
+    
+        E_react = 0
+        for spec in self.reactants:
+            E_react += spec.E_ZPE
+            
+        E_prod = 0
+        for spec in self.products:
+            E_prod += spec.E_ZPE
         
-    def TS_BEP(omega,b):        # set TS information using BEP
+        self.delE = E_prod - E_react
+    
+    def TS_BEP(self,omega,b):        # set TS information using BEP
         delE = 0
         Ea = omega * delE + b
         return Ea

@@ -448,7 +448,7 @@ class KMCrun_data:
                 txt.write('# Mode: NA \n')
                 txt.write('# SDF:')
                 for i in self.scaledown_factors:
-                    txt.write(' ' + str(i))
+                    txt.write(' ' + ut.GeneralUtilities().N2FS(i,NumType=1,digits=4))
                 txt.write('\n\n')
             for i in range(0,nMech):
                 txt.write('#'*80 + '\n\n')
