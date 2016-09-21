@@ -22,7 +22,9 @@ class Species(object):
         self.Q_rot = 1.0
         self.Q_trans = 1.0
         self.E = E
-        self.E_ZPE = 0
+        self.E_ZPE = 0       
+        
+        vibs = np.array(vibs)
         self.vibs = vibs.astype(float)              # cm^-1
         
     def calc_Q(self):

@@ -11,7 +11,7 @@ import numpy as np
 
 os.system('cls')
 
-x = Species('CO',phase='surface')
+x = Species(name = 'CO',phase='surface')
 x.vibs = np.array([100.0, 200.0, 300.0, 400.0])
 x.calc_Q_vib()
 print x.Q_vib
