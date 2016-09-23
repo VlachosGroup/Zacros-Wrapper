@@ -5,6 +5,8 @@ Created on Tue Sep 13 10:58:43 2016
 @author: mpnun
 """
 
+# Enter data for a simple KMC lattice and then draw it.
+
 import os
 from KMC_lattice import KMC_lattice
 from ase.io import read

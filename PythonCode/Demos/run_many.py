@@ -9,7 +9,9 @@ from multiprocessing import Pool
 import os
 import numpy
 import random
+import sys
 
+sys.path.insert(0, '../KMCsim')
 from KMCrun import KMCrun
 from AnalyzeData import AnalyzeData
 

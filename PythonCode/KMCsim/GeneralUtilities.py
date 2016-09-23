@@ -13,7 +13,6 @@ from scipy import stats
 import sys
 
 sys.path.append("..")
-from MachineSpecifics import MachineSpecifics as MS
 
 
 
@@ -126,15 +125,15 @@ class GeneralUtilities:
         else:
             print List
                 
-    def SystemInformation(self):
-        SystemInfo = {}
-        SystemInfo['OS'] = platform.system()
-        if SystemInfo['OS'] == 'Linux':
-            SystemInfo['ComputerName'] = os.environ['SGE_CLUSTER_NAME']
-        else:
-            SystemInfo['ComputerName'] = platform.node()
-        SystemInfo = MS().PathInfo(SystemInfo)
-        return SystemInfo
+#    def SystemInformation(self):
+#        SystemInfo = {}
+#        SystemInfo['OS'] = platform.system()
+#        if SystemInfo['OS'] == 'Linux':
+#            SystemInfo['ComputerName'] = os.environ['SGE_CLUSTER_NAME']
+#        else:
+#            SystemInfo['ComputerName'] = platform.node()
+#        SystemInfo = MS().PathInfo(SystemInfo)
+#        return SystemInfo
         
     def ReturnUnique(self,Matrix):
         Matrix = np.array(Matrix)

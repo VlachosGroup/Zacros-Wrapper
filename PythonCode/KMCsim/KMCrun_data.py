@@ -7,7 +7,6 @@ Created on Thu Sep 08 16:58:21 2016
 
 import os
 import GeneralUtilities as ut
-import KMCUtilities as KMCut
 from KMC_lattice import KMC_lattice
 import numpy as np
 import re

@@ -5,6 +5,8 @@ Created on Fri Sep 16 15:44:51 2016
 @author: mpnun
 """
 
+# Inputs information for species and reactions in the water gas-shift network, then draws the reaction energy diagram
+
 import os
 import numpy as np
 from ReactionNetwork import ReactionNetwork
