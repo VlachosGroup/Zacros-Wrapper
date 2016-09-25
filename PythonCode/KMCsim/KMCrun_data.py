@@ -381,7 +381,9 @@ class KMCrun_data:
 #        Files = ut.GeneralUtilities().GetFiles(self.Path)
 #        for i in Files:
 #            os.remove(self.Path + i)
-            
+        
+        print 'Writing input files in ' + self.Path
+        
         self.WriteSimIn()
         self.WriteMechanism()
         self.WriteEnergetics()

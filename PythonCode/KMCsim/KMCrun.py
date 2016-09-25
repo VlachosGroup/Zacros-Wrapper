@@ -157,6 +157,7 @@ class KMCrun:
         plt.xlabel('frequency',size=24)
         plt.xscale('log')
         plt.yticks(yvals, ylabels)
+        plt.legend(['fwd','bwd','net'],loc=4,prop={'size':20},frameon=False) 
         plt.show()
     
     def ComputeTOF(self,Product):                       # return TOF and TOF error

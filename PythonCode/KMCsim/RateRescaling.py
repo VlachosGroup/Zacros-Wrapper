@@ -26,7 +26,7 @@ class RateRescaling:
         self.KMC_system = KMCrun()
         self.SDF_mat    = []        # scaledown factors for each iteration
     
-    def PerformScaledown(self):
+    def PerformScaledown(self, exe_path):
         # Print reaction names and scaledown factors into a file
         print 'Rescaling rate constants\n'
         
@@ -48,7 +48,7 @@ class RateRescaling:
             print 'Iteration number ' + str(iteration) + '\n'
             
             self.KMC_system.data.WriteAllInput()
-            self.KMC_system.Run_sim()
+            self.KMC_system.Run_sim(exe_path)
             self.KMC_system.data.ReadAllOutput()
             delta_sdf = self.ProcessStepFreqs()         # compute change in scaledown factors based on simulation result
             # Check convergence
@@ -65,6 +65,7 @@ class RateRescaling:
                   
     def ProcessStepFreqs(self):                 # Process KMC output and determine how to further scale down reactions        
         stiff_cut = 100                     # minimum time scale separation
+        equilib_cut = 0.05
         delta_sdf = np.ones(self.KMC_system.data.Reactions['nrxns'])    # initialize the marginal scaledown factors        
         
         # data analysis
@@ -73,12 +74,29 @@ class RateRescaling:
         bwd_freqs = freqs[1::2]
         net_freqs = fwd_freqs - bwd_freqs
         tot_freqs = fwd_freqs + bwd_freqs
-        frac_total = tot_freqs.astype(float) / (np.sum(tot_freqs) + 1)
+        
+        fast_rxns = []
+        slow_rxns = []        
         for i in range(len(tot_freqs)):
-            if frac_total[i] > (1.0 - 1.0 / stiff_cut):
-                other_events = np.sum(tot_freqs) + 1 - tot_freqs[i]
-                freq_desired = 99 * other_events
-                delta_sdf[i] = freq_desired.astype(float) / tot_freqs[i]
+            if tot_freqs[i] == 0:
+                slow_rxns.append(i)
+            else:
+                PE = float(net_freqs[i]) / tot_freqs[i]
+                if np.abs(PE) < equilib_cut:
+                    fast_rxns.append(i)
+                else:
+                    slow_rxns.append(i)       
+        
+        slow_freqs = [1.0]      # put an extra 1 in case no slow reactions occur
+        
+        # Find slow scale rate
+        for i in slow_rxns:
+            slow_freqs.append(tot_freqs[i])
+        slow_scale = np.max(slow_freqs)
+        
+        # Adjust fast reactions closer to the slow scale
+        for i in fast_rxns:
+            delta_sdf[i] = np.min([1.0, stiff_cut * float(slow_scale) / tot_freqs[i]])
         
         return delta_sdf
  

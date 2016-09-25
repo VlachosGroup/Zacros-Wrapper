@@ -21,22 +21,34 @@ class ReactionNetwork:
       
     def PlotEnrgDiagram(self,rxn_list):
         
+        # Initial state
         E = 0
         state_ind = [0,1]
         state_eng = [E,E]
-        
         state = 2
         
+        # Iterate through reactions in the pathway
         for i in rxn_list:
             
-            state_ind.append(state)
-            state += 1
-            state_ind.append(state)
-            state += 1
+            TS_eng = E + self.reactions[i-1].Ea_fwd
+            final_eng = E + self.reactions[i-1].delE
             
-            E += self.reactions[i-1].delE
-            state_eng.append(E)
-            state_eng.append(E)
+            # Put TS in if the reaction is activated
+            if not self.reactions[i-1].TS.name is 'empty':
+                
+                state_ind.append(state)
+                state_ind.append(state+1)
+                state += 2
+                state_eng.append(TS_eng)
+                state_eng.append(TS_eng)
+            
+            state_ind.append(state)
+            state_ind.append(state+1)
+            state += 2
+            state_eng.append(final_eng)
+            state_eng.append(final_eng)
+            
+            E = final_eng
         
         # Plotting
         mat.rcParams['mathtext.default'] = 'regular'
@@ -68,3 +80,9 @@ class ReactionNetwork:
             rxn.products.append(self.species[prod-1])       
         rxn.calc_delE()
         self.reactions.append(rxn)
+        
+    def WriteRxnInfo(self):
+        with open('rxn_parameters.txt', 'w') as txt:
+            txt.write('Reaction name \t Afwd A_fwd/A_rev \t Ea (eV) \t delta_E (eV) \n')
+            for rxn in self.reactions:
+                txt.write(rxn.TS.name + '\t {0:.3E}'.format(rxn.A_fwd) + '\t {0:.3f}'.format(rxn.A_rat) + '\t {0:.3f}'.format(rxn.Ea_fwd) + '\t {0:.3f} \n'.format(rxn.delE))

@@ -8,7 +8,10 @@ Created on Fri Sep 16 15:44:51 2016
 # Inputs information for species and reactions in the water gas-shift network, then draws the reaction energy diagram
 
 import os
+import sys
 import numpy as np
+
+sys.path.insert(0, '../Thermo')
 from ReactionNetwork import ReactionNetwork
 from Species import Species
 from Reaction import Reaction
@@ -37,9 +40,12 @@ WGS_net.species.append(Species(name = 'COOH*', phase='surface', E = -12490.26 - 
 
 for spec in WGS_net.species:
     spec.calc_ZPE()
-#    print spec.E_ZPE
+    spec.calc_Q()
     
 ''' Define reactions '''
+
+
+# Reactants and products
 
 WGS_net.AddRxn([1],[6])             # 1
 WGS_net.AddRxn([3],[7,7])           # 2
@@ -59,7 +65,31 @@ WGS_net.AddRxn([12],[2,10])               # 15
 WGS_net.AddRxn([12,7],[2,9])               # 16
 WGS_net.AddRxn([12,9],[2,8])               # 17
 
+# transitions states
+
+WGS_net.reactions[2].TS = Species(name = 'TS3', phase='surface', E = -11479.95 - E_slab, vibs = [305, 310, 1601, 2255])
+WGS_net.reactions[3].TS = Species(name = 'TS4', phase='surface', E = -12472.44 - E_slab, vibs = [290, 350, 370, 422, 545, 1896])
+WGS_net.reactions[5].TS = Species(name = 'TS6', phase='surface', E = -11915.26 - E_slab, vibs = [254, 282, 493, 524, 870, 1866, 3552])
+WGS_net.reactions[6].TS = Species(name = 'TS7', phase='surface', E = -11898.21 - E_slab, vibs = [260, 410, 477, 1796])
+WGS_net.reactions[7].TS = Species(name = 'TS8', phase='surface', E = -12350.53 - E_slab, vibs = [268, 432, 565, 578, 724, 839, 1353, 1454, 3551])
+WGS_net.reactions[8].TS = Species(name = 'TS9', phase='surface', E = -12489.54 - E_slab, vibs = [310, 386, 409, 512, 553, 839, 1926, 3545])
+WGS_net.reactions[9].TS = Species(name = 'TS10', phase='surface', E = -12489.40 - E_slab, vibs = [275, 319, 555, 576, 1157, 1804, 1958])
+WGS_net.reactions[10].TS = Species(name = 'TS11', phase='surface', E = -12924.54 - E_slab, vibs = [235, 264, 324, 448, 568, 630, 1048, 1120, 1174, 1764, 2234])
+WGS_net.reactions[11].TS = Species(name = 'TS12', phase='surface', E = -12941.08 - E_slab, vibs = [267, 308, 434, 494, 572, 655, 855, 1076, 1206, 1675, 3341, 3576])
+WGS_net.reactions[12].TS = Species(name = 'TS13', phase='surface', E = -12054.10 - E_slab, vibs = [213, 288, 315, 624, 977, 1597, 2053])
+WGS_net.reactions[13].TS = Species(name = 'TS14', phase='surface', E = -12488.19 - E_slab, vibs = [285, 305, 412, 475, 555, 818, 1057, 1488, 2975])
+WGS_net.reactions[14].TS = Species(name = 'TS15', phase='surface', E = -12488.83 - E_slab, vibs = [207, 370, 608, 895, 1030, 1240, 1532, 1644])
+WGS_net.reactions[15].TS = Species(name = 'TS16', phase='surface', E = -12922.88 - E_slab, vibs = [235, 264, 324, 448, 568, 630, 1048, 1120, 1174, 1764, 2234])
+WGS_net.reactions[16].TS = Species(name = 'TS17', phase='surface', E = -12939.78 - E_slab, vibs = [201, 225, 375, 473, 652, 674, 963, 977, 1103, 1292, 1621, 1959, 3052])
+
+# Compute reaction info
+for rxn in WGS_net.reactions:
+    rxn.TS.calc_ZPE()
+    rxn.TS.calc_Q()
+    rxn.calc_delE()  
+            
 ''' Plot reaction energy diagram '''
 
-rxn_order = [1,5,6,9,10,3]
-WGS_net.PlotEnrgDiagram(rxn_order)
+#rxn_order = [1,5,6,9,10,3]
+#WGS_net.PlotEnrgDiagram(rxn_order)
+WGS_net.WriteRxnInfo()
