@@ -5,25 +5,18 @@ Created on Thu Jul 28 13:48:34 2016
 @author: mpnun
 """
 
-from KMCrun import KMCrun
-from AnalyzeData import AnalyzeData
 import os
-import numpy as np
-import matplotlib.pyplot as plt
+import sys
+
+sys.path.insert(0, '../KMCsim')
 from RateRescaling import RateRescaling
-
-#import sys
-#import subprocess
-#import pickle
-#import matplotlib.pyplot as plt
-
-################################################################
+from AnalyzeData import AnalyzeData
+from KMCrun import KMCrun
 
 os.system('cls')
 
-#RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0111/'
-#RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/WGS/111/'
-#RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/LocalRun/Run/'
+# Set all directories
+exe_path = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/'
 KMC_source = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/AtoB/'
 RunPath = 'C:/Users/mpnun/Desktop/rescale_test/'
 
@@ -32,13 +25,15 @@ y = KMCrun()
 y.data.Path = KMC_source
 y.data.ReadAllInput()
 y.data.Path = RunPath
-#y.data.ReadAllOutput()
 
+#y.data.ReadAllOutput()
 z = RateRescaling()
 z.KMC_system = y
 
 #delta_sdf = z.ProcessStepFreqs()
 #print delta_sdf
 
-z.PerformScaledown()
+z.PerformScaledown(exe_path)
+z.KMC_system.PlotElemStepFreqs()
 z.PlotStiffnessReduction()
+z.WriteRescaling_output()

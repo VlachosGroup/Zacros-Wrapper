@@ -186,4 +186,49 @@ class KMCrun:
         TOF = np.sum(TOF_contributions)
         TOF_fracs = TOF_contributions / TOF             # will need this for sensitivity analysis
 #        return TOF
-        return {'TOF': TOF, 'TOF_fracs': TOF_fracs}        
+        return {'TOF': TOF, 'TOF_fracs': TOF_fracs}    
+        
+    def CheckSteadyState(self,Product, frac_sample = 0.2, d_cut = 0.12, show_graph = False):
+        
+        # Find the index of the product species
+        product_ind = -1       
+        for spec in enumerate(self.data.Species['gas_spec']):
+            if spec[1] == Product:
+                product_ind = spec[0]
+        
+        # Make sure the index has been found
+        if product_ind == -1:
+            print 'Product species not found'
+        else:
+            product_ind = product_ind + self.data.Species['n_surf']         # Adjust index to account for surface species                
+        
+        n_t_points = len(self.data.Specnum['t'])
+        rate_traj = np.zeros(n_t_points)
+        for t_point in range(n_t_points):
+            if t_point == 0:
+                rate_traj[t_point] = 0
+            else:
+                for i, elem_stoich in enumerate(self.data.Reactions['Nu']):
+                    TOF_stoich = elem_stoich[product_ind]
+                    r = self.data.Binary['propCounter'][t_point,i] / self.data.Specnum['t'][t_point]      # ergodic average
+#                    r = (self.data.Binary['propCounter'][t_point,i] - self.data.Binary['propCounter'][t_point-1,i]) / (self.data.Specnum['t'][t_point] - self.data.Specnum['t'][t_point-1])      # non-ergodic average
+                    rate_traj[t_point] = rate_traj[t_point] + TOF_stoich * r
+        
+        t_vec = self.data.Specnum['t'][1::] / self.data.Specnum['t'][-1]
+        rate_traj = (rate_traj[1::] - rate_traj[1]) / (rate_traj[-1] - rate_traj[1])
+        
+        n_back = int(n_t_points * (1-frac_sample))
+        dydt = (rate_traj[-1] - rate_traj[n_back]) / (t_vec[-1] - t_vec[n_back]) 
+#        print t_vec[-1] - t_vec[-n_back]
+        
+        if show_graph:
+            self.PlotOptions
+            plt.figure()                 
+            plt.plot(t_vec, rate_traj, color='r')
+            plt.xticks(size=20)
+            plt.yticks(size=20)
+            plt.ylabel('observable',size=24)
+            plt.xlabel('time',size=24)
+            plt.show()        
+        
+        return np.abs(dydt) < d_cut

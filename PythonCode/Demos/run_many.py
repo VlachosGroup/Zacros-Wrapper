@@ -28,9 +28,10 @@ def runKMC(KMC_inst):
 if __name__ == '__main__':
     
     # Options     
-    run_dir = 'C:/Users/mpnun/Desktop/parallel_test/' 
+#    run_dir = 'C:/Users/mpnun/Desktop/parallel_test/'
+    run_dir = 'C:/Users/mpnun/Desktop/ss/' 
     
-    n_runs = 5
+    n_runs = 50
     n_procs = 4
    
     # build KMC job from the input files

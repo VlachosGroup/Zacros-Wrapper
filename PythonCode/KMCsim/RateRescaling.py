@@ -141,3 +141,18 @@ class RateRescaling:
         ax = plt.subplot(111)
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
+        
+    def WriteRescaling_output(self):
+        with open(self.KMC_system.data.Path + 'rescaling_output.txt', 'w') as txt:
+            txt.write('Reaction rate rescaling: scaledown factors \n\n')
+            txt.write('Iteration \t')
+            for rxn in self.KMC_system.data.Reactions['Input']:
+                txt.write(rxn['Name'] + '\t')
+            txt.write('\n')
+            
+            s = self.SDF_mat.shape
+            for row_ind in range(s[0]):
+                txt.write(str(row_ind) + '\t')
+                for col_ind in range(s[1]):
+                    txt.write('{0:.3E} \t'.format(self.SDF_mat[row_ind,col_ind]))
+                txt.write('\n')

@@ -34,13 +34,13 @@ class Species(object):
         self.Q = self.Q_vib * self.Q_rot * self.Q_trans
     
     def calc_Q_elect(self):
-        self.Q_elect = np.exp(-self.E / (const().kB * const().T_stp))        
+        self.Q_elect = np.exp(-self.E / (const.kB * const.T_stp))        
     
     def calc_ZPE(self):
-        self.E_ZPE = self.E + np.sum(const().h * const().c * self.vibs) / 2
+        self.E_ZPE = self.E + np.sum(const.h * const.c * self.vibs) / 2
     
     def calc_Q_vib(self):
-        x = const().h * const().c * self.vibs / (const().kB * const().T_stp)
+        x = const.h * const.c * self.vibs / (const.kB * const.T_stp)
         q_conts = 1.0 / (1 - np.exp(-x))            # does not include zero-point energy
         self.Q_vib = np.prod(q_conts)
         

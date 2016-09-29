@@ -90,6 +90,6 @@ for rxn in WGS_net.reactions:
             
 ''' Plot reaction energy diagram '''
 
-#rxn_order = [1,5,6,9,10,3]
-#WGS_net.PlotEnrgDiagram(rxn_order)
+rxn_order = [1,5,6,9,10,3]
+WGS_net.PlotEnrgDiagram(rxn_order)
 WGS_net.WriteRxnInfo()

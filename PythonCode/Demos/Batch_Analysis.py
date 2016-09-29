@@ -49,13 +49,5 @@ x.WvarCheck()
 
 x.ComputeStats('CO2')
 #x.ComputeStats('B')
-x.PlotSensitivities()
-
-print 'Sensitivities'
-print x.NSC
-
-print 'Confidence intervals'
-print x.NSC_ci
-
-'Turnover frequency'
-print x.TOF
+#x.PlotSensitivities()
+x.WriteSA_output(BatchPath)

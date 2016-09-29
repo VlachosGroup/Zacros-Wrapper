@@ -98,11 +98,8 @@ class AnalyzeData:
         self.NSC = np.zeros((self.runList[0].data.Reactions['nrxns'],1))
         self.NSC_ci = np.zeros((self.runList[0].data.Reactions['nrxns'],1))
         for i in range(0,self.runList[0].data.Reactions['nrxns']):
-            W = Wdata[:,2*i] + Wdata[:,2*i+1]
-#            cov_mat = np.cov(W, TOFdata / self.TOF)     # normalize by the rate
-#            self.NSC[i] = cov_mat[0,1]    
-#            self.NSC_ci[i] = 0.1               
-            ci_info = Stats().cov_ci(W, TOFdata / self.TOF)
+            W = Wdata[:,2*i] + Wdata[:,2*i+1]             
+            ci_info = Stats.cov_ci(W, TOFdata / self.TOF)
             self.NSC[i] = ci_info[0] + tof_fracs[2*i] + tof_fracs[2*i+1]
             self.NSC_ci[i] = ci_info[1]
                                    
@@ -163,3 +160,11 @@ class AnalyzeData:
         plt.xlabel('NSC',size=24)
         plt.yticks(yvals, ylabels)
         plt.show()
+    
+    def WriteSA_output(self,BatchPath):     
+        with open(BatchPath + 'SA_output.txt', 'w') as txt:
+                txt.write('Normalized sensitivity coefficients \n\n')
+                txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '\n\n')               
+                txt.write('Reaction name \t NSC \t NSC confidence \n')
+                for rxn_ind in range(self.runList[0].data.Reactions['nrxns']):
+                    txt.write(self.runAvg.data.Reactions['Input'][rxn_ind]['Name'] + '\t' + '{0:.3f} + \t'.format(self.NSC[rxn_ind,0]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind,0]) + '\n')

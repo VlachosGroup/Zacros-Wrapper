@@ -54,11 +54,11 @@ class Reaction:
             self.TS.name = 'empty'
         
         if self.TS.name == 'empty':
-            self.A_fwd = const().kB* const().T_stp / const().h
+            self.A_fwd = const.kB* const.T_stp / const.h
             self.Ea_fwd = np.max([0, self.delE])
             self.Ea_bwd = np.max([0, -self.delE])
         else:
-            self.A_fwd = const().kB* const().T_stp / const().h * self.TS.Q / Q_react
+            self.A_fwd = const.kB* const.T_stp / const.h * self.TS.Q / Q_react
             self.Ea_fwd = np.max([self.TS.E_ZPE - E_react, 0, self.delE])
             self.Ea_bwd = np.max([self.TS.E_ZPE - E_prod, 0, -self.delE])
     
