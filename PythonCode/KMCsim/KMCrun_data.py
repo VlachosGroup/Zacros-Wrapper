@@ -11,6 +11,7 @@ from KMC_lattice import KMC_lattice
 import numpy as np
 import re
 import linecache
+import random
 
 class KMCrun_data:
     
@@ -24,7 +25,7 @@ class KMCrun_data:
         self.Conditions['T']                  = ''
         self.Conditions['P']                  = ''
         self.Conditions['Seed']               = ''
-        self.Conditions['restart']            = ''
+        self.Conditions['restart']            = False
         self.Conditions['SimTime']            = {}
         self.Conditions['SimTime']['Max']     = ''
         self.Conditions['SimTime']['Actual']  = ''
@@ -346,7 +347,10 @@ class KMCrun_data:
                         self.Report['specnum']        = self.StateInc(i)
                     
                     elif i.split()[0] == 'max_time':
-                        self.Conditions['SimTime']['Max'] = np.float(i.split()[1])
+                        if i.split()[1] == 'infinity':
+                            self.Conditions['SimTime']['Max'] = 'inf'
+                        else:
+                            self.Conditions['SimTime']['Max'] = np.float(i.split()[1])
                     elif i.split()[0] == 'max_steps':
                         if i.split()[1] == 'infinity':
                             self.Conditions['MaxStep'] = 'inf'
@@ -511,7 +515,7 @@ class KMCrun_data:
         with open(self.Path + 'simulation_input.dat', 'w') as txt:
             SeedTxt = ''
             if self.Conditions['Seed'] == '':
-                self.Conditions['Seed'] = KMCut.KMCUtilities().KMCSeed()
+                self.Conditions['Seed'] = random.randint(10000, 99999)
                 SeedTxt = '      #Random seed from Python wrapper'
             
             txt.write('#KMC simulation specification\n\n')
@@ -573,7 +577,8 @@ class KMCrun_data:
             else:
                 txt.write('max_time            ' + str(self.Conditions['SimTime']['Max']) + '\n')
             if self.Conditions['WallTime']['Max'] == '' or re.search('inf',str(self.Conditions['WallTime']['Max'])):
-                txt.write('\nwall_time           ' + str(3600*24*365*10) + '\n\n')
+                txt.write('\n')
+#                txt.write('\nwall_time           ' + str(3600*24*365*10) + '\n\n')      # 10 years
             else:
                 txt.write('\nwall_time           ' + str(self.Conditions['WallTime']['Max']) + '\n\n')
             
@@ -626,15 +631,19 @@ class KMCrun_data:
         
         print 'Reading output files in ' + self.Path
         if self.CheckComplete():
+
+            # Standard output files            
             self.ReadGeneral()
             self.ReadProcstat()
             self.ReadSpecnum()
 #            self.ReadHistory()
             
-            self.ReadCluster()
-            self.ReadProp(0)            
+            # Extra binary files            
             self.ReadProp(1)            
-            self.ReadSA()
+            self.ReadSA()           
+#            self.ReadCluster()
+#            self.ReadProp(0)            
+            
         else:
             print 'general_output.txt not found in ' + self.Path
   

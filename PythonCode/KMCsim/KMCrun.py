@@ -157,7 +157,10 @@ class KMCrun:
         plt.xlabel('frequency',size=24)
         plt.xscale('log')
         plt.yticks(yvals, ylabels)
-        plt.legend(['fwd','bwd','net'],loc=4,prop={'size':20},frameon=False) 
+        plt.legend(['fwd','bwd','net'],loc=4,prop={'size':20},frameon=False)
+        ax = plt.subplot(111)        
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)
         plt.show()
     
     def ComputeTOF(self,Product):                       # return TOF and TOF error
@@ -188,7 +191,7 @@ class KMCrun:
 #        return TOF
         return {'TOF': TOF, 'TOF_fracs': TOF_fracs}    
         
-    def CheckSteadyState(self,Product, frac_sample = 0.2, d_cut = 0.12, show_graph = False):
+    def CheckSteadyState(self, Product, frac_sample = 0.2, d_cut = 0.12, show_graph = False):
         
         # Find the index of the product species
         product_ind = -1       
@@ -214,12 +217,14 @@ class KMCrun:
 #                    r = (self.data.Binary['propCounter'][t_point,i] - self.data.Binary['propCounter'][t_point-1,i]) / (self.data.Specnum['t'][t_point] - self.data.Specnum['t'][t_point-1])      # non-ergodic average
                     rate_traj[t_point] = rate_traj[t_point] + TOF_stoich * r
         
+        if rate_traj[-1] == 0:
+            return False        
+        
         t_vec = self.data.Specnum['t'][1::] / self.data.Specnum['t'][-1]
         rate_traj = (rate_traj[1::] - rate_traj[1]) / (rate_traj[-1] - rate_traj[1])
         
         n_back = int(n_t_points * (1-frac_sample))
         dydt = (rate_traj[-1] - rate_traj[n_back]) / (t_vec[-1] - t_vec[n_back]) 
-#        print t_vec[-1] - t_vec[-n_back]
         
         if show_graph:
             self.PlotOptions

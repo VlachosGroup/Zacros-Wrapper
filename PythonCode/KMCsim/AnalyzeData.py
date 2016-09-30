@@ -12,8 +12,10 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from Stats import Stats
+from multiprocessing import Pool
 
-##import ReadOutputFiles as RO
+def runKMC(kmc_rep):
+    kmc_rep.Run_sim('C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/')
 
 class AnalyzeData:
     
@@ -31,8 +33,11 @@ class AnalyzeData:
         self.TOF_error                        = ''
         self.NSC                              = ''
         self.NSC_ci                           = ''
-        
-        
+    
+    def RunAllJobs(self,n_procs):
+        pool = Pool(processes=n_procs)
+        pool.map(runKMC, self.runList)
+    
     def ReadMultipleRuns(self,Path):
         print 'Reading output from ' + Path
         summary_fname = 'BatchSummary.p'

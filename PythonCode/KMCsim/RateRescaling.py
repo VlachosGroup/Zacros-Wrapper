@@ -26,23 +26,27 @@ class RateRescaling:
         self.KMC_system = KMCrun()
         self.SDF_mat    = []        # scaledown factors for each iteration
     
-    def PerformScaledown(self, exe_path):
+    def PerformScaledown(self, exe_path, max_events = int(1e5), max_iterations = 15, cutoff = 0.5):
         # Print reaction names and scaledown factors into a file
         print 'Rescaling rate constants\n'
         
-        max_iterations = 15
-        max_events = int(1e5)
-        converged = False
+        stiff = True
         iteration = 0        
-        cutoff = 0.5                # If a rate constant is changing by a half-order of magnititude or more, continue
         
         self.SDF_mat = self.KMC_system.data.scaledown_factors
         
-        # Set numerical parameters
-        self.KMC_system.data.Conditions['MaxStep'] = max_events
-        self.KMC_system.data.Report['procstat'] = ['event', max_events/10]
+        # Set sampling parameters
+        self.KMC_system.data.Conditions['MaxStep'] = max_events        
+        self.KMC_system.data.Conditions['SimTime']['Max'] = 'inf'    
+        self.KMC_system.data.Conditions['WallTime']['Max'] = 'inf'
+        self.KMC_system.data.Conditions['restart'] = False
         
-        while not converged and iteration < max_iterations:
+        self.KMC_system.data.Report['procstat'] = ['event', max_events / 100]
+        self.KMC_system.data.Report['specnum'] = ['event', max_events / 100]
+        self.KMC_system.data.Report['hist'] = ['off']
+        
+        
+        while stiff and iteration < max_iterations:
             
             iteration += 1
             print 'Iteration number ' + str(iteration) + '\n'
@@ -51,17 +55,22 @@ class RateRescaling:
             self.KMC_system.Run_sim(exe_path)
             self.KMC_system.data.ReadAllOutput()
             delta_sdf = self.ProcessStepFreqs()         # compute change in scaledown factors based on simulation result
+            
             # Check convergence
             if np.max(np.abs(np.log10(delta_sdf))) < cutoff:             # converged if changes to rate constants are small enough
-                converged = True
-                                   
+                stiff = False
+            
+            # Check steady-state
+            print 'At steady state? ' + str(self.KMC_system.CheckSteadyState('B')) + '\n'
+                       
             for rxn_ind in range (self.KMC_system.data.Reactions['nrxns']):            
                 self.KMC_system.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.KMC_system.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
                 self.KMC_system.data.scaledown_factors[rxn_ind] = self.KMC_system.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
             
             self.SDF_mat = np.vstack([self.SDF_mat,self.KMC_system.data.scaledown_factors])            
 
-        # return time-scale information, use this to set a good sampling time for big run
+        if stiff:
+            print 'Did NOT converge'
                   
     def ProcessStepFreqs(self):                 # Process KMC output and determine how to further scale down reactions        
         stiff_cut = 100                     # minimum time scale separation
@@ -99,14 +108,6 @@ class RateRescaling:
             delta_sdf[i] = np.min([1.0, stiff_cut * float(slow_scale) / tot_freqs[i]])
         
         return delta_sdf
- 
-    def WriteScaledownSummary(self,flname):
-        # Print reaction names and scaledown factors into a file
-        print 'Write scaledown summary'        
-        
-    def ReadScaledownSummary(self,flname):
-        # Read reaction names and scaledown factors from a file
-        print 'Read scaledown summary'
     
     def PlotStiffnessReduction(self):
         

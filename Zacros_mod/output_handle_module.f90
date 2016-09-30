@@ -100,12 +100,12 @@ else
             ! *** Write sample to history file
             write(ihistory,'(a,I20,1x,I20,1x,ES30.16,1x,ES30.16,1x,ES30.16)') 'configuration ', snapshnum, curstep-1_8, snaptime, temp+tramp*snaptime, globalenergy
             do i = 1,nsites
-                write(ihistory,'(4(I10,1x))') i,(latticestate(i,j), j = 1,3)
-				
-				write(Histwrite) i
-				write(Histwrite) latticestate(i,1)
-				write(Histwrite) latticestate(i,2)
-				write(Histwrite) latticestate(i,3)
+                !write(ihistory,'(4(I10,1x))') i,(latticestate(i,j), j = 1,3)
+				!
+				!write(Histwrite) i
+				!write(Histwrite) latticestate(i,1)
+				!write(Histwrite) latticestate(i,2)
+				!write(Histwrite) latticestate(i,3)
 				
             enddo
             write(ihistory,'('//int2str(ngasspecs)//'(I20,1x))') (gasspecsnums(j), j = 1,ngasspecs)
@@ -247,13 +247,13 @@ if (specnum_on_event) then
                   (gasspecsnums(i),i=1,ngasspecs)
 				  
 			! Extra binary output
-			write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
-			write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
-			write(Ewrite) specnumtime	
-			write(Ewrite) globalenergy
-			write(Propfnum) (propvec(i), i=1, nSAparams)
+			!write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+			!write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
+			!write(Ewrite) specnumtime	
+			!write(Ewrite) globalenergy
+			!write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
-			write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
+			!write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
 			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
 			
         endif
@@ -271,13 +271,13 @@ if (specnum_on_event) then
                   (gasspecsnums(i),i=1,ngasspecs)        
         
 			! Extra binary output
-			write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
-			write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
-			write(Ewrite) specnumtime	
-			write(Ewrite) globalenergy
-			write(Propfnum) (propvec(i), i=1, nSAparams)
+			!write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+			!write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
+			!write(Ewrite) specnumtime	
+			!write(Ewrite) globalenergy
+			!write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
-			write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
+			!write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
 			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
 		
         endif
@@ -299,13 +299,13 @@ else
                   (gasspecsnums(i),i=1,ngasspecs)     
 				  
 			! Extra binary output
-			write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
-			write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
-			write(Ewrite) specnumtime
-			write(Ewrite) globalenergy
-			write(Propfnum) (propvec(i), i=1, nSAparams)
+			!write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+			!write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
+			!write(Ewrite) specnumtime
+			!write(Ewrite) globalenergy
+			!write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
-			write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
+			!write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
 			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
 			
             specnumtime = specnumtime * dtspecnum
@@ -325,13 +325,13 @@ else
                   (gasspecsnums(i),i=1,ngasspecs)
 				  
 			! Extra binary output
-			write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
-			write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
-			write(Ewrite) specnumtime	
-			write(Ewrite) globalenergy
-			write(Propfnum) (propvec(i), i=1, nSAparams)
+			!write(Specfnum) (sum(adsorbspecposi(1:nadsorb,0),mask = adsorbspecposi(1:nadsorb,0) == i)/i,i=1,nsurfspecs)	! Record species numbers in binary file
+			!write(clusteroccwrite) (clusterOcc(i) / clustergraphmultipl(i), i=1, nclusters)
+			!write(Ewrite) specnumtime	
+			!write(Ewrite) globalenergy
+			!write(Propfnum) (propvec(i), i=1, nSAparams)
 			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
-			write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
+			!write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
 			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
 				  
             specnumtime = specnumtime + dtspecnum

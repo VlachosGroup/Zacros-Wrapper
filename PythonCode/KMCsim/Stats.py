@@ -13,7 +13,7 @@ class Stats:
 
     @staticmethod
     def mean_ci(Data,p=0.05):
-        xbar = np.mean(Data)        
+        xbar = np.mean(Data)
         nPts = len(Data)
         CI = np.std(Data) * stats.t.isf(p,nPts-1)/np.sqrt(nPts)
         return [xbar, CI]    
@@ -36,8 +36,6 @@ class Stats:
         
         ind_high = int(round(Nboot * (1-p)) - 1)
         ind_low = int(round(Nboot * p) - 1)
-#        print ind_high
-#        print ind_low
         boot_dist = sorted(boot_dist)
         cov_ci = (boot_dist[ind_high] - boot_dist[ind_low]) / 2
         return [cov_val, cov_ci]
