@@ -5,27 +5,31 @@ Created on Sun Apr 03 15:20:36 2016
 @author: robieta
 """
 
-from KMCrun import KMCrun
-import GeneralUtilities as ut
-import os
+import os, shutil
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from Stats import Stats
 from multiprocessing import Pool
+import copy
+
+from KMCrun import KMCrun
+import GeneralUtilities as ut
+from Stats import Stats
 
 def runKMC(kmc_rep):
-    kmc_rep.Run_sim('C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/')
+    kmc_rep.Run_sim()
 
-class AnalyzeData:
+class KMC_batch:
     
     def __init__(self):
              
-        # Folder info
+        # General info
         self.ParentFolder                     = ''
-        self.runList                          = []      
+        self.runList                          = []
+        self.runtemplate = KMCrun()                             # Use this to build replicate jobs
         self.runAvg                           = KMCrun()            # Values are averages of all runs
-        self.n_runs = 0        
+        self.n_runs = 0               
+        self.n_procs = 4        
         
         # Analysis
         self.Product                          = ''
@@ -34,11 +38,44 @@ class AnalyzeData:
         self.NSC                              = ''
         self.NSC_ci                           = ''
     
-    def RunAllJobs(self,n_procs):
-        pool = Pool(processes=n_procs)
-        pool.map(runKMC, self.runList)
+    def BuildJobs(self):
+        
+        # Build list of KMCrun objects
+        for i in range(self.n_runs):
+            new_run = copy.deepcopy(self.runtemplate)
+            new_run.data.Conditions['Seed'] = self.runtemplate.data.Conditions['Seed'] + i
+            new_run.data.Path = self.ParentFolder + str(i+1) + '/'
+            self.runList.append(new_run)
+        
+        # Delete all files and folders in the run directory
+        for the_file in os.listdir(self.ParentFolder):
+            file_path = os.path.join(self.ParentFolder, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(e)
+                
+        # Build folders and input files for each job
+        for run in self.runList:
+            if not os.path.exists(run.data.Path):
+                os.makedirs(run.data.Path)
+            run.data.WriteAllInput()
     
-    def ReadMultipleRuns(self,Path):
+    def RunAllJobs(self, parallel = True):
+        
+        if parallel:
+            pool = Pool(processes = self.n_procs)
+            pool.map(runKMC, self.runList)
+        else:
+            for run in self.runList:
+                run.Run_sim()
+    
+    def ReadMultipleRuns(self):     # Could simplify this
+        
+        Path = self.ParentFolder
         print 'Reading output from ' + Path
         summary_fname = 'BatchSummary.p'
         if os.path.isfile(Path + summary_fname):                              # Runs have already been read
@@ -67,20 +104,20 @@ class AnalyzeData:
              
         self.runAvg.data.Specnum['spec'] = self.runList[0].data.Specnum['spec'] - self.runList[0].data.Specnum['spec']         
         self.runAvg.data.Procstat['events'] = self.runList[0].data.Procstat['events'] - self.runList[0].data.Procstat['events']
-        self.runAvg.data.Binary['cluster'] = self.runList[0].data.Binary['cluster'] - self.runList[0].data.Binary['cluster']
-        self.runAvg.data.Binary['prop'] = self.runList[0].data.Binary['prop'] - self.runList[0].data.Binary['prop']
+#        self.runAvg.data.Binary['cluster'] = self.runList[0].data.Binary['cluster'] - self.runList[0].data.Binary['cluster']
+#        self.runAvg.data.Binary['prop'] = self.runList[0].data.Binary['prop'] - self.runList[0].data.Binary['prop']
         self.runAvg.data.Binary['propCounter'] = self.runList[0].data.Binary['propCounter'] - self.runList[0].data.Binary['propCounter']        
         
         self.runAvg.data.Specnum['spec'] = self.runAvg.data.Specnum['spec'].astype(float)     
         self.runAvg.data.Procstat['events'] = self.runAvg.data.Procstat['events'].astype(float) 
-        self.runAvg.data.Binary['cluster'] = self.runAvg.data.Binary['cluster'].astype(float)         
+#        self.runAvg.data.Binary['cluster'] = self.runAvg.data.Binary['cluster'].astype(float)         
         
         # Add data from each run
         for run in self.runList:
             self.runAvg.data.Specnum['spec'] = self.runAvg.data.Specnum['spec'] + run.data.Specnum['spec'].astype(float) / self.n_runs     
             self.runAvg.data.Procstat['events'] = self.runAvg.data.Procstat['events'] + run.data.Procstat['events'].astype(float) / self.n_runs
-            self.runAvg.data.Binary['cluster'] = self.runAvg.data.Binary['cluster'] + run.data.Binary['cluster'].astype(float) / self.n_runs
-            self.runAvg.data.Binary['prop'] = self.runAvg.data.Binary['prop'] + run.data.Binary['prop'] / self.n_runs
+#            self.runAvg.data.Binary['cluster'] = self.runAvg.data.Binary['cluster'] + run.data.Binary['cluster'].astype(float) / self.n_runs
+#            self.ru1nAvg.data.Binary['prop'] = self.runAvg.data.Binary['prop'] + run.data.Binary['prop'] / self.n_runs
             self.runAvg.data.Binary['propCounter'] = self.runAvg.data.Binary['propCounter'] + run.data.Binary['propCounter'] / self.n_runs
 
      

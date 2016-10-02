@@ -6,12 +6,13 @@ Created on Thu Sep 08 16:58:21 2016
 """
 
 import os
-import GeneralUtilities as ut
-from KMC_lattice import KMC_lattice
 import numpy as np
 import re
 import linecache
 import random
+
+import GeneralUtilities as ut
+from KMC_lattice import KMC_lattice     # will implement handling of lattice data structure later
 
 class KMCrun_data:
     

@@ -33,11 +33,22 @@ class KMCrun:
     def __init__(self):
         
         self.data = KMCrun_data()
+        self.exe_path = ''
+        self.op_system = 'Windows'
 
-    def Run_sim(self,exe_path):
+    def Run_sim(self):
+        
         os.chdir(self.data.Path)
-        print '--- Zacros run completed ---'
-        subprocess.call([exe_path + 'zacros.exe'])
+        
+        print '--- Zacros run starting ---'
+        
+        if self.op_system == 'Windows':
+            subprocess.call([self.exe_path + 'zacros.exe'])
+        elif self.op_system == 'Linux':
+            print 'Linux execution to be implemented'
+        else:
+            print 'Unknown operating system'
+        
         print '--- Zacros run completed ---'                
 
     def PlotOptions(self):

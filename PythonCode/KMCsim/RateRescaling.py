@@ -31,6 +31,7 @@ class RateRescaling:
         print 'Rescaling rate constants\n'
         
         stiff = True
+        is_steady_state = True
         iteration = 0        
         
         self.SDF_mat = self.KMC_system.data.scaledown_factors
@@ -46,7 +47,7 @@ class RateRescaling:
         self.KMC_system.data.Report['hist'] = ['off']
         
         
-        while stiff and iteration < max_iterations:
+        while ((not is_steady_state) or stiff) and iteration < max_iterations:
             
             iteration += 1
             print 'Iteration number ' + str(iteration) + '\n'
@@ -59,9 +60,11 @@ class RateRescaling:
             # Check convergence
             if np.max(np.abs(np.log10(delta_sdf))) < cutoff:             # converged if changes to rate constants are small enough
                 stiff = False
+
+#            is_steady_state = self.KMC_system.CheckSteadyState('B')     # will put this into effect soon                  
             
             # Check steady-state
-            print 'At steady state? ' + str(self.KMC_system.CheckSteadyState('B')) + '\n'
+            print 'At steady state? ' + str(is_steady_state) + '\n'
                        
             for rxn_ind in range (self.KMC_system.data.Reactions['nrxns']):            
                 self.KMC_system.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.KMC_system.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
