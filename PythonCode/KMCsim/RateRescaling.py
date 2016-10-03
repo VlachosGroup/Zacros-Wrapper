@@ -5,15 +5,6 @@ Created on Sun Mar 27 20:28:48 2016
 @author: RDX
 """
 
-#import BuildInputFiles as BI
-#import copy
-#import GeneralUtilities as ut
-#import numpy as np
-#import os
-#import ReadInputFiles as RI
-#import ReadOutputFiles as RO
-#import RunZacros as RunZacros
-
 import matplotlib.pyplot as plt
 import matplotlib as mat
 import numpy as np
@@ -29,8 +20,9 @@ class RateRescaling:
         self.scale_parent_fldr = ''
         self.batch = KMC_batch()
         self.SDF_mat    = []        # scaledown factors for each iteration
+        # should also record t_final for each iteration
     
-    def PerformScaledown(self, Product, max_events = int(1e5), max_iterations = 15, cutoff = 0.5, write_summary = True, n_runs = 10, n_procs = 4):
+    def PerformScaledown(self, Product, max_events = int(1e5), max_iterations = 15, cutoff = 0.5, ss_inc = 3.0, write_summary = True, n_samples = 100, n_runs = 10, n_procs = 4):
         
         # Convergence variables
         stiff = True
@@ -44,8 +36,8 @@ class RateRescaling:
         self.batch.runtemplate.data.Conditions['WallTime']['Max'] = 'inf'
         self.batch.runtemplate.data.Conditions['restart'] = False
         
-        self.batch.runtemplate.data.Report['procstat'] = ['event', max_events / 100]
-        self.batch.runtemplate.data.Report['specnum'] = ['event', max_events / 100]
+        self.batch.runtemplate.data.Report['procstat'] = ['event', max_events / n_samples]
+        self.batch.runtemplate.data.Report['specnum'] = ['event', max_events / n_samples]
         self.batch.runtemplate.data.Report['hist'] = ['off']
         
         # Set up batch variables
@@ -53,8 +45,7 @@ class RateRescaling:
         self.batch.n_procs = n_procs
         self.batch.Product = Product
         
-#        while ((not is_steady_state) or stiff) and iteration < max_iterations:
-        while stiff and iteration < max_iterations:
+        while (not is_steady_state or stiff) and iteration < max_iterations:
             
             iteration += 1
             print 'Iteration number ' + str(iteration) + '\n'
@@ -68,18 +59,28 @@ class RateRescaling:
             self.batch.RunAllJobs()
             self.batch.ReadMultipleRuns()
             self.batch.AverageRuns()
-            is_steady_state = self.batch.runAvg.CheckSteadyState(Product)
-            
             delta_sdf = self.ProcessStepFreqs()         # compute change in scaledown factors based on simulation result
             
-            # Check convergence
-            if np.max(np.abs(np.log10(delta_sdf))) < cutoff:             # converged if changes to rate constants are small enough
-                stiff = False                 
+            # Change sampling
+            self.batch.runtemplate.data.Conditions['MaxStep'] = 'inf'
+            self.batch.runtemplate.data.Conditions['SimTime']['Max'] = self.batch.runAvg.data.Specnum['t'][-1]        
+            self.batch.runtemplate.data.Report['procstat'] = ['time', self.batch.runAvg.data.Specnum['t'][-1] / n_samples]
+            self.batch.runtemplate.data.Report['specnum'] = ['time', self.batch.runAvg.data.Specnum['t'][-1] / n_samples]
             
-            # Check steady-state
-            print 'At steady state? ' + str(is_steady_state) + '\n'
-                       
-            for rxn_ind in range (self.batch.runtemplate.data.Reactions['nrxns']):            
+            is_steady_state = self.batch.runAvg.CheckSteadyState(Product)
+            stiff = not np.max(np.abs(np.log10(delta_sdf))) < cutoff        # converged if changes to rate constants are small enough        
+            
+            # Update sampling
+            if not is_steady_state:
+                if stiff:
+                    self.batch.runtemplate.data.Conditions['SimTime']['Max'] = self.batch.runAvg.data.Specnum['t'][-1] / np.min(delta_sdf)
+                else:
+                    self.batch.runtemplate.data.Conditions['SimTime']['Max'] = self.batch.runAvg.data.Specnum['t'][-1] * ss_inc        
+                self.batch.runtemplate.data.Report['procstat'] = ['time', self.batch.runtemplate.data.Conditions['SimTime']['Max'] / n_samples]
+                self.batch.runtemplate.data.Report['specnum'] = ['time', self.batch.runtemplate.data.Conditions['SimTime']['Max'] / n_samples]
+            
+            # Update the pre-exponential factors
+            for rxn_ind in range (self.batch.runtemplate.data.Reactions['nrxns']):
                 self.batch.runtemplate.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.batch.runtemplate.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
                 self.batch.runtemplate.data.scaledown_factors[rxn_ind] = self.batch.runtemplate.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
             
@@ -90,8 +91,10 @@ class RateRescaling:
         
         if write_summary:
             self.WriteRescaling_output()
+            self.batch.runtemplate.data.Path = self.scale_parent_fldr
+            self.batch.runtemplate.data.WriteAllInput()
     
-    # Process KMC output and determine how to further scale down reactions                   
+    # Process KMC output and determine how to further scale down reactions
     def ProcessStepFreqs(self, stiff_cut = 100, equilib_cut = 0.05):                    
         
         delta_sdf = np.ones(self.batch.runAvg.data.Reactions['nrxns'])    # initialize the marginal scaledown factors        

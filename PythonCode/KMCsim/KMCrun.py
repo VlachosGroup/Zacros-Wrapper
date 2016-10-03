@@ -19,16 +19,6 @@ import subprocess
 import tempfile
 import time
 
-#import GeneralUtilities as ut
-#import pickle
-#import random
-#import shutil
-#import sys
-#
-#sys.path.append("..")
-#from MachineSpecifics import MachineSpecifics as MS
-
-
 class KMCrun:
     
     def __init__(self):
@@ -45,10 +35,6 @@ class KMCrun:
         
         if self.op_system == 'Windows':
             subprocess.call([self.exe_file])
-        
-#            p = subprocess.Popen(['cmd', self.exe_file])
-#            p.kill()
-#            os.killpg(os.getpgid(p.pid), signal.SIGTERM)  # Send the signal to all the process group
         elif self.op_system == 'Linux':
             print 'Linux execution to be implemented'
         else:
