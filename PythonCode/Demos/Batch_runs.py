@@ -33,11 +33,11 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     KMC_batch.runtemplate = KMC_template
     KMC_batch.ParentFolder = RunPath
     KMC_batch.n_runs = 4
+    KMC_batch.n_procs = 4
     KMC_batch.Product = 'B'
     
     # Build folders and run jobs
     KMC_batch.BuildJobs()
-    #KMC_batch.RunAllJobs(parallel = False)
     KMC_batch.RunAllJobs()
     
     # Analyze jobs

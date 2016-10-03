@@ -10,32 +10,29 @@ import sys
 
 sys.path.insert(0, '../KMCsim')
 from RateRescaling import RateRescaling
-from AnalyzeData import AnalyzeData
 from KMCrun import KMCrun
 
-os.system('cls')
+if __name__ == '__main__':                 # Need this line to make parallelization work
 
-# Set all directories
-exe_path = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/'
-KMC_source = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/AtoB/'
-RunPath = 'C:/Users/mpnun/Desktop/rescale_test/'
-
-''' Single run '''
-y = KMCrun()
-y.data.Path = KMC_source
-y.data.ReadAllInput()
-y.data.Path = RunPath
-
-#y.data.ReadAllOutput()
-z = RateRescaling()
-z.KMC_system = y
-
-#delta_sdf = z.ProcessStepFreqs()
-#print delta_sdf
-
-z.PerformScaledown(exe_path)
-z.KMC_system.PlotElemStepFreqs()
-z.PlotStiffnessReduction()
-z.WriteRescaling_output()
-z.KMC_system.CheckSteadyState('B', show_graph = True)
-print 'Final KMC time: ' + str(z.KMC_system.data.Specnum['t'][-1])
+    os.system('cls')
+    
+    # Set all directories
+    exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
+    KMC_source = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/AtoB/'
+    RunPath = 'C:/Users/mpnun/Desktop/rescale_test/'
+    
+    ''' Set up system '''
+    y = KMCrun()
+    y.data.Path = KMC_source
+    y.data.ReadAllInput()
+    y.exe_file = exe_file
+    z = RateRescaling()
+    z.batch.runtemplate = y
+    z.scale_parent_fldr = RunPath
+    
+    ''' Run rescaling '''
+    z.PerformScaledown(Product = 'B', n_runs = 3, n_procs = 4)
+    z.batch.runAvg.PlotElemStepFreqs()
+    z.PlotStiffnessReduction()
+    z.batch.runAvg.CheckSteadyState('B', show_graph = True)
+    print 'Final KMC time: ' + str(z.batch.runAvg.data.Specnum['t'][-1])

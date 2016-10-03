@@ -17,71 +17,87 @@ Created on Sun Mar 27 20:28:48 2016
 import matplotlib.pyplot as plt
 import matplotlib as mat
 import numpy as np
-from KMCrun import KMCrun
+import os
+import copy
+
+from KMC_batch import KMC_batch
 
 class RateRescaling:
     
     def __init__(self):
         
-        self.KMC_system = KMCrun()
+        self.scale_parent_fldr = ''
+        self.batch = KMC_batch()
         self.SDF_mat    = []        # scaledown factors for each iteration
     
-    def PerformScaledown(self, exe_path, max_events = int(1e5), max_iterations = 15, cutoff = 0.5):
-        # Print reaction names and scaledown factors into a file
-        print 'Rescaling rate constants\n'
+    def PerformScaledown(self, Product, max_events = int(1e5), max_iterations = 15, cutoff = 0.5, write_summary = True, n_runs = 10, n_procs = 4):
         
+        # Convergence variables
         stiff = True
         is_steady_state = True
         iteration = 0        
-        
-        self.SDF_mat = self.KMC_system.data.scaledown_factors
+        self.SDF_mat = copy.deepcopy(self.batch.runtemplate.data.scaledown_factors)     
         
         # Set sampling parameters
-        self.KMC_system.data.Conditions['MaxStep'] = max_events        
-        self.KMC_system.data.Conditions['SimTime']['Max'] = 'inf'    
-        self.KMC_system.data.Conditions['WallTime']['Max'] = 'inf'
-        self.KMC_system.data.Conditions['restart'] = False
+        self.batch.runtemplate.data.Conditions['MaxStep'] = max_events
+        self.batch.runtemplate.data.Conditions['SimTime']['Max'] = 'inf'
+        self.batch.runtemplate.data.Conditions['WallTime']['Max'] = 'inf'
+        self.batch.runtemplate.data.Conditions['restart'] = False
         
-        self.KMC_system.data.Report['procstat'] = ['event', max_events / 100]
-        self.KMC_system.data.Report['specnum'] = ['event', max_events / 100]
-        self.KMC_system.data.Report['hist'] = ['off']
+        self.batch.runtemplate.data.Report['procstat'] = ['event', max_events / 100]
+        self.batch.runtemplate.data.Report['specnum'] = ['event', max_events / 100]
+        self.batch.runtemplate.data.Report['hist'] = ['off']
         
+        # Set up batch variables
+        self.batch.n_runs = n_runs
+        self.batch.n_procs = n_procs
+        self.batch.Product = Product
         
-        while ((not is_steady_state) or stiff) and iteration < max_iterations:
+#        while ((not is_steady_state) or stiff) and iteration < max_iterations:
+        while stiff and iteration < max_iterations:
             
             iteration += 1
             print 'Iteration number ' + str(iteration) + '\n'
             
-            self.KMC_system.data.WriteAllInput()
-            self.KMC_system.Run_sim(exe_path)
-            self.KMC_system.data.ReadAllOutput()
+            # Run and analyze jobs
+            iter_fldr = self.scale_parent_fldr + 'Iteration_' + str(iteration) + '/'
+            if not os.path.exists(iter_fldr):
+                os.makedirs(iter_fldr)
+            self.batch.ParentFolder = iter_fldr
+            self.batch.BuildJobs()
+            self.batch.RunAllJobs()
+            self.batch.ReadMultipleRuns()
+            self.batch.AverageRuns()
+            is_steady_state = self.batch.runAvg.CheckSteadyState(Product)
+            
             delta_sdf = self.ProcessStepFreqs()         # compute change in scaledown factors based on simulation result
             
             # Check convergence
             if np.max(np.abs(np.log10(delta_sdf))) < cutoff:             # converged if changes to rate constants are small enough
-                stiff = False
-
-#            is_steady_state = self.KMC_system.CheckSteadyState('B')     # will put this into effect soon                  
+                stiff = False                 
             
             # Check steady-state
             print 'At steady state? ' + str(is_steady_state) + '\n'
                        
-            for rxn_ind in range (self.KMC_system.data.Reactions['nrxns']):            
-                self.KMC_system.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.KMC_system.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
-                self.KMC_system.data.scaledown_factors[rxn_ind] = self.KMC_system.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
+            for rxn_ind in range (self.batch.runtemplate.data.Reactions['nrxns']):            
+                self.batch.runtemplate.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.batch.runtemplate.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
+                self.batch.runtemplate.data.scaledown_factors[rxn_ind] = self.batch.runtemplate.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
             
-            self.SDF_mat = np.vstack([self.SDF_mat,self.KMC_system.data.scaledown_factors])            
+            self.SDF_mat = np.vstack([self.SDF_mat, self.batch.runtemplate.data.scaledown_factors])
 
         if stiff:
             print 'Did NOT converge'
-                  
-    def ProcessStepFreqs(self):                 # Process KMC output and determine how to further scale down reactions        
-        stiff_cut = 100                     # minimum time scale separation
-        equilib_cut = 0.05
-        delta_sdf = np.ones(self.KMC_system.data.Reactions['nrxns'])    # initialize the marginal scaledown factors        
+        
+        if write_summary:
+            self.WriteRescaling_output()
+    
+    # Process KMC output and determine how to further scale down reactions                   
+    def ProcessStepFreqs(self, stiff_cut = 100, equilib_cut = 0.05):                    
+        
+        delta_sdf = np.ones(self.batch.runAvg.data.Reactions['nrxns'])    # initialize the marginal scaledown factors        
         
         # data analysis
-        freqs = self.KMC_system.data.Procstat['events'][-1,:]
+        freqs = self.batch.runAvg.data.Procstat['events'][-1,:]
         fwd_freqs = freqs[0::2]
         bwd_freqs = freqs[1::2]
         net_freqs = fwd_freqs - bwd_freqs
@@ -99,9 +115,8 @@ class RateRescaling:
                 else:
                     slow_rxns.append(i)       
         
-        slow_freqs = [1.0]      # put an extra 1 in case no slow reactions occur
-        
         # Find slow scale rate
+        slow_freqs = [1.0]      # put an extra 1 in case no slow reactions occur
         for i in slow_rxns:
             slow_freqs.append(tot_freqs[i])
         slow_scale = np.max(slow_freqs)
@@ -132,7 +147,7 @@ class RateRescaling:
         
         for i in range(n_rxns):
             plt.plot(iterations, np.transpose(self.SDF_mat[:,i]), 'o-', markersize = 15)
-            rxn_labels.append(self.KMC_system.data.Reactions['Input'][i]['Name'])   
+            rxn_labels.append(self.batch.runtemplate.data.Reactions['Input'][i]['Name'])   
         
         plt.xticks(size=24)
         plt.yticks(size=24)
@@ -147,10 +162,10 @@ class RateRescaling:
         ax.set_position(pos)
         
     def WriteRescaling_output(self):
-        with open(self.KMC_system.data.Path + 'rescaling_output.txt', 'w') as txt:
+        with open(self.scale_parent_fldr + 'rescaling_output.txt', 'w') as txt:
             txt.write('Reaction rate rescaling: scaledown factors \n\n')
             txt.write('Iteration \t')
-            for rxn in self.KMC_system.data.Reactions['Input']:
+            for rxn in self.batch.runtemplate.data.Reactions['Input']:
                 txt.write(rxn['Name'] + '\t')
             txt.write('\n')
             

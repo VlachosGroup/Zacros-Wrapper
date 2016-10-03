@@ -104,7 +104,7 @@ class KMCrun_data:
 
     def ReadAllInput(self):
     
-        print 'Reading input files in ' + self.Path    
+#        print 'Reading input files in ' + self.Path    
     
         self.ReadSimIn()
         self.ReadLatticeIn()
@@ -387,7 +387,7 @@ class KMCrun_data:
 #        for i in Files:
 #            os.remove(self.Path + i)
         
-        print 'Writing input files in ' + self.Path
+#        print 'Writing input files in ' + self.Path
         
         self.WriteSimIn()
         self.WriteMechanism()
@@ -630,7 +630,7 @@ class KMCrun_data:
         
         self.ReadAllInput()
         
-        print 'Reading output files in ' + self.Path
+#        print 'Reading output files in ' + self.Path
         if self.CheckComplete():
 
             # Standard output files            

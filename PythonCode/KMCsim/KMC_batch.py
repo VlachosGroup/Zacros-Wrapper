@@ -16,6 +16,7 @@ from KMCrun import KMCrun
 import GeneralUtilities as ut
 from Stats import Stats
 
+# Separate function for use in parallelization
 def runKMC(kmc_rep):
     kmc_rep.Run_sim()
 
@@ -41,6 +42,7 @@ class KMC_batch:
     def BuildJobs(self):
         
         # Build list of KMCrun objects
+        self.runList = []
         for i in range(self.n_runs):
             new_run = copy.deepcopy(self.runtemplate)
             new_run.data.Conditions['Seed'] = self.runtemplate.data.Conditions['Seed'] + i
@@ -65,33 +67,33 @@ class KMC_batch:
             run.data.WriteAllInput()
     
     def RunAllJobs(self, parallel = True):
-        
+
         if parallel:
             pool = Pool(processes = self.n_procs)
             pool.map(runKMC, self.runList)
+            pool.close()
         else:
             for run in self.runList:
                 run.Run_sim()
     
     def ReadMultipleRuns(self):     # Could simplify this
         
-        Path = self.ParentFolder
-        print 'Reading output from ' + Path
+#        print 'Reading output from ' + self.ParentFolder
         summary_fname = 'BatchSummary.p'
-        if os.path.isfile(Path + summary_fname):                              # Runs have already been read
+        if os.path.isfile(self.ParentFolder + summary_fname):                              # Runs have already been read
             print 'Existing pickle file found.'
-            self.runList = pickle.load(open( Path + summary_fname, "rb" ))
+            self.runList = pickle.load(open( self.ParentFolder + summary_fname, "rb" ))
         else:                                                               # Go through each directory and read the data           
-            DirList = ut.GeneralUtilities().GetDir(Path)
+            DirList = ut.GeneralUtilities().GetDir(self.ParentFolder)
             nDir = len(DirList)
             self.runList = ['' for i in range(nDir)]
             for i in range(nDir):
-                print 'Reading run # ' + str(i+1) + ' / ' + str(nDir)
-                RunPath = Path + DirList[i] + '/'
+#                print 'Reading run # ' + str(i+1) + ' / ' + str(nDir)
+                RunPath = self.ParentFolder + DirList[i] + '/'
                 self.runList[i]  = KMCrun()
                 self.runList[i].data.Path = RunPath
                 self.runList[i].data.ReadAllOutput()                               # Read input and output files
-            pickle.dump( self.runList, open( Path + summary_fname, "wb" ) )  
+            pickle.dump( self.runList, open( self.ParentFolder + summary_fname, "wb" ) )  
         self.n_runs = len(self.runList)
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities

@@ -13,6 +13,7 @@ import matplotlib as mat
 # For executable
 import GeneralUtilities as ut
 import os
+import signal
 import shutil
 import subprocess
 import tempfile
@@ -33,7 +34,7 @@ class KMCrun:
     def __init__(self):
         
         self.data = KMCrun_data()
-        self.exe_path = ''
+        self.exe_file = ''
         self.op_system = 'Windows'
 
     def Run_sim(self):
@@ -43,13 +44,17 @@ class KMCrun:
         print '--- Zacros run starting ---'
         
         if self.op_system == 'Windows':
-            subprocess.call([self.exe_path + 'zacros.exe'])
+            subprocess.call([self.exe_file])
+        
+#            p = subprocess.Popen(['cmd', self.exe_file])
+#            p.kill()
+#            os.killpg(os.getpgid(p.pid), signal.SIGTERM)  # Send the signal to all the process group
         elif self.op_system == 'Linux':
             print 'Linux execution to be implemented'
         else:
             print 'Unknown operating system'
         
-        print '--- Zacros run completed ---'                
+        print '--- Zacros run completed ---'
 
     def PlotOptions(self):
         mat.rcParams['mathtext.default'] = 'regular'
