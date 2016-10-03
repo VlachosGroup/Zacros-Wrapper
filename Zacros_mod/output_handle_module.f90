@@ -330,9 +330,11 @@ else
 			!write(Ewrite) specnumtime	
 			!write(Ewrite) globalenergy
 			!write(Propfnum) (propvec(i), i=1, nSAparams)
-			write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams)
+			!write(PropCountfnum) (propCountvec(i) + propvec(i) * (specnumtime - prevtime), i=1, nSAparams) 	! Include truncation term
+			write(PropCountfnum) (propCountvec(i), i=1, nSAparams)
 			!write(procstatfnum) (elemstep_noccur(i), i = 1, nelemsteps)																		! Write process statistics info			
-			write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis 
+			write(SAfnum) (elemstep_noccur(i) - propCountvec(i), i=1, nSAparams)
+			!write(SAfnum) (elemstep_noccur(i) - ( propCountvec(i) + propvec(i) * (specnumtime - prevtime) ), i=1, nSAparams)				! Record W for sensitivity analysis, Include truncation term
 				  
             specnumtime = specnumtime + dtspecnum
 
