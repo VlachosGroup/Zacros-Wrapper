@@ -974,7 +974,7 @@ do while (io >= 0)
                         write(iwrite,'(/,a)') '    Species number will be reported in file ' // trim(cspecnumfname) // ' at every '  // trim(int82str(dkeventspecnum)) // ' events'
                     else
                         if (specnum_on_logtime) then
-                            write(iwrite,'(/,a)') '    Species number will be reported in file ' // trim(cspecnumfname) // ' at logarithmically-spaced times, starting at ' // trim(dbl2str(specnumtime)) // ' and multiplying with factor ' // trim(dbl2str(dtspecnum))
+                            write(iwrite,'(/,a)') '    Species number will be reported in file ' // trim(cspecnumfname) // trim(dbl2str(dtspecnum))
                         else
                             write(iwrite,'(/,a)') '    Species number will be reported in file ' // trim(cspecnumfname) // ' every ' // trim(dbl2str(dtspecnum)) // ' time units'
                         endif

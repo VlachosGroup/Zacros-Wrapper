@@ -9,7 +9,6 @@ from itertools import (takewhile,repeat)
 import numpy as np
 import os
 import platform
-from scipy import stats
 import sys
 
 sys.path.append("..")

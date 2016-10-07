@@ -192,7 +192,20 @@ class KMCrun:
         TOF_fracs = TOF_contributions / TOF             # will need this for sensitivity analysis
 #        return TOF
         return {'TOF': TOF, 'TOF_fracs': TOF_fracs}    
+    
+    def AdjustPreExponentials(self, delta_sdf):
         
+        rxn_ind = 0
+        for rxn_type in self.data.Reactions['Input']:
+            for variant in rxn_type['variant']:
+                variant['pre_expon'] = ['pre_expon'] * delta_sdf[rxn_ind]
+                self.data.scaledown_factors[rxn_ind] = self.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
+                rxn_ind += 1
+        
+#        for rxn_ind in range (self.data.Reactions['nrxns']):
+#            self.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
+#            
+    
     def CheckSteadyState(self, Product, frac_sample = 0.2, d_cut = 0.12, show_graph = False):
         
         # Find the index of the product species

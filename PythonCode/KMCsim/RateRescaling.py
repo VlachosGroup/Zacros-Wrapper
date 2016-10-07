@@ -22,7 +22,7 @@ class RateRescaling:
         self.SDF_mat    = []        # scaledown factors for each iteration
         # should also record t_final for each iteration
     
-    def PerformScaledown(self, Product, max_events = int(1e5), max_iterations = 15, cutoff = 0.5, ss_inc = 3.0, write_summary = True, n_samples = 100, n_runs = 10, n_procs = 4):
+    def PerformScaledown(self, Product, max_events = int(1e4), max_iterations = 15, cutoff = 0.5, ss_inc = 3.0, write_summary = True, n_samples = 100, n_runs = 10, n_procs = 4):
         
         # Convergence variables
         stiff = True
@@ -80,10 +80,7 @@ class RateRescaling:
                 self.batch.runtemplate.data.Report['specnum'] = ['time', self.batch.runtemplate.data.Conditions['SimTime']['Max'] / n_samples]
             
             # Update the pre-exponential factors
-            for rxn_ind in range (self.batch.runtemplate.data.Reactions['nrxns']):
-                self.batch.runtemplate.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.batch.runtemplate.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
-                self.batch.runtemplate.data.scaledown_factors[rxn_ind] = self.batch.runtemplate.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
-            
+            self.batch.runtemplate.AdjustPreExponentials(delta_sdf)
             self.SDF_mat = np.vstack([self.SDF_mat, self.batch.runtemplate.data.scaledown_factors])
 
         if stiff:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct 07 19:12:15 2016
+Created on Thu Jul 28 13:48:34 2016
 
 @author: mpnun
 """
@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, '../KMCsim')
 from RateRescaling import RateRescaling
 from KMCrun import KMCrun
+from KMC_batch import KMC_batch
 
 if __name__ == '__main__':                 # Need this line to make parallelization work
 
@@ -20,19 +21,22 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
     KMC_source = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/AtoB/'
     RunPath = 'C:/Users/mpnun/Desktop/rescale_test/'
+    BatchPath = 'C:/Users/mpnun/Desktop/COox/Scaledown/Iteration_1/'
+
+
+    # Test batch of runs ----------------
+    x = KMC_batch()
+    x.ParentFolder = BatchPath
+    x.ReadMultipleRuns()
+    x.AverageRuns()
     
-    ''' Set up system '''
-    y = KMCrun()
-    y.data.Path = KMC_source
-    y.data.ReadAllInput()
-    y.exe_file = exe_file
     z = RateRescaling()
-    z.batch.runtemplate = y
-    z.scale_parent_fldr = RunPath
+    z.batch = x
+    z.batch.runtemplate = z.batch.runAvg
     
-    ''' Run rescaling '''
-    z.PerformScaledown(Product = 'B', n_runs = 10, n_procs = 4)
-    z.batch.runAvg.PlotElemStepFreqs()
-    z.PlotStiffnessReduction()
-    z.batch.runAvg.CheckSteadyState('B', show_graph = True)
-    print 'Final KMC time: ' + str(z.batch.runAvg.data.Specnum['t'][-1])  
+    delta_sdf = z.ProcessStepFreqs()
+    
+    z.batch.ParentFolder = 'C:/Users/mpnun/Desktop/COox/Scaledown/Iteration_2/'
+    z.batch.runtemplate.AdjustPreExponentials(delta_sdf)
+
+# Need to finish this
