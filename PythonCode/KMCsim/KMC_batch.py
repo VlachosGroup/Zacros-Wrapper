@@ -128,8 +128,8 @@ class KMC_batch:
         self.TOF = Tof_out['TOF']     
         tof_fracs = Tof_out['TOF_fracs']          
         
-        Wdata = np.zeros((self.n_runs,2*self.runList[0].data.Reactions['nrxns']))      # number of runs x number of reactions
-        TOFdata = np.zeros((self.n_runs))
+        Wdata = np.zeros((self.n_runs, 2*self.runList[0].data.Reactions['nrxns']))      # number of runs x number of reactions
+        TOFdata = np.zeros(self.n_runs)
         ind = 0
         for run in self.runList:
             Wdata[ind,:] = run.data.Binary['W_sen_anal'][-1,:]
@@ -139,9 +139,9 @@ class KMC_batch:
             TOFdata[ind] = TOF_output['TOF']
             ind = ind + 1
         
-        self.NSC = np.zeros((self.runList[0].data.Reactions['nrxns'],1))
-        self.NSC_ci = np.zeros((self.runList[0].data.Reactions['nrxns'],1))
-        for i in range(0,self.runList[0].data.Reactions['nrxns']):
+        self.NSC = np.zeros(self.runList[0].data.Reactions['nrxns'])
+        self.NSC_ci = np.zeros(self.runList[0].data.Reactions['nrxns'])
+        for i in range(0, self.runList[0].data.Reactions['nrxns']):
             W = Wdata[:,2*i] + Wdata[:,2*i+1]             
             ci_info = Stats.cov_ci(W, TOFdata / self.TOF)
             self.NSC[i] = ci_info[0] + tof_fracs[2*i] + tof_fracs[2*i+1]
@@ -169,16 +169,16 @@ class KMC_batch:
         plt.figure()
             
         labels = []
-        for i in range (len(self.runList[0].data.Reactions['Names'])):
+        for i in range (len(self.runList[0].data.Reactions['names'])):
             if np.max(np.abs( Wvars[:,i] )) > 0:
                 plt.plot(self.runList[0].data.Specnum['t'], Wvars[:,i])
-                labels.append(self.runList[0].data.Reactions['Names'][i])
+                labels.append(self.runList[0].data.Reactions['names'][i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('var(W)',size=24)
-        plt.legend(self.runList[0].data.Reactions['Names'],loc=4,prop={'size':20},frameon=False)        
+        plt.legend(self.runList[0].data.Reactions['names'],loc=4,prop={'size':20},frameon=False)        
         plt.show()
         
     def PlotSensitivities(self): 
@@ -189,11 +189,12 @@ class KMC_batch:
         ind = 0
         yvals = []
         ylabels = []
+        
         for i in range (self.runList[0].data.Reactions['nrxns']):
             cutoff = 0.05
             if self.NSC[i] + self.NSC_ci[i] > cutoff or self.NSC[i] - self.NSC_ci[i] < -cutoff:     
-                plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')
-                ylabels.append(self.runAvg.data.Reactions['Input'][i]['Name'])              
+                plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')               
+                ylabels.append(self.runList[0].data.Reactions['names'][i])              
                 yvals.append(ind-0.6)                
                 ind = ind - 1
 
@@ -205,10 +206,11 @@ class KMC_batch:
         plt.yticks(yvals, ylabels)
         plt.show()
     
-    def WriteSA_output(self,BatchPath):     
+    def WriteSA_output(self,BatchPath):
         with open(BatchPath + 'SA_output.txt', 'w') as txt:
-                txt.write('Normalized sensitivity coefficients \n\n')
-                txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '\n\n')               
-                txt.write('Reaction name \t NSC \t NSC confidence \n')
-                for rxn_ind in range(self.runList[0].data.Reactions['nrxns']):
-                    txt.write(self.runAvg.data.Reactions['Input'][rxn_ind]['Name'] + '\t' + '{0:.3f} + \t'.format(self.NSC[rxn_ind,0]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind,0]) + '\n')
+            txt.write('Normalized sensitivity coefficients \n\n')
+            txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '\n\n')               
+            txt.write('Reaction name \t NSC \t NSC confidence \n')
+
+            for rxn_ind in range(self.runList[0].data.Reactions['nrxns']):
+                txt.write(self.runAvg.data.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} + \t'.format(self.NSC[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind]) + '\n')

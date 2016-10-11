@@ -84,16 +84,16 @@ class KMCrun:
         plt.figure()            
             
         labels = []
-        for i in range (len(self.data.Reactions['Names'])):
+        for i in range (len(self.data.Reactions['names'])):
             if np.max(np.abs(self.data.Binary['prop'][:,i])) > 0:
                 plt.plot(self.data.Specnum['t'], self.data.Binary['prop'][:,i]) 
-                labels.append(self.data.Reactions['Names'][i])
+                labels.append(self.data.Reactions['names'][i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('props',size=24)
-        plt.legend(self.data.Reactions['Names'],loc=2,prop={'size':20},frameon=False)        
+        plt.legend(labels,loc=2,prop={'size':20},frameon=False)        
         plt.show()
         
     def PlotIntPropsVsTime(self):      # Helps analyze the sensitivty analysis
@@ -101,16 +101,16 @@ class KMCrun:
         plt.figure()            
             
         labels = []
-        for i in range (len(self.data.Reactions['Names'])):
+        for i in range (len(self.data.Reactions['names'])):
             if np.max(np.abs(self.data.Binary['propCounter'][:,i])) > 0:
                 plt.plot(self.data.Specnum['t'], self.data.Binary['propCounter'][:,i]) 
-                labels.append(self.data.Reactions['Names'][i])
+                labels.append(self.data.Reactions['names'][i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('integral props',size=24)
-        plt.legend(self.data.Reactions['Names'],loc=2,prop={'size':20},frameon=False)        
+        plt.legend(labels,loc=2,prop={'size':20},frameon=False)        
         plt.show()
     
     def PlotWVsTime(self):      # Helps analyze the sensitivty analysis
@@ -118,17 +118,17 @@ class KMCrun:
         plt.figure()            
             
         labels = []
-        for i in range (len(self.data.Reactions['Names'])):
+        for i in range (len(self.data.Reactions['names'])):
             if np.max(np.abs(self.data.Binary['W_sen_anal'][:,i])) > 0:
                 plt.plot(self.data.Specnum['t'], self.data.Binary['W_sen_anal'][:,i]) 
 #                plt.plot(self.data.Specnum['t'], self.data.Procstat['events'][:,i] - self.data.Binary['propCounter'][:,i]) 
-                labels.append(self.data.Reactions['Names'][i])
+                labels.append(self.data.Reactions['names'][i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('W',size=24)
-        plt.legend(self.data.Reactions['Names'],loc=2,prop={'size':20},frameon=False)        
+        plt.legend(labels, loc=2,prop={'size':20},frameon=False)        
         plt.show()       
     
     def PlotElemStepFreqs(self):
@@ -139,9 +139,8 @@ class KMCrun:
         ind = 0
         yvals = []
         ylabels = []
-        nRnxs = len(self.data.Reactions['Names'])
 
-        for i in range (nRnxs/2): 
+        for i in range (self.data.Reactions['nrxns']):
             if self.data.Procstat['events'][-1,2*i] + self.data.Procstat['events'][-1,2*i+1] > 0:
                 net_freq = abs(self.data.Procstat['events'][-1,2*i] - self.data.Procstat['events'][-1,2*i+1])               
                 if self.data.Procstat['events'][-1,2*i] > 0:              
@@ -150,7 +149,7 @@ class KMCrun:
                     plt.barh(ind-0.6, self.data.Procstat['events'][-1,2*i+1], width, color='b')
                 if net_freq > 0:
                     plt.barh(ind-0.8, net_freq, width, color='g')
-                ylabels.append(self.data.Reactions['Input'][i]['Name'])                
+                ylabels.append(self.data.Reactions['names'][i])                
                 yvals.append(ind-0.6)                
                 ind = ind - 1
 
@@ -198,13 +197,9 @@ class KMCrun:
         rxn_ind = 0
         for rxn_type in self.data.Reactions['Input']:
             for variant in rxn_type['variant']:
-                variant['pre_expon'] = ['pre_expon'] * delta_sdf[rxn_ind]
+                variant['pre_expon'] = variant['pre_expon'] * delta_sdf[rxn_ind]
                 self.data.scaledown_factors[rxn_ind] = self.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
-                rxn_ind += 1
-        
-#        for rxn_ind in range (self.data.Reactions['nrxns']):
-#            self.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] = self.data.Reactions['Input'][rxn_ind]['variant'][0]['pre_expon'] * delta_sdf[rxn_ind]
-#            
+                rxn_ind += 1    
     
     def CheckSteadyState(self, Product, frac_sample = 0.2, d_cut = 0.12, show_graph = False):
         

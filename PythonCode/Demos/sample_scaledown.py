@@ -31,8 +31,7 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     z.scale_parent_fldr = RunPath
     
     ''' Run rescaling '''
-    z.PerformScaledown(Product = 'B', n_runs = 10, n_procs = 4)
+    z.PerformScaledown(Product = 'B', n_runs = 10, n_procs = 4, max_events = int(1e3))
     z.batch.runAvg.PlotElemStepFreqs()
     z.PlotStiffnessReduction()
     z.batch.runAvg.CheckSteadyState('B', show_graph = True)
-    print 'Final KMC time: ' + str(z.batch.runAvg.data.Specnum['t'][-1])  

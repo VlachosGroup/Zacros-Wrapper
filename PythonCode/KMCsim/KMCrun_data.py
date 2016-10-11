@@ -12,7 +12,7 @@ import linecache
 import random
 
 import GeneralUtilities as ut
-from KMC_lattice import KMC_lattice     # will implement handling of lattice data structure later
+#from KMC_lattice import KMC_lattice     # will implement handling of lattice data structure later
 
 class KMCrun_data:
     
@@ -51,7 +51,7 @@ class KMCrun_data:
         self.Report['specnum']                = ['','']
         self.Report['procstat']               = ['','']
         self.Report['hist']                   = ['','']
-        self.Report['event']                  = ''
+        self.Report['event']                  = 'off'
     
         self.Cluster                          = {}
         self.Cluster['nCluster']              = ''
@@ -60,7 +60,8 @@ class KMCrun_data:
         
         self.Reactions                        = {}
         self.Reactions['nrxns']               = ''
-        self.Reactions['Input']               = ''      
+        self.Reactions['Input']               = ''
+        self.Reactions['names']               = []  
         
         self.StateInput                       = {}
         self.StateInput['Type']               = ''
@@ -96,7 +97,6 @@ class KMCrun_data:
         self.Binary['propCounter']            = ''
         self.Binary['W_sen_anal']             = ''  
         
-        self.Reactions['Names']   = ''
         self.Reactions['Nu']      = ''
         self.Reactions['UniqNu']  = ''
 
@@ -277,6 +277,7 @@ class KMCrun_data:
                 for i in range(variantInd[k,0],variantInd[k,1]):
                     if RawTxt[i].split()[0]=='variant':
                         MechDict[j]['variant'][k]['Name'] = RawTxt[i].split()[1]
+                        self.Reactions['names'].append(RawTxt[MechInd[j,0]].split()[1] + '_' + RawTxt[i].split()[1])
                     elif RawTxt[i].split()[0]=='site_types':
                         MechDict[j]['variant'][k]['site_types'] = RawTxt[i].split()[1:]
                     elif RawTxt[i].split()[0]=='pre_expon':
@@ -700,7 +701,6 @@ class KMCrun_data:
                     nu[self.Species['n_surf'] + GasInd] += Sign
             nuList.append(nu)
 
-        self.Reactions['Names']   = RxnNameList
         self.Reactions['Nu']      = nuList
         self.Reactions['UniqNu']  = ut.GeneralUtilities().ReturnUnique(nuList).tolist()          
     

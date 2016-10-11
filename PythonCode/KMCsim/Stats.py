@@ -19,7 +19,7 @@ class Stats:
         return [xbar, CI]    
     
     @staticmethod
-    def cov_ci(x, y, Nboot=1000, p = 0.05):
+    def cov_ci(x, y, Nboot=100, p = 0.05):
         cov_val = Stats.cov_calc(x,y)
         nPts = len(x)
         

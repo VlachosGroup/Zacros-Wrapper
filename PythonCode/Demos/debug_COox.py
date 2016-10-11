@@ -21,7 +21,7 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
     KMC_source = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/AtoB/'
     RunPath = 'C:/Users/mpnun/Desktop/rescale_test/'
-    BatchPath = 'C:/Users/mpnun/Desktop/COox/Scaledown/Iteration_1/'
+    BatchPath = 'C:/Users/mpnun/Desktop/analyzethese/'
 
 
     # Test batch of runs ----------------
@@ -35,8 +35,9 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     z.batch.runtemplate = z.batch.runAvg
     
     delta_sdf = z.ProcessStepFreqs()
+    print delta_sdf
     
-    z.batch.ParentFolder = 'C:/Users/mpnun/Desktop/COox/Scaledown/Iteration_2/'
-    z.batch.runtemplate.AdjustPreExponentials(delta_sdf)
+#    z.batch.ParentFolder = 'C:/Users/mpnun/Desktop/COox/Scaledown/Iteration_2/'
+#    z.batch.runtemplate.AdjustPreExponentials(delta_sdf)
 
 # Need to finish this

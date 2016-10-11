@@ -16,16 +16,24 @@ from KMCrun import KMCrun
 
 os.system('cls')
 
-#RunPath = 'C:/Users/mpnun/Desktop/test/'
-#RunPath = 'C:/Users/mpnun/Desktop/WGS_run/'
-#RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0111/'
-RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/JobBuilds/AtoB/0001/'
+RunPath = 'C:/Users/mpnun/Desktop/analyzethese/1/'
 
 ''' Single run '''
 y = KMCrun()
 y.data.Path = RunPath
 y.data.ReadAllInput()
-print y.data.Conditions
+
+#print len(y.data.Reactions['Input'][0]['variant'])
+
+#for x in y.data.Reactions['Input'][0]:
+#    print (x) + ': ' + str(y.data.Reactions['Input'][0][x])
+#    print y.data.Reactions['Input'][0][x]
+#    for y in y.data.Reactions['Input'][0][x]:
+#        print (y,':', y.data.Reactions['Input'][0][x][y])
+
+print y.data.Reactions['names']
+
+#print y.data.Reactions['Input'][0]['Name']
 
 #y.data.ReadAllOutput()
 #TOF = y.ComputeTOF('B')
