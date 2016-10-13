@@ -8,7 +8,7 @@ Created on Tue Sep 13 10:59:52 2016
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mat
-from ase.neighborlist import NeighborList
+#from ase.neighborlist import NeighborList
 
 class KMC_lattice:
     
@@ -19,14 +19,15 @@ class KMC_lattice:
         self.repeat = [1,1]
         self.site_type_names = ''
         self.site_type_inds = ''
-        self.frac_coords = ''
+        self.frac_coords = []
+        self.cart_coords = []
         self.neighbor_list = ''
         self.cell_list = ''
         self.mol_dat = ''                           # ASE-compatible object for the atomic positions
 
-    def PlotLattice(self):
+    def PlotLattice(self, cutoff = 3.0):
         
-        cart_coords = np.dot(self.frac_coords,self.lattice_matrix)      
+        cart_coords = np.dot(self.frac_coords, self.lattice_matrix)      
         border = np.dot(np.array([[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0],[0.0,0.0]]),self.lattice_matrix)             
         
         mat.rcParams['mathtext.default'] = 'regular'
@@ -37,10 +38,13 @@ class KMC_lattice:
         
         plt.figure()
         
-        plt.plot(border[:,0], border[:,1], '--k', linewidth = 4)                  # cell border 
-        plt.plot(cart_coords[:,0], cart_coords[:,1], 'o', markersize = 15)          # sites     
+        plt.plot(border[:,0], border[:,1], '--k', linewidth = 4)                  # cell border            
         for pair in self.neighbor_list:                                             # neighbors
-            plt.plot([cart_coords[pair[0]-1,0],cart_coords[pair[1]-1,0]], [cart_coords[pair[0]-1,1],cart_coords[pair[1]-1,1]], '-k', linewidth = 2)
+            p1 = np.array([cart_coords[pair[0]-1,0], cart_coords[pair[0]-1,1]])
+            p2 = np.array([cart_coords[pair[1]-1,0], cart_coords[pair[1]-1,1]])
+            if np.linalg.norm(p2 - p1) < cutoff:
+                plt.plot([p1[0], p2[0]], [p1[1], p2[1]], '-k', linewidth = 1)
+        plt.plot(cart_coords[:,0], cart_coords[:,1], 'o', markersize = 15)          # sites  
         
         plt.xticks(size=20)
         plt.yticks(size=20)
@@ -48,10 +52,33 @@ class KMC_lattice:
         plt.ylabel('y-coord (ang)',size=24)
 #        plt.legend(self.data.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)        
         plt.show()
-        # Plot periodic cell
-        # Plot points for each of the lattice sites
-        # Plot lines between nearest-neighbors
+    
+    def Read_lattice_output(self,fname):
+        with open(fname,'r') as txt:
+            RawTxt = txt.readlines()           
+        n_sites = len(RawTxt) - 2
+        self.cart_coords = np.zeros([n_sites,2])        
         
+        # Fill in lattice vectors
+        line1 = RawTxt[0].split()
+        self.lattice_matrix[0,0] = float(line1[1])
+        self.lattice_matrix[0,1] = float(line1[2])
+        line2 = RawTxt[1].split()
+        self.lattice_matrix[1,0] = float(line2[1])
+        self.lattice_matrix[1,1] = float(line2[2])
+        
+        # Fill in site coordinates and neighbors
+        self.neighbor_list = []
+        for site_ind in range(n_sites):
+            line = RawTxt[site_ind+2].split()
+            self.cart_coords[site_ind,:] = [line[1], line[2]]
+            neighbs = line[5::]
+            for site_2 in neighbs:
+                self.neighbor_list.append([site_ind+1, int(site_2)])
+        
+        # Convert to fractional coordinates
+        self.frac_coords = np.dot(self.cart_coords, np.linalg.inv(self.lattice_matrix))
+    
     def Read_lattice_KMC(self):
         input_text = []
         with open(self.workingdir + '/lattice_input.dat','r') as Txt:
@@ -97,12 +124,12 @@ class KMC_lattice:
             txt.write('end_lattice\n')
         txt.close() 
     
-    def molecular_to_KMClat(self):
-        
-        self.lattice_matrix = self.mol_dat.cell[0:2,0:2]     # Need to exclude z componenets      
-        
-        # Build neighbors
-        nn_dist = 1.6
-        neighb_list = NeighborList(cutoffs = nn_dist / 2 * np.ones(len(self.mol_dat.numbers)), self_interaction=False)
-        neighb_list.build(self.mol_dat)
-        self.neighbor_list = neighb_list.neighbors
+#    def molecular_to_KMClat(self):
+#        
+#        self.lattice_matrix = self.mol_dat.cell[0:2,0:2]     # Need to exclude z componenets      
+#        
+#        # Build neighbors
+#        nn_dist = 1.6
+#        neighb_list = NeighborList(cutoffs = nn_dist / 2 * np.ones(len(self.mol_dat.numbers)), self_interaction=False)
+#        neighb_list.build(self.mol_dat)
+#        self.neighbor_list = neighb_list.neighbors

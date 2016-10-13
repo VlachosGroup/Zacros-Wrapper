@@ -16,26 +16,15 @@ from KMCrun import KMCrun
 
 os.system('cls')
 
-RunPath = 'C:/Users/mpnun/Desktop/analyzethese/1/'
+RunPath = 'C:/Users/mpnun/Desktop/lattice_test/'
 
 ''' Single run '''
 y = KMCrun()
 y.data.Path = RunPath
 y.data.ReadAllInput()
+y.data.ReadAllOutput()
 
-#print len(y.data.Reactions['Input'][0]['variant'])
-
-#for x in y.data.Reactions['Input'][0]:
-#    print (x) + ': ' + str(y.data.Reactions['Input'][0][x])
-#    print y.data.Reactions['Input'][0][x]
-#    for y in y.data.Reactions['Input'][0][x]:
-#        print (y,':', y.data.Reactions['Input'][0][x][y])
-
-print y.data.Reactions['names']
-
-#print y.data.Reactions['Input'][0]['Name']
-
-#y.data.ReadAllOutput()
+y.LatticeMovie()
 #TOF = y.ComputeTOF('B')
 #y.PlotSurfSpecVsTime()
 #y.PlotGasSpecVsTime()

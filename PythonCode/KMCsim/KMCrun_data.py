@@ -12,7 +12,7 @@ import linecache
 import random
 
 import GeneralUtilities as ut
-#from KMC_lattice import KMC_lattice     # will implement handling of lattice data structure later
+from KMC_lattice import KMC_lattice     # will implement handling of lattice data structure later
 
 class KMCrun_data:
     
@@ -69,7 +69,7 @@ class KMCrun_data:
         
         self.Lattice                          = {}
         self.Lattice['Input']                 = ''
-        self.KMC_lat = ''
+        self.KMC_lat = KMC_lattice()
 
         self.scaledown_factors    = ''
 
@@ -634,10 +634,11 @@ class KMCrun_data:
 #        print 'Reading output files in ' + self.Path
         if self.CheckComplete():
 
-            # Standard output files            
+            # Standard output files
             self.ReadGeneral()
             self.ReadProcstat()
             self.ReadSpecnum()
+            self.KMC_lat.Read_lattice_output(self.Path + 'lattice_output.txt')
 #            self.ReadHistory()
             
             # Extra binary files            

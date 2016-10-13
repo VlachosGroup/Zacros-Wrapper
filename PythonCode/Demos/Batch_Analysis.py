@@ -15,7 +15,12 @@ from KMC_batch import KMC_batch
 
 os.system('cls')
 
-BatchPath = 'C:/Users/mpnun/Desktop/analyzethese/'
+#BatchPath = 'C:/Users/mpnun/Desktop/COscaled/'
+#BatchPath = 'C:/Users/mpnun/Desktop/WGSscaled/'
+#BatchPath = 'C:/Users/mpnun/Desktop/COox_SA/'
+BatchPath = 'C:/Users/mpnun/Desktop/AtoB_SA/'
+
+Product = 'B'
 
 # Batch of runs ----------------
 x = KMC_batch()
@@ -27,10 +32,10 @@ x.AverageRuns()
 x.runAvg.PlotSurfSpecVsTime()
 x.runAvg.PlotGasSpecVsTime()
 x.runAvg.PlotElemStepFreqs()
-#x.runAvg.CheckSteadyState('CO2', show_graph = True)
+x.runAvg.CheckSteadyState(Product, show_graph = True)
 
 # Rate and sensitivities
-x.ComputeStats('CO2')
-#x.WvarCheck() 
+x.ComputeStats(Product)
 x.PlotSensitivities()
 x.WriteSA_output(BatchPath)
+x.WvarCheck() 

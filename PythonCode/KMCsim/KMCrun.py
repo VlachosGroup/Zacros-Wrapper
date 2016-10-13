@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import matplotlib.animation as animation
 
 class KMCrun:
     
@@ -26,7 +27,8 @@ class KMCrun:
         self.data = KMCrun_data()
         self.exe_file = ''
         self.op_system = 'Windows'
-
+        self.anim = []          # animation object used for lattice movie
+        
     def Run_sim(self):
         
         os.chdir(self.data.Path)
@@ -142,15 +144,15 @@ class KMCrun:
 
         for i in range (self.data.Reactions['nrxns']):
             if self.data.Procstat['events'][-1,2*i] + self.data.Procstat['events'][-1,2*i+1] > 0:
-                net_freq = abs(self.data.Procstat['events'][-1,2*i] - self.data.Procstat['events'][-1,2*i+1])               
+                net_freq = abs(self.data.Procstat['events'][-1,2*i] - self.data.Procstat['events'][-1,2*i+1])
                 if self.data.Procstat['events'][-1,2*i] > 0:              
                     plt.barh(ind-0.4, self.data.Procstat['events'][-1,2*i], width, color='r')
                 if self.data.Procstat['events'][-1,2*i+1] > 0:
                     plt.barh(ind-0.6, self.data.Procstat['events'][-1,2*i+1], width, color='b')
                 if net_freq > 0:
                     plt.barh(ind-0.8, net_freq, width, color='g')
-                ylabels.append(self.data.Reactions['names'][i])                
-                yvals.append(ind-0.6)                
+                ylabels.append(self.data.Reactions['names'][i])
+                yvals.append(ind-0.6)
                 ind = ind - 1
 
         plt.xticks(size=20)
@@ -162,6 +164,60 @@ class KMCrun:
         ax = plt.subplot(111)        
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
+        plt.show()
+    
+    def LatticeMovie(self):       # Need to complete this function by plotting adsorbates from the history file data
+
+        self.data.KMC_lat.Read_lattice_output(self.data.Path + 'lattice_output.txt')
+        cart_coords = self.data.KMC_lat.cart_coords
+        lat = self.data.KMC_lat.lattice_matrix
+#        self.data.KMC_lat.PlotLattice()
+        border = np.dot(np.array([[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0],[0.0,0.0]]), lat)
+        
+        self.PlotOptions
+
+        fig = plt.figure()
+        ax = plt.axes(xlim=[np.min(border[:,0]), np.max(border[:,0])], ylim=[np.min(border[:,1]), np.max(border[:,1])])
+        
+        # Plot cell border 
+        plt.plot(border[:,0], border[:,1], '--k', linewidth = 4)
+        
+        # Plot neighbors
+        cutoff = 3.0
+        for pair in self.data.KMC_lat.neighbor_list:
+                p1 = np.array([cart_coords[pair[0]-1,0], cart_coords[pair[0]-1,1]])
+                p2 = np.array([cart_coords[pair[1]-1,0], cart_coords[pair[1]-1,1]])
+                if np.linalg.norm(p2 - p1) < cutoff:
+                    plt.plot([p1[0], p2[0]], [p1[1], p2[1]], '-k', linewidth = 1)
+        
+        # Plot sites            
+        plt.plot(cart_coords[:,0], cart_coords[:,1], 'o', markersize = 15)
+        
+        line, = ax.plot([], [], lw=2)
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('x-coord (ang)',size=24)
+        plt.ylabel('y-coord (ang)',size=24)        
+        
+        
+        # initialization function: plot the background of each frame
+        def init():
+            line.set_data([], [])
+            return line,
+        
+        # animation function.  This is called sequentially
+        def animate(i):
+            
+            x = np.linspace(0, 2, 1000)
+            y = np.sin(2 * np.pi * (x - 0.01 * i))
+            
+            line.set_data(x, y)
+            return line,
+        
+        # call the animator.  blit=True means only re-draw the parts that have changed.
+        self.anim = animation.FuncAnimation(fig, animate, init_func=init,
+                                       frames=200, interval=20, blit=True)
+        
         plt.show()
     
     def ComputeTOF(self,Product):                       # return TOF and TOF error

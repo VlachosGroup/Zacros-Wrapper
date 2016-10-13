@@ -169,16 +169,16 @@ class KMC_batch:
         plt.figure()
             
         labels = []
-        for i in range (len(self.runList[0].data.Reactions['names'])):
+        for i in range (2*len(self.runList[0].data.Reactions['names'])):
             if np.max(np.abs( Wvars[:,i] )) > 0:
                 plt.plot(self.runList[0].data.Specnum['t'], Wvars[:,i])
-                labels.append(self.runList[0].data.Reactions['names'][i])
+                labels.append(self.runList[0].data.Reactions['names'][i/2])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('var(W)',size=24)
-        plt.legend(self.runList[0].data.Reactions['names'],loc=4,prop={'size':20},frameon=False)        
+        plt.legend(labels,loc=4,prop={'size':20},frameon=False)        
         plt.show()
         
     def PlotSensitivities(self): 
@@ -213,4 +213,4 @@ class KMC_batch:
             txt.write('Reaction name \t NSC \t NSC confidence \n')
 
             for rxn_ind in range(self.runList[0].data.Reactions['nrxns']):
-                txt.write(self.runAvg.data.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} + \t'.format(self.NSC[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind]) + '\n')
+                txt.write(self.runAvg.data.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind]) + '\n')

@@ -100,7 +100,7 @@ else
             ! *** Write sample to history file
             write(ihistory,'(a,I20,1x,I20,1x,ES30.16,1x,ES30.16,1x,ES30.16)') 'configuration ', snapshnum, curstep-1_8, snaptime, temp+tramp*snaptime, globalenergy
             do i = 1,nsites
-                !write(ihistory,'(4(I10,1x))') i,(latticestate(i,j), j = 1,3)
+                write(ihistory,'(4(I10,1x))') i,(latticestate(i,j), j = 1,3)
 				!
 				!write(Histwrite) i
 				!write(Histwrite) latticestate(i,1)
