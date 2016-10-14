@@ -178,6 +178,7 @@ class KMCrun:
 
         fig = plt.figure()
         ax = plt.axes(xlim=[np.min(border[:,0]), np.max(border[:,0])], ylim=[np.min(border[:,1]), np.max(border[:,1])])
+        plt.axis('equal')        
         
         # Plot cell border 
         plt.plot(border[:,0], border[:,1], '--k', linewidth = 4)
@@ -193,7 +194,7 @@ class KMCrun:
         # Plot sites            
         plt.plot(cart_coords[:,0], cart_coords[:,1], 'o', markersize = 15)
         
-        line, = ax.plot([], [], lw=2)
+        line, = ax.plot([], [], 'rs')
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('x-coord (ang)',size=24)
@@ -208,15 +209,24 @@ class KMCrun:
         # animation function.  This is called sequentially
         def animate(i):
             
-            x = np.linspace(0, 2, 1000)
-            y = np.sin(2 * np.pi * (x - 0.01 * i))
+            x_list = []
+            y_list = []
+            
+            snap = self.data.History[i]            
+            for site_ind in range(self.data.n_sites):
+                if snap[site_ind,2] > 0:
+                    x_list.append(cart_coords[site_ind,0])
+                    y_list.append(cart_coords[site_ind,1])
+        
+            x = np.array(x_list)
+            y = np.array(y_list)
             
             line.set_data(x, y)
             return line,
         
         # call the animator.  blit=True means only re-draw the parts that have changed.
         self.anim = animation.FuncAnimation(fig, animate, init_func=init,
-                                       frames=200, interval=20, blit=True)
+                                       frames=self.data.n_snapshots, interval=20, blit=True)
         
         plt.show()
     

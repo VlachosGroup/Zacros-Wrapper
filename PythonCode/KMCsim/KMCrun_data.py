@@ -88,8 +88,9 @@ class KMCrun_data:
         self.Procstat['t']                    = ''
         self.Procstat['events']               = ''
         
-        self.History                          = {}
-        self.History['Final']                 = ''
+        self.History                          = []
+        self.n_snapshots = 0
+        self.n_sites = 0
         
         self.Binary                           = {}
         self.Binary['cluster']                = ''
@@ -639,7 +640,7 @@ class KMCrun_data:
             self.ReadProcstat()
             self.ReadSpecnum()
             self.KMC_lat.Read_lattice_output(self.Path + 'lattice_output.txt')
-#            self.ReadHistory()
+            self.ReadHistory()
             
             # Extra binary files            
             self.ReadProp(1)            
@@ -703,28 +704,30 @@ class KMCrun_data:
             nuList.append(nu)
 
         self.Reactions['Nu']      = nuList
-        self.Reactions['UniqNu']  = ut.GeneralUtilities().ReturnUnique(nuList).tolist()          
+        self.Reactions['UniqNu']  = ut.GeneralUtilities().ReturnUnique(nuList).tolist()    
     
     def ReadHistory(self):
-        self.History['Final'] = self.ReadSnapshot(-1)           
-             
-    def ReadSnapshot(self,Snapshot):
+        
+        # Check if file exists
+        if not os.path.isfile(self.Path + 'history_output.txt'):
+            return
+        
+        # Count number of sites
         with open(self.Path + 'lattice_output.txt','r') as txt:
             RawTxt = txt.readlines()
         nSites = len(RawTxt) - 2
-        SnapshotArray = np.array([[0]*4]*nSites)
+        self.n_sites = nSites
         HistPath = self.Path + 'history_output.txt'
         nLines = ut.GeneralUtilities().rawbigcount(HistPath)
-        nSnapshot = np.float(nLines-6)/(nSites+2)
-        if nSnapshot != int(nSnapshot):
-            raise ValueError('Index error in the history_state.txt read')
-        if Snapshot < 0:
-            Snapshot = int(nSnapshot) + Snapshot
-        linecache.clearcache()
-        for i in range(0,nSites):
-            SnapshotArray[i,:] = linecache.getline(HistPath, 8+Snapshot*(nSites+2)+i).split()
-        return SnapshotArray
-     
+        self.n_snapshots = (nLines-6)/(nSites+2)
+        self.History = []
+        
+        for snap_ind in range(self.n_snapshots):
+            snap_data = np.array([[0]*4]*nSites)
+            linecache.clearcache()
+            for i in range(0,nSites):
+                snap_data[i,:] = linecache.getline(HistPath, 8 + snap_ind * (nSites+2)+i).split()
+            self.History.append(snap_data)
         
     def ReadProcstat(self):
         MaxLen = np.int(2e4)

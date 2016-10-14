@@ -25,6 +25,9 @@ y.data.ReadAllInput()
 y.data.ReadAllOutput()
 
 y.LatticeMovie()
+
+#print y.data.History
+
 #TOF = y.ComputeTOF('B')
 #y.PlotSurfSpecVsTime()
 #y.PlotGasSpecVsTime()
