@@ -34,10 +34,10 @@ class KMC_batch:
         
         # Analysis
         self.Product                          = ''
-        self.TOF                              = ''
-        self.TOF_error                        = ''
-        self.NSC                              = ''
-        self.NSC_ci                           = ''
+        self.TOF                              = 0
+        self.TOF_error                        = 0
+        self.NSC                              = []
+        self.NSC_ci                           = []
     
     def BuildJobs(self):
         
@@ -123,17 +123,27 @@ class KMC_batch:
             self.runAvg.data.Binary['propCounter'] = self.runAvg.data.Binary['propCounter'] + run.data.Binary['propCounter'] / self.n_runs
 
      
-    def ComputeStats(self,product):
+    def ComputeStats(self, product, SA = True):
+        
         Tof_out = self.runAvg.ComputeTOF(product)
-        self.TOF = Tof_out['TOF']     
         tof_fracs = Tof_out['TOF_fracs']          
         
-        Wdata = np.zeros((self.n_runs, 2*self.runList[0].data.Reactions['nrxns']))      # number of runs x number of reactions
+        TOF_vec = []
+        for run in self.runList:
+            TOF_vec.append(run.ComputeTOF(product)['TOF'])
+        
+        self.TOF = Stats.mean_ci(TOF_vec)[0]
+        self.TOF_error = Stats.mean_ci(TOF_vec)[1]   
+        
+        if not SA:
+            return        
+        
+        Wdata = np.zeros([self.n_runs, 2*self.runList[0].data.Reactions['nrxns']])      # number of runs x number of reactions
         TOFdata = np.zeros(self.n_runs)
         ind = 0
         for run in self.runList:
             Wdata[ind,:] = run.data.Binary['W_sen_anal'][-1,:]
-#            Wdata[ind,:] = run.data.Procstat['events'][-1,:] - run.data.Binary['propCounter'][-1,:]            
+#            Wdata[ind,:] = run.data.Procstat['events'][-1,:] - run.data.Binary['propCounter'][-1,:]
                                
             TOF_output = run.ComputeTOF(product)
             TOFdata[ind] = TOF_output['TOF']
@@ -209,8 +219,70 @@ class KMC_batch:
     def WriteSA_output(self,BatchPath):
         with open(BatchPath + 'SA_output.txt', 'w') as txt:
             txt.write('Normalized sensitivity coefficients \n\n')
-            txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '\n\n')               
+            txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
             txt.write('Reaction name \t NSC \t NSC confidence \n')
 
             for rxn_ind in range(self.runList[0].data.Reactions['nrxns']):
                 txt.write(self.runAvg.data.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind]) + '\n')
+                
+    def FD_SA(self, rxn_inds = [1], pert_frac = 0.05, n_runs = 20, setup = True, exec_run = True, analyze_bool = True):
+        
+        # Create objects for perturbed systems
+        plus = copy.deepcopy(self)
+        minus = copy.deepcopy(self)
+        FD_list = [plus, minus]
+
+        for FD in FD_list:
+            FD.n_runs = n_runs
+        
+        # Adjust pre-exponential factors in each
+        adjust_plus = np.ones(self.runtemplate.data.Reactions['nrxns'])
+        adjust_minus = np.ones(self.runtemplate.data.Reactions['nrxns'])
+        for rxn_ind in rxn_inds:
+            adjust_plus[rxn_ind-1] = 1 + pert_frac
+            adjust_minus[rxn_ind-1] = 1 / (1 + pert_frac)
+        plus.runtemplate.AdjustPreExponentials(adjust_plus)
+        minus.runtemplate.AdjustPreExponentials(adjust_minus)
+        
+        # Set subfolder for perturbed runs
+        plus.ParentFolder = self.ParentFolder + 'plus'
+        minus.ParentFolder = self.ParentFolder + 'minus'
+        
+        if setup:        
+        
+            for FD in FD_list:
+                for rxn_ind in rxn_inds:
+                    FD.ParentFolder = FD.ParentFolder + '_' + str(rxn_ind)
+                FD.ParentFolder = FD.ParentFolder + '/'
+            
+                # Build folders for runs
+                if not os.path.exists(FD.ParentFolder):
+                        os.makedirs(FD.ParentFolder)
+                FD.BuildJobs()
+        
+        if exec_run:
+            for FD in FD_list:
+                FD.RunAllJobs()
+        
+        ''' Analyze results '''
+        if analyze_bool:
+            for FD in FD_list:
+                FD.ReadMultipleRuns()
+                FD.AverageRuns()
+                
+            plus_stats = []
+            for run in plus.runList:
+                plus_stats.append(run.ComputeTOF(self.Product)['TOF'])
+                
+            minus_stats = []
+            for run in minus.runList:
+                minus_stats.append(run.ComputeTOF(self.Product)['TOF'])
+    
+            all_TOFs = plus_stats + minus_stats
+            TOF_mean = np.mean(all_TOFs)
+            diff_stats = Stats.diff_ci(plus_stats, minus_stats)   
+            
+            NSC = diff_stats[0] / TOF_mean / (2 * pert_frac)
+            NSC_ci = diff_stats[1] / TOF_mean / (2 * pert_frac)
+            
+            return [NSC, NSC_ci]

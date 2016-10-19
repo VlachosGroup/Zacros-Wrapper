@@ -74,12 +74,13 @@ class KMC_lattice:
             self.cart_coords[site_ind,:] = [line[1], line[2]]
             neighbs = line[5::]
             for site_2 in neighbs:
-                self.neighbor_list.append([site_ind+1, int(site_2)])
+                if int(site_2) > 0:         # Zeros are placeholders in the output file
+                    self.neighbor_list.append([site_ind+1, int(site_2)])
         
         # Convert to fractional coordinates
         self.frac_coords = np.dot(self.cart_coords, np.linalg.inv(self.lattice_matrix))
     
-    def Read_lattice_KMC(self):
+    def Read_lattice_input(self):
         input_text = []
         with open(self.workingdir + '/lattice_input.dat','r') as Txt:
             RawTxt = Txt.readlines()   

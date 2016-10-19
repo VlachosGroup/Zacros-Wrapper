@@ -15,10 +15,7 @@ from KMC_batch import KMC_batch
 
 os.system('cls')
 
-#BatchPath = 'C:/Users/mpnun/Desktop/COscaled/'
-#BatchPath = 'C:/Users/mpnun/Desktop/WGSscaled/'
-#BatchPath = 'C:/Users/mpnun/Desktop/COox_SA/'
-BatchPath = 'C:/Users/mpnun/Desktop/AtoB_SA/'
+BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/AtoB_ZW/LRSA/'
 
 Product = 'B'
 
@@ -38,4 +35,4 @@ x.runAvg.CheckSteadyState(Product, show_graph = True)
 x.ComputeStats(Product)
 x.PlotSensitivities()
 x.WriteSA_output(BatchPath)
-x.WvarCheck() 
+#x.WvarCheck() 

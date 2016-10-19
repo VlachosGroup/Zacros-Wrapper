@@ -71,7 +71,7 @@ class KMCrun_data:
         self.Lattice['Input']                 = ''
         self.KMC_lat = KMC_lattice()
 
-        self.scaledown_factors    = ''
+        self.scaledown_factors    = []
 
 # -------------------- Output data --------------------
 
@@ -91,6 +91,7 @@ class KMCrun_data:
         self.History                          = []
         self.n_snapshots = 0
         self.n_sites = 0
+        self.snap_times = []
         
         self.Binary                           = {}
         self.Binary['cluster']                = ''
@@ -721,11 +722,14 @@ class KMCrun_data:
         nLines = ut.GeneralUtilities().rawbigcount(HistPath)
         self.n_snapshots = (nLines-6)/(nSites+2)
         self.History = []
+        self.snap_times = []
         
         for snap_ind in range(self.n_snapshots):
             snap_data = np.array([[0]*4]*nSites)
             linecache.clearcache()
-            for i in range(0,nSites):
+            snap_header = linecache.getline(HistPath, 8 + snap_ind * (nSites+2)-1).split()
+            self.snap_times.append(snap_header[3])
+            for i in range(0,nSites):               
                 snap_data[i,:] = linecache.getline(HistPath, 8 + snap_ind * (nSites+2)+i).split()
             self.History.append(snap_data)
         

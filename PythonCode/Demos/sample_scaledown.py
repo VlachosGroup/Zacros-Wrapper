@@ -19,7 +19,8 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     # Set all directories
     exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
     KMC_source = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/AtoB/'
-    RunPath = 'C:/Users/mpnun/Desktop/rescale_test/'
+    RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/Tests/rescale_test/'
+#    RunPath = 'C:/Users/mpnun/Desktop/'
     
     ''' Set up system '''
     y = KMCrun()
@@ -29,9 +30,14 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     z = RateRescaling()
     z.batch.runtemplate = y
     z.scale_parent_fldr = RunPath
+#    
     
     ''' Run rescaling '''
     z.PerformScaledown(Product = 'B', n_runs = 10, n_procs = 4)
     z.batch.runAvg.PlotElemStepFreqs()
+#    z.ReadSummaryFile()
+    
+    ''' Analyze '''    
     z.PlotStiffnessReduction()
+    z.PlotFinalTimes()
     z.batch.runAvg.CheckSteadyState('B', show_graph = True)

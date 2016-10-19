@@ -297,6 +297,7 @@ class KMCrun:
             return False        
         
         t_vec = self.data.Specnum['t'][1::] / self.data.Specnum['t'][-1]
+        rate_traj_plot = rate_traj[1::]
         rate_traj = (rate_traj[1::] - rate_traj[1]) / (rate_traj[-1] - rate_traj[1])
         
         n_back = int(n_t_points * (1-frac_sample))
@@ -305,11 +306,11 @@ class KMCrun:
         if show_graph:
             self.PlotOptions
             plt.figure()                 
-            plt.plot(t_vec, rate_traj, color='r')
+            plt.plot(self.data.Specnum['t'][1::], rate_traj_plot, color='r')
             plt.xticks(size=20)
             plt.yticks(size=20)
-            plt.ylabel('observable',size=24)
-            plt.xlabel('time',size=24)
+            plt.ylabel('integral rate',size=24)
+            plt.xlabel('time (s)',size=24)
             plt.show()        
         
         return np.abs(dydt) < d_cut
