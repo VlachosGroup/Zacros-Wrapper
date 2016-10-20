@@ -12,23 +12,23 @@ import matplotlib.pyplot as plt
 from multiprocessing import Pool
 import copy
 
-from KMCrun import KMCrun
-import GeneralUtilities as ut
+from KMC_Run import KMC_Run
+import Helper as ut
 from Stats import Stats
 
 # Separate function for use in parallelization
 def runKMC(kmc_rep):
     kmc_rep.Run_sim()
 
-class KMC_batch:
+class Replicates:
     
     def __init__(self):
              
         # General info
         self.ParentFolder                     = ''
         self.runList                          = []
-        self.runtemplate = KMCrun()                             # Use this to build replicate jobs
-        self.runAvg                           = KMCrun()            # Values are averages of all runs
+        self.runtemplate = KMC_Run()                             # Use this to build replicate jobs
+        self.runAvg                           = KMC_Run()            # Values are averages of all runs
         self.n_runs = 0               
         self.n_procs = 4        
         
@@ -41,7 +41,7 @@ class KMC_batch:
     
     def BuildJobs(self):
         
-        # Build list of KMCrun objects
+        # Build list of KMC_Run objects
         self.runList = []
         for i in range(self.n_runs):
             new_run = copy.deepcopy(self.runtemplate)
@@ -84,13 +84,13 @@ class KMC_batch:
             print 'Existing pickle file found.'
             self.runList = pickle.load(open( self.ParentFolder + summary_fname, "rb" ))
         else:                                                               # Go through each directory and read the data           
-            DirList = ut.GeneralUtilities().GetDir(self.ParentFolder)
+            DirList = ut.Helper().GetDir(self.ParentFolder)
             nDir = len(DirList)
             self.runList = ['' for i in range(nDir)]
             for i in range(nDir):
 #                print 'Reading run # ' + str(i+1) + ' / ' + str(nDir)
                 RunPath = self.ParentFolder + DirList[i] + '/'
-                self.runList[i]  = KMCrun()
+                self.runList[i]  = KMC_Run()
                 self.runList[i].data.Path = RunPath
                 self.runList[i].data.ReadAllOutput()                               # Read input and output files
             pickle.dump( self.runList, open( self.ParentFolder + summary_fname, "wb" ) )  
@@ -100,7 +100,7 @@ class KMC_batch:
     def AverageRuns(self):
         
         # Initialize run average with information from first run, then set data to zero
-        self.runAvg = KMCrun()      
+        self.runAvg = KMC_Run()      
         self.runAvg.data = self.runList[0].data
         self.runAvg.data.Specnum['t'] = self.runList[0].data.Specnum['t']
              

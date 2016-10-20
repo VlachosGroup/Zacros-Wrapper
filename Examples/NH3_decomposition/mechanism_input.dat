@@ -1,0 +1,668 @@
+mechanism
+
+################################################################################
+
+reversible_step NH3_adsorption
+  sites 1
+  gas_reacs_prods NH3 -1
+  initial
+    1 *  1
+  final
+    1 NH3*  1
+
+  variant PtPt_terrace
+    site_types           base_top 
+    pre_expon            7.98E7
+    pe_ratio             1.1E-8
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_corner
+    site_types           adlayer_top_corner 
+    pre_expon            7.98E7
+    pe_ratio             1.1E-8
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_edge
+    site_types           adlayer_top_edge 
+    pre_expon            7.98E7
+    pe_ratio             1.1E-8
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_terrace
+    site_types           adlayer_top 
+    pre_expon            7.98E7
+    pe_ratio             1.1E-8
+    activ_eng            0.0
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step N2_adsorption
+  sites 1
+  gas_reacs_prods N2 -1
+  initial
+    1 *  1
+  final
+    1 N2*  1
+
+  variant PtPt_terrace
+    site_types           base_top 
+    pre_expon            6.22E7
+    pe_ratio             9.65E-7
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_corner
+    site_types           adlayer_top_corner 
+    pre_expon            6.22E7
+    pe_ratio             9.65E-7
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_edge
+    site_types           adlayer_top_edge 
+    pre_expon            6.22E7
+    pe_ratio             9.65E-7
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_terrace
+    site_types           adlayer_top 
+    pre_expon            6.22E7
+    pe_ratio             9.65E-7
+    activ_eng            0.0
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step H2_adsorption
+  sites 2
+  neighboring 1-2
+  gas_reacs_prods H2 -1
+  initial
+    1 *  1
+    2 *  1
+  final
+    1 H* 1
+    2 H* 1
+
+  variant PtPt_terrace
+    site_types           base_fcc base_fcc 
+    pre_expon            2.32E8
+    pe_ratio             1.65E-5
+    activ_eng            0.0
+  end_variant
+
+  variant PtPt_edge
+    site_types           base_fcc lower_edge_fcc_fcc 
+    pre_expon            2.32E8
+    pe_ratio             1.65E-5
+    activ_eng            0.0
+  end_variant
+
+  variant PtPt_edge
+    site_types           base_fcc lower_edge_fcc_hcp 
+    pre_expon            2.32E8
+    pe_ratio             1.65E-5
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_terrace
+    site_types           adlayer_fcc adlayer_fcc 
+    pre_expon            2.32E8
+    pe_ratio             1.65E-5
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_edge
+    site_types           adlayer_fcc upper_edge_fcc_fcc 
+    pre_expon            2.32E8
+    pe_ratio             1.65E-5
+    activ_eng            0.0
+  end_variant
+
+  variant NiPt_terrace
+    site_types           adlayer_fcc upper_edge_fcc_hcp 
+    pre_expon            2.32E8
+    pe_ratio             1.65E-5
+    activ_eng            0.0
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step NH3*_Decomposition
+  sites 4
+  neighboring 1-2 2-3 3-4 1-3 2-4
+  initial
+    1 *    1
+    2 *    1
+    3 NH3* 1
+    4 *    1
+  final
+    1 NH2*  1
+    1 NH2*  2
+    2  *    1 
+    3 H*    1
+
+  variant PtPt_terrace
+    site_types           base_hcp base_fcc base_top base_fcc 
+    pre_expon            6.16E12
+    pe_ratio             3.13E-1
+    activ_eng            1.16
+    prox_factor          0.78
+  end_variant
+
+  variant NiPt_terrace
+    site_types           adlayer_hcp adlayer_fcc adlayer_top adlayer_fcc 
+    pre_expon            6.16E12
+    pe_ratio             3.13E-1
+    activ_eng            0.92
+    prox_factor          0.78
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step NH2*_Decomposition
+  sites 3
+  neighboring 1-2 1-3 2-3
+  initial
+    1 NH2*  1
+    1 NH2*  2
+    2  *    1
+  final
+    1 *     1
+    2 NH*   1
+    3 H*    1
+
+  variant PtPt_terrace
+    site_types           base_hcp base_fcc base_fcc 
+    pre_expon            3.21E13
+    pe_ratio             1.15
+    activ_eng            1.22
+    prox_factor          0.52
+  end_variant
+
+  variant NiPt_terrace
+    site_types           adlayer_hcp adlayer_fcc adlayer_fcc 
+    pre_expon            3.21E13
+    pe_ratio             1.15
+    activ_eng            0.57
+    prox_factor          0.52
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step NH*_Decomposition
+  sites 2
+  neighboring 1-2
+  initial
+    1 NH*  1
+    2 *    1
+  final
+    1 N*   1
+    2 H*   1
+
+  variant PtPt_terrace
+    site_types           base_fcc base_fcc 
+    pre_expon            2.47E13
+    pe_ratio             2.37
+    activ_eng            1.38
+    prox_factor          0.29
+  end_variant
+
+  variant NiPt_terrace
+    site_types           adlayer_fcc adlayer_fcc 
+    pre_expon            2.47E13
+    pe_ratio             2.37
+    activ_eng            1.42
+    prox_factor          0.29
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+
+  variant PtPt_top_fcc_fcc
+    site_types           base_top base_fcc base_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.96
+    prox_factor          0.217
+  end_variant
+
+  variant PtPt_top_fcc_fcc
+    site_types           base_top base_fcc lower_edge_fcc_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.96
+    prox_factor          0.217
+  end_variant
+
+  variant PtPt_top_fcc_fcc
+    site_types           base_top base_fcc lower_edge_fcc_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.96
+    prox_factor          0.217
+  end_variant
+
+  variant PtPt_top_fcc_fcc
+    site_types           base_top lower_edge_fcc_fcc lower_edge_fcc_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.96
+    prox_factor          0.217
+  end_variant
+
+  variant PtPt_top_fcc_fcc
+    site_types           base_top lower_edge_fcc_fcc lower_edge_fcc_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.96
+    prox_factor          0.217
+  end_variant
+
+  variant PtPt_top_fcc_fcc
+    site_types           base_top lower_edge_fcc_hcp lower_edge_fcc_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.96
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_top_fcc_fcc
+    site_types           adlayer_top adlayer_fcc adlayer_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            2.29
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_top_fcc_fcc
+    site_types           adlayer_top upper_edge_fcc_hcp upper_edge_fcc_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            2.29
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_top_fcc_fcc
+    site_types           adlayer_top_edge upper_edge_fcc_fcc upper_edge_fcc_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.83
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_top_fcc_fcc
+    site_types           adlayer_top_edge upper_edge_hcp_hcp upper_edge_hcp_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.93
+    prox_factor          0.217
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step 2N*_association_UpperEdge
+  sites 4
+  neighboring 1-2 2-3 2-4 1-4
+  initial
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+
+  variant NiPt_UpperEdge
+    site_types           adlayer_top_corner step_110 upper_edge_fcc_fcc lower_edge_fcc_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.86
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_UpperEdge
+    site_types           adlayer_top_edge step_110 upper_edge_fcc_fcc lower_edge_fcc_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.86
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_UpperEdge
+    site_types           adlayer_top_corner step_100 upper_edge_hcp_hcp lower_edge_fcc_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.6
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_UpperEdge
+    site_types           adlayer_top_edge step_100 upper_edge_hcp_hcp lower_edge_fcc_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.6
+    prox_factor          0.217
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step 2N*_association_LowerEdge
+  sites 4
+  neighboring 1-2 1-3 2-3 2-4
+  initial
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+
+  variant NiPt_LowerEdge
+    site_types           adlayer_top_corner lower_edge_fcc_fcc step_110 lower_edge2_hcp_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.28
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_LowerEdge
+    site_types           adlayer_top_edge lower_edge_fcc_fcc step_110 lower_edge2_hcp_fcc 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            1.28
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_LowerEdge
+    site_types           adlayer_top_corner lower_edge_fcc_hcp step_100 lower_edge_hcp_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            0.47
+    prox_factor          0.217
+  end_variant
+
+  variant NiPt_LowerEdge
+    site_types           adlayer_top_edge lower_edge_fcc_hcp step_100 lower_edge_hcp_hcp 
+    pre_expon            2.0E13
+    pe_ratio             7.2E-1
+    activ_eng            0.47
+    prox_factor          0.217
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+
+  variant base_fcc-base_hcp
+    site_types           base_fcc base_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.79
+  end_variant
+
+  variant lower_edge_fcc_fcc-lower_edge_hcp_fcc
+    site_types           lower_edge_fcc_fcc lower_edge_hcp_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.71
+  end_variant
+
+  variant lower_edge_fcc_hcp-lower_edge_hcp_hcp
+    site_types           lower_edge_fcc_hcp lower_edge_hcp_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.88
+  end_variant
+
+  variant lower_edge_fcc_fcc-lower_edge_hcp_hcp
+    site_types           lower_edge_fcc_fcc lower_edge_hcp_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.71
+  end_variant
+
+  variant lower_edge_fcc_hcp-lower_edge_hcp_fcc
+    site_types           lower_edge_fcc_hcp lower_edge_hcp_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.88
+  end_variant
+
+  variant lower_edge_fcc_fcc-lower_edge2_hcp_fcc
+    site_types           lower_edge_fcc_fcc lower_edge2_hcp_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.5
+  end_variant
+
+  variant lower_edge_hcp_hcp-base_fcc
+    site_types           lower_edge_hcp_hcp base_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.62
+  end_variant
+
+  variant lower_edge2_hcp_fcc-base_fcc
+    site_types           lower_edge2_hcp_fcc base_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.62
+  end_variant
+
+  variant upper_edge_fcc_fcc-upper_edge_hcp_fcc
+    site_types           upper_edge_fcc_fcc upper_edge_hcp_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.47
+  end_variant
+
+  variant upper_edge_fcc_hcp-upper_edge_hcp_hcp
+    site_types           upper_edge_fcc_hcp upper_edge_hcp_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.44
+  end_variant
+
+  variant upper_edge_fcc_fcc-upper_edge_hcp_hcp
+    site_types           upper_edge_fcc_fcc upper_edge_hcp_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.47
+  end_variant
+
+  variant upper_edge_hcp_fcc-upper_edge_fcc_hcp
+    site_types           upper_edge_hcp_fcc upper_edge_fcc_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.47
+  end_variant
+
+  variant upper_edge_fcc_fcc-step_110
+    site_types           upper_edge_fcc_fcc step_110 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.81
+  end_variant
+
+  variant adlayer_fcc-adlayer_hcp
+    site_types           adlayer_fcc adlayer_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.75
+  end_variant
+
+  variant adlayer_fcc-upper_edge_hcp_fcc
+    site_types           adlayer_fcc upper_edge_hcp_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.75
+  end_variant
+
+  variant upper_edge_fcc_hcp-adlayer_hcp
+    site_types           upper_edge_fcc_hcp adlayer_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.75
+  end_variant
+
+  variant upper_edge_hcp_hcp-step_100
+    site_types           upper_edge_hcp_hcp step_100 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            1.21
+  end_variant
+
+  variant lower_edge_fcc_fcc-step_110
+    site_types           lower_edge_fcc_fcc step_110 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.52
+  end_variant
+
+  variant lower_edge_hcp_fcc-step_110
+    site_types           lower_edge_hcp_fcc step_110 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.27
+  end_variant
+
+  variant lower_edge_fcc_hcp-step_100
+    site_types           lower_edge_fcc_hcp step_100 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            0.36
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step H*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 H*    1
+    2 *     1
+  final
+    1 *     1  
+    2 H*    1  
+
+  variant base_fcc-base_fcc
+    site_types           base_fcc base_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            1.2
+  end_variant
+
+  variant adlayer_fcc-adlayer_fcc
+    site_types           adlayer_fcc adlayer_fcc 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            1.2
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+################################################################################
+
+reversible_step NH*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 NH*    1
+    2 *     1
+  final
+    1 *     1
+    2 NH*    1
+
+  variant base_fcc-base_hcp
+    site_types           base_fcc base_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            1.4
+  end_variant
+
+  variant adlayer_fcc-adlayer_hcp
+    site_types           adlayer_fcc adlayer_hcp 
+    pre_expon            1.4E13
+    pe_ratio             1.0
+    activ_eng            1.0
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+
+
+end_mechanism

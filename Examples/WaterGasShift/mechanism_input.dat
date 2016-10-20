@@ -1,0 +1,459 @@
+# Mechanism file for water-gas shift on Pt(111) for T = 650 K 
+# Created by Michail Stamatakis on 06-May-2011.
+# Chemical Engineering Department - University of Delaware.
+
+# Units used:
+# for pre-exponentials of surface reactions:      1/s
+# for pre-exponentials of gas-surface reactions:  1/bar/s
+# for activation energies:                        eV
+
+mechanism
+
+#######################################################
+
+reversible_step CO_adsorption
+  gas_reacs_prods CO -1
+  sites 1
+  initial # (entity_number, species, dentate)
+    1 *     1
+  final
+    1 CO*   1
+  variant trc # ElemStep 1 
+    site_types fcc_hollow_t
+    pre_expon  3.41e+005
+    activ_eng  0.00
+    pe_ratio   3.43e-009
+    #delta_eng  -1.82
+    #energetics_de  1
+    #  1 CO* 1 fcc_hollow_t 2  1.066666666666667e-1
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step O2_dissociative_adsorption
+  gas_reacs_prods O2 -1
+  sites 3
+  neighboring 1-2 2-3
+  initial # (entity_number, species, dentate)
+    1 *     1
+    2 *     1
+    3 *     1
+  final
+    1 O*    1
+    2 *     1
+    3 O*    1
+  variant trc # ElemStep 3 
+    site_types fcc_hollow_t top_t fcc_hollow_t
+    pre_expon  1.18e+008
+    activ_eng  0.00
+    pe_ratio   4.84e-008 # pre-exponential ratio
+    #delta_eng  -2.32
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step H2_dissociative_adsorption
+  gas_reacs_prods H2 -1
+  sites 3
+  neighboring 1-2 2-3
+  initial # (entity_number, species, dentate)
+    1 *     1
+    2 *     1
+    3 *     1
+  final
+    1 H*    1
+    2 *     1
+    3 H*    1
+  variant trc # ElemStep 7 
+    site_types fcc_hollow_t top_t fcc_hollow_t
+    pre_expon  2.87e+007
+    activ_eng  0.00
+    pe_ratio   4.65e-006
+    #delta_eng  -1.00
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step CO2_dissociative_adsorption
+  gas_reacs_prods CO2 -1
+  sites 3
+  neighboring 1-2 2-3
+  initial # (entity_number, species, dentate)
+    1 *     1
+    2 *     1
+    3 *     1
+  final
+    1 CO*   1
+    2 *     1
+    3 O*    1
+  variant trc # ElemStep 12 
+    site_types fcc_hollow_t top_t fcc_hollow_t
+    pre_expon  6.65e+004
+    activ_eng  1.23
+    pe_ratio   5.66e-008
+    #delta_eng  -0.18
+    #energetics_de  1
+    #  1 CO* 1 fcc_hollow_t 2  1.066666666666667e-1
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step H2O_adsorption
+  gas_reacs_prods H2O -1
+  sites 1
+  initial # (entity_number, species, dentate)
+    1 *    1
+  final
+    1 H2O* 1
+  variant trc1 # ElemStep 19 
+    site_types top_t
+    pre_expon  7.20e+005
+    activ_eng  0.00
+    pe_ratio   1.69e-007
+    #delta_eng  -0.29
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step H2O_decomposition
+  sites 2
+  neighboring 1-2
+  initial # (entity_number, species, dentate)
+    1 H2O*  1
+    2 *     1
+  final
+    1 OH*   1
+    2 H*    1
+  variant trc1 # ElemStep 22 
+    site_types top_t fcc_hollow_t
+    pre_expon  4.48e+012
+    activ_eng  0.65
+    pe_ratio   6.39e+000
+    #delta_eng  0.40
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step OH_decomposition
+  sites 3
+  neighboring 1-2 2-3
+  initial # (entity_number, species, dentate)
+    1 *     1
+    2 OH*   1
+    3 *     1
+  final
+    1 O*    1
+    2 *     1
+    3 H*    1
+  variant trc1 # ElemStep 26 
+    site_types fcc_hollow_t top_t fcc_hollow_t
+    pre_expon  2.36e+013
+    activ_eng  0.79
+    pe_ratio   19.8e+000
+    #delta_eng  -0.31
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step OH_OH_disproportionation
+  sites 4
+  neighboring 1-2 2-3 3-4 4-1
+  initial # (entity_number, species, dentate)
+    1 OH*   1
+    2 *     1
+    3 OH*   1
+    4 *     1
+  final
+    1 H2O*  1
+    2 O*    1
+    3 *     1
+    4 *     1
+  variant trc1 # ElemStep 29 
+    site_types top_t fcc_hollow_t top_t bridge_t
+    pre_expon  3.09e+011
+    activ_eng  0.00
+    pe_ratio   3.09e+000
+    #delta_eng  -0.71
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step CO_OH_disproportionation
+  sites 2
+  neighboring 1-2
+  initial # (entity_number, species, dentate)
+    1 CO*    1
+    2 OH*    1
+  final
+    1 *      1
+    2 tCOOH* 1
+  variant trc1 # ElemStep 34 
+    site_types fcc_hollow_t top_t
+    pre_expon  4.58e+011
+    activ_eng  0.48
+    prox_factor 0.945
+    pe_ratio   3.90e-002
+    #delta_eng  -0.17
+    #energetics_fwd 1
+    #  1 CO* 1 fcc_hollow_t 2 -5.333333333333333e-2
+    #energetics_de  1
+    #  1 CO* 1 fcc_hollow_t 2 -1.066666666666667e-1
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step COOH_decomposition
+  gas_reacs_prods CO2 1
+  sites 2
+  neighboring 1-2
+  initial # (entity_number, species, dentate)
+    1 tCOOH* 1
+    2 *      1
+  final
+    1 *      1
+    2 H*     1
+  variant trc1 # ElemStep 38 
+    site_types top_t fcc_hollow_t
+    pre_expon  5.28e+014
+    activ_eng  0.67
+    pe_ratio   8.96e+009
+    #delta_eng  0.04
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step COOH_O_disproportionation
+  gas_reacs_prods CO2 1
+  sites 3
+  neighboring 1-2 2-3
+  initial # (entity_number, species, dentate)
+    1 tCOOH* 1
+    2 *      1
+    3 O*     1
+  final
+    1 OH*    1
+    2 *      1
+    3 *      1
+  variant trc1 # ElemStep 41 
+    site_types top_t bridge_t fcc_hollow_t
+    pre_expon  6.93e+011
+    activ_eng  0.45
+    pe_ratio   4.53e+008
+    #delta_eng  0.35
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step COOH_OH_disproportionation
+  gas_reacs_prods CO2 1
+  sites 3
+  neighboring 1-2 2-3
+  initial # (entity_number, species, dentate)
+    1 tCOOH* 1
+    2 *      1
+    3 OH*    1
+  final
+    1 *      1
+    2 *      1
+    3 H2O*   1
+  variant trc1 # ElemStep 45 
+    site_types top_t bridge_t top_t
+    pre_expon  1.04e+013
+    activ_eng  0.10
+    pe_ratio   1.4e+009
+    #delta_eng  -0.36
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step HCO_formation
+  sites 4
+  neighboring 1-2 1-3 1-4 2-4
+  initial # (entity_number, species, dentate)
+    1 *      1
+    2 CO*    1
+    3 H*     1
+    4 *      1
+  final
+    1 HCO**  1
+    2 *      1
+    3 *      1
+    1 HCO**  2
+  variant trc1 # ElemStep 51 
+    site_types top_t fcc_hollow_t fcc_hollow_t bridge_t
+    pre_expon  1.98e+011
+    activ_eng  1.35
+    prox_factor 0.945
+    pe_ratio   2.35e-002
+    #delta_eng  1.08
+    #energetics_fwd 1
+    #  2 CO* 1 fcc_hollow_t 2 -5.333333333333333e-2
+    #energetics_de  1
+    #  1 CO* 1 fcc_hollow_t 2 -1.066666666666667e-1
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step HCOO_formation
+  sites 4
+  neighboring 1-4 2-4 3-4
+  initial # (entity_number, species, dentate)
+    1 HCO**  2
+    2 *      1
+    3 O*     1
+    1 HCO**  1
+  final
+    1 HCOO*** 1
+    1 HCOO*** 3
+    2 *       1
+    1 HCOO*** 2
+  variant trc1 # ElemStep 55 
+    site_types top_t top_t fcc_hollow_t bridge_t
+    pre_expon  6.15e+011
+    activ_eng  1.06
+    pe_ratio   4.89e-002
+    #delta_eng  -0.54
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step HCOO_decomposition
+  gas_reacs_prods CO2 1
+  sites 4
+  neighboring 1-2 2-3 2-4
+  initial # (entity_number, species, dentate)
+    1 HCOO*** 1
+    1 HCOO*** 2
+    1 HCOO*** 3
+    2 *       1
+  final
+    1 *       1
+    2 *       1
+    3 *       1
+    4 H*      1
+  variant trc1 # ElemStep 62 
+    site_types top_t bridge_t top_t fcc_hollow_t
+    pre_expon  5.97e+013
+    activ_eng  0.91
+    pe_ratio   1.54e+010
+    #delta_eng  -0.36
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step HCOO_O_disporportionation
+  gas_reacs_prods CO2 1
+  sites 4
+  neighboring 1-2 2-3 2-4
+  initial # (entity_number, species, dentate)
+    1 HCOO*** 1
+    1 HCOO*** 2
+    1 HCOO*** 3
+    2 O*      1
+  final
+    1 OH*     1
+    2 *       1
+    3 *       1
+    4 *       1
+  variant trc1 # ElemStep 67 
+    site_types top_t bridge_t top_t fcc_hollow_t
+    pre_expon  1.19e+012
+    activ_eng  1.71
+    pe_ratio   7.76e+008
+    #delta_eng  -0.05
+  end_variant
+end_reversible_step
+
+reversible_step HCOO_O_disporportionation
+  gas_reacs_prods CO2 1
+  sites 4
+  neighboring 1-2 2-3 2-4
+  initial # (entity_number, species, dentate)
+    1 HCOO*** 3
+    1 HCOO*** 2
+    1 HCOO*** 1
+    2 O*      1
+  final
+    1 OH*     1
+    2 *       1
+    3 *       1
+    4 *       1
+  variant trc1m # ElemStep 67 
+    site_types top_t bridge_t top_t fcc_hollow_t
+    pre_expon  1.19e+012
+    activ_eng  1.71
+    pe_ratio   7.76e+008
+    #delta_eng  -0.05
+  end_variant
+end_reversible_step
+
+#######################################################
+
+reversible_step HCOO_OH_disporportionation
+  gas_reacs_prods CO2 1
+  sites 5
+  neighboring 1-2 2-3 1-4 4-5
+  initial # (entity_number, species, dentate)
+    1 HCOO*** 1
+    1 HCOO*** 2
+    1 HCOO*** 3
+    2 *       1
+    3 OH*     1
+  final
+    1 *       1
+    2 *       1
+    3 *       1
+    4 *       1
+    5 H2O*    1
+  variant trc1 # ElemStep 73 
+    site_types top_t bridge_t top_t bridge_t top_t
+    pre_expon  6.3e+012
+    activ_eng  0.92
+    pe_ratio   2.4e+009
+    #delta_eng  -0.76
+  end_variant
+end_reversible_step
+
+reversible_step HCOO_OH_disporportionation
+  gas_reacs_prods CO2 1
+  sites 5
+  neighboring 1-2 2-3 1-4 4-5
+  initial # (entity_number, species, dentate)
+    1 HCOO*** 3
+    1 HCOO*** 2
+    1 HCOO*** 1
+    2 *       1
+    3 OH*     1
+  final
+    1 *       1
+    2 *       1
+    3 *       1
+    4 *       1
+    5 H2O*    1
+  variant trc1m # ElemStep 73 
+    site_types top_t bridge_t top_t bridge_t top_t
+    pre_expon  6.3e+012
+    activ_eng  0.92
+    pe_ratio   2.4e+009
+    #delta_eng  -0.76
+  end_variant
+end_reversible_step
+
+#######################################################
+
+end_mechanism

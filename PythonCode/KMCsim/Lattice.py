@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mat
 #from ase.neighborlist import NeighborList
 
-class KMC_lattice:
+class Lattice:
     
     def __init__(self):
         

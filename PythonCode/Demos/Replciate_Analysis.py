@@ -9,18 +9,19 @@ import os
 import sys
 
 sys.path.insert(0, '../KMCsim')
-from KMC_batch import KMC_batch
+from Replicates import Replicates
+
+################## User input ##################################
+
+BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/AtoB_ZW/LRSA/'
+Product = 'B'
 
 ################################################################
 
 os.system('cls')
 
-BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/AtoB_ZW/LRSA/'
-
-Product = 'B'
-
 # Batch of runs ----------------
-x = KMC_batch()
+x = Replicates()
 x.ParentFolder = BatchPath
 x.ReadMultipleRuns()
 

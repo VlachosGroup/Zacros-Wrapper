@@ -8,25 +8,26 @@ Created on Tue Sep 13 10:58:43 2016
 # Enter data for a simple KMC lattice and then draw it.
 
 import os
+import sys
 from ase.io import read
 from ase.io import write 
 import numpy as np
 
 sys.path.insert(0, '../KMCsim')
-from KMC_lattice import KMC_lattice
+from Lattice import Lattice
 
 os.system('cls')
 
 #POSCAR_fname = 'C:/Users/mpnun/Dropbox/Github/Zacros-scripts/Lattice Maker/graphene_example/graphene_template.POSCAR'
 #
-#lat = KMC_lattice()
+#lat = Lattice()
 #lat.workingdir = 'C:\Users\mpnun\Desktop\lat_test'
 #lat.mol_dat = read(POSCAR_fname)
 #lat.molecular_to_KMClat()
 #lat.Write_lattice_input()
 
 ''' Define and print lattice '''
-#lat = KMC_lattice()
+#lat = Lattice()
 #lat.workingdir = 'C:\Users\mpnun\Desktop\lat_test'
 #lat.lattice_matrix = np.array([[3.0,0.0],[0.0,3.0]])
 #lat.site_type_names = ['top','fcc']
@@ -38,7 +39,7 @@ os.system('cls')
 #lat.PlotLattice()
 
 ''' Read lattice info from file '''
-fname = 'C:/Users/mpnun/Desktop/lattice_test/lattice_output.txt'
-lat = KMC_lattice()
+fname = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/Test_systems/CO_ox_211/lattice_output.txt'
+lat = Lattice()
 lat.Read_lattice_output(fname)
 lat.PlotLattice()

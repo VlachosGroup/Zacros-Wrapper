@@ -5,13 +5,13 @@ Created on Thu Mar 03 14:54:26 2016
 @author: robieta
 """
 
-from KMCrun_data import KMCrun_data
+from IOdata import IOdata
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mat
 
 # For executable
-import GeneralUtilities as ut
+import Helper as ut
 import os
 import signal
 import shutil
@@ -20,11 +20,11 @@ import tempfile
 import time
 import matplotlib.animation as animation
 
-class KMCrun:
+class KMC_Run:
     
     def __init__(self):
         
-        self.data = KMCrun_data()
+        self.data = IOdata()
         self.exe_file = ''
         self.op_system = 'Windows'
         self.anim = []          # animation object used for lattice movie

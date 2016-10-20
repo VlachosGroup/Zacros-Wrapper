@@ -15,7 +15,7 @@ sys.path.append("..")
 
 
 
-class GeneralUtilities:
+class Helper:
     def __init__(self):
         pass
     

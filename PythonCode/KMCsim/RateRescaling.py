@@ -11,7 +11,7 @@ import numpy as np
 import os
 import copy
 
-from KMC_batch import KMC_batch
+from Replicates import Replicates
 
 class RateRescaling:
     
@@ -19,7 +19,7 @@ class RateRescaling:
         
         self.summary_filename = 'rescaling_output.txt'
         self.scale_parent_fldr = ''
-        self.batch = KMC_batch()
+        self.batch = Replicates()
         self.SDF_mat    = []        # scaledown factors for each iteration
         self.tfinalvec = []         # t_final for each iteration
         self.rxn_names = []

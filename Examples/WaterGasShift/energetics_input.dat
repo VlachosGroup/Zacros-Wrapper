@@ -1,0 +1,160 @@
+# Energetics for WGS on Pt(111)
+  
+energetics
+  
+############################################################################
+  
+cluster CO_point
+  
+  sites 1
+  lattice_state
+    1 CO*  1
+    
+  variant fcc
+    site_types          fcc_hollow_t
+    graph_multiplicity  1
+    cluster_eng         -1.82
+  end_variant
+  
+end_cluster
+  
+############################################################################
+  
+cluster O_point
+  
+  sites 1
+  lattice_state
+    1 O*  1
+    
+  variant fcc
+    site_types          fcc_hollow_t
+    graph_multiplicity  1
+    cluster_eng         -1.16
+  end_variant
+  
+end_cluster
+  
+############################################################################
+  
+cluster H2O_point
+  
+  sites 1
+  lattice_state
+    1 H2O*   1
+    
+  variant top
+    site_types          top_t
+    graph_multiplicity  1
+    cluster_eng         -2.25
+  end_variant
+  
+end_cluster
+  
+############################################################################
+  
+cluster OH_point
+  
+  sites 1
+  lattice_state
+    1 OH*  1
+  
+  variant top
+    site_types          top_t
+    graph_multiplicity  1
+    cluster_eng         -1.35
+  end_variant
+  
+end_cluster
+
+############################################################################
+
+cluster H_point
+  
+  sites 1
+  lattice_state
+    1 H*  1
+  
+  variant fcc
+    site_types          fcc_hollow_t
+    graph_multiplicity  1
+    cluster_eng         -0.5
+  end_variant
+  
+end_cluster
+
+############################################################################
+
+cluster HCO_point
+  
+  sites 2
+  neighboring 1-2
+  lattice_state
+    1 HCO**  1
+    1 HCO**  2  
+  
+  variant tb
+    site_types          top_t bridge_t
+    graph_multiplicity  1
+    cluster_eng         -1.24
+  end_variant
+  
+end_cluster
+
+############################################################################
+
+cluster HCOO_point
+  
+  sites 3
+  neighboring 1-2 2-3
+  lattice_state
+    1 HCOO***  1
+    1 HCOO***  2
+    1 HCOO***  3
+  
+  variant tbt
+    site_types          top_t bridge_t top_t
+    graph_multiplicity  1
+    cluster_eng         -2.94
+  end_variant
+  
+end_cluster
+
+############################################################################
+
+cluster tCOOH_point
+  
+  sites 1
+  lattice_state
+    1 tCOOH*  1
+  
+  variant top
+    site_types          top_t
+    graph_multiplicity  1
+    cluster_eng         -3.34
+  end_variant
+  
+end_cluster
+
+############################################################################
+
+cluster CO_CO_lateral
+  
+  sites 4
+  neighboring 1-2 2-3 3-4 
+  lattice_state
+    1 CO*  1
+    & &    &
+    & &    &
+    2 CO*  1
+  
+  variant fcc_fcc
+    site_types          fcc_hollow_t bridge_t bridge_t fcc_hollow_t
+    graph_multiplicity  2
+    cluster_eng         0.10667
+  end_variant
+  
+end_cluster
+
+############################################################################
+
+end_energetics
