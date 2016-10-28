@@ -14,19 +14,23 @@ from KMC_Run import KMC_Run
 os.system('cls')
 
 ''' ------------ User input section ------------ '''
-RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/lattice_test/'
-ProductSpecies = 'B'
+RunPath = 'C:/Users/mpnun/Desktop/New folder/'
+ProductSpecies = 'CO2'
+exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
 ''' -------------------------------------------- '''
 
 ''' Set up data '''
 y = KMC_Run()
 y.data.Path = RunPath
 y.data.ReadAllInput()
+y.exe_file = exe_file
+
+#y.Run_sim()
 y.data.ReadAllOutput()
 
 ''' Analyze '''
-TOF = y.ComputeTOF(ProductSpecies)
-y.PlotSurfSpecVsTime()
-y.PlotGasSpecVsTime()
-y.PlotElemStepFreqs()
+#TOF = y.ComputeTOF(ProductSpecies)
+#y.PlotSurfSpecVsTime()
+#y.PlotGasSpecVsTime()
+#y.PlotElemStepFreqs()
 y.LatticeMovie()

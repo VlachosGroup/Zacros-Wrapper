@@ -192,41 +192,51 @@ class KMC_Run:
                     plt.plot([p1[0], p2[0]], [p1[1], p2[1]], '-k', linewidth = 1)
         
         # Plot sites            
-        plt.plot(cart_coords[:,0], cart_coords[:,1], 'o', markersize = 15)
-        
-        line, = ax.plot([], [], 'rs')
+        plt.plot(cart_coords[:,0], cart_coords[:,1], 'bo', markersize = 15)
+            
+        color_list = ['g','r','c','m','y','k']
+        line_list = []
+        for ind in range(self.data.Species['n_surf']):    
+            line, = ax.plot([], [], 's' + color_list[ind % len(color_list)], markersize = 10, label=self.data.Species['surf_spec'][ind])
+            line_list.append(line)
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('x-coord (ang)',size=24)
         plt.ylabel('y-coord (ang)',size=24)        
-        
+        plt.legend(handles = line_list, frameon=False)
         
         # initialization function: plot the background of each frame
         def init():
-            line.set_data([], [])
-            return line,
+            for line in line_list:
+                line.set_data([], [])
+            return line_list
         
         # animation function.  This is called sequentially
         def animate(i):
             
-            x_list = []
-            y_list = []
-            
             snap = self.data.History[i]            
-            for site_ind in range(self.data.n_sites):
-                if snap[site_ind,2] > 0:
-                    x_list.append(cart_coords[site_ind,0])
-                    y_list.append(cart_coords[site_ind,1])
-        
-            x = np.array(x_list)
-            y = np.array(y_list)
             
-            line.set_data(x, y)
-            return line,
+            for ind in range(self.data.Species['n_surf']):
+                
+                # Find all coordinates with species ind occupying it
+                x_list = []
+                y_list = []
+                for site_ind in range(self.data.n_sites):
+                    if snap[site_ind,2] == ind + 1:
+                        x_list.append(cart_coords[site_ind,0])
+                        y_list.append(cart_coords[site_ind,1])
+        
+                x = np.array(x_list)
+                y = np.array(y_list)                
+                
+                line = line_list[ind]
+                line.set_data(x,y)
+                
+            return line_list
         
         # call the animator.  blit=True means only re-draw the parts that have changed.
         self.anim = animation.FuncAnimation(fig, animate, init_func=init,
-                                       frames=self.data.n_snapshots, interval=20, blit=True)
+                                       frames=self.data.n_snapshots, interval=40, blit=True, repeat_delay = 500)
         
         plt.show()
     

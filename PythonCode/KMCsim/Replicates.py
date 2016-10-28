@@ -68,11 +68,11 @@ class Replicates:
     
     def RunAllJobs(self, parallel = True):
 
-        if parallel:
+        if parallel:	# run in parallel among available processors
             pool = Pool(processes = self.n_procs)
             pool.map(runKMC, self.runList)
             pool.close()
-        else:
+        else:			# run in serial
             for run in self.runList:
                 run.Run_sim()
     
