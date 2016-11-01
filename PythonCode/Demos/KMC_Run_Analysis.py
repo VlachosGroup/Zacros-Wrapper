@@ -14,7 +14,7 @@ from KMC_Run import KMC_Run
 os.system('cls')
 
 ''' ------------ User input section ------------ '''
-RunPath = 'C:/Users/mpnun/Desktop/New folder/'
+RunPath = 'C:/Users/mpnun/Desktop/test_rep/1/'
 ProductSpecies = 'CO2'
 exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
 ''' -------------------------------------------- '''
@@ -30,7 +30,7 @@ y.data.ReadAllOutput()
 
 ''' Analyze '''
 #TOF = y.ComputeTOF(ProductSpecies)
-#y.PlotSurfSpecVsTime()
+y.PlotSurfSpecVsTime(save = True)
 #y.PlotGasSpecVsTime()
 #y.PlotElemStepFreqs()
-y.LatticeMovie()
+#y.LatticeMovie()

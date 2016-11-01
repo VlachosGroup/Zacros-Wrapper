@@ -6,19 +6,21 @@ Created on Sun Apr 03 15:20:36 2016
 """
 
 import os, shutil
-import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
 import copy
 
 from KMC_Run import KMC_Run
-import Helper as ut
 from Stats import Stats
 
 # Separate function for use in parallelization
 def runKMC(kmc_rep):
     kmc_rep.Run_sim()
+    
+def readKMCoutput(kmc_rep):
+    kmc_rep.data.ReadAllOutput()
+    return kmc_rep
 
 class Replicates:
     
@@ -59,7 +61,7 @@ class Replicates:
                     shutil.rmtree(file_path)
             except Exception as e:
                 print(e)
-                
+        
         # Build folders and input files for each job
         for run in self.runList:
             if not os.path.exists(run.data.Path):
@@ -76,25 +78,26 @@ class Replicates:
             for run in self.runList:
                 run.Run_sim()
     
-    def ReadMultipleRuns(self):     # Could simplify this
-        
-#        print 'Reading output from ' + self.ParentFolder
-        summary_fname = 'BatchSummary.p'
-        if os.path.isfile(self.ParentFolder + summary_fname):                              # Runs have already been read
-            print 'Existing pickle file found.'
-            self.runList = pickle.load(open( self.ParentFolder + summary_fname, "rb" ))
-        else:                                                               # Go through each directory and read the data           
-            DirList = ut.Helper().GetDir(self.ParentFolder)
-            nDir = len(DirList)
-            self.runList = ['' for i in range(nDir)]
-            for i in range(nDir):
-#                print 'Reading run # ' + str(i+1) + ' / ' + str(nDir)
-                RunPath = self.ParentFolder + DirList[i] + '/'
-                self.runList[i]  = KMC_Run()
-                self.runList[i].data.Path = RunPath
-                self.runList[i].data.ReadAllOutput()                               # Read input and output files
-            pickle.dump( self.runList, open( self.ParentFolder + summary_fname, "wb" ) )  
+    def ReadMultipleRuns(self, parallel = False):
+
+        # Add complete jobs to the list
+        self.runList = []
+        DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(self.ParentFolder + d + '/')]      # List all folders in ParentFolder
+        for direct in DirList:
+            run = KMC_Run()
+            run.data.Path =  self.ParentFolder + direct + '/'
+            if run.data.CheckComplete():
+                self.runList.append(run)      
         self.n_runs = len(self.runList)
+        
+        # Read output files of all jobs
+        if parallel:
+            pool = Pool(processes = self.n_procs)
+            self.runList = pool.map(readKMCoutput, self.runList)
+            pool.close()
+        else:
+            for run in self.runList:
+                run.data.ReadAllOutput()
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
@@ -102,8 +105,9 @@ class Replicates:
         # Initialize run average with information from first run, then set data to zero
         self.runAvg = KMC_Run()      
         self.runAvg.data = self.runList[0].data
+        self.runAvg.data.Path = self.ParentFolder
         self.runAvg.data.Specnum['t'] = self.runList[0].data.Specnum['t']
-             
+
         self.runAvg.data.Specnum['spec'] = self.runList[0].data.Specnum['spec'] - self.runList[0].data.Specnum['spec']         
         self.runAvg.data.Procstat['events'] = self.runList[0].data.Procstat['events'] - self.runList[0].data.Procstat['events']
 #        self.runAvg.data.Binary['cluster'] = self.runList[0].data.Binary['cluster'] - self.runList[0].data.Binary['cluster']
@@ -153,7 +157,7 @@ class Replicates:
         self.NSC_ci = np.zeros(self.runList[0].data.Reactions['nrxns'])
         for i in range(0, self.runList[0].data.Reactions['nrxns']):
             W = Wdata[:,2*i] + Wdata[:,2*i+1]             
-            ci_info = Stats.cov_ci(W, TOFdata / self.TOF)
+            ci_info = Stats.cov_ci(W, TOFdata / self.TOF, Nboot=100, n_cores = self.n_procs)
             self.NSC[i] = ci_info[0] + tof_fracs[2*i] + tof_fracs[2*i+1]
             self.NSC_ci[i] = ci_info[1]
                                    
@@ -191,7 +195,7 @@ class Replicates:
         plt.legend(labels,loc=4,prop={'size':20},frameon=False)        
         plt.show()
         
-    def PlotSensitivities(self): 
+    def PlotSensitivities(self, save = True): 
         
         self.runAvg.PlotOptions()
         plt.figure()
@@ -214,7 +218,15 @@ class Replicates:
         plt.yticks(size=20)
         plt.xlabel('NSC',size=24)
         plt.yticks(yvals, ylabels)
-        plt.show()
+        ax = plt.subplot(111)
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)
+        
+        if save:
+            plt.savefig(self.ParentFolder + 'SA_output.png')
+            plt.close()
+        else:
+            plt.show()
     
     def WriteSA_output(self,BatchPath):
         with open(BatchPath + 'SA_output.txt', 'w') as txt:

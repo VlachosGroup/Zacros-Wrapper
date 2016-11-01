@@ -51,7 +51,7 @@ class KMC_Run:
         mat.rcParams['lines.linewidth'] = 2
         mat.rcParams['lines.markersize'] = 12
 
-    def PlotSurfSpecVsTime(self):
+    def PlotSurfSpecVsTime(self, save = True):
         self.PlotOptions()
         plt.figure()
         
@@ -63,10 +63,18 @@ class KMC_Run:
         plt.xlabel('time (s)',size=24)
         plt.ylabel('spec. pop.',size=24)
 #        plt.ylabel('coverage',size=24)
-        plt.legend(self.data.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)        
-        plt.show()
+        plt.legend(self.data.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)
+        ax = plt.subplot(111)
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)
+        
+        if save:
+            plt.savefig(self.data.Path + 'surf_spec_vs_time.png')
+            plt.close()
+        else:
+            plt.show()
     
-    def PlotGasSpecVsTime(self):
+    def PlotGasSpecVsTime(self, save = True):
         self.PlotOptions()
         plt.figure()          
           
@@ -79,7 +87,15 @@ class KMC_Run:
         plt.xlabel('time (s)',size=24)
         plt.ylabel('spec. pop.',size=24)
         plt.legend(self.data.Species['gas_spec'],loc=2,prop={'size':20},frameon=False)        
-        plt.show()     
+        ax = plt.subplot(111)
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)        
+        
+        if save:
+            plt.savefig(self.data.Path + 'gas_spec_vs_time.png')
+            plt.close()
+        else:
+            plt.show()
     
     def PlotPropsVsTime(self):      # Helps analyze the sensitivty analysis
         self.PlotOptions
@@ -95,7 +111,10 @@ class KMC_Run:
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('props',size=24)
-        plt.legend(labels,loc=2,prop={'size':20},frameon=False)        
+        plt.legend(labels,loc=2,prop={'size':20},frameon=False)
+        ax = plt.subplot(111)
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)
         plt.show()
         
     def PlotIntPropsVsTime(self):      # Helps analyze the sensitivty analysis
@@ -112,7 +131,10 @@ class KMC_Run:
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('integral props',size=24)
-        plt.legend(labels,loc=2,prop={'size':20},frameon=False)        
+        plt.legend(labels,loc=2,prop={'size':20},frameon=False)
+        ax = plt.subplot(111)
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)
         plt.show()
     
     def PlotWVsTime(self):      # Helps analyze the sensitivty analysis
@@ -130,10 +152,13 @@ class KMC_Run:
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('W',size=24)
-        plt.legend(labels, loc=2,prop={'size':20},frameon=False)        
+        plt.legend(labels, loc=2,prop={'size':20},frameon=False)
+        ax = plt.subplot(111)
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)
         plt.show()       
     
-    def PlotElemStepFreqs(self):
+    def PlotElemStepFreqs(self, save = True):
         self.PlotOptions
         plt.figure()        
         
@@ -164,7 +189,12 @@ class KMC_Run:
         ax = plt.subplot(111)        
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
-        plt.show()
+        
+        if save:
+            plt.savefig(self.data.Path + 'elem_step_freqs.png')
+            plt.close()
+        else:
+            plt.show()
     
     def LatticeMovie(self):       # Need to complete this function by plotting adsorbates from the history file data
 

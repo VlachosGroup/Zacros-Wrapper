@@ -633,9 +633,9 @@ class IOdata:
         
         self.ReadAllInput()
         
-#        print 'Reading output files in ' + self.Path
+        print 'Reading output files in ' + self.Path
         if self.CheckComplete():
-
+            
             # Standard output files
             self.ReadGeneral()
             self.ReadProcstat()
@@ -764,6 +764,7 @@ class IOdata:
         self.Procstat['events'] = np.asarray(events)
     
     def ReadSpecnum(self):
+
         MaxLen = np.int(2e4)
         with open(self.Path + 'specnum_output.txt','r') as txt:
             RawTxt = txt.readlines()

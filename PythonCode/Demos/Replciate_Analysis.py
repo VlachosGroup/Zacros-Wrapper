@@ -13,29 +13,34 @@ from Replicates import Replicates
 
 ################## User input ##################################
 
-BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/COox_SA/'
+BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/WGS_ZW/SA_run/run_fldr/'
+#BatchPath = 'C:/Users/mpnun/Desktop/test_rep/'
 Product = 'CO2'
+n_cores = 3
 
 ################################################################
 
-os.system('cls')
+if __name__ == '__main__':                 # Need this line to make parallelization work
 
-# Batch of runs ----------------
-x = Replicates()
-x.ParentFolder = BatchPath
-x.ReadMultipleRuns()
+    os.system('cls')
 
-# Trajectory average
-x.AverageRuns()
-x.runAvg.PlotSurfSpecVsTime()
-x.runAvg.PlotGasSpecVsTime()
-x.runAvg.PlotElemStepFreqs()
-x.runAvg.CheckSteadyState(Product, show_graph = True)
+    # Batch of runs ----------------
+    x = Replicates()
+    x.ParentFolder = BatchPath
+    x.n_procs = n_cores  
+    x.ReadMultipleRuns(parallel = True)
 
-# Rate and sensitivities
-x.ComputeStats(Product, SA = False)
-#x.PlotSensitivities()
-#x.WriteSA_output(BatchPath)
-#x.WvarCheck()
-
-print [x.TOF, x.TOF_error]
+    # Trajectory average
+    x.AverageRuns()
+    x.runAvg.PlotSurfSpecVsTime()
+    x.runAvg.PlotGasSpecVsTime()
+    x.runAvg.PlotElemStepFreqs()
+#    x.runAvg.CheckSteadyState(Product, show_graph = True)
+    
+#     Rate and sensitivities
+    x.ComputeStats(Product)
+    x.PlotSensitivities()
+    x.WriteSA_output(BatchPath)
+    #x.WvarCheck()
+#    
+#    print [x.TOF, x.TOF_error]

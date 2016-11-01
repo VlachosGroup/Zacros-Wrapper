@@ -18,10 +18,6 @@ sys.path.append("..")
 class Helper:
     def __init__(self):
         pass
-    
-    def GetDir(self,Path):
-        Dir = [d for d in os.listdir(Path) if os.path.isdir(Path + d + '/')]
-        return Dir
         
     def GetFiles(self,Path):
         Files = [d for d in os.listdir(Path) if not os.path.isdir(Path + d + '/')]
