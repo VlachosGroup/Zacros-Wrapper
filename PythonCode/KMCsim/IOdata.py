@@ -103,6 +103,11 @@ class IOdata(object):
         
         self.Reactions['Nu']      = ''
         self.Reactions['UniqNu']  = ''
+        
+        self.Performance = {}
+        self.Performance['t_final']  = 0
+        self.Performance['events_occurred']  = 0
+        self.Performance['CPU_time']  = 0
 
 # ------------------------------------- Read input files ----------------------------
 
@@ -387,13 +392,6 @@ class IOdata(object):
 
     def WriteAllInput(self):
         
-        #Purge Directory
-#        Files = ut.Helper().GetFiles(self.Path)
-#        for i in Files:
-#            os.remove(self.Path + i)
-        
-#        print 'Writing input files in ' + self.Path
-        
         self.WriteSimIn()
         self.WriteMechanism()
         self.WriteEnergetics()
@@ -671,6 +669,13 @@ class IOdata(object):
         for i in range(0,len(RawTxt)):
             if re.search('Number of elementary steps:',RawTxt[i]):
                 nRxn = np.int(RawTxt[i].split(':')[1])
+            elif re.search('Current KMC time:',RawTxt[i]):
+                self.Performance['t_final'] = np.float(RawTxt[i].split(':')[1])
+            elif re.search('Events occurred:',RawTxt[i]):
+                self.Performance['events_occurred'] = np.float(RawTxt[i].split(':')[1])
+            elif re.search('Elapsed CPU time:',RawTxt[i]):
+                after_colon = RawTxt[i].split(':')[1]
+                self.Performance['CPU_time'] = np.float(after_colon.split(' ')[-2])
             elif re.search('Reaction network:',RawTxt[i]):
                 RxnStartLine = i + 2
                 

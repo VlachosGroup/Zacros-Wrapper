@@ -28,9 +28,11 @@ y.exe_file = exe_file
 #y.Run_sim()
 y.ReadAllOutput()
 
+
+
 ''' Analyze '''
 #TOF = y.ComputeTOF(ProductSpecies)
-y.PlotSurfSpecVsTime(save = False)
+#y.PlotSurfSpecVsTime(save = False)
 #y.PlotGasSpecVsTime()
 #y.PlotElemStepFreqs()
 #y.LatticeMovie()
