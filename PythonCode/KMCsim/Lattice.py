@@ -50,7 +50,7 @@ class Lattice:
         plt.yticks(size=20)
         plt.xlabel('x-coord (ang)',size=24)
         plt.ylabel('y-coord (ang)',size=24)
-#        plt.legend(self.data.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)        
+#        plt.legend(self.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)        
         plt.show()
     
     def Read_lattice_output(self,fname):

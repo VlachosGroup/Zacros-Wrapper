@@ -27,8 +27,8 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
 	
     ''' Set up system '''
     y = KMC_Run()
-    y.data.Path = KMC_source
-    y.data.ReadAllInput()
+    y.Path = KMC_source
+    y.ReadAllInput()
     y.exe_file = exe_file
     z = RateRescaling()
     z.batch.runtemplate = y

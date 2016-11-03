@@ -19,7 +19,7 @@ def runKMC(kmc_rep):
     kmc_rep.Run_sim()
     
 def readKMCoutput(kmc_rep):
-    kmc_rep.data.ReadAllOutput()
+    kmc_rep.ReadAllOutput()
     return kmc_rep
 
 class Replicates:
@@ -47,8 +47,8 @@ class Replicates:
         self.runList = []
         for i in range(self.n_runs):
             new_run = copy.deepcopy(self.runtemplate)
-            new_run.data.Conditions['Seed'] = self.runtemplate.data.Conditions['Seed'] + i
-            new_run.data.Path = self.ParentFolder + str(i+1) + '/'
+            new_run.Conditions['Seed'] = self.runtemplate.Conditions['Seed'] + i
+            new_run.Path = self.ParentFolder + str(i+1) + '/'
             self.runList.append(new_run)
         
         # Delete all files and folders in the run directory
@@ -64,9 +64,9 @@ class Replicates:
         
         # Build folders and input files for each job
         for run in self.runList:
-            if not os.path.exists(run.data.Path):
-                os.makedirs(run.data.Path)
-            run.data.WriteAllInput()
+            if not os.path.exists(run.Path):
+                os.makedirs(run.Path)
+            run.WriteAllInput()
     
     def RunAllJobs(self, parallel = True):
 
@@ -85,8 +85,8 @@ class Replicates:
         DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(self.ParentFolder + d + '/')]      # List all folders in ParentFolder
         for direct in DirList:
             run = KMC_Run()
-            run.data.Path =  self.ParentFolder + direct + '/'
-            if run.data.CheckComplete():
+            run.Path =  self.ParentFolder + direct + '/'
+            if run.CheckComplete():
                 self.runList.append(run)      
         self.n_runs = len(self.runList)
         
@@ -97,34 +97,34 @@ class Replicates:
             pool.close()
         else:
             for run in self.runList:
-                run.data.ReadAllOutput()
+                run.ReadAllOutput()
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
         
         # Initialize run average with information from first run, then set data to zero
         self.runAvg = KMC_Run()      
-        self.runAvg.data = self.runList[0].data
-        self.runAvg.data.Path = self.ParentFolder
-        self.runAvg.data.Specnum['t'] = self.runList[0].data.Specnum['t']
+        self.runAvg = self.runList[0]
+        self.runAvg.Path = self.ParentFolder
+        self.runAvg.Specnum['t'] = self.runList[0].Specnum['t']
 
-        self.runAvg.data.Specnum['spec'] = self.runList[0].data.Specnum['spec'] - self.runList[0].data.Specnum['spec']         
-        self.runAvg.data.Procstat['events'] = self.runList[0].data.Procstat['events'] - self.runList[0].data.Procstat['events']
-#        self.runAvg.data.Binary['cluster'] = self.runList[0].data.Binary['cluster'] - self.runList[0].data.Binary['cluster']
-#        self.runAvg.data.Binary['prop'] = self.runList[0].data.Binary['prop'] - self.runList[0].data.Binary['prop']
-        self.runAvg.data.Binary['propCounter'] = self.runList[0].data.Binary['propCounter'] - self.runList[0].data.Binary['propCounter']        
+        self.runAvg.Specnum['spec'] = self.runList[0].Specnum['spec'] - self.runList[0].Specnum['spec']         
+        self.runAvg.Procstat['events'] = self.runList[0].Procstat['events'] - self.runList[0].Procstat['events']
+#        self.runAvg.Binary['cluster'] = self.runList[0].Binary['cluster'] - self.runList[0].Binary['cluster']
+#        self.runAvg.Binary['prop'] = self.runList[0].Binary['prop'] - self.runList[0].Binary['prop']
+        self.runAvg.Binary['propCounter'] = self.runList[0].Binary['propCounter'] - self.runList[0].Binary['propCounter']        
         
-        self.runAvg.data.Specnum['spec'] = self.runAvg.data.Specnum['spec'].astype(float)     
-        self.runAvg.data.Procstat['events'] = self.runAvg.data.Procstat['events'].astype(float) 
-#        self.runAvg.data.Binary['cluster'] = self.runAvg.data.Binary['cluster'].astype(float)         
+        self.runAvg.Specnum['spec'] = self.runAvg.Specnum['spec'].astype(float)     
+        self.runAvg.Procstat['events'] = self.runAvg.Procstat['events'].astype(float) 
+#        self.runAvg.Binary['cluster'] = self.runAvg.Binary['cluster'].astype(float)         
         
         # Add data from each run
         for run in self.runList:
-            self.runAvg.data.Specnum['spec'] = self.runAvg.data.Specnum['spec'] + run.data.Specnum['spec'].astype(float) / self.n_runs     
-            self.runAvg.data.Procstat['events'] = self.runAvg.data.Procstat['events'] + run.data.Procstat['events'].astype(float) / self.n_runs
-#            self.runAvg.data.Binary['cluster'] = self.runAvg.data.Binary['cluster'] + run.data.Binary['cluster'].astype(float) / self.n_runs
-#            self.ru1nAvg.data.Binary['prop'] = self.runAvg.data.Binary['prop'] + run.data.Binary['prop'] / self.n_runs
-            self.runAvg.data.Binary['propCounter'] = self.runAvg.data.Binary['propCounter'] + run.data.Binary['propCounter'] / self.n_runs
+            self.runAvg.Specnum['spec'] = self.runAvg.Specnum['spec'] + run.Specnum['spec'].astype(float) / self.n_runs     
+            self.runAvg.Procstat['events'] = self.runAvg.Procstat['events'] + run.Procstat['events'].astype(float) / self.n_runs
+#            self.runAvg.Binary['cluster'] = self.runAvg.Binary['cluster'] + run.Binary['cluster'].astype(float) / self.n_runs
+#            self.ru1nAvg.Binary['prop'] = self.runAvg.Binary['prop'] + run.Binary['prop'] / self.n_runs
+            self.runAvg.Binary['propCounter'] = self.runAvg.Binary['propCounter'] + run.Binary['propCounter'] / self.n_runs
 
      
     def ComputeStats(self, product, SA = True):
@@ -142,20 +142,20 @@ class Replicates:
         if not SA:
             return        
         
-        Wdata = np.zeros([self.n_runs, 2*self.runList[0].data.Reactions['nrxns']])      # number of runs x number of reactions
+        Wdata = np.zeros([self.n_runs, 2*self.runList[0].Reactions['nrxns']])      # number of runs x number of reactions
         TOFdata = np.zeros(self.n_runs)
         ind = 0
         for run in self.runList:
-            Wdata[ind,:] = run.data.Binary['W_sen_anal'][-1,:]
-#            Wdata[ind,:] = run.data.Procstat['events'][-1,:] - run.data.Binary['propCounter'][-1,:]
+            Wdata[ind,:] = run.Binary['W_sen_anal'][-1,:]
+#            Wdata[ind,:] = run.Procstat['events'][-1,:] - run.Binary['propCounter'][-1,:]
                                
             TOF_output = run.ComputeTOF(product)
             TOFdata[ind] = TOF_output['TOF']
             ind = ind + 1
         
-        self.NSC = np.zeros(self.runList[0].data.Reactions['nrxns'])
-        self.NSC_ci = np.zeros(self.runList[0].data.Reactions['nrxns'])
-        for i in range(0, self.runList[0].data.Reactions['nrxns']):
+        self.NSC = np.zeros(self.runList[0].Reactions['nrxns'])
+        self.NSC_ci = np.zeros(self.runList[0].Reactions['nrxns'])
+        for i in range(0, self.runList[0].Reactions['nrxns']):
             W = Wdata[:,2*i] + Wdata[:,2*i+1]             
             ci_info = Stats.cov_ci(W, TOFdata / self.TOF, Nboot=100, n_cores = self.n_procs)
             self.NSC[i] = ci_info[0] + tof_fracs[2*i] + tof_fracs[2*i+1]
@@ -165,7 +165,7 @@ class Replicates:
         
         ''' Compute trajectory derivative variances vs. time '''        
         
-        W_dims = self.runList[0].data.Binary['W_sen_anal'].shape
+        W_dims = self.runList[0].Binary['W_sen_anal'].shape
         n_timepoints = W_dims[0]
         n_rxns = W_dims[1]       
         
@@ -174,7 +174,7 @@ class Replicates:
             for j in range(0,n_rxns):
                 data_vec = np.zeros((self.n_runs))
                 for k in range(0,self.n_runs):
-                    data_vec[k] = self.runList[k].data.Binary['W_sen_anal'][i,j]
+                    data_vec[k] = self.runList[k].Binary['W_sen_anal'][i,j]
                 Wvars[i,j] = np.var(data_vec)
         
         ''' Plot results '''
@@ -183,10 +183,10 @@ class Replicates:
         plt.figure()
             
         labels = []
-        for i in range (2*len(self.runList[0].data.Reactions['names'])):
+        for i in range (2*len(self.runList[0].Reactions['names'])):
             if np.max(np.abs( Wvars[:,i] )) > 0:
-                plt.plot(self.runList[0].data.Specnum['t'], Wvars[:,i])
-                labels.append(self.runList[0].data.Reactions['names'][i/2])
+                plt.plot(self.runList[0].Specnum['t'], Wvars[:,i])
+                labels.append(self.runList[0].Reactions['names'][i/2])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
@@ -204,11 +204,11 @@ class Replicates:
         yvals = []
         ylabels = []
         
-        for i in range (self.runList[0].data.Reactions['nrxns']):
+        for i in range (self.runList[0].Reactions['nrxns']):
             cutoff = 0.05
             if self.NSC[i] + self.NSC_ci[i] > cutoff or self.NSC[i] - self.NSC_ci[i] < -cutoff:     
                 plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')               
-                ylabels.append(self.runList[0].data.Reactions['names'][i])              
+                ylabels.append(self.runList[0].Reactions['names'][i])              
                 yvals.append(ind-0.6)                
                 ind = ind - 1
 
@@ -234,8 +234,8 @@ class Replicates:
             txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
             txt.write('Reaction name \t NSC \t NSC confidence \n')
 
-            for rxn_ind in range(self.runList[0].data.Reactions['nrxns']):
-                txt.write(self.runAvg.data.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind]) + '\n')
+            for rxn_ind in range(self.runList[0].Reactions['nrxns']):
+                txt.write(self.runAvg.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind]) + '\n')
                 
     def FD_SA(self, rxn_inds = [1], pert_frac = 0.05, n_runs = 20, setup = True, exec_run = True, analyze_bool = True):
         
@@ -248,8 +248,8 @@ class Replicates:
             FD.n_runs = n_runs
         
         # Adjust pre-exponential factors in each
-        adjust_plus = np.ones(self.runtemplate.data.Reactions['nrxns'])
-        adjust_minus = np.ones(self.runtemplate.data.Reactions['nrxns'])
+        adjust_plus = np.ones(self.runtemplate.Reactions['nrxns'])
+        adjust_minus = np.ones(self.runtemplate.Reactions['nrxns'])
         for rxn_ind in rxn_inds:
             adjust_plus[rxn_ind-1] = 1 + pert_frac
             adjust_minus[rxn_ind-1] = 1 / (1 + pert_frac)

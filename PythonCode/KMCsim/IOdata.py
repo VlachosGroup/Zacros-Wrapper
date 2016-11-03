@@ -14,9 +14,11 @@ import random
 import Helper as ut
 from Lattice import Lattice     # will implement handling of lattice data structure later
 
-class IOdata:
+class IOdata(object):
     
     def __init__(self):
+        
+        super(IOdata, self).__init__()        
         
         self.Path                             = ''
 

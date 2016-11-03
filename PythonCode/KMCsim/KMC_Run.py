@@ -20,28 +20,21 @@ import tempfile
 import time
 import matplotlib.animation as animation
 
-class KMC_Run:
+class KMC_Run(IOdata):
     
     def __init__(self):
         
-        self.data = IOdata()
+        super(KMC_Run, self).__init__()
+
         self.exe_file = ''
-        self.op_system = 'Windows'
         self.anim = []          # animation object used for lattice movie
         
     def Run_sim(self):
         
-        os.chdir(self.data.Path)
+        os.chdir(self.Path)
         
         print '--- Zacros run starting ---'
-        
-        if self.op_system == 'Windows':
-            subprocess.call([self.exe_file])
-        elif self.op_system == 'Linux':
-            print 'Linux execution to be implemented'
-        else:
-            print 'Unknown operating system'
-        
+        subprocess.call([self.exe_file])
         print '--- Zacros run completed ---'
 
     def PlotOptions(self):
@@ -55,21 +48,21 @@ class KMC_Run:
         self.PlotOptions()
         plt.figure()
         
-        for i in range (len(self.data.Species['surf_spec'])):
-            plt.plot(self.data.Specnum['t'], self.data.Specnum['spec'][:,i])    
+        for i in range (len(self.Species['surf_spec'])):
+            plt.plot(self.Specnum['t'], self.Specnum['spec'][:,i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('spec. pop.',size=24)
 #        plt.ylabel('coverage',size=24)
-        plt.legend(self.data.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)
+        plt.legend(self.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)
         ax = plt.subplot(111)
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
         
         if save:
-            plt.savefig(self.data.Path + 'surf_spec_vs_time.png')
+            plt.savefig(self.Path + 'surf_spec_vs_time.png')
             plt.close()
         else:
             plt.show()
@@ -78,21 +71,21 @@ class KMC_Run:
         self.PlotOptions()
         plt.figure()          
           
-        for i in range (len(self.data.Species['gas_spec'])):
-            ind = i + len(self.data.Species['surf_spec'])
-            plt.plot(self.data.Specnum['t'], self.data.Specnum['spec'][:,ind])    
+        for i in range (len(self.Species['gas_spec'])):
+            ind = i + len(self.Species['surf_spec'])
+            plt.plot(self.Specnum['t'], self.Specnum['spec'][:,ind])    
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('time (s)',size=24)
         plt.ylabel('spec. pop.',size=24)
-        plt.legend(self.data.Species['gas_spec'],loc=2,prop={'size':20},frameon=False)        
+        plt.legend(self.Species['gas_spec'],loc=2,prop={'size':20},frameon=False)        
         ax = plt.subplot(111)
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)        
         
         if save:
-            plt.savefig(self.data.Path + 'gas_spec_vs_time.png')
+            plt.savefig(self.Path + 'gas_spec_vs_time.png')
             plt.close()
         else:
             plt.show()
@@ -102,10 +95,10 @@ class KMC_Run:
         plt.figure()            
             
         labels = []
-        for i in range (len(self.data.Reactions['names'])):
-            if np.max(np.abs(self.data.Binary['prop'][:,i])) > 0:
-                plt.plot(self.data.Specnum['t'], self.data.Binary['prop'][:,i]) 
-                labels.append(self.data.Reactions['names'][i])
+        for i in range (len(self.Reactions['names'])):
+            if np.max(np.abs(self.Binary['prop'][:,i])) > 0:
+                plt.plot(self.Specnum['t'], self.Binary['prop'][:,i]) 
+                labels.append(self.Reactions['names'][i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
@@ -122,10 +115,10 @@ class KMC_Run:
         plt.figure()            
             
         labels = []
-        for i in range (len(self.data.Reactions['names'])):
-            if np.max(np.abs(self.data.Binary['propCounter'][:,i])) > 0:
-                plt.plot(self.data.Specnum['t'], self.data.Binary['propCounter'][:,i]) 
-                labels.append(self.data.Reactions['names'][i])
+        for i in range (len(self.Reactions['names'])):
+            if np.max(np.abs(self.Binary['propCounter'][:,i])) > 0:
+                plt.plot(self.Specnum['t'], self.Binary['propCounter'][:,i]) 
+                labels.append(self.Reactions['names'][i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
@@ -142,11 +135,11 @@ class KMC_Run:
         plt.figure()            
             
         labels = []
-        for i in range (len(self.data.Reactions['names'])):
-            if np.max(np.abs(self.data.Binary['W_sen_anal'][:,i])) > 0:
-                plt.plot(self.data.Specnum['t'], self.data.Binary['W_sen_anal'][:,i]) 
-#                plt.plot(self.data.Specnum['t'], self.data.Procstat['events'][:,i] - self.data.Binary['propCounter'][:,i]) 
-                labels.append(self.data.Reactions['names'][i])
+        for i in range (len(self.Reactions['names'])):
+            if np.max(np.abs(self.Binary['W_sen_anal'][:,i])) > 0:
+                plt.plot(self.Specnum['t'], self.Binary['W_sen_anal'][:,i]) 
+#                plt.plot(self.Specnum['t'], self.Procstat['events'][:,i] - self.Binary['propCounter'][:,i]) 
+                labels.append(self.Reactions['names'][i])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
@@ -167,16 +160,16 @@ class KMC_Run:
         yvals = []
         ylabels = []
 
-        for i in range (self.data.Reactions['nrxns']):
-            if self.data.Procstat['events'][-1,2*i] + self.data.Procstat['events'][-1,2*i+1] > 0:
-                net_freq = abs(self.data.Procstat['events'][-1,2*i] - self.data.Procstat['events'][-1,2*i+1])
-                if self.data.Procstat['events'][-1,2*i] > 0:              
-                    plt.barh(ind-0.4, self.data.Procstat['events'][-1,2*i], width, color='r')
-                if self.data.Procstat['events'][-1,2*i+1] > 0:
-                    plt.barh(ind-0.6, self.data.Procstat['events'][-1,2*i+1], width, color='b')
+        for i in range (self.Reactions['nrxns']):
+            if self.Procstat['events'][-1,2*i] + self.Procstat['events'][-1,2*i+1] > 0:
+                net_freq = abs(self.Procstat['events'][-1,2*i] - self.Procstat['events'][-1,2*i+1])
+                if self.Procstat['events'][-1,2*i] > 0:              
+                    plt.barh(ind-0.4, self.Procstat['events'][-1,2*i], width, color='r')
+                if self.Procstat['events'][-1,2*i+1] > 0:
+                    plt.barh(ind-0.6, self.Procstat['events'][-1,2*i+1], width, color='b')
                 if net_freq > 0:
                     plt.barh(ind-0.8, net_freq, width, color='g')
-                ylabels.append(self.data.Reactions['names'][i])
+                ylabels.append(self.Reactions['names'][i])
                 yvals.append(ind-0.6)
                 ind = ind - 1
 
@@ -191,17 +184,17 @@ class KMC_Run:
         ax.set_position(pos)
         
         if save:
-            plt.savefig(self.data.Path + 'elem_step_freqs.png')
+            plt.savefig(self.Path + 'elem_step_freqs.png')
             plt.close()
         else:
             plt.show()
     
     def LatticeMovie(self):       # Need to complete this function by plotting adsorbates from the history file data
 
-        self.data.KMC_lat.Read_lattice_output(self.data.Path + 'lattice_output.txt')
-        cart_coords = self.data.KMC_lat.cart_coords
-        lat = self.data.KMC_lat.lattice_matrix
-#        self.data.KMC_lat.PlotLattice()
+        self.KMC_lat.Read_lattice_output(self.Path + 'lattice_output.txt')
+        cart_coords = self.KMC_lat.cart_coords
+        lat = self.KMC_lat.lattice_matrix
+#        self.KMC_lat.PlotLattice()
         border = np.dot(np.array([[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0],[0.0,0.0]]), lat)
         
         self.PlotOptions
@@ -215,7 +208,7 @@ class KMC_Run:
         
         # Plot neighbors
         cutoff = 3.0
-        for pair in self.data.KMC_lat.neighbor_list:
+        for pair in self.KMC_lat.neighbor_list:
                 p1 = np.array([cart_coords[pair[0]-1,0], cart_coords[pair[0]-1,1]])
                 p2 = np.array([cart_coords[pair[1]-1,0], cart_coords[pair[1]-1,1]])
                 if np.linalg.norm(p2 - p1) < cutoff:
@@ -226,8 +219,8 @@ class KMC_Run:
             
         color_list = ['g','r','c','m','y','k']
         line_list = []
-        for ind in range(self.data.Species['n_surf']):    
-            line, = ax.plot([], [], 's' + color_list[ind % len(color_list)], markersize = 10, label=self.data.Species['surf_spec'][ind])
+        for ind in range(self.Species['n_surf']):    
+            line, = ax.plot([], [], 's' + color_list[ind % len(color_list)], markersize = 10, label=self.Species['surf_spec'][ind])
             line_list.append(line)
         plt.xticks(size=20)
         plt.yticks(size=20)
@@ -244,14 +237,14 @@ class KMC_Run:
         # animation function.  This is called sequentially
         def animate(i):
             
-            snap = self.data.History[i]            
+            snap = self.History[i]            
             
-            for ind in range(self.data.Species['n_surf']):
+            for ind in range(self.Species['n_surf']):
                 
                 # Find all coordinates with species ind occupying it
                 x_list = []
                 y_list = []
-                for site_ind in range(self.data.n_sites):
+                for site_ind in range(self.n_sites):
                     if snap[site_ind,2] == ind + 1:
                         x_list.append(cart_coords[site_ind,0])
                         y_list.append(cart_coords[site_ind,1])
@@ -266,7 +259,7 @@ class KMC_Run:
         
         # call the animator.  blit=True means only re-draw the parts that have changed.
         self.anim = animation.FuncAnimation(fig, animate, init_func=init,
-                                       frames=self.data.n_snapshots, interval=40, blit=True, repeat_delay = 500)
+                                       frames=self.n_snapshots, interval=40, blit=True, repeat_delay = 500)
         
         plt.show()
     
@@ -274,7 +267,7 @@ class KMC_Run:
         
         # Find the index of the product species
         product_ind = -1       
-        for i in enumerate(self.data.Species['gas_spec']):
+        for i in enumerate(self.Species['gas_spec']):
             if i[1] == Product:
                 product_ind = i[0]
         
@@ -282,15 +275,15 @@ class KMC_Run:
         if product_ind == -1:
             print 'Product species not found'
         else:
-            product_ind = product_ind + self.data.Species['n_surf']         # Adjust index to account for surface species   
+            product_ind = product_ind + self.Species['n_surf']         # Adjust index to account for surface species   
         
         
-        nRxns = len(self.data.Reactions['Nu'])        
+        nRxns = len(self.Reactions['Nu'])        
         TOF_contributions = [0 for i in range(nRxns)]              # number of product molecules produced in each reaction        
-        for i, elem_stoich in enumerate(self.data.Reactions['Nu']):
+        for i, elem_stoich in enumerate(self.Reactions['Nu']):
             TOF_stoich = elem_stoich[product_ind]
-            r = self.data.Binary['propCounter'][-1,i] / self.data.Specnum['t'][-1]      # ergodic average
-#            r = self.data.Binary['prop'][-1,i]                                           # non-ergodic average
+            r = self.Binary['propCounter'][-1,i] / self.Specnum['t'][-1]      # ergodic average
+#            r = self.Binary['prop'][-1,i]                                           # non-ergodic average
             TOF_contributions[i] = TOF_stoich * r         
                
         TOF = np.sum(TOF_contributions)
@@ -301,17 +294,17 @@ class KMC_Run:
     def AdjustPreExponentials(self, delta_sdf):
         
         rxn_ind = 0
-        for rxn_type in self.data.Reactions['Input']:
+        for rxn_type in self.Reactions['Input']:
             for variant in rxn_type['variant']:
                 variant['pre_expon'] = variant['pre_expon'] * delta_sdf[rxn_ind]
-                self.data.scaledown_factors[rxn_ind] = self.data.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
+                self.scaledown_factors[rxn_ind] = self.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
                 rxn_ind += 1    
     
     def CheckSteadyState(self, Product, frac_sample = 0.2, d_cut = 0.12, show_graph = False):
         
         # Find the index of the product species
         product_ind = -1       
-        for spec in enumerate(self.data.Species['gas_spec']):
+        for spec in enumerate(self.Species['gas_spec']):
             if spec[1] == Product:
                 product_ind = spec[0]
         
@@ -319,24 +312,24 @@ class KMC_Run:
         if product_ind == -1:
             print 'Product species not found'
         else:
-            product_ind = product_ind + self.data.Species['n_surf']         # Adjust index to account for surface species                
+            product_ind = product_ind + self.Species['n_surf']         # Adjust index to account for surface species                
         
-        n_t_points = len(self.data.Specnum['t'])
+        n_t_points = len(self.Specnum['t'])
         rate_traj = np.zeros(n_t_points)
         for t_point in range(n_t_points):
             if t_point == 0:
                 rate_traj[t_point] = 0
             else:
-                for i, elem_stoich in enumerate(self.data.Reactions['Nu']):
+                for i, elem_stoich in enumerate(self.Reactions['Nu']):
                     TOF_stoich = elem_stoich[product_ind]
-                    r = self.data.Binary['propCounter'][t_point,i] / self.data.Specnum['t'][t_point]      # ergodic average
-#                    r = (self.data.Binary['propCounter'][t_point,i] - self.data.Binary['propCounter'][t_point-1,i]) / (self.data.Specnum['t'][t_point] - self.data.Specnum['t'][t_point-1])      # non-ergodic average
+                    r = self.Binary['propCounter'][t_point,i] / self.Specnum['t'][t_point]      # ergodic average
+#                    r = (self.Binary['propCounter'][t_point,i] - self.Binary['propCounter'][t_point-1,i]) / (self.Specnum['t'][t_point] - self.Specnum['t'][t_point-1])      # non-ergodic average
                     rate_traj[t_point] = rate_traj[t_point] + TOF_stoich * r
         
         if rate_traj[-1] == 0:
             return False        
         
-        t_vec = self.data.Specnum['t'][1::] / self.data.Specnum['t'][-1]
+        t_vec = self.Specnum['t'][1::] / self.Specnum['t'][-1]
         rate_traj_plot = rate_traj[1::]
         rate_traj = (rate_traj[1::] - rate_traj[1]) / (rate_traj[-1] - rate_traj[1])
         
@@ -346,7 +339,7 @@ class KMC_Run:
         if show_graph:
             self.PlotOptions
             plt.figure()                 
-            plt.plot(self.data.Specnum['t'][1::], rate_traj_plot, color='r')
+            plt.plot(self.Specnum['t'][1::], rate_traj_plot, color='r')
             plt.xticks(size=20)
             plt.yticks(size=20)
             plt.ylabel('integral rate',size=24)

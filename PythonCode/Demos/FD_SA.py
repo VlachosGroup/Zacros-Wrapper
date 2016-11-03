@@ -28,11 +28,11 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
         
     # Read in data
     KMC_template = KMC_Run()
-    KMC_template.data.Path = KMC_source
-    KMC_template.data.ReadAllInput()
-    KMC_template.data.Path = RunPath
+    KMC_template.Path = KMC_source
+    KMC_template.ReadAllInput()
+    KMC_template.Path = RunPath
     KMC_template.exe_file = exe_file
-    KMC_template.data.scaledown_factors = np.ones(KMC_template.data.Reactions['nrxns'])
+    KMC_template.scaledown_factors = np.ones(KMC_template.Reactions['nrxns'])
     
     # Set up batch variables
     Replicates = Replicates()

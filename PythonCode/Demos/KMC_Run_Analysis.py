@@ -21,16 +21,16 @@ exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
 
 ''' Set up data '''
 y = KMC_Run()
-y.data.Path = RunPath
-y.data.ReadAllInput()
+y.Path = RunPath
+y.ReadAllInput()
 y.exe_file = exe_file
 
 #y.Run_sim()
-y.data.ReadAllOutput()
+y.ReadAllOutput()
 
 ''' Analyze '''
 #TOF = y.ComputeTOF(ProductSpecies)
-y.PlotSurfSpecVsTime(save = True)
+y.PlotSurfSpecVsTime(save = False)
 #y.PlotGasSpecVsTime()
 #y.PlotElemStepFreqs()
 #y.LatticeMovie()
