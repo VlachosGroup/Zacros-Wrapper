@@ -66,7 +66,7 @@ class IOdata(object):
         self.Reactions['names']               = []  
         
         self.StateInput                       = {}
-        self.StateInput['Type']               = ''
+        self.StateInput['Type']               = 'none'
         self.StateInput['Struct']             = ''
         
         self.Lattice                          = {}
@@ -591,41 +591,43 @@ class IOdata(object):
             txt.write('\nfinish\n')
 
     def WriteStateIn(self):
-        if self.StateInput['Type'] != '':
-            if self.StateInput['Type'] == 'StateInput':   #Copy from prior state_input file
-                with open(self.Path + 'state_input.dat', 'w') as txt:
-                    for i in self.StateInput['Struct']:
-                        txt.write(i + '\n')
-            elif self.StateInput['Type'] == 'history':   #Copy from prior history_output file
-                pass
+        if self.StateInput['Type'] == 'none':
+            return
             
-                Lattice = self.StateInput['Struct']
-                UniqSpec = np.unique(Lattice[np.not_equal(Lattice[:,2],0),1])
-                nAds = len(UniqSpec)
-                SpecIden = [0] * nAds
-                AdsInfo = [[] for i in range(0,nAds)]
-                DentInfo = [[] for i in range(0,nAds)]
-                for i in range(0,nAds):
-                    for j in range(0,Lattice.shape[0]):
-                        if UniqSpec[i] == Lattice[j,1]:
-                            AdsInfo[i].append(j+1)
-                            DentInfo[i].append(Lattice[j,3])
-                            SpecIden[i] = Lattice[j,2]
-                
-                if nAds > 0:
-                    with open(self.Path + 'state_input.dat','w') as txt:
-                        txt.write('initial_state\n')
-                        for i in range(0,nAds):
-                            txt.write('  seed_on_sites  ' + ut.Helper().PadStr(self.Species['surf_spec'][SpecIden[i]-1],10))
-                            for j in range(0,len(DentInfo[i])):
-                                for k in range(0,len(DentInfo[i])):
-                                    if j + 1 == DentInfo[i][k]:
-                                        txt.write(str(AdsInfo[i][k]) + '  ')
-                            txt.write('\n')
-                        txt.write('end_initial_state\n')
-            else:
-                print 'Unrecognized state_input type'
-                print 'state_input not written'
+        if self.StateInput['Type'] == 'StateInput':   #Copy from prior state_input file
+            with open(self.Path + 'state_input.dat', 'w') as txt:
+                for i in self.StateInput['Struct']:
+                    txt.write(i + '\n')
+                    
+        elif self.StateInput['Type'] == 'history':   #Copy from prior history_output file
+        
+            Lattice = self.StateInput['Struct']
+            UniqSpec = np.unique(Lattice[np.not_equal(Lattice[:,2],0),1])
+            nAds = len(UniqSpec)
+            SpecIden = [0] * nAds
+            AdsInfo = [[] for i in range(0,nAds)]
+            DentInfo = [[] for i in range(0,nAds)]
+            for i in range(0,nAds):
+                for j in range(0,Lattice.shape[0]):
+                    if UniqSpec[i] == Lattice[j,1]:
+                        AdsInfo[i].append(j+1)
+                        DentInfo[i].append(Lattice[j,3])
+                        SpecIden[i] = Lattice[j,2]
+            
+            if nAds > 0:
+                with open(self.Path + 'state_input.dat','w') as txt:
+                    txt.write('initial_state\n')
+                    for i in range(0,nAds):
+                        txt.write('  seed_on_sites  ' + ut.Helper().PadStr(self.Species['surf_spec'][SpecIden[i]-1],10))
+                        for j in range(0,len(DentInfo[i])):
+                            for k in range(0,len(DentInfo[i])):
+                                if j + 1 == DentInfo[i][k]:
+                                    txt.write(str(AdsInfo[i][k]) + '  ')
+                        txt.write('\n')
+                    txt.write('end_initial_state\n')
+        else:
+            print 'Unrecognized state_input type'
+            print 'state_input not written'
                 
 #------------------------------------- Read output files ----------------------------
 

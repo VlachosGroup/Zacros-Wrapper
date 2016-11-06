@@ -35,12 +35,12 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     x.runAvg.PlotSurfSpecVsTime()
     x.runAvg.PlotGasSpecVsTime()
     x.runAvg.PlotElemStepFreqs()
-#    x.runAvg.CheckSteadyState(Product, show_graph = True)
+    x.runAvg.CheckSteadyState(Product, show_graph = True)
     
 #     Rate and sensitivities
-    x.ComputeStats(Product)
-    x.PlotSensitivities()
-    x.WriteSA_output(BatchPath)
+#    x.ComputeStats(Product)
+#    x.PlotSensitivities()
+#    x.WriteSA_output(BatchPath)
     #x.WvarCheck()
 #    
 #    print [x.TOF, x.TOF_error]

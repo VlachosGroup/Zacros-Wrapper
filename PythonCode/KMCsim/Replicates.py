@@ -28,10 +28,10 @@ class Replicates:
              
         # General info
         self.ParentFolder                     = ''
-        self.runList                          = []
+        self.runList                          = []              # List of KMC_Run objects from which data is averaged
         self.runtemplate = KMC_Run()                             # Use this to build replicate jobs
-        self.runAvg                           = KMC_Run()            # Values are averages of all runs
-        self.n_runs = 0               
+        self.runAvg = KMC_Run()            # Values are averages of all runs from runList
+        self.n_runs = 0
         self.n_procs = 4        
         
         # Analysis
@@ -103,27 +103,17 @@ class Replicates:
     def AverageRuns(self):
         
         # Initialize run average with information from first run, then set data to zero
-        self.runAvg = KMC_Run()      
-        self.runAvg = self.runList[0]
+        self.runAvg = self.runList[0].copy()
         self.runAvg.Path = self.ParentFolder
-        self.runAvg.Specnum['t'] = self.runList[0].Specnum['t']
 
-        self.runAvg.Specnum['spec'] = self.runList[0].Specnum['spec'] - self.runList[0].Specnum['spec']         
-        self.runAvg.Procstat['events'] = self.runList[0].Procstat['events'] - self.runList[0].Procstat['events']
-#        self.runAvg.Binary['cluster'] = self.runList[0].Binary['cluster'] - self.runList[0].Binary['cluster']
-#        self.runAvg.Binary['prop'] = self.runList[0].Binary['prop'] - self.runList[0].Binary['prop']
-        self.runAvg.Binary['propCounter'] = self.runList[0].Binary['propCounter'] - self.runList[0].Binary['propCounter']        
-        
-        self.runAvg.Specnum['spec'] = self.runAvg.Specnum['spec'].astype(float)     
-        self.runAvg.Procstat['events'] = self.runAvg.Procstat['events'].astype(float) 
-#        self.runAvg.Binary['cluster'] = self.runAvg.Binary['cluster'].astype(float)         
+        self.runAvg.Specnum['spec'] = np.zeros(self.runList[0].Specnum['spec'].shape)
+        self.runAvg.Procstat['events'] = np.zeros(self.runList[0].Procstat['events'].shape)
+        self.runAvg.Binary['propCounter'] = np.zeros(self.runList[0].Binary['propCounter'].shape)     
         
         # Add data from each run
         for run in self.runList:
             self.runAvg.Specnum['spec'] = self.runAvg.Specnum['spec'] + run.Specnum['spec'].astype(float) / self.n_runs     
             self.runAvg.Procstat['events'] = self.runAvg.Procstat['events'] + run.Procstat['events'].astype(float) / self.n_runs
-#            self.runAvg.Binary['cluster'] = self.runAvg.Binary['cluster'] + run.Binary['cluster'].astype(float) / self.n_runs
-#            self.ru1nAvg.Binary['prop'] = self.runAvg.Binary['prop'] + run.Binary['prop'] / self.n_runs
             self.runAvg.Binary['propCounter'] = self.runAvg.Binary['propCounter'] + run.Binary['propCounter'] / self.n_runs
 
      

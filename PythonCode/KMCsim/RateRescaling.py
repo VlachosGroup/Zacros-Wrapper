@@ -29,8 +29,8 @@ class RateRescaling:
         # Convergence variables
         stiff = True
         is_steady_state = True
-        iteration = 0        
-        self.SDF_mat = copy.deepcopy(self.batch.runtemplate.scaledown_factors)     
+        iteration = 0
+        self.SDF_mat = copy.deepcopy(self.batch.runtemplate.scaledown_factors)
         
         # Set sampling parameters
         self.batch.runtemplate.Conditions['MaxStep'] = max_events

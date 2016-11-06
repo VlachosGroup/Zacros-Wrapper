@@ -11,13 +11,9 @@ import matplotlib.pyplot as plt
 import matplotlib as mat
 
 # For executable
-import Helper as ut
 import os
-import signal
-import shutil
 import subprocess
-import tempfile
-import time
+import copy
 import matplotlib.animation as animation
 
 class KMC_Run(IOdata):
@@ -301,18 +297,13 @@ class KMC_Run(IOdata):
                 rxn_ind += 1    
     
     def CheckSteadyState(self, Product, frac_sample = 0.2, d_cut = 0.12, show_graph = False):
-        
-        # Find the index of the product species
-        product_ind = -1       
-        for spec in enumerate(self.Species['gas_spec']):
-            if spec[1] == Product:
-                product_ind = spec[0]
-        
-        # Make sure the index has been found
-        if product_ind == -1:
-            print 'Product species not found'
-        else:
-            product_ind = product_ind + self.Species['n_surf']         # Adjust index to account for surface species                
+           
+        try:
+            product_ind = self.Species['gas_spec'].index(Product)           # Find the index of the product species
+        except:
+            raise Exception('Gas species not found.')
+
+        product_ind = product_ind + self.Species['n_surf']         # Adjust index to account for surface species
         
         n_t_points = len(self.Specnum['t'])
         rate_traj = np.zeros(n_t_points)
@@ -326,7 +317,7 @@ class KMC_Run(IOdata):
 #                    r = (self.Binary['propCounter'][t_point,i] - self.Binary['propCounter'][t_point-1,i]) / (self.Specnum['t'][t_point] - self.Specnum['t'][t_point-1])      # non-ergodic average
                     rate_traj[t_point] = rate_traj[t_point] + TOF_stoich * r
         
-        if rate_traj[-1] == 0:
+        if rate_traj[-1] == 0:          # Simulation is not in steady-state if rate of production of product species is 0
             return False        
         
         t_vec = self.Specnum['t'][1::] / self.Specnum['t'][-1]
@@ -347,3 +338,33 @@ class KMC_Run(IOdata):
             plt.show()        
         
         return np.abs(dydt) < d_cut
+        
+    @staticmethod
+    def time_sandwich(run_list):
+        
+        sandwich = copy.deepcopy(run_list[0])
+        sandwich.Performance['t_final']  = 0
+        sandwich.Performance['events_occurred']  = 0
+        sandwich.Performance['CPU_time']  = 0        
+        
+        specnum_list = []
+        procstat_list = []
+        binary_list = []
+        t_list = []
+        
+        for run in run_list:
+            specnum_list.append(run.Specnum['spec'])
+            procstat_list.append(run.Procstat['events'])
+            binary_list.append(run.Binary['propCounter'])
+            t_list.append(run.Specnum['t'] + sandwich.Performance['t_final'] * np.ones(len(run.Specnum['t'])))
+            
+            sandwich.Performance['t_final'] += run.Performance['t_final']
+            sandwich.Performance['events_occurred'] += run.Performance['events_occurred']
+            sandwich.Performance['CPU_time'] += run.Performance['CPU_time']
+        
+        sandwich.Specnum['t'] = np.concatenate(t_list)
+        sandwich.Specnum['spec'] = np.vstack(specnum_list)
+        sandwich.Procstat['events'] = np.vstack(procstat_list)
+        sandwich.Binary['propCounter'] = np.vstack(binary_list)
+        
+        return sandwich 
