@@ -24,6 +24,7 @@ class KMC_Run(IOdata):
 
         self.exe_file = ''
         self.anim = []          # animation object used for lattice movie
+        self.props_avg = []
         
     def Run_sim(self):
         
@@ -86,14 +87,27 @@ class KMC_Run(IOdata):
         else:
             plt.show()
     
+    def time_avg_props(self):
+        
+        delt = self.Specnum['t'][1::] - self.Specnum['t'][:-1:]
+        props = self.Binary['propCounter'][1::,:] - self.Binary['propCounter'][:-1:,:]
+        prop_shape = self.Binary['propCounter'].shape
+        self.props_avg = np.zeros([prop_shape[0]-1, prop_shape[1]])
+        
+        for rxn_ind in range(prop_shape[1]):
+            self.props_avg[:,rxn_ind] = props[:,rxn_ind] / delt
+        
     def PlotPropsVsTime(self):      # Helps analyze the sensitivty analysis
         self.PlotOptions
-        plt.figure()            
-            
+        plt.figure()
+        
+        self.time_avg_props()
+        
         labels = []
         for i in range (len(self.Reactions['names'])):
-            if np.max(np.abs(self.Binary['prop'][:,i])) > 0:
-                plt.plot(self.Specnum['t'], self.Binary['prop'][:,i]) 
+            if np.max(np.abs(self.props_avg[:,i])) > 0:
+#                plt.plot(self.Specnum['t'], self.Binary['prop'][:,i])
+                plt.plot(self.Specnum['t'][1::], self.props_avg[:,i] )
                 labels.append(self.Reactions['names'][i])
         
         plt.xticks(size=20)
@@ -345,17 +359,17 @@ class KMC_Run(IOdata):
         sandwich = copy.deepcopy(run_list[0])
         sandwich.Performance['t_final']  = 0
         sandwich.Performance['events_occurred']  = 0
-        sandwich.Performance['CPU_time']  = 0        
+        sandwich.Performance['CPU_time']  = 0
         
         specnum_list = []
         procstat_list = []
         binary_list = []
-        t_list = []
+        t_list = []        
         
         for run in run_list:
             specnum_list.append(run.Specnum['spec'])
             procstat_list.append(run.Procstat['events'])
-            binary_list.append(run.Binary['propCounter'])
+            binary_list.append(run.Binary['propCounter'])       # Need to add the values from the final point of the last run
             t_list.append(run.Specnum['t'] + sandwich.Performance['t_final'] * np.ones(len(run.Specnum['t'])))
             
             sandwich.Performance['t_final'] += run.Performance['t_final']
@@ -367,4 +381,4 @@ class KMC_Run(IOdata):
         sandwich.Procstat['events'] = np.vstack(procstat_list)
         sandwich.Binary['propCounter'] = np.vstack(binary_list)
         
-        return sandwich 
+        return sandwich

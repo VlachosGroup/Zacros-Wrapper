@@ -13,9 +13,9 @@ from Replicates import Replicates
 
 ################## User input ##################################
 
-BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/WGS_ZW/SA_run/run_fldr/'
+BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/Iteration_7/'
 #BatchPath = 'C:/Users/mpnun/Desktop/test_rep/'
-Product = 'CO2'
+Product = 'B'
 n_cores = 3
 
 ################################################################

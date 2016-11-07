@@ -28,7 +28,7 @@ y.ReadAllInput()
 
 #y.Run_sim()
 y.ReadAllOutput()
-y.PlotSurfSpecVsTime(save = False)
+#y.PlotSurfSpecVsTime(save = False)
 
 z = copy.deepcopy(y)
 z.Path = 'C:/Users/mpnun/Desktop/test_cont/2/'
@@ -37,15 +37,14 @@ z.StateInput['Struct'] = y.History[-1]
 #z.WriteAllInput()
 #z.Run_sim()
 z.ReadAllOutput()
-z.PlotSurfSpecVsTime(save = False)
+#z.PlotSurfSpecVsTime(save = False)
 
 sw = KMC_Run.time_sandwich([y,z])
-print sw.Specnum['t'].shape
 
 
-sw.PlotSurfSpecVsTime(save = False)
+#sw.PlotSurfSpecVsTime(save = False)
 
-
+y.PlotPropsVsTime()
 
 
 ''' Analyze '''

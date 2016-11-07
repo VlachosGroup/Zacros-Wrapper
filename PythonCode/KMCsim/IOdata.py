@@ -20,7 +20,7 @@ class IOdata(object):
         
         super(IOdata, self).__init__()        
         
-        self.Path                             = ''
+        self.Path = ''
 
 # -------------------- Input data --------------------
         
