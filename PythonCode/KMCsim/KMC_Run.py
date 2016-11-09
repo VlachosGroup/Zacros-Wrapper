@@ -288,7 +288,7 @@ class KMC_Run(IOdata):
         if product_ind == -1:
             print 'Product species not found'
         else:
-            product_ind = product_ind + self.Species['n_surf']         # Adjust index to account for surface species   
+            product_ind = product_ind + self.Species['n_surf']         # Adjust index to account for surface species
         
         
         nRxns = len(self.Reactions['Nu'])        
@@ -399,31 +399,20 @@ class KMC_Run(IOdata):
         return np.abs(frac_change) < cut
         
     @staticmethod
-    def time_sandwich(run_list):
+    def time_sandwich(run1, run2):
         
-        sandwich = copy.deepcopy(run_list[0])
-        sandwich.Performance['t_final']  = 0
-        sandwich.Performance['events_occurred']  = 0
-        sandwich.Performance['CPU_time']  = 0
+        sandwich = copy.deepcopy(run1)
+        sandwich.Performance['t_final'] = run1.Performance['t_final'] + run2.Performance['t_final']
+        sandwich.Performance['events_occurred'] = run1.Performance['events_occurred'] + run2.Performance['events_occurred']
+        sandwich.Performance['CPU_time'] = run1.Performance['CPU_time'] + run2.Performance['CPU_time']
         
-        specnum_list = []
-        procstat_list = []
-        binary_list = []
-        t_list = []        
-        
-        for run in run_list:
-            specnum_list.append(run.Specnum['spec'])
-            procstat_list.append(run.Procstat['events'])
-            binary_list.append(run.Binary['propCounter'])       # Need to add the values from the final point of the last run
-            t_list.append(run.Specnum['t'] + sandwich.Performance['t_final'] * np.ones(len(run.Specnum['t'])))
-            
-            sandwich.Performance['t_final'] += run.Performance['t_final']
-            sandwich.Performance['events_occurred'] += run.Performance['events_occurred']
-            sandwich.Performance['CPU_time'] += run.Performance['CPU_time']
-        
-        sandwich.Specnum['t'] = np.concatenate(t_list)
-        sandwich.Specnum['spec'] = np.vstack(specnum_list)
-        sandwich.Procstat['events'] = np.vstack(procstat_list)
-        sandwich.Binary['propCounter'] = np.vstack(binary_list)
+        sandwich.Specnum['t'] = np.concatenate([run1.Specnum['t'], run2.Specnum['t'][1::] + run1.Performance['t_final'] * np.ones( len(run2.Specnum['t'])-1 )])
+        sandwich.Specnum['spec'] = np.vstack([run1.Specnum['spec'], run2.Specnum['spec'][1::,:] ])
+#        print run1.Procstat['events']
+#        print run2.Procstat['events'][1::,:]
+#        print run1.Procstat['events'][-1,:]
+#        print np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), run1.Procstat['events'][-1,:])
+        sandwich.Procstat['events'] = np.vstack( [run1.Procstat['events'], run2.Procstat['events'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Procstat['events'][-1,:]] ) ] )
+        sandwich.Binary['propCounter'] = np.vstack( [run1.Binary['propCounter'], run2.Binary['propCounter'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['propCounter'][-1,:]]  ) ] )
         
         return sandwich

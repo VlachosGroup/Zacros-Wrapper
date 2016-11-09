@@ -15,14 +15,13 @@ from KMC_Run import KMC_Run
 os.system('cls')
 
 ''' ------------ User input section ------------ '''
-RunPath = 'C:/Users/mpnun/Desktop/test_cont/1/'
 ProductSpecies = 'B'
 exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
 ''' -------------------------------------------- '''
 
 ''' Set up data '''
 y = KMC_Run()
-y.Path = RunPath
+y.Path = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/test_cont/1/'
 y.exe_file = exe_file
 y.ReadAllInput()
 
@@ -31,7 +30,7 @@ y.ReadAllOutput()
 #y.PlotSurfSpecVsTime(save = False)
 
 z = copy.deepcopy(y)
-z.Path = 'C:/Users/mpnun/Desktop/test_cont/2/'
+z.Path = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/test_cont/2/'
 z.StateInput['Type'] = 'history'
 z.StateInput['Struct'] = y.History[-1]
 #z.WriteAllInput()
@@ -39,12 +38,14 @@ z.StateInput['Struct'] = y.History[-1]
 z.ReadAllOutput()
 #z.PlotSurfSpecVsTime(save = False)
 
-sw = KMC_Run.time_sandwich([y,z])
+sw = KMC_Run.time_sandwich(y,z)
 
 
 #sw.PlotSurfSpecVsTime(save = False)
 
-y.PlotPropsVsTime()
+sw.CalcRateTraj('B')
+sw.PlotIntPropsVsTime()
+sw.PlotRateVsTime()
 
 
 ''' Analyze '''
