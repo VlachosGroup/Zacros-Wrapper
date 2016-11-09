@@ -69,20 +69,6 @@ class Stats:
         cov_ci = (boot_dist[ind_high] - boot_dist[ind_low]) / 2
         return [cov_val, cov_ci]
     
-#    @staticmethod
-#    def sub_cov(mat):
-#        
-#        nPts = mat.shape[0]
-#        
-#        x_sub = np.zeros(nPts)
-#        y_sub = np.zeros(nPts)
-#    
-#        for j in range(nPts):
-#            rand_ind = random.randint(0, nPts-1)
-#            x_sub[j] = mat[0,rand_ind]
-#            y_sub[j] = mat[1,rand_ind]
-#        return Stats.cov_calc(x_sub, y_sub)
-    
     @staticmethod
     def cov_calc(x,y):
         cov_mat = np.cov(x,y)

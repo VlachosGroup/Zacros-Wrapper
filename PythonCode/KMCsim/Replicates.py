@@ -41,7 +41,7 @@ class Replicates:
         self.NSC                              = []
         self.NSC_ci                           = []
     
-    def BuildJobs(self):
+    def BuildJobsFromTemplate(self):
         
         # Build list of KMC_Run objects
         self.runList = []
@@ -50,6 +50,8 @@ class Replicates:
             new_run.Conditions['Seed'] = self.runtemplate.Conditions['Seed'] + i
             new_run.Path = self.ParentFolder + str(i+1) + '/'
             self.runList.append(new_run)
+            
+    def BuildJobs(self):
         
         # Delete all files and folders in the run directory
         for the_file in os.listdir(self.ParentFolder):
@@ -60,7 +62,7 @@ class Replicates:
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except Exception as e:
-                print(e)
+                print(e)        
         
         # Build folders and input files for each job
         for run in self.runList:
@@ -80,6 +82,8 @@ class Replicates:
     
     def ReadMultipleRuns(self, parallel = False):
 
+        print 'Reading output files for all jobs in ' + self.ParentFolder
+
         # Add complete jobs to the list
         self.runList = []
         DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(self.ParentFolder + d + '/')]      # List all folders in ParentFolder
@@ -87,7 +91,7 @@ class Replicates:
             run = KMC_Run()
             run.Path =  self.ParentFolder + direct + '/'
             if run.CheckComplete():
-                self.runList.append(run)      
+                self.runList.append(run)
         self.n_runs = len(self.runList)
         
         # Read output files of all jobs
@@ -103,16 +107,16 @@ class Replicates:
     def AverageRuns(self):
         
         # Initialize run average with information from first run, then set data to zero
-        self.runAvg = self.runList[0].copy()
+        self.runAvg = copy.deepcopy(self.runList[0])
         self.runAvg.Path = self.ParentFolder
 
         self.runAvg.Specnum['spec'] = np.zeros(self.runList[0].Specnum['spec'].shape)
         self.runAvg.Procstat['events'] = np.zeros(self.runList[0].Procstat['events'].shape)
-        self.runAvg.Binary['propCounter'] = np.zeros(self.runList[0].Binary['propCounter'].shape)     
+        self.runAvg.Binary['propCounter'] = np.zeros(self.runList[0].Binary['propCounter'].shape)
         
         # Add data from each run
         for run in self.runList:
-            self.runAvg.Specnum['spec'] = self.runAvg.Specnum['spec'] + run.Specnum['spec'].astype(float) / self.n_runs     
+            self.runAvg.Specnum['spec'] = self.runAvg.Specnum['spec'] + run.Specnum['spec'].astype(float) / self.n_runs
             self.runAvg.Procstat['events'] = self.runAvg.Procstat['events'] + run.Procstat['events'].astype(float) / self.n_runs
             self.runAvg.Binary['propCounter'] = self.runAvg.Binary['propCounter'] + run.Binary['propCounter'] / self.n_runs
 
@@ -130,7 +134,7 @@ class Replicates:
         self.TOF_error = Stats.mean_ci(TOF_vec)[1]   
         
         if not SA:
-            return        
+            return
         
         Wdata = np.zeros([self.n_runs, 2*self.runList[0].Reactions['nrxns']])      # number of runs x number of reactions
         TOFdata = np.zeros(self.n_runs)
@@ -288,3 +292,19 @@ class Replicates:
             NSC_ci = diff_stats[1] / TOF_mean / (2 * pert_frac)
             
             return [NSC, NSC_ci]
+            
+    def CheckAutocorrelation(self, Product, limits = [0.5, 1]):
+        
+        data1 = []
+        data2 = []
+        for run in self.runList:
+            run.CalcRateTraj(Product)
+            
+            ind1 = run.time_search(run.Specnum['t'][-1] * limits[0])
+            ind2 = run.time_search(run.Specnum['t'][-1] * limits[1])
+            
+            data1.append(run.rate_traj[ind1-1])
+            data2.append(run.rate_traj[ind2-1])
+        
+#        return Stats.cov_calc(data1,data2) / np.var(data2)
+        return Stats.cov_ci(data1,data2) / np.var(data2)

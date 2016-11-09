@@ -12,6 +12,7 @@ import matplotlib as mat
 
 # For executable
 import os
+import sys
 import subprocess
 import copy
 import matplotlib.animation as animation
@@ -25,6 +26,8 @@ class KMC_Run(IOdata):
         self.exe_file = ''
         self.anim = []          # animation object used for lattice movie
         self.props_avg = []
+        self.rate_traj = []
+        self.int_rate_traj = []
         
     def Run_sim(self):
         
@@ -104,11 +107,11 @@ class KMC_Run(IOdata):
         self.time_avg_props()
         
         labels = []
-        for i in range (len(self.Reactions['names'])):
+        for i in range (self.props_avg.shape[1]):
             if np.max(np.abs(self.props_avg[:,i])) > 0:
 #                plt.plot(self.Specnum['t'], self.Binary['prop'][:,i])
                 plt.plot(self.Specnum['t'][1::], self.props_avg[:,i] )
-                labels.append(self.Reactions['names'][i])
+                labels.append(self.Reactions['names'][i/2])
         
         plt.xticks(size=20)
         plt.yticks(size=20)
@@ -310,48 +313,90 @@ class KMC_Run(IOdata):
                 self.scaledown_factors[rxn_ind] = self.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
                 rxn_ind += 1    
     
-    def CheckSteadyState(self, Product, frac_sample = 0.2, d_cut = 0.12, show_graph = False):
-           
+    def CalcRateTraj(self, Product):
+        
         try:
-            product_ind = self.Species['gas_spec'].index(Product)           # Find the index of the product species
+            product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
         except:
             raise Exception('Gas species not found.')
-
-        product_ind = product_ind + self.Species['n_surf']         # Adjust index to account for surface species
         
         n_t_points = len(self.Specnum['t'])
-        rate_traj = np.zeros(n_t_points)
+        self.rate_traj = np.zeros(n_t_points)
+        self.int_rate_traj = np.zeros(n_t_points)
+        
         for t_point in range(n_t_points):
-            if t_point == 0:
-                rate_traj[t_point] = 0
-            else:
-                for i, elem_stoich in enumerate(self.Reactions['Nu']):
-                    TOF_stoich = elem_stoich[product_ind]
-                    r = self.Binary['propCounter'][t_point,i] / self.Specnum['t'][t_point]      # ergodic average
-#                    r = (self.Binary['propCounter'][t_point,i] - self.Binary['propCounter'][t_point-1,i]) / (self.Specnum['t'][t_point] - self.Specnum['t'][t_point-1])      # non-ergodic average
-                    rate_traj[t_point] = rate_traj[t_point] + TOF_stoich * r
+            for i, elem_stoich in enumerate(self.Reactions['Nu']):
+                
+                TOF_stoich = elem_stoich[product_ind]
+                r_int = self.Binary['propCounter'][t_point,i]
+                self.int_rate_traj[t_point] = self.int_rate_traj[t_point] + TOF_stoich * r_int
+                
+                if t_point == 0:
+                    self.rate_traj[t_point] = 0
+                else:                    
+                    r = (self.Binary['propCounter'][t_point,i] - self.Binary['propCounter'][t_point-1,i]) / (self.Specnum['t'][t_point] - self.Specnum['t'][t_point-1])      # ergodic average
+                    self.rate_traj[t_point] = self.rate_traj[t_point] + TOF_stoich * r
+                        
+        self.rate_traj = self.rate_traj[1::]
+    
+    def PlotRateVsTime(self):
+    
+        self.PlotOptions()
         
-        if rate_traj[-1] == 0:          # Simulation is not in steady-state if rate of production of product species is 0
+        plt.figure()
+        plt.plot(self.Specnum['t'][1::], self.rate_traj)
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('time (s)',size=24)
+        plt.ylabel('rate',size=24)
+        plt.ylim([0, plt.ylim()[1]])
+        ax = plt.subplot(111)
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)
+        plt.show()    
+    
+    def time_search(self, t):
+        
+        if t > self.Specnum['t'][-1] or t < 0:
+            raise Exception('Time is out of range.')
+        
+        ind = 0
+        while self.Specnum['t'][ind] < t:
+            ind += 1
+            
+        return ind
+    
+    def avg_in_window(self, data, limits):
+        high_ind = self.time_search(limits[1])
+        low_ind = self.time_search(limits[0])
+        return (data[high_ind] - data[low_ind]) / (self.Specnum['t'][high_ind] - self.Specnum['t'][low_ind])
+    
+    def CheckSteadyState(self, Product, frac_sample = 0.2, cut = 0.05, show_graph = False):
+           
+        self.CalcRateTraj(Product)
+        
+        if self.rate_traj[-1] == 0:          # Simulation is not in steady-state if rate of production of product species is 0
             return False        
+
+        batch_1 = self.avg_in_window(self.int_rate_traj, [0.50 * self.Specnum['t'][-1], 0.75 * self.Specnum['t'][-1]])
+        batch_2 = self.avg_in_window(self.int_rate_traj, [0.75 * self.Specnum['t'][-1], self.Specnum['t'][-1]])
         
-        t_vec = self.Specnum['t'][1::] / self.Specnum['t'][-1]
-        rate_traj_plot = rate_traj[1::]
-        rate_traj = (rate_traj[1::] - rate_traj[1]) / (rate_traj[-1] - rate_traj[1])
+        frac_change = (batch_2 - batch_1) / batch_2
         
-        n_back = int(n_t_points * (1-frac_sample))
-        dydt = (rate_traj[-1] - rate_traj[n_back]) / (t_vec[-1] - t_vec[n_back]) 
+        print '{0:.3f}'.format(frac_change) + ' change in last 50% of window'
         
         if show_graph:
             self.PlotOptions
             plt.figure()                 
-            plt.plot(self.Specnum['t'][1::], rate_traj_plot, color='r')
+            plt.plot(self.Specnum['t'][1::], self.rate_traj, color='r')
             plt.xticks(size=20)
             plt.yticks(size=20)
-            plt.ylabel('integral rate',size=24)
+            plt.ylabel('rate',size=24)
             plt.xlabel('time (s)',size=24)
-            plt.show()        
-        
-        return np.abs(dydt) < d_cut
+            plt.ylim([0, plt.ylim()[1]])
+            plt.show()
+            
+        return np.abs(frac_change) < cut
         
     @staticmethod
     def time_sandwich(run_list):

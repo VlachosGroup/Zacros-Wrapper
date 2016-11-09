@@ -635,7 +635,6 @@ class IOdata(object):
         
         self.ReadAllInput()
         
-        print 'Reading output files in ' + self.Path
         if self.CheckComplete():
             
             # Standard output files
