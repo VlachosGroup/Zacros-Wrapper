@@ -65,7 +65,7 @@ class Replicates:
                 print(e)        
         
         # Build folders and input files for each job
-        for run in self.runList:
+        for run in self.runList:            
             if not os.path.exists(run.Path):
                 os.makedirs(run.Path)
             run.WriteAllInput()
