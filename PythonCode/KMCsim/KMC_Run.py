@@ -33,9 +33,16 @@ class KMC_Run(IOdata):
         
         os.chdir(self.Path)
         
-        print '--- Zacros run starting ---'
-        subprocess.call([self.exe_file])
-        print '--- Zacros run completed ---'
+        if self.exe_file == '':
+            raise Exception('Zacros exe file not specified.')        
+        
+        try:
+            print '--- Zacros run starting ---'
+            subprocess.call([self.exe_file])
+            print '--- Zacros run completed ---'
+        except:
+            raise Exception('Zacros run failed.')
+        
 
     def PlotOptions(self):
         mat.rcParams['mathtext.default'] = 'regular'
@@ -100,7 +107,7 @@ class KMC_Run(IOdata):
         for rxn_ind in range(prop_shape[1]):
             self.props_avg[:,rxn_ind] = props[:,rxn_ind] / delt
         
-    def PlotPropsVsTime(self):      # Helps analyze the sensitivty analysis
+    def PlotPropsVsTime(self, save = True):      # Helps analyze the sensitivty analysis
         self.PlotOptions
         plt.figure()
         
@@ -121,9 +128,14 @@ class KMC_Run(IOdata):
         ax = plt.subplot(111)
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
-        plt.show()
         
-    def PlotIntPropsVsTime(self):      # Helps analyze the sensitivty analysis
+        if save:
+            plt.savefig(self.Path + 'rate_vs_time.png')
+            plt.close()
+        else:
+            plt.show()
+        
+    def PlotIntPropsVsTime(self, save = True):      # Helps analyze the sensitivty analysis
         self.PlotOptions
         plt.figure()            
             
@@ -141,7 +153,12 @@ class KMC_Run(IOdata):
         ax = plt.subplot(111)
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
-        plt.show()
+        
+        if save:
+            plt.savefig(self.Path + 'intprops_vs_time.png')
+            plt.close()
+        else:
+            plt.show()
     
     def PlotWVsTime(self):      # Helps analyze the sensitivty analysis
         self.PlotOptions
@@ -339,7 +356,7 @@ class KMC_Run(IOdata):
                         
         self.rate_traj = self.rate_traj[1::]
     
-    def PlotRateVsTime(self):
+    def PlotRateVsTime(self, save = True):
     
         self.PlotOptions()
         
@@ -353,7 +370,12 @@ class KMC_Run(IOdata):
         ax = plt.subplot(111)
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
-        plt.show()    
+        
+        if save:
+            plt.savefig(self.Path + 'rate_vs_time.png')
+            plt.close()
+        else:
+            plt.show()
     
     def time_search(self, t):
         
@@ -387,7 +409,7 @@ class KMC_Run(IOdata):
         
         if show_graph:
             self.PlotOptions
-            plt.figure()                 
+            plt.figure()
             plt.plot(self.Specnum['t'][1::], self.rate_traj, color='r')
             plt.xticks(size=20)
             plt.yticks(size=20)
@@ -408,10 +430,6 @@ class KMC_Run(IOdata):
         
         sandwich.Specnum['t'] = np.concatenate([run1.Specnum['t'], run2.Specnum['t'][1::] + run1.Performance['t_final'] * np.ones( len(run2.Specnum['t'])-1 )])
         sandwich.Specnum['spec'] = np.vstack([run1.Specnum['spec'], run2.Specnum['spec'][1::,:] ])
-#        print run1.Procstat['events']
-#        print run2.Procstat['events'][1::,:]
-#        print run1.Procstat['events'][-1,:]
-#        print np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), run1.Procstat['events'][-1,:])
         sandwich.Procstat['events'] = np.vstack( [run1.Procstat['events'], run2.Procstat['events'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Procstat['events'][-1,:]] ) ] )
         sandwich.Binary['propCounter'] = np.vstack( [run1.Binary['propCounter'], run2.Binary['propCounter'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['propCounter'][-1,:]]  ) ] )
         

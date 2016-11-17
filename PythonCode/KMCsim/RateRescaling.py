@@ -129,18 +129,18 @@ class RateRescaling:
             self.batch.runtemplate.Path = self.scale_parent_fldr
             self.batch.runtemplate.WriteAllInput()
             
-    def ReachSteadyState(self, Product, template_folder, max_events = int(1e4), max_iterations = 15, cutoff = 0.5, ss_inc = 2.0, n_samples = 100, n_runs = 10, n_procs = 4):
+    def ReachSteadyState(self, Product, template_folder, exe, max_events = int(1e4), max_iterations = 15, cutoff = 0.5, ss_inc = 2.0, n_samples = 100, n_runs = 10, n_procs = 4):
 
         # Delete all files and folders in the run directory
-#        for the_file in os.listdir(self.scale_parent_fldr):
-#            file_path = os.path.join(self.scale_parent_fldr, the_file)
-#            try:
-#                if os.path.isfile(file_path):
-#                    os.unlink(file_path)
-#                elif os.path.isdir(file_path):
-#                    shutil.rmtree(file_path)
-#            except Exception as e:
-#                print(e) 
+        for the_file in os.listdir(self.scale_parent_fldr):
+            file_path = os.path.join(self.scale_parent_fldr, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(e) 
 
         # Placeholder variables
         prev_batch = Replicates()
@@ -150,7 +150,7 @@ class RateRescaling:
         is_steady_state = False
         iteration = 1
 
-        while not is_steady_state and iteration < max_iterations:
+        while not is_steady_state and iteration <= max_iterations:
             
             # Make folder for iteration
             iter_fldr = self.scale_parent_fldr + 'Iteration_' + str(iteration) + '/'
@@ -165,6 +165,7 @@ class RateRescaling:
             cur_batch.Product = Product            
             
             cur_batch.runtemplate = KMC_Run()
+            cur_batch.runtemplate.exe_file = exe
             cur_batch.runtemplate.Path = template_folder
             cur_batch.runtemplate.ReadAllInput()
             
@@ -185,6 +186,7 @@ class RateRescaling:
                 # Change sampling
                 cur_batch.runtemplate.Conditions['MaxStep'] = 'inf'
                 cur_batch.runtemplate.Conditions['SimTime']['Max'] = prev_batch.runList[0].Performance['t_final'] * ss_inc
+                cur_batch.runtemplate.Conditions['SimTime']['Max'] = float('{0:.3E} \t'.format(cur_batch.runtemplate.Conditions['SimTime']['Max']))     # round to 4 significant figures
                 cur_batch.runtemplate.Report['procstat'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
                 cur_batch.runtemplate.Report['specnum'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
                 cur_batch.runtemplate.Report['hist'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max']]
@@ -200,7 +202,7 @@ class RateRescaling:
             
             # Run jobs
             cur_batch.BuildJobs()
-            cur_batch.RunAllJobs()
+            cur_batch.RunAllJobs(parallel = False)
             cur_batch.ReadMultipleRuns()            # Process results
             
             # Add data to running list
@@ -217,9 +219,21 @@ class RateRescaling:
                 is_steady_state = False
             else:
                 cum_batch.AverageRuns()
+                cum_batch.runAvg.Path = iter_fldr
                 correl = cum_batch.CheckAutocorrelation(Product)
                 not_change = cum_batch.runAvg.CheckSteadyState(Product)
                 is_steady_state = np.abs(correl[0]) < 0.05 and not_change
+                
+                # Record information about the iteration
+                cum_batch.runAvg.CalcRateTraj(Product)
+        
+                cum_batch.runAvg.PlotSurfSpecVsTime()        
+                cum_batch.runAvg.PlotIntPropsVsTime()
+                cum_batch.runAvg.PlotRateVsTime()
+                
+                with open(iter_fldr + 'Iteration_summary.txt', 'w') as txt:
+                    txt.write('Reaction rate rescaling log \n\n')
+                    txt.write('Reaction rate rescaling log \n\n')
                 
             prev_batch = copy.deepcopy(cur_batch)
             iteration += 1
@@ -228,6 +242,8 @@ class RateRescaling:
             print 'Steady-state achieved'
         else:
             print 'Not converged'
+        
+        
     
     # Process KMC output and determine how to further scale down reactions
     def ProcessStepFreqs(self, stiff_cut = 100, equilib_cut = 0.05):                    
