@@ -13,11 +13,12 @@ from RateRescaling import RateRescaling
 
 ''' ------------ User input section ------------ '''
 exe_file = 'C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/Zacros_mod/zacros.exe'
-KMC_source = 'C:/Users/mpnun/Desktop/Test/Source/'
+#KMC_source = 'C:/Users/mpnun/Desktop/Test/Source/'
+KMC_source = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/AtoB/'
 RunPath = 'C:/Users/mpnun/Desktop/Test/RunDir/'
 product_spec = 'B'                                  # product species
 number_of_runs = 3
-number_of_processors = 3
+number_of_processors = 1
 ''' -------------------------------------------- '''
 
 os.system('cls')
@@ -26,4 +27,4 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
 
     z = RateRescaling()
     z.scale_parent_fldr = RunPath
-    z.ReachSteadyState(product_spec, KMC_source, exe_file, max_iterations = 4, n_runs = number_of_runs, n_procs = number_of_processors)
+    z.ReachSteadyStateAndRescale(product_spec, KMC_source, exe_file, max_iterations = 4, n_runs = number_of_runs, n_procs = number_of_processors)

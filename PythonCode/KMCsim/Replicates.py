@@ -32,7 +32,7 @@ class Replicates:
         self.runtemplate = KMC_Run()                             # Use this to build replicate jobs
         self.runAvg = KMC_Run()            # Values are averages of all runs from runList
         self.n_runs = 0
-        self.n_procs = 4        
+        self.n_procs = 1
         
         # Analysis
         self.Product                          = ''
@@ -72,7 +72,7 @@ class Replicates:
     
     def RunAllJobs(self, parallel = True):
 
-        if parallel:	# run in parallel among available processors
+        if parallel and self.n_procs > 1:	# run in parallel among available processors
             pool = Pool(processes = self.n_procs)
             pool.map(runKMC, self.runList)
             pool.close()
