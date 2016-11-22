@@ -21,9 +21,9 @@ from KMC_Run import KMC_Run
 
 ################## User input ##################################
 
-RunPath = 'C:/Users/mpnun/Desktop/Test/Squid_data/'
-Product = 'B'
-n_iterations = 3
+RunPath = 'C:/Users/mpnun/Desktop/WGS_ss/'
+Product = 'CO2'
+n_iterations = 6
 
 ################################################################
 
@@ -61,15 +61,15 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
         
         delt = cum_batch.runAvg.Specnum['t'][-1]/2
         delt_list.append(delt)
-        corr_list.append(corrs[0])
-        corr_err.append(corrs[1])
+        corr_list.append(corrs)
+#        corr_err.append(corrs[1])
         
  
-    tau = 0.3186
-    dtlin = np.linspace(0, delt_list[-1], 1000)
-    corr_expected = []
-    for dt in dtlin:
-        corr_expected.append(np.exp(-dt / tau)) 
+#    tau = 0.3186
+#    dtlin = np.linspace(0, delt_list[-1], 1000)
+#    corr_expected = []
+#    for dt in dtlin:
+#        corr_expected.append(np.exp(-dt / tau)) 
     
     mat.rcParams['mathtext.default'] = 'regular'
     mat.rcParams['text.latex.unicode'] = 'False'
@@ -79,14 +79,16 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     
     plt.figure()
 #    plt.errorbar(range(2,8), corr_list, yerr = corr_err, markersize = 15, marker='o')
-    plt.plot(dtlin, corr_expected)
-    plt.errorbar(delt_list, corr_list, yerr = corr_err, markersize = 15, marker='o')
+#    plt.plot(dtlin, corr_expected)
+#    plt.errorbar(delt_list, corr_list, yerr = corr_err, markersize = 15, marker='o')
+    plt.plot(delt_list, corr_list, markersize = 15, marker='o')
     plt.xticks(size=24)
     plt.yticks(size=24)
 #    plt.xlabel('iteration',size=30)
     plt.xlabel('Delta t',size=30)
     plt.ylabel('Correlation',size=30)
 #    plt.xlim([0,7])
+#    plt.ylim([0,1])
     plt.show()
     
     ax = plt.subplot(111)

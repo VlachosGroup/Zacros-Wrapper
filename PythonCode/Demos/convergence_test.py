@@ -46,8 +46,8 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     corr_list = []
     corr_err = []
     corr_expect_list = []
-    for ind in range(2,8):
-        BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/AtoB_scaledown2/Iteration_' + str(ind) + '/'
+    for ind in range(2,5):
+        BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/ab/Iteration_' + str(ind) + '/'
         
         x = Replicates()
         x.ParentFolder = BatchPath
@@ -68,7 +68,7 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
         
  
     tau = 0.3186
-    dtlin = np.linspace(0, delt_list[-1], 1000)
+    dtlin = np.linspace(0, 2, 1000)
     corr_expected = []
     for dt in dtlin:
         corr_expected.append(np.exp(-dt / tau)) 
@@ -88,7 +88,8 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
 #    plt.xlabel('iteration',size=30)
     plt.xlabel('Delta t',size=30)
     plt.ylabel('Correlation',size=30)
-#    plt.xlim([0,7])
+    plt.xlim([0,2])
+    plt.ylim([0,1])
     plt.show()
     
     ax = plt.subplot(111)

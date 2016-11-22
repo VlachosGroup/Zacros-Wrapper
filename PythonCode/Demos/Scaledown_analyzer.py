@@ -18,7 +18,7 @@ from KMC_Run import KMC_Run
 
 ''' ------------ User input section ------------ '''
 KMC_source = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/BigJobs/AtoB/'
-RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/WGS_ZW/Scaledown/'
+RunPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/AtoB_scaledown2/'
 product_spec = 'B'                                  # product species
 number_of_runs = 10
 number_of_processors = 4

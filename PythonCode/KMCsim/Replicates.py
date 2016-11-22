@@ -102,6 +102,33 @@ class Replicates:
         else:
             for run in self.runList:
                 run.ReadAllOutput()
+    
+    @staticmethod
+    def ReadPerformance(path):
+        
+        t_final_cum = 0
+        events_occurred_cum = 0
+        CPU_time_cum = 0        
+        n_runs = 0        
+        
+        DirList = [d for d in os.listdir(path) if os.path.isdir(path + d + '/')]      # List all folders in ParentFolder
+        for direct in DirList:
+            run = KMC_Run()
+            run.Path =  path + direct + '/'
+            if run.CheckComplete():
+                run.ReadAllInput()
+                run.ReadGeneral()
+                t_final_cum += run.Performance['t_final']
+                events_occurred_cum += run.Performance['events_occurred']
+                CPU_time_cum += run.Performance['CPU_time']
+                n_runs += 1
+                
+        with open(path + 'Performance_summary.txt', 'w') as txt:   
+            txt.write('----- Performance totals -----\n')
+            txt.write('number of runs: ' + str(n_runs) + '\n' )      # number of runs
+            txt.write('KMC time: {0:.3E} \n'.format(t_final_cum))      # seconds
+            txt.write('events: ' + str(events_occurred_cum) + '\n' )                                  # events
+            txt.write('CPU time: {0:.3E} \n'.format(CPU_time_cum))                       # seconds
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
@@ -307,4 +334,4 @@ class Replicates:
             data2.append(run.rate_traj[ind2-1])
         
 #        return Stats.cov_calc(data1,data2) / np.var(data2)
-        return Stats.cov_ci(data1,data2) / np.var(data2)
+        return Stats.cov_calc(data1,data2) / np.var(data2)

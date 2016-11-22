@@ -13,8 +13,7 @@ from Replicates import Replicates
 
 ################## User input ##################################
 
-BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/AtoB_scaledown2/Iteration_4/'
-#BatchPath = 'C:/Users/mpnun/Desktop/test_rep/'
+BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/AtoB_scaledown2/Iteration_7/'
 Product = 'B'
 n_cores = 3
 
@@ -24,30 +23,32 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
 
     os.system('cls')
 
+#    Replicates.ReadPerformance(BatchPath)
+
     # Batch of runs ----------------
     x = Replicates()
     x.ParentFolder = BatchPath
     x.n_procs = n_cores  
-    x.ReadMultipleRuns(parallel = True)
+    x.ReadMultipleRuns(parallel = False)
 
     # Trajectory average
     x.AverageRuns()
 #    x.runAvg.PlotSurfSpecVsTime(save = False)
 #    x.runAvg.PlotGasSpecVsTime(save = False)
-#    x.runAvg.PlotElemStepFreqs(save = False)
+    x.runAvg.PlotElemStepFreqs(save = False)
     
-    x.runAvg.CalcRateTraj(Product)
-    x.runAvg.PlotRateVsTime()
-    print x.runAvg.CheckSteadyState(Product, show_graph = True)
-    print x.CheckAutocorrelation(Product)
-    
+#    x.runAvg.CalcRateTraj(Product)
+#    x.runAvg.PlotRateVsTime()
+#    print x.runAvg.CheckSteadyState(Product, show_graph = True)
+#    print x.CheckAutocorrelation(Product)
+#    
 #    x.runAvg.PlotPropsVsTime()
 #    x.runAvg.PlotIntPropsVsTime()
-    
+#    
 #     Rate and sensitivities
 #    x.ComputeStats(Product)
 #    x.PlotSensitivities()
 #    x.WriteSA_output(BatchPath)
-    #x.WvarCheck()
-#    
+#    x.WvarCheck()
+    
 #    print [x.TOF, x.TOF_error]
