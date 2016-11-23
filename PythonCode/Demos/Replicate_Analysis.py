@@ -5,37 +5,48 @@ Created on Thu Jul 28 13:48:34 2016
 @author: mpnun
 """
 
-import os
 import sys
+
+from mpi4py import MPI
 
 sys.path.insert(0, '../KMCsim')
 from Replicates import Replicates
 
 ################## User input ##################################
 
-BatchPath = 'C:/Users/mpnun/Documents/Local_research_files/ZacrosWrapper/AtoB_scaledown2/Iteration_7/'
+zacros_exe = '/home/vlachos/mpnunez/bin/zacros_ZW.x'
+KMC_source = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/NonStiff/'
+BatchPath = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/test_parallel/'
 Product = 'B'
-n_cores = 3
+n_runs = 10
 
 ################################################################
 
 if __name__ == '__main__':                 # Need this line to make parallelization work
 
-    os.system('cls')
-
-#    Replicates.ReadPerformance(BatchPath)
-
     # Batch of runs ----------------
     x = Replicates()
     x.ParentFolder = BatchPath
-    x.n_procs = n_cores  
-    x.ReadMultipleRuns(parallel = False)
+#    x.runtemplate.Path = KMC_source
+#    x.runtemplate.exe_file = zacros_exe
+#    x.runtemplate.ReadAllInput()    
+    
+    # Build and run
+#    x.n_runs = n_runs
+#    x.BuildJobsFromTemplate()
+#    x.BuildJobFiles()
+#    x.RunAllJobs()
+    
+    x.ReadMultipleRuns()
 
     # Trajectory average
     x.AverageRuns()
-#    x.runAvg.PlotSurfSpecVsTime(save = False)
-#    x.runAvg.PlotGasSpecVsTime(save = False)
-    x.runAvg.PlotElemStepFreqs(save = False)
+    
+    COMM = MPI.COMM_WORLD
+    if COMM.rank == 0:
+        x.runAvg.PlotSurfSpecVsTime()
+        x.runAvg.PlotGasSpecVsTime()
+        x.runAvg.PlotElemStepFreqs()
     
 #    x.runAvg.CalcRateTraj(Product)
 #    x.runAvg.PlotRateVsTime()

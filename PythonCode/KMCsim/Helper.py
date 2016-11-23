@@ -7,21 +7,13 @@ Created on Wed Mar 02 15:40:49 2016
 
 from itertools import (takewhile,repeat)
 import numpy as np
-import os
-import platform
+import os, shutil
 import sys
-
-sys.path.append("..")
-
-
+from mpi4py import MPI
 
 class Helper:
     def __init__(self):
         pass
-        
-    def GetFiles(self,Path):
-        Files = [d for d in os.listdir(Path) if not os.path.isdir(Path + d + '/')]
-        return Files
         
     def N2FS(self,num,**kwargs):     #function to convert numbers into a format that is 
                                     #suited to the fortran interpreter
@@ -83,53 +75,6 @@ class Helper:
             string = string + ' '*(num - len(string))
         return string
         
-    def PrintDict(self,Dict,Indent = 0):
-        keys = [key for key in Dict]
-        keys.sort()
-        for i in keys:
-            if type(Dict[i]) == dict:
-                if Indent == 0:
-                    print ''
-                print ' ' * 2 * Indent + i + ':'
-                self.PrintDict(Dict[i],Indent+1)
-            elif isinstance(Dict[i],np.ndarray):
-                if Indent == 0:
-                    print ''
-                print self.PadStr(' ' * 2 * Indent + i + ':',20),
-                self.PrintList(Dict[i].tolist())
-            else:
-                print self.PadStr(' ' * 2 * Indent + i + ':  ',20),
-                self.PrintList(Dict[i])
-    
-    def PrintList(self,List,Nest=0):
-        if len(str(List)) > 100 and len(List) > 2:
-            print '[',
-            if type(List[0]) == list and len(str(List[0])) > 100 and len(List[0]) > 2:
-                self.PrintList(List[0],Nest+1)
-            else:
-                print List[0],
-            print ',... ,',
-            if type(List[-1]) == list and len(str(List[-1])) > 100 and len(List[-1]) > 2:
-                self.PrintList(List[-1],Nest+1)
-            else:
-                print List[-1],
-            if Nest == 0:
-                print ']'
-            else:
-                print ']',
-        else:
-            print List
-                
-#    def SystemInformation(self):
-#        SystemInfo = {}
-#        SystemInfo['OS'] = platform.system()
-#        if SystemInfo['OS'] == 'Linux':
-#            SystemInfo['ComputerName'] = os.environ['SGE_CLUSTER_NAME']
-#        else:
-#            SystemInfo['ComputerName'] = platform.node()
-#        SystemInfo = MS().PathInfo(SystemInfo)
-#        return SystemInfo
-        
     def ReturnUnique(self,Matrix):
         Matrix = np.array(Matrix)
         ncols = Matrix.shape[1]
@@ -154,13 +99,18 @@ class Helper:
             nLines = sum( buf.count(b'\n') for buf in bufgen if buf )
         return nLines
         
-    def CompareFileSize(self,Path1,Path2):
-        if os.path.isfile(Path1) and os.path.isfile(Path2):        
-            Size1 = os.stat(Path1).st_size
-            Size2 = os.stat(Path2).st_size
-            if Size1 == Size2:
-                return True
-            else:
-                return False
-        else:
-            return False
+    ''' Handle folder and file making when running in parallel'''
+    @staticmethod
+    def ClearFolderContents(fldr_name):
+        
+        COMM = MPI.COMM_WORLD
+        if COMM.rank == 0:             
+            for the_file in os.listdir(fldr_name):
+                file_path = os.path.join(fldr_name, the_file)
+                try:
+                    if os.path.isfile(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    print(e) 

@@ -11,8 +11,11 @@ import numpy as np
 import os, shutil
 import copy
 
+from mpi4py import MPI
+
 from Replicates import Replicates
 from KMC_Run import KMC_Run
+from Helper import Helper
 
 class RateRescaling:
     
@@ -21,240 +24,14 @@ class RateRescaling:
         self.summary_filename = 'rescaling_output.txt'
         self.scale_parent_fldr = ''
         self.batch = Replicates()
-        self.SDF_mat    = []        # scaledown factors for each iteration
+        self.SDF_mat = []        # scaledown factors for each iteration
         self.tfinalvec = []         # t_final for each iteration
         self.rxn_names = []
-    
-    def PerformScaledown(self, Product, max_events = int(1e4), max_iterations = 15, cutoff = 0.5, ss_inc = 3.0, n_samples = 100, n_runs = 10, n_procs = 4):
         
-        # Convergence variables
-        stiff = True
-        is_steady_state = False
-        iteration = 0
-        self.SDF_mat = copy.deepcopy(self.batch.runtemplate.scaledown_factors)
-        
-        # Set sampling parameters
-        self.batch.runtemplate.Conditions['MaxStep'] = max_events
-        self.batch.runtemplate.Conditions['SimTime']['Max'] = 'inf'
-        self.batch.runtemplate.Conditions['WallTime']['Max'] = 'inf'
-        self.batch.runtemplate.Conditions['restart'] = False
-        
-        self.batch.runtemplate.Report['procstat'] = ['event', max_events / n_samples]
-        self.batch.runtemplate.Report['specnum'] = ['event', max_events / n_samples]
-        self.batch.runtemplate.Report['hist'] = ['event', max_events]       # only record the initial and final states
-        
-        prev_iteration_batch = Replicates()          # placeholder variable        
-        
-        # Set up batch variables
-        self.batch.n_runs = n_runs
-        self.batch.n_procs = n_procs
-        self.batch.Product = Product    
-        
-        with open(self.scale_parent_fldr + self.summary_filename, 'w') as txt:             # Open log file
-            txt.write('Reaction rate rescaling log \n\n')
+    def ReachSteadyStateAndRescale(self, Product, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10):
 
-            while (not is_steady_state or stiff) and iteration < max_iterations:
-                
-                iteration += 1                
-                
-                # Prepare and run jobs
-                iter_fldr = self.scale_parent_fldr + 'Iteration_' + str(iteration) + '/'
-                if not os.path.exists(iter_fldr):
-                    os.makedirs(iter_fldr)
-                self.batch.ParentFolder = iter_fldr
-                self.batch.BuildJobsFromTemplate()
-                
-                # Use continuation if it is past the first iteration
-                if iteration > 1:
-                    for run_ind in range(n_runs):
-                        self.batch.runList[run_ind].StateInput['Type'] = 'history'
-                        self.batch.runList[run_ind].StateInput['Struct'] = prev_iteration_batch.runList[run_ind].History[-1]
-                
-                self.batch.BuildJobs()
-                self.batch.RunAllJobs()
-                
-                # Process results
-                self.batch.ReadMultipleRuns()
-                self.batch.AverageRuns()
-                scaledown_data = self.ProcessStepFreqs()         # compute change in scaledown factors based on simulation result
-                delta_sdf = scaledown_data['delta_sdf']
-                rxn_speeds = scaledown_data['rxn_speeds']                
-                prev_iteration_batch = copy.deepcopy(self.batch)
-                
-                # Change sampling
-                self.batch.runtemplate.Conditions['MaxStep'] = 'inf'
-                self.batch.runtemplate.Conditions['SimTime']['Max'] = self.batch.runAvg.Specnum['t'][-1]
-                self.batch.runtemplate.Report['procstat'] = ['time', self.batch.runAvg.Specnum['t'][-1] / n_samples]
-                self.batch.runtemplate.Report['specnum'] = ['time', self.batch.runAvg.Specnum['t'][-1] / n_samples]
-                self.batch.runtemplate.Report['hist'] = ['time', self.batch.runAvg.Specnum['t'][-1]]
-                
-                is_steady_state = self.batch.runAvg.CheckSteadyState(Product)
-                stiff = not np.max(np.abs(np.log10(delta_sdf))) < cutoff        # converged if changes to rate constants are small enough
-                
-                # Record iteration in log file
-                txt.write('----- Iteration #' + str(iteration) + ' -----\n')
-                txt.write('t_final: {0:.3E} \n'.format(self.batch.runAvg.Specnum['t'][-1]))
-                txt.write('stiff: ' + str(stiff) + '\n')
-                txt.write('steady-state: ' + str(is_steady_state) + '\n')
-                for rxn_name in self.batch.runAvg.Reactions['names']:
-                    txt.write(rxn_name + '\t')
-                txt.write('\n')
-                for sdf in delta_sdf:
-                    txt.write('{0:.3E} \t'.format(sdf))
-                txt.write('\n')
-                for rxn_speed in rxn_speeds:
-                    txt.write(rxn_speed + '\t')
-                txt.write('\n\n')
-                
-                # Update sampling
-                if not is_steady_state:
-                    if stiff:
-                        self.batch.runtemplate.Conditions['SimTime']['Max'] = self.batch.runAvg.Specnum['t'][-1] / np.min(delta_sdf)
-                    else:
-                        self.batch.runtemplate.Conditions['SimTime']['Max'] = self.batch.runAvg.Specnum['t'][-1] * ss_inc        
-                    self.batch.runtemplate.Report['procstat'] = ['time', self.batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
-                    self.batch.runtemplate.Report['specnum'] = ['time', self.batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
-                    self.batch.runtemplate.Report['hist'] = ['time', self.batch.runtemplate.Conditions['SimTime']['Max']]
-                
-                # Update the pre-exponential factors
-                self.batch.runtemplate.AdjustPreExponentials(delta_sdf)
-                self.tfinalvec.append(self.batch.runAvg.Specnum['t'][-1])
-                self.SDF_mat = np.vstack([self.SDF_mat, self.batch.runtemplate.scaledown_factors])
-    
-            if not is_steady_state or stiff:
-                txt.write('Did NOT converge')
-            else:
-                txt.write('Successfully converged')
-            
-            self.batch.runtemplate.Path = self.scale_parent_fldr
-            self.batch.runtemplate.WriteAllInput()
-    
-    def ReachSteadyState(self, Product, template_folder, exe, max_events = int(1e4), max_iterations = 15, cutoff = 0.5, ss_inc = 2.0, n_samples = 100, n_runs = 10, n_procs = 4):
-
-        # Delete all files and folders in the run directory
-        for the_file in os.listdir(self.scale_parent_fldr):
-            file_path = os.path.join(self.scale_parent_fldr, the_file)
-            try:
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print(e) 
-
-        # Placeholder variables
-        prev_batch = Replicates()
-        cum_batch = Replicates()
-        
-        # Convergence variables
-        is_steady_state = False
-        iteration = 1
-
-        while not is_steady_state and iteration <= max_iterations:
-            
-            # Make folder for iteration
-            iter_fldr = self.scale_parent_fldr + 'Iteration_' + str(iteration) + '/'
-            if not os.path.exists(iter_fldr):
-                os.makedirs(iter_fldr)
-                
-            # Create object for batch
-            cur_batch = Replicates()
-            cur_batch.ParentFolder = iter_fldr
-            cur_batch.n_runs = n_runs
-            cur_batch.n_procs = n_procs
-            cur_batch.Product = Product            
-            
-            cur_batch.runtemplate = KMC_Run()
-            cur_batch.runtemplate.exe_file = exe
-            cur_batch.runtemplate.Path = template_folder
-            cur_batch.runtemplate.ReadAllInput()
-            
-            if iteration == 1:              # Event sampling
-            
-                # Set sampling parameters
-                cur_batch.runtemplate.Conditions['MaxStep'] = max_events
-                cur_batch.runtemplate.Conditions['SimTime']['Max'] = 'inf'
-                cur_batch.runtemplate.Conditions['WallTime']['Max'] = 'inf'
-                cur_batch.runtemplate.Conditions['restart'] = False
-                
-                cur_batch.runtemplate.Report['procstat'] = ['event', max_events / n_samples]
-                cur_batch.runtemplate.Report['specnum'] = ['event', max_events / n_samples]
-                cur_batch.runtemplate.Report['hist'] = ['event', max_events]       # only record the initial and final states
-            
-            elif iteration > 1:             # Time sampling
-
-                # Change sampling
-                cur_batch.runtemplate.Conditions['MaxStep'] = 'inf'
-                cur_batch.runtemplate.Conditions['SimTime']['Max'] = prev_batch.runList[0].Performance['t_final'] * ss_inc
-                cur_batch.runtemplate.Conditions['SimTime']['Max'] = float('{0:.3E} \t'.format(cur_batch.runtemplate.Conditions['SimTime']['Max']))     # round to 4 significant figures
-                cur_batch.runtemplate.Report['procstat'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
-                cur_batch.runtemplate.Report['specnum'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
-                cur_batch.runtemplate.Report['hist'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max']]
-                
-            
-            cur_batch.BuildJobsFromTemplate()
-                
-            # Use continuation
-            if iteration > 1:
-                for run_ind in range(n_runs):
-                    cur_batch.runList[run_ind].StateInput['Type'] = 'history'
-                    cur_batch.runList[run_ind].StateInput['Struct'] = prev_batch.runList[run_ind].History[-1]
-            
-            # Run jobs
-            cur_batch.BuildJobs()
-            cur_batch.RunAllJobs()
-            cur_batch.ReadMultipleRuns()            # Process results
-            
-            # Add data to running list
-            if iteration == 1:
-                pass            # Do not use data from first run because it is on event rather than time
-            elif iteration == 2:
-                cum_batch = copy.deepcopy(cur_batch)
-            elif iteration > 2:
-                for run_ind in range(n_runs):
-                    cum_batch.runList[run_ind] = KMC_Run.time_sandwich(cum_batch.runList[run_ind], cur_batch.runList[run_ind])
-            
-            # Test steady-state
-            if iteration == 1:
-                is_steady_state = False
-            else:
-                cum_batch.AverageRuns()
-                cum_batch.runAvg.Path = iter_fldr
-                correl = cum_batch.CheckAutocorrelation(Product)
-                not_change = cum_batch.runAvg.CheckSteadyState(Product)
-                is_steady_state = np.abs(correl[0]) < 0.05 and not_change
-                
-                # Record information about the iteration
-                cum_batch.runAvg.CalcRateTraj(Product)
-        
-                cum_batch.runAvg.PlotSurfSpecVsTime()        
-                cum_batch.runAvg.PlotIntPropsVsTime()
-                cum_batch.runAvg.PlotRateVsTime()
-                
-                with open(iter_fldr + 'Iteration_summary.txt', 'w') as txt:
-                    txt.write('Reaction rate rescaling log \n\n')
-                    txt.write('Reaction rate rescaling log \n\n')
-                
-            prev_batch = copy.deepcopy(cur_batch)
-            iteration += 1
-            
-        if is_steady_state:
-            print 'Steady-state achieved'
-        else:
-            print 'Not converged'
-        
-    def ReachSteadyStateAndRescale(self, Product, template_folder, exe, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10, n_procs = 4):
-
-        # Delete all files and folders in the run directory
-        for the_file in os.listdir(self.scale_parent_fldr):
-            file_path = os.path.join(self.scale_parent_fldr, the_file)
-            try:
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print(e) 
+        COMM = MPI.COMM_WORLD
+        Helper.ClearFolderContents(self.scale_parent_fldr)
 
         # Placeholder variables
         prev_batch = Replicates()
@@ -272,14 +49,14 @@ class RateRescaling:
             
             # Make folder for iteration
             iter_fldr = self.scale_parent_fldr + 'Iteration_' + str(iteration) + '/'
-            if not os.path.exists(iter_fldr):
-                os.makedirs(iter_fldr)
+            if COMM.rank == 0:
+                if not os.path.exists(iter_fldr):
+                    os.makedirs(iter_fldr)
                 
             # Create object for batch
             cur_batch = Replicates()
             cur_batch.ParentFolder = iter_fldr
             cur_batch.n_runs = n_runs
-            cur_batch.n_procs = n_procs
             cur_batch.Product = Product
             
             cur_batch.runtemplate = KMC_Run()
@@ -313,7 +90,8 @@ class RateRescaling:
                 cur_batch.runtemplate.Report['specnum'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
                 cur_batch.runtemplate.Report['hist'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max']]
                 
-                cur_batch.runtemplate.AdjustPreExponentials(SDF_vec)
+                if include_stiff_reduc:
+                    cur_batch.runtemplate.AdjustPreExponentials(SDF_vec)
                 
             cur_batch.BuildJobsFromTemplate()
                 
@@ -323,12 +101,13 @@ class RateRescaling:
                     cur_batch.runList[run_ind].StateInput['Type'] = 'history'
                     cur_batch.runList[run_ind].StateInput['Struct'] = prev_batch.runList[run_ind].History[-1]
             
-            # Run jobs
-            cur_batch.BuildJobs()
+            # Run jobs and read output
+            cur_batch.BuildJobFiles()
             cur_batch.RunAllJobs()
-            cur_batch.ReadMultipleRuns()            # Process results
+            cur_batch.ReadMultipleRuns()
             
             # Add data to running list
+            COMM.Barrier()
             if iteration == 1:
                 pass            # Do not use data from first run because it is on event rather than time
             elif iteration == 2:
@@ -345,7 +124,7 @@ class RateRescaling:
                 cum_batch.runAvg.Path = iter_fldr
                 correl = cum_batch.CheckAutocorrelation(Product)
                 not_change = cum_batch.runAvg.CheckSteadyState(Product)
-                is_steady_state = np.abs(correl[0]) < 0.05 and not_change
+                is_steady_state = np.abs(correl) < 0.05 and not_change
                 
                 # Record information about the iteration
                 cum_batch.runAvg.CalcRateTraj(Product)
@@ -359,22 +138,26 @@ class RateRescaling:
             scaledown_data = self.ProcessStepFreqs(cur_batch.runAvg)         # compute change in scaledown factors based on simulation result
             delta_sdf = scaledown_data['delta_sdf']
             rxn_speeds = scaledown_data['rxn_speeds']
-            unstiff = np.max(np.abs(np.log10(delta_sdf))) < stiff_cutoff
-            
-            # Record iteartion data in output file
-            with open(iter_fldr + 'Iteration_summary.txt', 'w') as txt:   
-                txt.write('----- Iteration #' + str(iteration) + ' -----\n')
-                txt.write('t_final: {0:.3E} \n'.format(cur_batch.runAvg.Specnum['t'][-1]))
-                txt.write('stiff: ' + str(not unstiff) + '\n')
-                txt.write('steady-state: ' + str(is_steady_state) + '\n')
-                for rxn_name in cur_batch.runAvg.Reactions['names']:
-                    txt.write(rxn_name + '\t')
-                txt.write('\n')
-                for sdf in delta_sdf:
-                    txt.write('{0:.3E} \t'.format(sdf))
-                txt.write('\n')
-                for rxn_speed in rxn_speeds:
-                    txt.write(rxn_speed + '\t')
+            if include_stiff_reduc:
+                unstiff = np.max(np.abs(np.log10(delta_sdf))) < stiff_cutoff
+            else:
+                unstiff = True
+    
+            if COMM.rank == 0:
+                # Record iteartion data in output file
+                with open(iter_fldr + 'Iteration_summary.txt', 'w') as txt:   
+                    txt.write('----- Iteration #' + str(iteration) + ' -----\n')
+                    txt.write('t_final: {0:.3E} \n'.format(cur_batch.runAvg.Specnum['t'][-1]))
+                    txt.write('stiff: ' + str(not unstiff) + '\n')
+                    txt.write('steady-state: ' + str(is_steady_state) + '\n')
+                    for rxn_name in cur_batch.runAvg.Reactions['names']:
+                        txt.write(rxn_name + '\t')
+                    txt.write('\n')
+                    for sdf in delta_sdf:
+                        txt.write('{0:.3E} \t'.format(sdf))
+                    txt.write('\n')
+                    for rxn_speed in rxn_speeds:
+                        txt.write(rxn_speed + '\t')
             
             # Update scaledown factors
             for ind in range(len(SDF_vec)):
@@ -385,13 +168,6 @@ class RateRescaling:
             prev_batch = copy.deepcopy(cur_batch)
             converged = unstiff and is_steady_state
             iteration += 1
-            
-        if is_steady_state:
-            print 'Steady-state achieved'
-        else:
-            print 'Not converged'
-        
-        
     
     # Process KMC output and determine how to further scale down reactions
     def ProcessStepFreqs(self, run, stiff_cut = 100, equilib_cut = 0.05):

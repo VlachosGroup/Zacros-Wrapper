@@ -8,19 +8,13 @@ Created on Sun Apr 03 15:20:36 2016
 import os, shutil
 import numpy as np
 import matplotlib.pyplot as plt
-from multiprocessing import Pool
 import copy
+
+from mpi4py import MPI
 
 from KMC_Run import KMC_Run
 from Stats import Stats
-
-# Separate function for use in parallelization
-def runKMC(kmc_rep):
-    kmc_rep.Run_sim()
-    
-def readKMCoutput(kmc_rep):
-    kmc_rep.ReadAllOutput()
-    return kmc_rep
+from Helper import Helper
 
 class Replicates:
     
@@ -32,7 +26,6 @@ class Replicates:
         self.runtemplate = KMC_Run()                             # Use this to build replicate jobs
         self.runAvg = KMC_Run()            # Values are averages of all runs from runList
         self.n_runs = 0
-        self.n_procs = 1
         
         # Analysis
         self.Product                          = ''
@@ -51,57 +44,84 @@ class Replicates:
             new_run.Path = self.ParentFolder + str(i+1) + '/'
             self.runList.append(new_run)
             
-    def BuildJobs(self):
+    def BuildJobFiles(self):
         
-        # Delete all files and folders in the run directory
-        for the_file in os.listdir(self.ParentFolder):
-            file_path = os.path.join(self.ParentFolder, the_file)
-            try:
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print(e)        
+        Helper.ClearFolderContents(self.ParentFolder)    
         
-        # Build folders and input files for each job
-        for run in self.runList:            
-            if not os.path.exists(run.Path):
-                os.makedirs(run.Path)
-            run.WriteAllInput()
+        COMM = MPI.COMM_WORLD
+        if COMM.rank == 0:
+            # Build folders and input files for each job
+            for run in self.runList:            
+                if not os.path.exists(run.Path):
+                    os.makedirs(run.Path)
+                run.WriteAllInput()
     
-    def RunAllJobs(self, parallel = True):
+    def RunAllJobs(self):
 
-        if parallel and self.n_procs > 1:	# run in parallel among available processors
-            pool = Pool(processes = self.n_procs)
-            pool.map(runKMC, self.runList)
-            pool.close()
-        else:			# run in serial
-            for run in self.runList:
-                run.Run_sim()
-    
-    def ReadMultipleRuns(self, parallel = False):
+        COMM = MPI.COMM_WORLD
+        COMM.Barrier()
 
-        print 'Reading output files for all jobs in ' + self.ParentFolder
-
-        # Add complete jobs to the list
-        self.runList = []
-        DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(self.ParentFolder + d + '/')]      # List all folders in ParentFolder
-        for direct in DirList:
-            run = KMC_Run()
-            run.Path =  self.ParentFolder + direct + '/'
-            if run.CheckComplete():
-                self.runList.append(run)
-        self.n_runs = len(self.runList)
-        
-        # Read output files of all jobs
-        if parallel:
-            pool = Pool(processes = self.n_procs)
-            self.runList = pool.map(readKMCoutput, self.runList)
-            pool.close()
+        # Collect whatever has to be done in a list. Here we'll just collect a list of
+        # numbers. Only the first rank has to do this.
+        if COMM.rank == 0:
+            jobs = self.runList
+            jobs = [jobs[_i::COMM.size] for _i in range(COMM.size)]             # Split into however many cores are available.
         else:
-            for run in self.runList:
-                run.ReadAllOutput()
+            jobs = None
+        
+        jobs = COMM.scatter(jobs, root=0)           # Scatter jobs across cores.
+        
+        # Now each rank just does its jobs and collects everything in a results list.
+        # Make sure to not use super big objects in there as they will be pickled to be
+        # exchanged over MPI.
+        for job in jobs:
+            job.Run_sim()
+        
+        jobs = MPI.COMM_WORLD.gather(jobs, root=0)              # Gather results on rank 0.
+        
+        if COMM.rank == 0:
+            jobs = [_i for temp in jobs for _i in temp]         # Flatten list of lists.
+            self.runList = jobs
+
+        self.runList = COMM.bcast(self.runList, root=0)
+    
+    def ReadMultipleRuns(self):
+
+        COMM = MPI.COMM_WORLD
+        COMM.Barrier()
+        
+        self.runList = []
+
+        if COMM.rank == 0:
+
+            # Add complete jobs to the list  
+            DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(self.ParentFolder + d + '/')]      # List all folders in ParentFolder
+            for direct in DirList:
+                run = KMC_Run()
+                run.Path =  self.ParentFolder + direct + '/'
+                if run.CheckComplete():
+                    self.runList.append(run)
+            self.n_runs = len(self.runList)
+        
+        if COMM.rank == 0:
+            jobs = self.runList
+            jobs = [jobs[_i::COMM.size] for _i in range(COMM.size)]             # Split into however many cores are available.
+        else:
+            jobs = None
+        
+        jobs = COMM.scatter(jobs, root=0)           # Scatter jobs across cores.
+        
+        for job in jobs:
+            job.ReadAllOutput()
+        
+        jobs = MPI.COMM_WORLD.gather(jobs, root=0)              # Gather results on rank 0.
+        
+        if COMM.rank == 0:
+            jobs = [_i for temp in jobs for _i in temp]         # Flatten list of lists.       
+            self.runList = jobs
+            
+        self.runList = COMM.bcast(self.runList, root=0)
+        self.n_runs = len(self.runList)
     
     @staticmethod
     def ReadPerformance(path):
