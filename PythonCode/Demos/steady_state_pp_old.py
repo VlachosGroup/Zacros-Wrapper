@@ -23,16 +23,13 @@ from KMC_Run import KMC_Run
 
 RunPath = 'C:/Users/mpnun/Desktop/WGS_ss/'
 Product = 'CO2'
+n_iterations = 6
 
 ################################################################
 
 if __name__ == '__main__':                 # Need this line to make parallelization work
 
-    # Count the iterations
-    n_files = n_folders = 0
-    for _, dirnames, filenames in os.walk(RunPath):
-        n_files += len(filenames)
-        n_folders += len(dirnames)
+    os.system('cls')
 
     cum_batch = Replicates()
 
@@ -40,7 +37,7 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     corr_list = []
     corr_err = []
     corr_expect_list = []
-    for ind in range(n_folders):
+    for ind in range(2,n_iterations+1):
         
         x = Replicates()
         x.ParentFolder = RunPath + 'Iteration_' + str(ind) + '/'
@@ -92,10 +89,8 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     plt.ylabel('Correlation',size=30)
 #    plt.xlim([0,7])
 #    plt.ylim([0,1])
+    plt.show()
     
     ax = plt.subplot(111)
     pos = [0.2, 0.15, 0.7, 0.8]
     ax.set_position(pos)
-    
-    plt.savefig(RunPath + 'correlation.png')
-    plt.close()  

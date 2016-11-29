@@ -5,10 +5,8 @@ Created on Sun Mar 27 20:28:48 2016
 @author: RDX
 """
 
-import matplotlib.pyplot as plt
-import matplotlib as mat
 import numpy as np
-import os, shutil
+import os
 import copy
 
 from mpi4py import MPI
@@ -49,9 +47,8 @@ class RateRescaling:
             
             # Make folder for iteration
             iter_fldr = self.scale_parent_fldr + 'Iteration_' + str(iteration) + '/'
-            if COMM.rank == 0:
-                if not os.path.exists(iter_fldr):
-                    os.makedirs(iter_fldr)
+            if COMM.rank == 0 and not os.path.exists(iter_fldr):
+                os.makedirs(iter_fldr)
                 
             # Create object for batch
             cur_batch = Replicates()
@@ -121,6 +118,7 @@ class RateRescaling:
                 is_steady_state = False
             else:
                 cum_batch.AverageRuns()
+                cum_batch.ParentFolder = iter_fldr
                 cum_batch.runAvg.Path = iter_fldr
                 correl = cum_batch.CheckAutocorrelation(Product)
                 not_change = cum_batch.runAvg.CheckSteadyState(Product)
@@ -168,6 +166,10 @@ class RateRescaling:
             prev_batch = copy.deepcopy(cur_batch)
             converged = unstiff and is_steady_state
             iteration += 1
+            
+        cum_batch.ComputeStats(Product)
+        cum_batch.WriteSA_output(cum_batch.ParentFolder)
+        cum_batch.PlotSensitivities()
     
     # Process KMC output and determine how to further scale down reactions
     def ProcessStepFreqs(self, run, stiff_cut = 100, equilib_cut = 0.05):
@@ -208,93 +210,3 @@ class RateRescaling:
             delta_sdf[i] = np.min([1.0, stiff_cut * float(slow_scale) / tot_freqs[i]])
             
         return {'delta_sdf': delta_sdf, 'rxn_speeds': rxn_speeds}
-    
-    def PlotStiffnessReduction(self):
-        
-        # Data
-        SDF_dims = self.SDF_mat.shape
-        n_iterations = SDF_dims[0]
-        n_rxns = SDF_dims[1]
-        iterations = range(n_iterations)
-        if self.rxn_names == []:
-            self.rxn_names = self.batch.runtemplate.Reactions['names']
-        
-        
-        # Plotting
-        mat.rcParams['mathtext.default'] = 'regular'
-        mat.rcParams['text.latex.unicode'] = 'False'
-        mat.rcParams['legend.numpoints'] = 1
-        mat.rcParams['lines.linewidth'] = 2
-        mat.rcParams['lines.markersize'] = 16
-        
-        plt.figure()
-        
-        for i in range(n_rxns):
-            plt.plot(iterations, np.transpose(self.SDF_mat[:,i]), 'o-', markersize = 15)
-        
-        plt.xticks(size=24)
-        plt.yticks(size=24)
-        plt.xlabel('iterations',size=30)
-        plt.ylabel('scaledown factor',size=30)
-        plt.legend(self.rxn_names, loc=1, prop={'size':20}, frameon=False)
-        plt.show()
-        
-        plt.yscale('log')
-        ax = plt.subplot(111)
-        pos = [0.2, 0.15, 0.7, 0.8]
-        ax.set_position(pos)
-        
-    def PlotFinalTimes(self):
-        
-        # Data
-        SDF_dims = self.SDF_mat.shape
-        n_iterations = SDF_dims[0]-1
-        iterations = range(1,n_iterations+1)
-        rxn_labels = []
-        
-        # Plotting
-        mat.rcParams['mathtext.default'] = 'regular'
-        mat.rcParams['text.latex.unicode'] = 'False'
-        mat.rcParams['legend.numpoints'] = 1
-        mat.rcParams['lines.linewidth'] = 2
-        mat.rcParams['lines.markersize'] = 16
-        
-        plt.figure()
-        
-        plt.plot(iterations, self.tfinalvec, 'o-', markersize = 15)
-        
-        plt.xticks(size=24)
-        plt.yticks(size=24)
-        plt.xlabel('iterations',size=30)
-        plt.ylabel('final KMC time (s)',size=30)
-        plt.legend(rxn_labels,loc=1,prop={'size':20},frameon=False)
-        plt.xlim([0,n_iterations])
-        plt.show()
-        
-        plt.yscale('log')
-        ax = plt.subplot(111)
-        pos = [0.2, 0.15, 0.7, 0.8]
-        ax.set_position(pos)
-        
-    def ReadSummaryFile(self):
-        
-        with open(self.scale_parent_fldr + self.summary_filename,'r') as txt:
-            RawTxt = txt.readlines()
-        
-        lines_per_iter = 8
-        n_iters =  (len(RawTxt) - 3) / lines_per_iter
-        n_rxns = len(RawTxt[7].split())
-        SDFcum = np.ones(n_rxns)
-        
-        self.SDF_mat    = np.zeros([n_iters+1, n_rxns])
-        self.SDF_mat[0,:] = SDFcum
-        self.rxn_names = RawTxt[6].split()
-        
-        for ind in range(n_iters):
-            self.tfinalvec.append(float(RawTxt[ind * lines_per_iter + 3].split()[1]))
-            sdf_line = RawTxt[ind * lines_per_iter + 7].split()
-            
-            for rxn_ind in range(n_rxns):
-                SDFcum[rxn_ind] = SDFcum[rxn_ind] * float(sdf_line[rxn_ind])
-            
-            self.SDF_mat[ind+1,:] = SDFcum

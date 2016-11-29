@@ -5,8 +5,10 @@ Created on Sun Apr 03 15:20:36 2016
 @author: robieta
 """
 
-import os, shutil
+import os
 import numpy as np
+import matplotlib as mat
+mat.use('Agg')
 import matplotlib.pyplot as plt
 import copy
 
@@ -149,6 +151,8 @@ class Replicates:
             txt.write('KMC time: {0:.3E} \n'.format(t_final_cum))      # seconds
             txt.write('events: ' + str(events_occurred_cum) + '\n' )                                  # events
             txt.write('CPU time: {0:.3E} \n'.format(CPU_time_cum))                       # seconds
+            
+        return {'t_final_cum': t_final_cum, 'events_occurred_cum': events_occurred_cum, 'CPU_time_cum': CPU_time_cum, 'n_runs': n_runs}
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
@@ -198,7 +202,7 @@ class Replicates:
         self.NSC_ci = np.zeros(self.runList[0].Reactions['nrxns'])
         for i in range(0, self.runList[0].Reactions['nrxns']):
             W = Wdata[:,2*i] + Wdata[:,2*i+1]             
-            ci_info = Stats.cov_ci(W, TOFdata / self.TOF, Nboot=100, n_cores = self.n_procs)
+            ci_info = Stats.cov_ci(W, TOFdata / self.TOF, Nboot=100)
             self.NSC[i] = ci_info[0] + tof_fracs[2*i] + tof_fracs[2*i+1]
             self.NSC_ci[i] = ci_info[1]
                                    
@@ -220,7 +224,7 @@ class Replicates:
         
         ''' Plot results '''
         
-        self.runList[0].PlotOptions()
+        Helper.PlotOptions()
         plt.figure()
             
         labels = []
@@ -238,7 +242,7 @@ class Replicates:
         
     def PlotSensitivities(self, save = True): 
         
-        self.runAvg.PlotOptions()
+        Helper.PlotOptions()
         plt.figure()
         width = 0.8
         ind = 0
@@ -353,5 +357,5 @@ class Replicates:
             data1.append(run.rate_traj[ind1-1])
             data2.append(run.rate_traj[ind2-1])
         
-#        return Stats.cov_calc(data1,data2) / np.var(data2)
+#        return Stats.cov_ci(data1,data2) / np.var(data2)
         return Stats.cov_calc(data1,data2) / np.var(data2)

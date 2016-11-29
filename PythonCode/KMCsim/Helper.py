@@ -9,45 +9,14 @@ from itertools import (takewhile,repeat)
 import numpy as np
 import os, shutil
 import sys
+import matplotlib.pyplot as plt
+import matplotlib as mat
 from mpi4py import MPI
 
 class Helper:
-    def __init__(self):
-        pass
-        
-    def N2FS(self,num,**kwargs):     #function to convert numbers into a format that is 
-                                    #suited to the fortran interpreter
-        """Num Types:
-        1   Floating point scientific notation (default)
-        2   Integer
-        3   Floating point"""
-        
-        NumType = 1
-        digits = -1
-        for key, value in kwargs.iteritems():
-             if key == 'NumType':
-                 NumType = value
-             elif key == 'digits':
-                 digits = value
-        if digits > 0:
-            num = np.round(num,-int(np.ceil(np.log10(num)-digits)))
-        if NumType == 1:
-            num = float(num)
-            if num == 0:
-                output = '0.0'
-            elif np.log10(num) >= 0 and np.log10(num) < 1:
-                output = str(num)
-            else:
-                output = str(num/10 ** np.floor(np.log10(num))) + 'E' +str(int(np.floor(np.log10(num))))
-        elif NumType == 2:
-            num = int(num)
-            output = str(num)
-        elif NumType == 3:
-            num = np.float(num)
-            output = str(num)
-        return output 
 
-    def ReadWithoutBlankLines(self,File,CommentLines=True):
+    @staticmethod
+    def ReadWithoutBlankLines(File,CommentLines=True):
         with open(File,'r') as Txt:
             RawTxt = Txt.readlines()
         RawTxt2 = []
@@ -57,8 +26,9 @@ class Helper:
             if len(i.split())>0:
                     RawTxt2.append(i)
         return RawTxt2
-        
-    def isblank(self,Input):
+    
+    @staticmethod    
+    def isblank(Input):
         if type(Input) != str:
             Output = False
         elif len(Input) != 1:
@@ -69,13 +39,15 @@ class Helper:
             Output = True
         return Output
     
-    def PadStr(self,string,num):
+    @staticmethod
+    def PadStr(string,num):
         string = str(string)
         if len(string) < num:
             string = string + ' '*(num - len(string))
         return string
-        
-    def ReturnUnique(self,Matrix):
+    
+    @staticmethod
+    def ReturnUnique(Matrix):
         Matrix = np.array(Matrix)
         ncols = Matrix.shape[1]
         dtype = Matrix.dtype.descr * ncols
@@ -90,8 +62,9 @@ class Helper:
                     uniq[i+1,:] = -uniq[i,:]
         uniq = uniq.astype(int)  
         return uniq
-        
-    def rawbigcount(self,filename):
+    
+    @staticmethod    
+    def rawbigcount(filename):
         # Taken from http://stackoverflow.com/questions/19001402/how-to-count-the-total-number-of-lines-in-a-text-file-using-python
         # Used to count the number of lines on very large files.
         with open(filename, 'rb') as f:
@@ -99,7 +72,7 @@ class Helper:
             nLines = sum( buf.count(b'\n') for buf in bufgen if buf )
         return nLines
         
-    ''' Handle folder and file making when running in parallel'''
+    # Handle clearing a folder when running in parallel
     @staticmethod
     def ClearFolderContents(fldr_name):
         
@@ -113,4 +86,37 @@ class Helper:
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as e:
-                    print(e) 
+                    print(e)
+    
+    @staticmethod
+    def PlotOptions():
+        mat.rcParams['mathtext.default'] = 'regular'
+        mat.rcParams['text.latex.unicode'] = 'False'
+        mat.rcParams['legend.numpoints'] = 1
+        mat.rcParams['lines.linewidth'] = 2
+        mat.rcParams['lines.markersize'] = 12
+                
+    @staticmethod
+    def PlotTrajectory(x_series, y_series, xlab = '', ylab = '', series_labels = [], fname = ''):
+        
+        Helper.PlotOptions()
+        plt.figure()
+        
+        for i in range (len(y_series)):
+            plt.plot(x_series[i], y_series[i])
+        
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel(xlab, size=24)
+        plt.ylabel(ylab, size=24)
+        
+        if not series_labels == []:
+            plt.legend(series_labels, loc=4, prop={'size':20}, frameon=False)
+        ax = plt.subplot(111)
+        ax.set_position([0.2, 0.15, 0.7, 0.8])
+        
+        if fname == '':
+            plt.show()
+        else:
+            plt.savefig(fname)
+            plt.close()            
