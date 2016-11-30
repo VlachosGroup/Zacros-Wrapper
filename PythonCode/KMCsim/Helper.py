@@ -11,7 +11,6 @@ import os, shutil
 import sys
 import matplotlib.pyplot as plt
 import matplotlib as mat
-from mpi4py import MPI
 
 class Helper:
 
@@ -75,18 +74,16 @@ class Helper:
     # Handle clearing a folder when running in parallel
     @staticmethod
     def ClearFolderContents(fldr_name):
-        
-        COMM = MPI.COMM_WORLD
-        if COMM.rank == 0:             
-            for the_file in os.listdir(fldr_name):
-                file_path = os.path.join(fldr_name, the_file)
-                try:
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        shutil.rmtree(file_path)
-                except Exception as e:
-                    print(e)
+                 
+        for the_file in os.listdir(fldr_name):
+            file_path = os.path.join(fldr_name, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(e)
     
     @staticmethod
     def PlotOptions():

@@ -12,11 +12,10 @@ mat.use('Agg')
 import matplotlib.pyplot as plt
 import copy
 
-from mpi4py import MPI
-
 from KMC_Run import KMC_Run
 from Stats import Stats
 from Helper import Helper
+import time
 
 class Replicates:
     
@@ -46,84 +45,90 @@ class Replicates:
             new_run.Path = self.ParentFolder + str(i+1) + '/'
             self.runList.append(new_run)
             
-    def BuildJobFiles(self):
+    def BuildJobFiles(self, write_dir_list = True, max_cores = 100):
         
         Helper.ClearFolderContents(self.ParentFolder)    
         
-        COMM = MPI.COMM_WORLD
-        if COMM.rank == 0:
-            # Build folders and input files for each job
-            for run in self.runList:            
-                if not os.path.exists(run.Path):
-                    os.makedirs(run.Path)
-                run.WriteAllInput()
+        # Build folders and input files for each job
+        for run in self.runList:
+            if not os.path.exists(run.Path):
+                os.makedirs(run.Path)
+            run.WriteAllInput()
+            
+        if write_dir_list:
+            with open(self.ParentFolder + 'dir_list.txt', 'w') as txt:
+                for job in self.runList:
+                    txt.write(job.Path + '\n')
+            
+            n_cores = np.min([max_cores, self.n_runs])
+            with open(self.ParentFolder + 'zacros_submit_JA.qs', 'w')as txt:
+                txt.write('#!/bin/bash\n')
+                txt.write('#$ -cwd\n')
+                txt.write('#$ -j y\n')
+                txt.write('#$ -S /bin/bash\n')
+                txt.write('#\n')
+                txt.write('\n')
+                txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
+                txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
+                txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
+                txt.write('#$ -pe threads 1 				#Change the last field to the number of processors desired per task\n')
+                txt.write('#\n')
+                txt.write('# Change the following to #$ and set the amount of memory you need\n')
+                txt.write('# per-slot if you are getting out-of-memory errors using the\n')
+                txt.write('# default:\n')
+                txt.write('#$ -l m_mem_free=4G\n')
+                txt.write('\n')
+                txt.write('source /etc/profile.d/valet.sh\n')
+                txt.write('\n')
+                txt.write('# Use vpkg_require to setup the environment:\n')
+                txt.write('vpkg_require intel/2016\n')
+                txt.write('\n')
+                txt.write('# Ensure that the OpenMP runtime knows how many processors to use;\n')
+                txt.write('# Grid Engine automatically sets NSLOTS to the number of cores granted\n')
+                txt.write('# to this job:\n')
+                txt.write('export OMP_NUM_THREADS=$NSLOTS\n')
+                txt.write('\n')
+                txt.write('job_file=\'' + self.ParentFolder + 'dir_list.txt\'\n')
+                txt.write('#Change to the job directory\n')
+                txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
+                txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
+                txt.write('                  #This could easily be modified to take a prefix; ask me how.\n')
+                txt.write('\n')
+                txt.write('# Now append whatever commands you use to run your OpenMP code:\n')
+                txt.write(self.runtemplate.exe_file)
+    
+    def SubmitJobArray(self):
+        os.chdir(self.ParentFolder)
+        os.system('qsub ' + self.ParentFolder + 'zacros_submit_JA.qs')
+    
+    def WaitForJobs(self):
+        
+        all_jobs_done = False
+        while not all_jobs_done:
+            time.sleep(60)
+            all_jobs_done = True
+            for job in self.runList:
+                if not job.CheckComplete():
+                    all_jobs_done = False
     
     def RunAllJobs(self):
 
-        COMM = MPI.COMM_WORLD
-        COMM.Barrier()
-
-        # Collect whatever has to be done in a list. Here we'll just collect a list of
-        # numbers. Only the first rank has to do this.
-        if COMM.rank == 0:
-            jobs = self.runList
-            jobs = [jobs[_i::COMM.size] for _i in range(COMM.size)]             # Split into however many cores are available.
-        else:
-            jobs = None
-        
-        jobs = COMM.scatter(jobs, root=0)           # Scatter jobs across cores.
-        
-        # Now each rank just does its jobs and collects everything in a results list.
-        # Make sure to not use super big objects in there as they will be pickled to be
-        # exchanged over MPI.
-        for job in jobs:
+        for job in self.runList:
             job.Run_sim()
-        
-        jobs = MPI.COMM_WORLD.gather(jobs, root=0)              # Gather results on rank 0.
-        
-        if COMM.rank == 0:
-            jobs = [_i for temp in jobs for _i in temp]         # Flatten list of lists.
-            self.runList = jobs
-
-        self.runList = COMM.bcast(self.runList, root=0)
     
     def ReadMultipleRuns(self):
 
-        COMM = MPI.COMM_WORLD
-        COMM.Barrier()
-        
         self.runList = []
-
-        if COMM.rank == 0:
-
-            # Add complete jobs to the list  
-            DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(self.ParentFolder + d + '/')]      # List all folders in ParentFolder
-            for direct in DirList:
-                run = KMC_Run()
-                run.Path =  self.ParentFolder + direct + '/'
-                if run.CheckComplete():
-                    self.runList.append(run)
-            self.n_runs = len(self.runList)
-        
-        if COMM.rank == 0:
-            jobs = self.runList
-            jobs = [jobs[_i::COMM.size] for _i in range(COMM.size)]             # Split into however many cores are available.
-        else:
-            jobs = None
-        
-        jobs = COMM.scatter(jobs, root=0)           # Scatter jobs across cores.
-        
-        for job in jobs:
-            job.ReadAllOutput()
-        
-        jobs = MPI.COMM_WORLD.gather(jobs, root=0)              # Gather results on rank 0.
-        
-        if COMM.rank == 0:
-            jobs = [_i for temp in jobs for _i in temp]         # Flatten list of lists.       
-            self.runList = jobs
-            
-        self.runList = COMM.bcast(self.runList, root=0)
+        DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(self.ParentFolder + d + '/')]      # List all folders in ParentFolder
+        for direct in DirList:
+            run = KMC_Run()
+            run.Path =  self.ParentFolder + direct + '/'
+            if run.CheckComplete():
+                self.runList.append(run)
         self.n_runs = len(self.runList)
+
+        for job in self.runList:
+            job.ReadAllOutput()
     
     @staticmethod
     def ReadPerformance(path):

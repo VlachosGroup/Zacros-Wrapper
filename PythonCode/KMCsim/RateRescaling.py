@@ -9,8 +9,6 @@ import numpy as np
 import os
 import copy
 
-from mpi4py import MPI
-
 from Replicates import Replicates
 from KMC_Run import KMC_Run
 from Helper import Helper
@@ -28,7 +26,6 @@ class RateRescaling:
         
     def ReachSteadyStateAndRescale(self, Product, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10):
 
-        COMM = MPI.COMM_WORLD
         Helper.ClearFolderContents(self.scale_parent_fldr)
 
         # Placeholder variables
@@ -47,7 +44,7 @@ class RateRescaling:
             
             # Make folder for iteration
             iter_fldr = self.scale_parent_fldr + 'Iteration_' + str(iteration) + '/'
-            if COMM.rank == 0 and not os.path.exists(iter_fldr):
+            if not os.path.exists(iter_fldr):
                 os.makedirs(iter_fldr)
                 
             # Create object for batch
@@ -100,11 +97,11 @@ class RateRescaling:
             
             # Run jobs and read output
             cur_batch.BuildJobFiles()
-            cur_batch.RunAllJobs()
+            cur_batch.SubmitJobArray()
+            cur_batch.WaitForJobs()
             cur_batch.ReadMultipleRuns()
             
             # Add data to running list
-            COMM.Barrier()
             if iteration == 1:
                 pass            # Do not use data from first run because it is on event rather than time
             elif iteration == 2:
@@ -141,21 +138,20 @@ class RateRescaling:
             else:
                 unstiff = True
     
-            if COMM.rank == 0:
-                # Record iteartion data in output file
-                with open(iter_fldr + 'Iteration_summary.txt', 'w') as txt:   
-                    txt.write('----- Iteration #' + str(iteration) + ' -----\n')
-                    txt.write('t_final: {0:.3E} \n'.format(cur_batch.runAvg.Specnum['t'][-1]))
-                    txt.write('stiff: ' + str(not unstiff) + '\n')
-                    txt.write('steady-state: ' + str(is_steady_state) + '\n')
-                    for rxn_name in cur_batch.runAvg.Reactions['names']:
-                        txt.write(rxn_name + '\t')
-                    txt.write('\n')
-                    for sdf in delta_sdf:
-                        txt.write('{0:.3E} \t'.format(sdf))
-                    txt.write('\n')
-                    for rxn_speed in rxn_speeds:
-                        txt.write(rxn_speed + '\t')
+            # Record iteartion data in output file
+            with open(iter_fldr + 'Iteration_summary.txt', 'w') as txt:   
+                txt.write('----- Iteration #' + str(iteration) + ' -----\n')
+                txt.write('t_final: {0:.3E} \n'.format(cur_batch.runAvg.Specnum['t'][-1]))
+                txt.write('stiff: ' + str(not unstiff) + '\n')
+                txt.write('steady-state: ' + str(is_steady_state) + '\n')
+                for rxn_name in cur_batch.runAvg.Reactions['names']:
+                    txt.write(rxn_name + '\t')
+                txt.write('\n')
+                for sdf in delta_sdf:
+                    txt.write('{0:.3E} \t'.format(sdf))
+                txt.write('\n')
+                for rxn_speed in rxn_speeds:
+                    txt.write(rxn_speed + '\t')
             
             # Update scaledown factors
             for ind in range(len(SDF_vec)):
