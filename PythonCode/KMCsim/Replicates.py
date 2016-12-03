@@ -207,7 +207,7 @@ class Replicates:
         self.NSC_ci = np.zeros(self.runList[0].Reactions['nrxns'])
         for i in range(0, self.runList[0].Reactions['nrxns']):
             W = Wdata[:,2*i] + Wdata[:,2*i+1]             
-            ci_info = Stats.cov_ci(W, TOFdata / self.TOF, Nboot=100)
+            ci_info = Stats.cov_ci(W, TOFdata / self.TOF)
             self.NSC[i] = ci_info[0] + tof_fracs[2*i] + tof_fracs[2*i+1]
             self.NSC_ci[i] = ci_info[1]
                                    
@@ -219,7 +219,7 @@ class Replicates:
         n_timepoints = W_dims[0]
         n_rxns = W_dims[1]       
         
-        Wvars = np.zeros((n_timepoints,n_rxns))
+        Wvars = np.zeros([n_timepoints,n_rxns])
         for i in range(0,n_timepoints):
             for j in range(0,n_rxns):
                 data_vec = np.zeros((self.n_runs))
@@ -362,5 +362,5 @@ class Replicates:
             data1.append(run.rate_traj[ind1-1])
             data2.append(run.rate_traj[ind2-1])
         
-#        return Stats.cov_ci(data1,data2) / np.var(data2)
-        return Stats.cov_calc(data1,data2) / np.var(data2)
+        return Stats.cov_ci(data1,data2) / np.var(data2)
+        #return Stats.cov_calc(data1,data2) / np.var(data2)

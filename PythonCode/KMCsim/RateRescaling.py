@@ -119,7 +119,7 @@ class RateRescaling:
                 cum_batch.runAvg.Path = iter_fldr
                 correl = cum_batch.CheckAutocorrelation(Product)
                 not_change = cum_batch.runAvg.CheckSteadyState(Product)
-                is_steady_state = np.abs(correl) < 0.05 and not_change
+                is_steady_state = np.abs(correl[0]) < 0.05 and not_change
                 
                 # Record information about the iteration
                 cum_batch.runAvg.CalcRateTraj(Product)

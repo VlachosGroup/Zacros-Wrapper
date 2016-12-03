@@ -7,7 +7,6 @@ Created on Thu Aug 04 22:09:31 2016
 
 import numpy as np
 from scipy import stats
-import random
 
 class Stats:
 
@@ -38,33 +37,48 @@ class Stats:
     def cov_ci(x, y, Nboot=100, p = 0.05):
         
         cov_val = Stats.cov_calc(x,y)
-        
-        z = np.vstack([x,y])
 
+        n_points = len(x)
         boot_dist = np.zeros(Nboot)
-        for i in range (Nboot):           
-            boot_dist[i] = Stats.sub_cov(z)
+        for i in range (Nboot):
+            subpop_inds = np.random.randint(n_points, size=n_points)
+            x_sub = x[subpop_inds]
+            y_sub = y[subpop_inds]
+            boot_dist[i] = Stats.cov_calc(x_sub, y_sub)
             
         ind_high = int(round(Nboot * (1-p)) - 1)
         ind_low = int(round(Nboot * p) - 1)
         boot_dist = sorted(boot_dist)
         cov_ci = (boot_dist[ind_high] - boot_dist[ind_low]) / 2
-        return [cov_val, cov_ci]
-    
-    @staticmethod
-    def sub_cov(mat):
-
-        nPts = mat.shape[0]
-        x_sub = np.zeros(nPts)
-        y_sub = np.zeros(nPts)
-        
-        for j in range(nPts):
-            rand_ind = random.randint(0, nPts-1)
-            x_sub[j] = mat[0,rand_ind]
-            y_sub[j] = mat[1,rand_ind]
-        return Stats.cov_calc(x_sub,y_sub)  
+        return [cov_val, cov_ci] 
     
     @staticmethod
     def cov_calc(x,y):
         cov_mat = np.cov(x,y)
         return cov_mat[0,1]
+        
+    @staticmethod
+    def cov_mat_ci(A, Nboot=100, p = 0.05):
+        
+        x = A.shape
+        n_vars = x[0]
+        n_obs = x[1]
+        
+        pop = np.zeros([n_vars, n_vars, Nboot])
+        
+        # Compute distribution of covariance estimates
+        for i in range(Nboot):
+            subpop_inds = np.random.randint(n_obs, size=n_obs)
+            pop[:,:,i] = np.cov(A[:,subpop_inds])
+        
+        # Sort covariance estimates
+        for var1 in range(n_vars):
+            for var2 in range(n_vars):
+                pop[var1,var2,:] = sorted(pop[var1,var2,:])
+        
+        # Compute half-lengths of the confidence intervals
+        ind_high = int(round(Nboot * (1-p)) - 1)
+        ind_low = int(round(Nboot * p) - 1)
+        ci_mat = ( pop[:,:,ind_high] - pop[:,:,ind_low]) / 2.0        
+        
+        return {'cov_mat': np.cov(A), 'ci_mat': ci_mat}

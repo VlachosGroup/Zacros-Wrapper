@@ -7,18 +7,16 @@ Created on Thu Jul 28 13:48:34 2016
 
 import sys
 
-from mpi4py import MPI
-
-sys.path.insert(0, '../KMCsim')
-from Replicates import Replicates
+sys.path.append('C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/PythonCode')
+from KMCsim.Replicates import Replicates
 
 ################## User input ##################################
 
-zacros_exe = '/home/vlachos/mpnunez/bin/zacros_ZW.x'
-KMC_source = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/NonStiff/'
-BatchPath = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/test_parallel/'
+#zacros_exe = '/home/vlachos/mpnunez/bin/zacros_ZW.x'
+#KMC_source = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/NonStiff/'
+BatchPath = 'C:/Users/mpnun/Desktop/Test/'
 Product = 'B'
-n_runs = 10
+#n_runs = 10
 
 ################################################################
 
@@ -42,24 +40,19 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     # Trajectory average
     x.AverageRuns()
     
-    COMM = MPI.COMM_WORLD
-    if COMM.rank == 0:
-        x.runAvg.PlotSurfSpecVsTime()
-        x.runAvg.PlotGasSpecVsTime()
-        x.runAvg.PlotElemStepFreqs()
+    x.runAvg.PlotSurfSpecVsTime()
+    x.runAvg.PlotGasSpecVsTime()
+    x.runAvg.PlotElemStepFreqs()
     
-#    x.runAvg.CalcRateTraj(Product)
-#    x.runAvg.PlotRateVsTime()
+    x.runAvg.CalcRateTraj(Product)
+    x.runAvg.PlotRateVsTime()
 #    print x.runAvg.CheckSteadyState(Product, show_graph = True)
 #    print x.CheckAutocorrelation(Product)
 #    
-#    x.runAvg.PlotPropsVsTime()
+    x.runAvg.PlotPropsVsTime()
 #    x.runAvg.PlotIntPropsVsTime()
 #    
 #     Rate and sensitivities
-#    x.ComputeStats(Product)
-#    x.PlotSensitivities()
-#    x.WriteSA_output(BatchPath)
-#    x.WvarCheck()
-    
-#    print [x.TOF, x.TOF_error]
+    x.ComputeStats(Product)
+    x.PlotSensitivities()
+    x.WriteSA_output(BatchPath)

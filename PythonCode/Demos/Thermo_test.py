@@ -11,10 +11,10 @@ import os
 import sys
 import numpy as np
 
-sys.path.insert(0, '../Thermo')
-from ReactionNetwork import ReactionNetwork
-from Species import Species
-from Reaction import Reaction
+sys.path.append('..')
+from Thermo.ReactionNetwork import ReactionNetwork
+from Thermo.Species import Species
+from Thermo.Reaction import Reaction
 
 os.system('cls')
 
@@ -39,7 +39,6 @@ WGS_net.species.append(Species(name = 'HCOO*', phase='surface', E = -12489.87 - 
 WGS_net.species.append(Species(name = 'COOH*', phase='surface', E = -12490.26 - E_slab, vibs = [267, 308, 434, 572, 655, 1076, 1206, 1675, 3341]))      # 13
 
 for spec in WGS_net.species:
-    spec.calc_ZPE()
     spec.calc_Q()
     
 ''' Define reactions '''
@@ -47,23 +46,23 @@ for spec in WGS_net.species:
 
 # Reactants and products
 
-WGS_net.AddRxn([1],[6])             # 1
-WGS_net.AddRxn([3],[7,7])           # 2
-WGS_net.AddRxn([10,10],[4])         # 3
-WGS_net.AddRxn([2],[6,7])           # 4
-WGS_net.AddRxn([5],[8])             # 5
-WGS_net.AddRxn([8],[9,10])          # 6
-WGS_net.AddRxn([9],[7,10])          # 7
-WGS_net.AddRxn([9,9],[7,8])         # 8
-WGS_net.AddRxn([6,9],[13])          # 9
-WGS_net.AddRxn([13],[10,2])         # 10
-WGS_net.AddRxn([13,7],[9,2])        # 11
-WGS_net.AddRxn([13,9],[8,2])        # 12
-WGS_net.AddRxn([10,6],[11])               # 13
-WGS_net.AddRxn([11,7],[12])               # 14
-WGS_net.AddRxn([12],[2,10])               # 15
-WGS_net.AddRxn([12,7],[2,9])               # 16
-WGS_net.AddRxn([12,9],[2,8])               # 17
+WGS_net.AddRxn([1],[6], name = 'CO(g) + * <-> CO*')             # 1
+WGS_net.AddRxn([3],[7,7], name = 'O2(g) + 2 *<->2 O*')           # 2
+WGS_net.AddRxn([10,10],[4], name = 'H2(g) + 2 *<->2 H*')         # 3
+WGS_net.AddRxn([2],[6,7], name = 'CO2(g) + 2 *<->CO* + O*')           # 4
+WGS_net.AddRxn([5],[8], name = 'H2O(g) + *<->H2O*')             # 5
+WGS_net.AddRxn([8],[9,10], name = 'H2O* + *<->OH* + H*')          # 6
+WGS_net.AddRxn([9],[7,10], name = 'OH* + *<->O* + H*')          # 7
+WGS_net.AddRxn([9,9],[7,8], name = '2 OH*<->O* + H2O*')         # 8
+WGS_net.AddRxn([6,9],[13], name = 'CO* + OH*<->COOH* +*')          # 9
+WGS_net.AddRxn([13],[10,2], name = 'COOH*<->H* + CO2(g)')         # 10
+WGS_net.AddRxn([13,7],[9,2], name = 'COOH* + O*<->OH* + CO2(g)')        # 11
+WGS_net.AddRxn([13,9],[8,2], name = 'COOH* + OH*<->H2O* + CO2(g)')        # 12
+WGS_net.AddRxn([10,6],[11], name = 'H* + CO*<->HCO**')               # 13
+WGS_net.AddRxn([11,7],[12], name = 'HCO** + O*<->HCOO***')               # 14
+WGS_net.AddRxn([12],[2,10], name = 'HCOO***<->CO2(g) + H* + 2 *')               # 15
+WGS_net.AddRxn([12,7],[2,9], name = 'HCOO*** + O*<->CO2(g) + OH* + 3 *')               # 16
+WGS_net.AddRxn([12,9],[2,8], name = 'HCOO*** + OH*<->CO2(g) + H2O* + 3 *')               # 17
 
 # transitions states
 
@@ -84,7 +83,6 @@ WGS_net.reactions[16].TS = Species(name = 'TS17', phase='surface', E = -12939.78
 
 # Compute reaction info
 for rxn in WGS_net.reactions:
-    rxn.TS.calc_ZPE()
     rxn.TS.calc_Q()
     rxn.calc_delE()  
             

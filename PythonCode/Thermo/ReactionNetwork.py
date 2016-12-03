@@ -26,6 +26,9 @@ class ReactionNetwork:
         state_ind = [0,1]
         state_eng = [E,E]
         state = 2
+        rxn_names = []
+        rxn_x = []
+        rxn_y = []        
         
         # Iterate through reactions in the pathway
         for i in rxn_list:
@@ -41,6 +44,10 @@ class ReactionNetwork:
                 state += 2
                 state_eng.append(TS_eng)
                 state_eng.append(TS_eng)
+                
+                rxn_names.append(self.reactions[i-1].text)
+                rxn_x.append(state-1)
+                rxn_y.append(state-1)
             
             state_ind.append(state)
             state_ind.append(state+1)
@@ -59,7 +66,10 @@ class ReactionNetwork:
         
         plt.figure()
         
-        plt.plot(state_ind, state_eng, 'o-', markersize = 15)   
+        plt.plot(state_ind, state_eng, 'o-', markersize = 12)   
+        
+        for ind in range(len(rxn_names)):
+            plt.text(rxn_x[ind], rxn_y[ind], rxn_names[ind], size = 24)
         
         plt.xticks(size=24)
         plt.yticks(size=24)
@@ -72,8 +82,9 @@ class ReactionNetwork:
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)        
         
-    def AddRxn(self,rcnt_list,prod_list):
+    def AddRxn(self,rcnt_list,prod_list, name = ''):
         rxn = Reaction()
+        rxn.text = name
         for rcnt in rcnt_list:
             rxn.reactants.append(self.species[rcnt-1])
         for prod in prod_list:
@@ -83,6 +94,6 @@ class ReactionNetwork:
         
     def WriteRxnInfo(self):
         with open('rxn_parameters.txt', 'w') as txt:
-            txt.write('Reaction name \t Afwd A_fwd/A_rev \t Ea (eV) \t delta_E (eV) \n')
+            txt.write('Reaction name \t TS name \t Afwd A_fwd/A_rev \t Ea (eV) \t delta_E (eV) \n')
             for rxn in self.reactions:
-                txt.write(rxn.TS.name + '\t {0:.3E}'.format(rxn.A_fwd) + '\t {0:.3f}'.format(rxn.A_rat) + '\t {0:.3f}'.format(rxn.Ea_fwd) + '\t {0:.3f} \n'.format(rxn.delE))
+                txt.write(rxn.text + '\t' + rxn.TS.name + '\t {0:.3E}'.format(rxn.A_fwd) + '\t {0:.3E}'.format(rxn.A_rat) + '\t {0:.3f}'.format(rxn.Ea_fwd) + '\t {0:.3f} \n'.format(rxn.delE))

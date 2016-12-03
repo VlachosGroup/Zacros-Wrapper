@@ -8,7 +8,6 @@ Created on Wed Mar 02 15:40:49 2016
 from itertools import (takewhile,repeat)
 import numpy as np
 import os, shutil
-import sys
 import matplotlib.pyplot as plt
 import matplotlib as mat
 
