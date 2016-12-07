@@ -7,15 +7,15 @@ Created on Thu Jul 28 13:48:34 2016
 
 import sys
 
-sys.path.append('C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/PythonCode')
-from KMCsim.Replicates import Replicates
+sys.path.append('/home/vlachos/mpnunez/ZacrosWrapper')
+import KMCsim as zw
 
 ################## User input ##################################
 
 #zacros_exe = '/home/vlachos/mpnunez/bin/zacros_ZW.x'
 #KMC_source = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/NonStiff/'
-BatchPath = 'C:/Users/mpnun/Desktop/Test/'
-Product = 'B'
+BatchPath = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/WGS/SA_run/'
+Product = 'CO2'
 #n_runs = 10
 
 ################################################################
@@ -23,7 +23,7 @@ Product = 'B'
 if __name__ == '__main__':                 # Need this line to make parallelization work
 
     # Batch of runs ----------------
-    x = Replicates()
+    x = zw.Replicates()
     x.ParentFolder = BatchPath
 #    x.runtemplate.Path = KMC_source
 #    x.runtemplate.exe_file = zacros_exe
@@ -42,17 +42,13 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
     
     x.runAvg.PlotSurfSpecVsTime()
     x.runAvg.PlotGasSpecVsTime()
-    x.runAvg.PlotElemStepFreqs()
+    x.runAvg.PlotElemStepFreqs(window = [0.4, 1.0])
     
     x.runAvg.CalcRateTraj(Product)
     x.runAvg.PlotRateVsTime()
-#    print x.runAvg.CheckSteadyState(Product, show_graph = True)
-#    print x.CheckAutocorrelation(Product)
-#    
-    x.runAvg.PlotPropsVsTime()
-#    x.runAvg.PlotIntPropsVsTime()
+
 #    
 #     Rate and sensitivities
-    x.ComputeStats(Product)
+    x.ComputeStats(Product, window = [0.4, 1])
     x.PlotSensitivities()
     x.WriteSA_output(BatchPath)

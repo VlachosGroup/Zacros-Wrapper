@@ -36,21 +36,9 @@ class Stats:
     @staticmethod
     def cov_ci(x, y, Nboot=100, p = 0.05):
         
-        cov_val = Stats.cov_calc(x,y)
-
-        n_points = len(x)
-        boot_dist = np.zeros(Nboot)
-        for i in range (Nboot):
-            subpop_inds = np.random.randint(n_points, size=n_points)
-            x_sub = x[subpop_inds]
-            y_sub = y[subpop_inds]
-            boot_dist[i] = Stats.cov_calc(x_sub, y_sub)
-            
-        ind_high = int(round(Nboot * (1-p)) - 1)
-        ind_low = int(round(Nboot * p) - 1)
-        boot_dist = sorted(boot_dist)
-        cov_ci = (boot_dist[ind_high] - boot_dist[ind_low]) / 2
-        return [cov_val, cov_ci] 
+        B = np.vstack([np.array(x), np.array(y)])
+        M = Stats.cov_mat_ci(B)
+        return [M['cov_mat'][0,1], M['ci_mat'][0,1]]         
     
     @staticmethod
     def cov_calc(x,y):

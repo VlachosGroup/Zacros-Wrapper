@@ -20,9 +20,6 @@ class RateRescaling:
         self.summary_filename = 'rescaling_output.txt'
         self.scale_parent_fldr = ''
         self.batch = Replicates()
-        self.SDF_mat = []        # scaledown factors for each iteration
-        self.tfinalvec = []         # t_final for each iteration
-        self.rxn_names = []
         
     def ReachSteadyStateAndRescale(self, Product, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10):
 
@@ -130,7 +127,7 @@ class RateRescaling:
             
             # Test stiffness
             cur_batch.AverageRuns()
-            scaledown_data = self.ProcessStepFreqs(cur_batch.runAvg)         # compute change in scaledown factors based on simulation result
+            scaledown_data = RateRescaling.ProcessStepFreqs(cur_batch.runAvg)         # compute change in scaledown factors based on simulation result
             delta_sdf = scaledown_data['delta_sdf']
             rxn_speeds = scaledown_data['rxn_speeds']
             if include_stiff_reduc:
@@ -168,6 +165,7 @@ class RateRescaling:
         cum_batch.PlotSensitivities()
     
     # Process KMC output and determine how to further scale down reactions
+    @staticmethod
     def ProcessStepFreqs(self, run, stiff_cut = 100, equilib_cut = 0.05):
         
         delta_sdf = np.ones(run.Reactions['nrxns'])    # initialize the marginal scaledown factors

@@ -32,8 +32,10 @@ class Replicates:
         self.Product                          = ''
         self.TOF                              = 0
         self.TOF_error                        = 0
-        self.NSC                              = []
-        self.NSC_ci                           = []
+        self.NSC_inst                              = []
+        self.NSC_ci_inst                           = []
+        self.NSC_erg                              = []
+        self.NSC_ci_erg                           = []
     
     def BuildJobsFromTemplate(self):
         
@@ -66,6 +68,7 @@ class Replicates:
                 txt.write('#$ -cwd\n')
                 txt.write('#$ -j y\n')
                 txt.write('#$ -S /bin/bash\n')
+                txt.write('#$ -l h_cpu=168:00:00')
                 txt.write('#\n')
                 txt.write('\n')
                 txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
@@ -177,40 +180,48 @@ class Replicates:
             self.runAvg.Binary['propCounter'] = self.runAvg.Binary['propCounter'] + run.Binary['propCounter'] / self.n_runs
 
      
-    def ComputeStats(self, product, SA = True):
+    def ComputeStats(self, product, window = [0.5, 1]):
         
-        Tof_out = self.runAvg.ComputeTOF(product)
-        tof_fracs = Tof_out['TOF_fracs']          
+        # Find indices for the beginning and end of the time window
+        start_t = window[0] * self.runList[0].Specnum['t'][-1]
+        end_t = window[1] * self.runList[0].Specnum['t'][-1]
+        start_ind = self.runList[0].time_search(start_t)
+        end_ind = self.runList[0].time_search(end_t)
+        start_t = self.runList[0].Specnum['t'][start_ind]
+        end_t = self.runList[0].Specnum['t'][end_t]        
         
-        TOF_vec = []
-        for run in self.runList:
-            TOF_vec.append(run.ComputeTOF(product)['TOF'])
+        Tof_out = self.runAvg.ComputeTOF(product, win = window)
+        tof_fracs_inst = Tof_out['TOF_fracs_inst']
+        tof_fracs_inst = tof_fracs_inst[::2] + tof_fracs_inst[1::2]
+        tof_fracs_erg = Tof_out['TOF_fracs_erg']
+        tof_fracs_erg = tof_fracs_erg[::2] + tof_fracs_erg[1::2]
         
-        self.TOF = Stats.mean_ci(TOF_vec)[0]
-        self.TOF_error = Stats.mean_ci(TOF_vec)[1]   
-        
-        if not SA:
-            return
-        
-        Wdata = np.zeros([self.n_runs, 2*self.runList[0].Reactions['nrxns']])      # number of runs x number of reactions
-        TOFdata = np.zeros(self.n_runs)
+        Wdata = np.zeros([self.n_runs, self.runList[0].Reactions['nrxns']])      # number of runs x number of reactions
+        rdata = np.zeros([self.n_runs, 2])     # 1st column: final rates, 2nd column: integral rates
         ind = 0
         for run in self.runList:
-            Wdata[ind,:] = run.Binary['W_sen_anal'][-1,:]
-#            Wdata[ind,:] = run.Procstat['events'][-1,:] - run.Binary['propCounter'][-1,:]
+            Wdata[ind,:] = run.Binary['W_sen_anal'][end_ind,::2] - run.Binary['W_sen_anal'][start_ind,::2] + run.Binary['W_sen_anal'][end_ind,1::2] - run.Binary['W_sen_anal'][start_ind,1::2]
                                
             TOF_output = run.ComputeTOF(product)
-            TOFdata[ind] = TOF_output['TOF']
+            rdata[ind,0] = TOF_output['TOF_inst'] / Tof_out['TOF_inst']
+            rdata[ind,1] = TOF_output['TOF_erg'] / Tof_out['TOF_erg']
             ind = ind + 1
         
-        self.NSC = np.zeros(self.runList[0].Reactions['nrxns'])
-        self.NSC_ci = np.zeros(self.runList[0].Reactions['nrxns'])
-        for i in range(0, self.runList[0].Reactions['nrxns']):
-            W = Wdata[:,2*i] + Wdata[:,2*i+1]             
-            ci_info = Stats.cov_ci(W, TOFdata / self.TOF)
-            self.NSC[i] = ci_info[0] + tof_fracs[2*i] + tof_fracs[2*i+1]
-            self.NSC_ci[i] = ci_info[1]
-                                   
+#        # Rate data
+#        TOF_stats = Stats.mean_ci(TOF_output)
+#        self.TOF = TOF_stats[0]
+#        self.TOF_error = TOF_stats[1]        
+        
+        # Sensitivity data
+        A = np.hstack([Wdata, rdata])
+        cov_out = Stats.cov_mat_ci( np.transpose(A) )    
+        self.NSC_inst = cov_out['cov_mat'][:-2:,-2] + tof_fracs_inst
+        self.NSC_ci_inst = cov_out['ci_mat'][:-2:,-2]
+        self.NSC_erg = cov_out['cov_mat'][:-2:,-1] + tof_fracs_erg
+        self.NSC_ci_erg = cov_out['ci_mat'][:-2:,-1]
+        
+        
+                           
     def WvarCheck(self): 
         
         ''' Compute trajectory derivative variances vs. time '''        
@@ -245,7 +256,7 @@ class Replicates:
         plt.legend(labels,loc=4,prop={'size':20},frameon=False)        
         plt.show()
         
-    def PlotSensitivities(self, save = True): 
+    def PlotSensitivities(self): 
         
         Helper.PlotOptions()
         plt.figure()
@@ -256,8 +267,8 @@ class Replicates:
         
         for i in range (self.runList[0].Reactions['nrxns']):
             cutoff = 0.05
-            if self.NSC[i] + self.NSC_ci[i] > cutoff or self.NSC[i] - self.NSC_ci[i] < -cutoff:     
-                plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')               
+            if self.NSC_inst[i] + self.NSC_ci_inst[i] > cutoff or self.NSC_inst[i] - self.NSC_ci_inst[i] < -cutoff:     
+                plt.barh(ind-0.9, self.NSC_inst[i], width, color='r', xerr = self.NSC_ci_inst[i], ecolor='k')               
                 ylabels.append(self.runList[0].Reactions['names'][i])              
                 yvals.append(ind-0.6)                
                 ind = ind - 1
@@ -272,20 +283,44 @@ class Replicates:
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
         
-        if save:
-            plt.savefig(self.ParentFolder + 'SA_output.png')
-            plt.close()
-        else:
-            plt.show()
+        plt.savefig(self.ParentFolder + 'SA_inst_output.png')
+        plt.close()
+        
+        plt.figure()
+        width = 0.8
+        ind = 0
+        yvals = []
+        ylabels = []
+        
+        for i in range (self.runList[0].Reactions['nrxns']):
+            cutoff = 0.05
+            if self.NSC_erg[i] + self.NSC_ci_erg[i] > cutoff or self.NSC_erg[i] - self.NSC_ci_erg[i] < -cutoff:     
+                plt.barh(ind-0.9, self.NSC_erg[i], width, color='r', xerr = self.NSC_ci_erg[i], ecolor='k')               
+                ylabels.append(self.runList[0].Reactions['names'][i])              
+                yvals.append(ind-0.6)                
+                ind = ind - 1
+
+        plt.plot([0, 0], [0, ind], color='k')
+        plt.xlim([0,1])
+        plt.xticks(size=20)
+        plt.yticks(size=20)
+        plt.xlabel('NSC',size=24)
+        plt.yticks(yvals, ylabels)
+        ax = plt.subplot(111)
+        pos = [0.2, 0.15, 0.7, 0.8]
+        ax.set_position(pos)
+        
+        plt.savefig(self.ParentFolder + 'SA_erg_output.png')
+        plt.close()
     
-    def WriteSA_output(self,BatchPath):
-        with open(BatchPath + 'SA_output.txt', 'w') as txt:
+    def WriteSA_output(self):
+        with open(self.ParentFolder + 'SA_output.txt', 'w') as txt:
             txt.write('Normalized sensitivity coefficients \n\n')
             txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
             txt.write('Reaction name \t NSC \t NSC confidence \n')
 
             for rxn_ind in range(self.runList[0].Reactions['nrxns']):
-                txt.write(self.runAvg.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci[rxn_ind]) + '\n')
+                txt.write(self.runAvg.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC_inst[rxn_ind]) + '{0:.3f}\t'.format(self.NSC_ci_inst[rxn_ind]) + '{0:.3f} +- '.format(self.NSC_erg[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci_erg[rxn_ind]) + '\n')
                 
     def FD_SA(self, rxn_inds = [1], pert_frac = 0.05, n_runs = 20, setup = True, exec_run = True, analyze_bool = True):
         

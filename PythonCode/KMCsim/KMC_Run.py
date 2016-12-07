@@ -45,7 +45,7 @@ class KMC_Run(IOdata):
         except:
             raise Exception('Zacros run failed.')
     
-    def ComputeTOF(self,Product):                       # return TOF and TOF error
+    def ComputeTOF(self, Product, win = [0.0, 1.0]):                       # return TOF and TOF error
         
         # Find the index of the product species
         try:
@@ -53,18 +53,31 @@ class KMC_Run(IOdata):
         except:
             raise Exception('Product species not found.')
         
-        nRxns = len(self.Reactions['Nu'])        
-        TOF_contributions = [0 for i in range(nRxns)]              # number of product molecules produced in each reaction
+        # Find indices for the beginning and end of the time window
+        start_t = win[0] * self.Specnum['t'][-1]
+        end_t = win[1] * self.Specnum['t'][-1]
+        start_ind = self.time_search(start_t)
+        end_ind = self.time_search(end_t)
+        del_t = self.Specnum['t'][end_t] - self.Specnum['t'][start_ind]          
+        
+        # Compute rates based on propensities and stoichiometries
+        nRxns = len(self.Reactions['Nu'])
+        TOF_contributions_inst = np.zeros(nRxns)
+        TOF_contributions_erg = np.zeros(nRxns)
         for i, elem_stoich in enumerate(self.Reactions['Nu']):
             TOF_stoich = elem_stoich[product_ind]
-            r = self.Binary['propCounter'][-1,i] / self.Specnum['t'][-1]      # ergodic average
-#            r = self.Binary['prop'][-1,i]                                           # non-ergodic average
-            TOF_contributions[i] = TOF_stoich * r         
-               
-        TOF = np.sum(TOF_contributions)
-        TOF_fracs = TOF_contributions / TOF             # will need this for sensitivity analysis
-#        return TOF
-        return {'TOF': TOF, 'TOF_fracs': TOF_fracs}    
+            r_inst = ( self.Binary['propCounter'][end_ind,i] - self.Binary['propCounter'][end_ind-1,i] ) / ( self.Specnum['t'][end_ind] - self.Specnum['t'][end_ind-1] )
+            r_erg = ( self.Binary['propCounter'][end_ind,i] - self.Binary['propCounter'][start_ind,i] ) / del_t      # ergodic average
+            TOF_contributions_inst[i] = TOF_stoich * r_inst            
+            TOF_contributions_erg[i] = TOF_stoich * r_erg         
+        
+        # Total the rates
+        TOF_inst = np.sum(TOF_contributions_inst)
+        TOF_fracs_inst = TOF_contributions_inst / TOF_inst
+        TOF_erg = np.sum(TOF_contributions_erg)
+        TOF_fracs_erg = TOF_contributions_erg / TOF_erg
+
+        return {'TOF_inst': TOF_inst, 'TOF_fracs_inst': TOF_fracs_inst, 'TOF_erg': TOF_erg, 'TOF_fracs_erg': TOF_fracs_erg}    
     
     def AdjustPreExponentials(self, delta_sdf):
         
@@ -101,7 +114,7 @@ class KMC_Run(IOdata):
                         
         self.rate_traj = self.rate_traj[1::]
     
-    def time_search(self, t):
+    def time_search(self, t):           # Convert KMC time to index of time series
         
         if t > self.Specnum['t'][-1] or t < 0:
             raise Exception('Time is out of range.')
@@ -111,7 +124,12 @@ class KMC_Run(IOdata):
             ind += 1
             
         return ind
-    
+        
+    def fraction_search(self, frac):       # Convert percentage of time interval to index of time series
+        
+        t = frac * self.Specnum['t'][-1]
+        return self.time_search(t)
+        
     def avg_in_window(self, data, limits):
         high_ind = self.time_search(limits[1])
         low_ind = self.time_search(limits[0])
@@ -223,7 +241,14 @@ class KMC_Run(IOdata):
         
         Helper.PlotTrajectory(time_vecs, W_vecs, xlab = 'time (s)', ylab = 'traj. deriv.', series_labels = labels, fname = self.Path + 'traj_deriv_vs_time.png')
     
-    def PlotElemStepFreqs(self, save = True):
+    def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1.0):
+        
+        start_ind = self.fraction_search(window[0])
+        end_ind = self.fraction_search(window[1])
+        event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / site_norm
+        if time_norm:
+            event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
+        
         Helper.PlotOptions
         plt.figure()        
         
@@ -233,12 +258,12 @@ class KMC_Run(IOdata):
         ylabels = []
 
         for i in range (self.Reactions['nrxns']):
-            if self.Procstat['events'][-1,2*i] + self.Procstat['events'][-1,2*i+1] > 0:
-                net_freq = abs(self.Procstat['events'][-1,2*i] - self.Procstat['events'][-1,2*i+1])
-                if self.Procstat['events'][-1,2*i] > 0:              
-                    plt.barh(ind-0.4, self.Procstat['events'][-1,2*i], width, color='r')
-                if self.Procstat['events'][-1,2*i+1] > 0:
-                    plt.barh(ind-0.6, self.Procstat['events'][-1,2*i+1], width, color='b')
+            if event_freqs[2*i] + event_freqs[2*i+1] > 0:
+                net_freq = abs(event_freqs[2*i] - event_freqs[2*i+1])
+                if event_freqs[2*i] > 0:              
+                    plt.barh(ind-0.4, event_freqs[2*i], width, color='r')
+                if event_freqs[2*i+1] > 0:
+                    plt.barh(ind-0.6, event_freqs[2*i+1], width, color='b')
                 if net_freq > 0:
                     plt.barh(ind-0.8, net_freq, width, color='g')
                 ylabels.append(self.Reactions['names'][i])
@@ -255,11 +280,8 @@ class KMC_Run(IOdata):
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
         
-        if save:
-            plt.savefig(self.Path + 'elem_step_freqs.png')
-            plt.close()
-        else:
-            plt.show()
+        plt.savefig(self.Path + 'elem_step_freqs.png')
+        plt.close()
 
     def PlotRateVsTime(self):
         Helper.PlotTrajectory([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'time (s)', ylab = 'rate (1/s)', fname = self.Path + 'rate_vs_time.png')
