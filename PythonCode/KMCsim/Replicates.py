@@ -22,20 +22,20 @@ class Replicates:
     def __init__(self):
              
         # General info
-        self.ParentFolder                     = ''
-        self.runList                          = []              # List of KMC_Run objects from which data is averaged
+        self.ParentFolder = ''
+        self.runList = []              # List of KMC_Run objects from which data is averaged
         self.runtemplate = KMC_Run()                             # Use this to build replicate jobs
         self.runAvg = KMC_Run()            # Values are averages of all runs from runList
         self.n_runs = 0
         
         # Analysis
-        self.Product                          = ''
-        self.TOF                              = 0
-        self.TOF_error                        = 0
-        self.NSC_inst                              = []
-        self.NSC_ci_inst                           = []
-        self.NSC_erg                              = []
-        self.NSC_ci_erg                           = []
+        self.Product = ''
+        self.TOF = 0
+        self.TOF_error = 0
+        self.NSC_inst = []
+        self.NSC_ci_inst = []
+        self.NSC_erg = []
+        self.NSC_ci_erg = []
     
     def BuildJobsFromTemplate(self):
         
@@ -68,7 +68,7 @@ class Replicates:
                 txt.write('#$ -cwd\n')
                 txt.write('#$ -j y\n')
                 txt.write('#$ -S /bin/bash\n')
-                txt.write('#$ -l h_cpu=168:00:00')
+                txt.write('#$ -l h_cpu=168:00:00\n')
                 txt.write('#\n')
                 txt.write('\n')
                 txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')

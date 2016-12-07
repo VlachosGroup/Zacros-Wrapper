@@ -1,3 +1,6 @@
+import matplotlib as mat
+mat.use('Agg')
+import matplotlib.pyplot as plt
 from Helper import Helper
 from IOdata import IOdata
 from KMC_Run import KMC_Run

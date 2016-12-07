@@ -27,7 +27,7 @@ dQd3 = [ -k(6), 0, k(5)
 vals = diag(vals);
 vals(abs(vals) < 1e-8) = [];
 taus = -1 ./ vals;
-tau = max(taus);
+tau = max(taus)
 
 % Solve time-dependent problem
 t_points = 100;

@@ -65,7 +65,7 @@ class RateRescaling:
                 
                 cur_batch.runtemplate.Report['procstat'] = ['event', max_events / n_samples]
                 cur_batch.runtemplate.Report['specnum'] = ['event', max_events / n_samples]
-                cur_batch.runtemplate.Report['hist'] = ['event', max_events]       # only record the initial and final states
+                cur_batch.runtemplate.Report['hist'] = ['event', max_events * (n_samples-1) / n_samples]       # only record the initial and final states
 
                 SDF_vec = np.ones(cur_batch.runtemplate.Reactions['nrxns'])         # Initialize scaledown factors
             
