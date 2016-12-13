@@ -47,7 +47,7 @@ class Replicates:
             new_run.Path = self.ParentFolder + str(i+1) + '/'
             self.runList.append(new_run)
             
-    def BuildJobFiles(self, write_dir_list = True, max_cores = 100):
+    def BuildJobFiles(self, write_dir_list = True, max_cores = 100, server = 'Farber'):
         
         Helper.ClearFolderContents(self.ParentFolder)    
         
@@ -62,43 +62,67 @@ class Replicates:
                 for job in self.runList:
                     txt.write(job.Path + '\n')
             
-            n_cores = np.min([max_cores, self.n_runs])
+            n_cores = np.min([max_cores, self.n_runs])           
+            
             with open(self.ParentFolder + 'zacros_submit_JA.qs', 'w')as txt:
-                txt.write('#!/bin/bash\n')
-                txt.write('#$ -cwd\n')
-                txt.write('#$ -j y\n')
-                txt.write('#$ -S /bin/bash\n')
-                txt.write('#$ -l h_cpu=168:00:00\n')
-                txt.write('#\n')
-                txt.write('\n')
-                txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
-                txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
-                txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
-                txt.write('#$ -pe threads 1 				#Change the last field to the number of processors desired per task\n')
-                txt.write('#\n')
-                txt.write('# Change the following to #$ and set the amount of memory you need\n')
-                txt.write('# per-slot if you are getting out-of-memory errors using the\n')
-                txt.write('# default:\n')
-                txt.write('#$ -l m_mem_free=4G\n')
-                txt.write('\n')
-                txt.write('source /etc/profile.d/valet.sh\n')
-                txt.write('\n')
-                txt.write('# Use vpkg_require to setup the environment:\n')
-                txt.write('vpkg_require intel/2016\n')
-                txt.write('\n')
-                txt.write('# Ensure that the OpenMP runtime knows how many processors to use;\n')
-                txt.write('# Grid Engine automatically sets NSLOTS to the number of cores granted\n')
-                txt.write('# to this job:\n')
-                txt.write('export OMP_NUM_THREADS=$NSLOTS\n')
-                txt.write('\n')
-                txt.write('job_file=\'' + self.ParentFolder + 'dir_list.txt\'\n')
-                txt.write('#Change to the job directory\n')
-                txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
-                txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
-                txt.write('                  #This could easily be modified to take a prefix; ask me how.\n')
-                txt.write('\n')
-                txt.write('# Now append whatever commands you use to run your OpenMP code:\n')
-                txt.write(self.runtemplate.exe_file)
+                
+                if server == 'Farber':             
+                
+                    txt.write('#!/bin/bash\n')
+                    txt.write('#$ -cwd\n')
+                    txt.write('#$ -j y\n')
+                    txt.write('#$ -S /bin/bash\n')
+                    txt.write('#$ -l h_cpu=168:00:00\n')
+                    txt.write('#\n')
+                    txt.write('\n')
+                    txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
+                    txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
+                    txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
+                    txt.write('#$ -pe threads 1 				#Change the last field to the number of processors desired per task\n')
+                    txt.write('#\n')
+                    txt.write('# Change the following to #$ and set the amount of memory you need\n')
+                    txt.write('# per-slot if you are getting out-of-memory errors using the\n')
+                    txt.write('# default:\n')
+                    txt.write('#$ -l m_mem_free=4G\n')
+                    txt.write('\n')
+                    txt.write('source /etc/profile.d/valet.sh\n')
+                    txt.write('\n')
+                    txt.write('# Use vpkg_require to setup the environment:\n')
+                    txt.write('vpkg_require intel/2016\n')
+                    txt.write('\n')
+                    txt.write('# Ensure that the OpenMP runtime knows how many processors to use;\n')
+                    txt.write('# Grid Engine automatically sets NSLOTS to the number of cores granted\n')
+                    txt.write('# to this job:\n')
+                    txt.write('export OMP_NUM_THREADS=$NSLOTS\n')
+                    txt.write('\n')
+                    txt.write('job_file=\'' + self.ParentFolder + 'dir_list.txt\'\n')
+                    txt.write('#Change to the job directory\n')
+                    txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
+                    txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
+                    txt.write('                  #This could easily be modified to take a prefix; ask me how.\n')
+                    txt.write('\n')
+                    txt.write('# Now append whatever commands you use to run your OpenMP code:\n')
+                    txt.write(self.runtemplate.exe_file)
+                
+                else:       # Squidward
+                
+                    txt.write('#!/bin/bash\n')
+                    txt.write('#$ -cwd\n')
+                    txt.write('#$ -j y\n')
+                    txt.write('#$ -S /bin/bash\n')
+                    txt.write('#\n')
+                    txt.write('\n')
+                    txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
+                    txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
+                    txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
+                    txt.write('#$ -pe openmpi-smp 1 				#Change the last field to the number of processors desired per task\n')
+                    txt.write('\n')
+                    txt.write('job_file=\'' + self.ParentFolder + 'dir_list.txt\'\n')
+                    txt.write('#Change to the job directory\n')
+                    txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
+                    txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
+                    txt.write('\n\n')
+                    txt.write(self.runtemplate.exe_file)
     
     def SubmitJobArray(self):
         os.chdir(self.ParentFolder)
@@ -180,7 +204,7 @@ class Replicates:
             self.runAvg.Binary['propCounter'] = self.runAvg.Binary['propCounter'] + run.Binary['propCounter'] / self.n_runs
 
      
-    def ComputeStats(self, product, window = [0.5, 1]):
+    def ComputeStats(self, product, window = [0.0, 1]):
         
         # Find indices for the beginning and end of the time window
         start_t = window[0] * self.runList[0].Specnum['t'][-1]
@@ -384,18 +408,22 @@ class Replicates:
             
             return [NSC, NSC_ci]
             
-    def CheckAutocorrelation(self, Product, limits = [0.5, 1]):
+    def CheckAutocorrelation(self, Product, limits = [0.0, 1]):
         
         data1 = []
         data2 = []
         for run in self.runList:
             run.CalcRateTraj(Product)
             
-            ind1 = run.time_search(run.Specnum['t'][-1] * limits[0])
-            ind2 = run.time_search(run.Specnum['t'][-1] * limits[1])
+#            ind1 = run.fraction_search(limits[0])
+#            ind2 = run.fraction_search(limits[1])
             
-            data1.append(run.rate_traj[ind1-1])
-            data2.append(run.rate_traj[ind2-1])
+            data1.append(run.rate_traj[0])
+            data2.append(run.rate_traj[-1])
         
-        return Stats.cov_ci(data1,data2) / np.var(data2)
-        #return Stats.cov_calc(data1,data2) / np.var(data2)
+        var1 = np.var(data1)
+        var2 = np.var(data2)
+        if var1 == 0 or var2 == 0:
+            return [1.0, 0.0]
+        else:
+            return Stats.cov_ci(data1,data2) / np.sqrt( np.var(data1) * np.var(data2) )

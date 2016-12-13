@@ -38,7 +38,6 @@ if __name__ == '__main__':                 # Need this line to make parallelizat
 #    x.RunAllJobs()
     
     x.ReadMultipleRuns()
-    print getsizeof(x)
 
 #    # Trajectory average
     x.AverageRuns()

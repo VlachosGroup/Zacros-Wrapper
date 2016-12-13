@@ -32,15 +32,15 @@ tau = max(taus)
 % Solve time-dependent problem
 t_points = 100;
 t_vec = linspace(0,6,t_points);
-c_t = zeros(1,t_points);
+c_t = exp(-t_vec/tau);
 P_t = zeros(n_states, t_points);
 r_t = zeros(1,t_points);
 var_r_t = zeros(1,t_points);
 NSC = zeros(3,t_points);
+
 for i = 1:length(t_vec)
     
-    P_t(:,i) = expm(Q * t_vec(i)) * P_0;
-    c_t(i) = exp(-t_vec(i)/tau);
+    P_t(:,i) = expm(Q * t_vec(i)) * P_0;    
     r_t(i) = r_states * P_t(:,i);
     var_r_t(i) = r_states .^2 * P_t(:,i) - r_t(i)^2;
     

@@ -27,7 +27,6 @@ class RateRescaling:
 
         # Placeholder variables
         prev_batch = Replicates()
-        cum_batch = Replicates()
         
         # Convergence variables
         is_steady_state = False
@@ -98,32 +97,22 @@ class RateRescaling:
             cur_batch.WaitForJobs()
             cur_batch.ReadMultipleRuns()
             
-            # Add data to running list
-            if iteration == 1:
-                pass            # Do not use data from first run because it is on event rather than time
-            elif iteration == 2:
-                cum_batch = copy.deepcopy(cur_batch)
-            elif iteration > 2:
-                for run_ind in range(n_runs):
-                    cum_batch.runList[run_ind] = KMC_Run.time_sandwich(cum_batch.runList[run_ind], cur_batch.runList[run_ind])
-            
             # Test steady-state
             if iteration == 1:
                 is_steady_state = False
             else:
-                cum_batch.AverageRuns()
-                cum_batch.ParentFolder = iter_fldr
-                cum_batch.runAvg.Path = iter_fldr
-                correl = cum_batch.CheckAutocorrelation(Product)
-                not_change = cum_batch.runAvg.CheckSteadyState(Product)
-                is_steady_state = np.abs(correl[0]) < 0.05 and not_change
+                cur_batch.AverageRuns()
+                cur_batch.ParentFolder = iter_fldr
+                cur_batch.runAvg.Path = iter_fldr
+                correl = cur_batch.CheckAutocorrelation(Product)
+                is_steady_state = np.abs(correl[0]) < 0.05
                 
                 # Record information about the iteration
-                cum_batch.runAvg.CalcRateTraj(Product)
+                cur_batch.runAvg.CalcRateTraj(Product)
         
-                cum_batch.runAvg.PlotSurfSpecVsTime()        
-                cum_batch.runAvg.PlotIntPropsVsTime()
-                cum_batch.runAvg.PlotRateVsTime()  
+                cur_batch.runAvg.PlotSurfSpecVsTime()        
+                cur_batch.runAvg.PlotIntPropsVsTime()
+                cur_batch.runAvg.PlotRateVsTime()  
             
             # Test stiffness
             cur_batch.AverageRuns()
@@ -160,13 +149,13 @@ class RateRescaling:
             converged = unstiff and is_steady_state
             iteration += 1
             
-        cum_batch.ComputeStats(Product)
-        cum_batch.WriteSA_output(cum_batch.ParentFolder)
-        cum_batch.PlotSensitivities()
+        cur_batch.ComputeStats(Product)
+        cur_batch.WriteSA_output()
+        cur_batch.PlotSensitivities()
     
     # Process KMC output and determine how to further scale down reactions
     @staticmethod
-    def ProcessStepFreqs(self, run, stiff_cut = 100, equilib_cut = 0.05):
+    def ProcessStepFreqs(run, stiff_cut = 100, equilib_cut = 0.05):
         
         delta_sdf = np.ones(run.Reactions['nrxns'])    # initialize the marginal scaledown factors
         rxn_speeds = []
