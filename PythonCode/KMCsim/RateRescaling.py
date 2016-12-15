@@ -39,7 +39,7 @@ class RateRescaling:
         while not converged and iteration <= max_iterations:
             
             # Make folder for iteration
-            iter_fldr = self.scale_parent_fldr + 'Iteration_' + str(iteration) + '/'
+            iter_fldr = os.path.join(self.scale_parent_fldr, 'Iteration_' + str(iteration))
             if not os.path.exists(iter_fldr):
                 os.makedirs(iter_fldr)
                 
@@ -125,7 +125,7 @@ class RateRescaling:
                 unstiff = True
     
             # Record iteartion data in output file
-            with open(iter_fldr + 'Iteration_summary.txt', 'w') as txt:   
+            with open(os.path.join(iter_fldr, 'Iteration_summary.txt'), 'w') as txt:   
                 txt.write('----- Iteration #' + str(iteration) + ' -----\n')
                 txt.write('t_final: {0:.3E} \n'.format(cur_batch.runAvg.Specnum['t'][-1]))
                 txt.write('stiff: ' + str(not unstiff) + '\n')

@@ -90,6 +90,15 @@ xlabel('Time (s)','FontSize',18)
 ylabel('Correlation','FontSize',18)
 
 figure
+plot(t_vec, var_r_t);
+% errorbar(t_vec, r_t, sqrt(var_r_t))
+box('on')
+ax = gca;
+ax.FontSize = 18;
+xlabel('Time (s)','FontSize',18)
+ylabel('Varience of rate (1/s^2)','FontSize',18)
+
+figure
 plot(t_vec, r_t);
 % errorbar(t_vec, r_t, sqrt(var_r_t))
 box('on')

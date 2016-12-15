@@ -44,7 +44,7 @@ class Replicates:
         for i in range(self.n_runs):
             new_run = copy.deepcopy(self.runtemplate)
             new_run.Conditions['Seed'] = self.runtemplate.Conditions['Seed'] + i
-            new_run.Path = self.ParentFolder + str(i+1) + '/'
+            new_run.Path = os.path.join(self.ParentFolder, str(i+1))
             self.runList.append(new_run)
             
     def BuildJobFiles(self, write_dir_list = True, max_cores = 100, server = 'Farber'):
@@ -58,13 +58,13 @@ class Replicates:
             run.WriteAllInput()
             
         if write_dir_list:
-            with open(self.ParentFolder + 'dir_list.txt', 'w') as txt:
+            with open(os.path.join(self.ParentFolder, 'dir_list.txt'), 'w') as txt:
                 for job in self.runList:
                     txt.write(job.Path + '\n')
             
             n_cores = np.min([max_cores, self.n_runs])           
             
-            with open(self.ParentFolder + 'zacros_submit_JA.qs', 'w')as txt:
+            with open(os.path.join(self.ParentFolder, 'zacros_submit_JA.qs'), 'w') as txt:
                 
                 if server == 'Farber':             
                 
@@ -95,7 +95,7 @@ class Replicates:
                     txt.write('# to this job:\n')
                     txt.write('export OMP_NUM_THREADS=$NSLOTS\n')
                     txt.write('\n')
-                    txt.write('job_file=\'' + self.ParentFolder + 'dir_list.txt\'\n')
+                    txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\n')
                     txt.write('#Change to the job directory\n')
                     txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
                     txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
@@ -117,7 +117,7 @@ class Replicates:
                     txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
                     txt.write('#$ -pe openmpi-smp 1 				#Change the last field to the number of processors desired per task\n')
                     txt.write('\n')
-                    txt.write('job_file=\'' + self.ParentFolder + 'dir_list.txt\'\n')
+                    txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\n')
                     txt.write('#Change to the job directory\n')
                     txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
                     txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
@@ -146,10 +146,10 @@ class Replicates:
     def ReadMultipleRuns(self):
 
         self.runList = []
-        DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(self.ParentFolder + d + '/')]      # List all folders in ParentFolder
+        DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(os.path.join(self.ParentFolder, d))]      # List all folders in ParentFolder
         for direct in DirList:
             run = KMC_Run()
-            run.Path =  self.ParentFolder + direct + '/'
+            run.Path = os.path.join(self.ParentFolder, direct)
             if run.CheckComplete():
                 self.runList.append(run)
         self.n_runs = len(self.runList)
@@ -165,10 +165,10 @@ class Replicates:
         CPU_time_cum = 0        
         n_runs = 0        
         
-        DirList = [d for d in os.listdir(path) if os.path.isdir(path + d + '/')]      # List all folders in ParentFolder
+        DirList = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]      # List all folders in ParentFolder
         for direct in DirList:
             run = KMC_Run()
-            run.Path =  path + direct + '/'
+            run.Path =  os.path.join(path, direct)
             if run.CheckComplete():
                 run.ReadAllInput()
                 run.ReadGeneral()
@@ -177,7 +177,7 @@ class Replicates:
                 CPU_time_cum += run.Performance['CPU_time']
                 n_runs += 1
                 
-        with open(path + 'Performance_summary.txt', 'w') as txt:   
+        with open(os.path.join(path, 'Performance_summary.txt'), 'w') as txt:   
             txt.write('----- Performance totals -----\n')
             txt.write('number of runs: ' + str(n_runs) + '\n' )      # number of runs
             txt.write('KMC time: {0:.3E} \n'.format(t_final_cum))      # seconds
@@ -369,7 +369,7 @@ class Replicates:
         plus.ParentFolder = self.ParentFolder + 'plus'
         minus.ParentFolder = self.ParentFolder + 'minus'
         
-        if setup:        
+        if setup:
         
             for FD in FD_list:
                 for rxn_ind in rxn_inds:

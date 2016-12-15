@@ -118,11 +118,11 @@ class IOdata(object):
         self.ReadEngIn()
         self.ReadMechIn()
        
-        if os.path.isfile(self.Path + 'state_input.dat'):
+        if os.path.isfile(os.path.join(self.Path, 'state_input.dat')):
             self.ReadStateInput()
     
     def ReadEngIn(self): 
-        RawTxt = Helper.ReadWithoutBlankLines(self.Path + 'energetics_input.dat',CommentLines=False)
+        RawTxt = Helper.ReadWithoutBlankLines(os.path.join(self.Path, 'energetics_input.dat'), CommentLines=False)
         nLines = len(RawTxt)
         
         nCluster = 0
@@ -188,21 +188,21 @@ class IOdata(object):
         
     def ReadLatticeIn(self):
         self.Lattice['Input'] = []
-        with open(self.Path + 'lattice_input.dat','r') as Txt:
+        with open(os.path.join(self.Path, 'lattice_input.dat'),'r') as Txt:
             RawTxt = Txt.readlines()   
         for i in RawTxt:
             self.Lattice['Input'].append(i.split('\n')[0])
     
     def ReadStateInput(self): 
         self.StateInput['Struct'] = []
-        with open(self.Path + 'state_input.dat','r') as Txt:
+        with open(os.path.join(self.Path, 'state_input.dat'),'r') as Txt:
             RawTxt = Txt.readlines()   
         for i in RawTxt:
             self.StateInput['Struct'].append(i.split('\n')[0])
         self.StateInput['Type'] = 'StateInput'
     
     def ReadMechIn(self): 
-        RawTxt = Helper.ReadWithoutBlankLines(self.Path + 'mechanism_input.dat',CommentLines=True)
+        RawTxt = Helper.ReadWithoutBlankLines(os.path.join(self.Path, 'mechanism_input.dat'),CommentLines=True)
         nLines = len(RawTxt)
         StiffCorrLine = -1
         
@@ -307,7 +307,7 @@ class IOdata(object):
         self.Reactions['Input'] = MechDict    
         
     def ReadSimIn(self):
-        with open(self.Path + 'simulation_input.dat','r') as txt:
+        with open(os.path.join(self.Path, 'simulation_input.dat'),'r') as txt:
             RawTxt = txt.readlines()
             
         self.Conditions['restart'] = True
@@ -399,7 +399,7 @@ class IOdata(object):
     def WriteEnergetics(self):
         nCluster = self.Cluster['nCluster']
 
-        with open(self.Path + 'energetics_input.dat', 'w') as txt:
+        with open(os.path.join(self.Path, 'energetics_input.dat'), 'w') as txt:
             txt.write('energetics\n\n')
             for i in range(0,nCluster):
                 txt.write('#'*80 + '\n\n')
@@ -435,7 +435,7 @@ class IOdata(object):
             txt.write('\n\nend_energetics')
             
     def WriteLattice(self):
-        with open(self.Path + 'lattice_input.dat', 'w') as txt:
+        with open(os.path.join(self.Path, 'lattice_input.dat'), 'w') as txt:
             for i in self.Lattice['Input']:
                 txt.write(i + '\n')
     
@@ -448,7 +448,7 @@ class IOdata(object):
             SDBool = True
         nMech = len(self.Reactions['Input'])
         StiffCorrCounter = -1
-        with open(self.Path + 'mechanism_input.dat', 'w') as txt:
+        with open(os.path.join(self.Path, 'mechanism_input.dat'), 'w') as txt:
             txt.write('mechanism\n\n')
             if SDBool:
                 txt.write('# Automated stiffness reconditioning employed\n')
@@ -513,7 +513,7 @@ class IOdata(object):
             txt.write('\n\nend_mechanism')
     
     def WriteSimIn(self):
-        with open(self.Path + 'simulation_input.dat', 'w') as txt:
+        with open(os.path.join(self.Path, 'simulation_input.dat'), 'w') as txt:
             SeedTxt = ''
             if self.Conditions['Seed'] == '':
                 self.Conditions['Seed'] = random.randint(10000, 99999)
@@ -592,7 +592,7 @@ class IOdata(object):
             return
             
         if self.StateInput['Type'] == 'StateInput':   #Copy from prior state_input file
-            with open(self.Path + 'state_input.dat', 'w') as txt:
+            with open(os.path.join(self.Path, 'state_input.dat'), 'w') as txt:
                 for i in self.StateInput['Struct']:
                     txt.write(i + '\n')
                     
@@ -612,7 +612,7 @@ class IOdata(object):
                         SpecIden[i] = Lattice[j,2]
             
             if nAds > 0:
-                with open(self.Path + 'state_input.dat','w') as txt:
+                with open(os.path.join(self.Path, 'state_input.dat'),'w') as txt:
                     txt.write('initial_state\n')
                     for i in range(0,nAds):
                         txt.write('  seed_on_sites  ' + Helper.PadStr(self.Species['surf_spec'][SpecIden[i]-1],10))
@@ -638,7 +638,7 @@ class IOdata(object):
             self.ReadGeneral()
             self.ReadProcstat()
             self.ReadSpecnum()
-            self.KMC_lat.Read_lattice_output(self.Path + 'lattice_output.txt')
+            #self.KMC_lat.Read_lattice_output(os.path.join(self.Path, 'lattice_output.txt'))
             self.ReadHistory()
             
             # Extra binary files            
@@ -652,8 +652,8 @@ class IOdata(object):
   
     def CheckComplete(self):
         Complete = False
-        if os.path.isfile(self.Path + 'general_output.txt'):
-            with open(self.Path + 'general_output.txt','r') as txt:
+        if os.path.isfile(os.path.join(self.Path, 'general_output.txt')):
+            with open(os.path.join(self.Path, 'general_output.txt'),'r') as txt:
                 RawTxt = txt.readlines()
             for i in RawTxt:
                 if re.search('Normal termination',i):
@@ -661,7 +661,7 @@ class IOdata(object):
         return Complete
 
     def ReadGeneral(self):          # general_output.txt
-        with open(self.Path + 'general_output.txt','r') as txt:
+        with open(os.path.join(self.Path, 'general_output.txt'),'r') as txt:
             RawTxt = txt.readlines()                
                 
         for i in range(0,len(RawTxt)):
@@ -715,15 +715,15 @@ class IOdata(object):
     def ReadHistory(self):
         
         # Check if file exists
-        if not os.path.isfile(self.Path + 'history_output.txt'):
+        if not os.path.isfile(os.path.join(self.Path, 'history_output.txt')):
             return
         
         # Count number of sites
-        with open(self.Path + 'lattice_output.txt','r') as txt:
+        with open(os.path.join(self.Path, 'lattice_output.txt'),'r') as txt:
             RawTxt = txt.readlines()
         nSites = len(RawTxt) - 2
         self.n_sites = nSites
-        HistPath = self.Path + 'history_output.txt'
+        HistPath = os.path.join(self.Path, 'history_output.txt')
         nLines = Helper.rawbigcount(HistPath)
         self.n_snapshots = (nLines-6)/(nSites+2)
         self.History = []
@@ -740,7 +740,7 @@ class IOdata(object):
         
     def ReadProcstat(self):
         MaxLen = np.int(2e4)
-        with open(self.Path + 'procstat_output.txt','r') as txt:
+        with open(os.path.join(self.Path, 'procstat_output.txt'),'r') as txt:
             RawTxt = txt.readlines()
 
         if len(RawTxt) - 1 > MaxLen * 3: # Procstat uses 3 lines per outputs
@@ -771,7 +771,7 @@ class IOdata(object):
     def ReadSpecnum(self):
 
         MaxLen = np.int(2e4)
-        with open(self.Path + 'specnum_output.txt','r') as txt:
+        with open(os.path.join(self.Path, 'specnum_output.txt'),'r') as txt:
             RawTxt = txt.readlines()
 
         if len(RawTxt) - 1 > MaxLen:
@@ -809,7 +809,7 @@ class IOdata(object):
     
     def ReadCluster(self):
         dt=np.dtype(np.int32)
-        virtual_arr = np.memmap(self.Path + 'clusterocc.bin', dt, "r")
+        virtual_arr = np.memmap(os.path.join(self.Path, 'clusterocc.bin'), dt, "r")
         nCluster = self.Cluster['nClusterVariant']
         nNum = virtual_arr.shape[0]
         nNum = nNum - (nNum % nCluster)
@@ -825,7 +825,7 @@ class IOdata(object):
         elif Mode==1:   #Integral propensities
             FileName = 'PropCounter_output.bin'
         
-        virtual_arr = np.memmap(self.Path + FileName, dt, "r")
+        virtual_arr = np.memmap(os.path.join(self.Path, FileName), dt, "r")
         nRxn = len(self.Reactions['Nu'])
         nNum = virtual_arr.shape[0]
         nNum = nNum - (nNum % nRxn)
@@ -843,8 +843,8 @@ class IOdata(object):
     def ReadSA(self):
         dt=np.dtype(np.float64)
         FileName = 'SA_output.bin'
-        if os.path.isfile(self.Path + FileName):
-            virtual_arr = np.memmap(self.Path + FileName, dt, "r")
+        if os.path.isfile(os.path.join(self.Path, FileName)):
+            virtual_arr = np.memmap(os.path.join(self.Path, FileName), dt, "r")
             nRxn = len(self.Reactions['Nu'])
             nNum = virtual_arr.shape[0]
             nNum = nNum - (nNum % nRxn)
