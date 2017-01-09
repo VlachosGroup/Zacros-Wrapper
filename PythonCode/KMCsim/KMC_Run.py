@@ -30,6 +30,8 @@ class KMC_Run(IOdata):
         self.props_avg = []
         self.rate_traj = []
         self.int_rate_traj = []
+        self.gas_stoich = []        # stoichiometry of gas-phase reaction
+        self.net_rxn = []        # net mass, conserved at steady-state
         
     def Run_sim(self):
         
@@ -103,8 +105,6 @@ class KMC_Run(IOdata):
             for i, elem_stoich in enumerate(self.Reactions['Nu']):
                 
                 TOF_stoich = elem_stoich[product_ind]
-                r_int = self.Binary['propCounter'][t_point,i]
-                self.int_rate_traj[t_point] = self.int_rate_traj[t_point] + TOF_stoich * r_int
                 
                 if t_point == 0:
                     self.rate_traj[t_point] = 0
@@ -146,8 +146,8 @@ class KMC_Run(IOdata):
         if self.rate_traj[-1] == 0:          # Simulation is not in steady-state if rate of production of product species is 0
             return False        
 
-        batch_1 = self.avg_in_window(self.int_rate_traj, [0.50 * self.Specnum['t'][-1], 0.75 * self.Specnum['t'][-1]])
-        batch_2 = self.avg_in_window(self.int_rate_traj, [0.75 * self.Specnum['t'][-1], self.Specnum['t'][-1]])
+        batch_1 = self.avg_in_window(self.int_rate_traj, [0, 0.5 * self.Specnum['t'][-1]])
+        batch_2 = self.avg_in_window(self.int_rate_traj, [0.5 * self.Specnum['t'][-1], self.Specnum['t'][-1]])
         
         frac_change = (batch_2 - batch_1) / batch_2
         
@@ -164,6 +164,9 @@ class KMC_Run(IOdata):
         sandwich.Performance['CPU_time'] = run1.Performance['CPU_time'] + run2.Performance['CPU_time']
         
         sandwich.Specnum['t'] = np.concatenate([run1.Specnum['t'], run2.Specnum['t'][1::] + run1.Specnum['t'][-1] * np.ones( len(run2.Specnum['t'])-1 )])
+        
+        n_surf_specs = len(run2.Species['surf_spec'])
+        run2.Specnum['spec'][1::, n_surf_specs : ] = run2.Specnum['spec'][1::, n_surf_specs : ] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Specnum['spec'][-1, n_surf_specs : ]] )        
         sandwich.Specnum['spec'] = np.vstack([run1.Specnum['spec'], run2.Specnum['spec'][1::,:] ])
         sandwich.Procstat['events'] = np.vstack( [run1.Procstat['events'], run2.Procstat['events'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Procstat['events'][-1,:]] ) ] )
         sandwich.Binary['propCounter'] = np.vstack( [run1.Binary['propCounter'], run2.Binary['propCounter'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['propCounter'][-1,:]]  ) ] )
@@ -181,6 +184,18 @@ class KMC_Run(IOdata):
         for rxn_ind in range(prop_shape[1]):
             self.props_avg[:,rxn_ind] = props[:,rxn_ind] / delt
             
+    def calc_net_rxn(self):
+        
+        gas_mat = self.Specnum['spec'][:, len(self.Species['surf_spec']) : ]        # gas species only
+        self.net_rxn = np.dot(gas_mat, np.abs(self.gas_stoich))
+    
+    def CheckNetRxnConvergence(self, m = 0.04):
+        
+        half_ind = self.fraction_search(0.5)
+        diff1 = np.abs( (self.net_rxn[half_ind] - self.net_rxn[-1]) / (self.net_rxn[-1] - self.net_rxn[0]) )
+
+        return diff1 < m
+        
     ''' ==================================== Plotting methods ==================================== '''
     
     def PlotSurfSpecVsTime(self):
@@ -193,7 +208,7 @@ class KMC_Run(IOdata):
         
         Helper.PlotTrajectory(time_vecs, surf_spec_vecs, xlab = 'time (s)', ylab = 'spec. pop.', series_labels = self.Species['surf_spec'], fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
     
-    def PlotGasSpecVsTime(self, save = True):
+    def PlotGasSpecVsTime(self):
         
         time_vecs = []
         gas_spec_vecs = []
@@ -202,6 +217,9 @@ class KMC_Run(IOdata):
             gas_spec_vecs.append(self.Specnum['spec'][:,i + len(self.Species['surf_spec']) ])
         
         Helper.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'time (s)', ylab = 'spec. pop.', series_labels = self.Species['gas_spec'], fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
+        
+    def PlotNetGasRxnVsTime(self):
+        Helper.PlotTrajectory([self.Specnum['t']], [self.net_rxn], xlab = 'time (s)', ylab = 'spec. pop.', fname = os.path.join(self.Path, 'net_rxn_vs_time.png'))
         
     def PlotPropsVsTime(self):
         

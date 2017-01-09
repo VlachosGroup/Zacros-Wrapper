@@ -93,7 +93,7 @@ class Helper:
         mat.rcParams['lines.markersize'] = 12
                 
     @staticmethod
-    def PlotTrajectory(x_series, y_series, xlab = '', ylab = '', series_labels = [], fname = ''):
+    def PlotTrajectory(x_series, y_series, xlab = '', ylab = '', series_labels = [], fname = '', logscale = False):
         
         Helper.PlotOptions()
         plt.figure()
@@ -110,6 +110,9 @@ class Helper:
             plt.legend(series_labels, loc=4, prop={'size':20}, frameon=False)
         ax = plt.subplot(111)
         ax.set_position([0.2, 0.15, 0.7, 0.8])
+        
+        if logscale:
+            plt.yscale('log')
         
         if fname == '':
             plt.show()

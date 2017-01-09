@@ -95,7 +95,7 @@ class Replicates:
                     txt.write('# to this job:\n')
                     txt.write('export OMP_NUM_THREADS=$NSLOTS\n')
                     txt.write('\n')
-                    txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\n')
+                    txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
                     txt.write('#Change to the job directory\n')
                     txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
                     txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
@@ -117,7 +117,7 @@ class Replicates:
                     txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
                     txt.write('#$ -pe openmpi-smp 1 				#Change the last field to the number of processors desired per task\n')
                     txt.write('\n')
-                    txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\n')
+                    txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
                     txt.write('#Change to the job directory\n')
                     txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
                     txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
@@ -126,7 +126,7 @@ class Replicates:
     
     def SubmitJobArray(self):
         os.chdir(self.ParentFolder)
-        os.system('qsub ' + self.ParentFolder + 'zacros_submit_JA.qs')
+        os.system('qsub ' + os.path.join(self.ParentFolder, 'zacros_submit_JA.qs'))
     
     def WaitForJobs(self):
         
@@ -144,7 +144,7 @@ class Replicates:
             job.Run_sim()
     
     def ReadMultipleRuns(self):
-
+        print self.ParentFolder
         self.runList = []
         DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(os.path.join(self.ParentFolder, d))]      # List all folders in ParentFolder
         for direct in DirList:
@@ -307,7 +307,7 @@ class Replicates:
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
         
-        plt.savefig(self.ParentFolder + 'SA_inst_output.png')
+        plt.savefig(os.path.join(self.ParentFolder, 'SA_inst_output.png'))
         plt.close()
         
         plt.figure()
@@ -334,11 +334,11 @@ class Replicates:
         pos = [0.2, 0.15, 0.7, 0.8]
         ax.set_position(pos)
         
-        plt.savefig(self.ParentFolder + 'SA_erg_output.png')
+        plt.savefig(os.path.join(self.ParentFolder, 'SA_erg_output.png'))
         plt.close()
     
     def WriteSA_output(self):
-        with open(self.ParentFolder + 'SA_output.txt', 'w') as txt:
+        with open(os.path.join(self.ParentFolder, 'SA_output.txt'), 'w') as txt:
             txt.write('Normalized sensitivity coefficients \n\n')
             txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
             txt.write('Reaction name \t NSC \t NSC confidence \n')
@@ -427,3 +427,13 @@ class Replicates:
             return [1.0, 0.0]
         else:
             return Stats.cov_ci(data1,data2) / np.sqrt( np.var(data1) * np.var(data2) )
+            
+    @staticmethod
+    def time_sandwich(batch1, batch2):
+        
+        if batch1.n_runs == 1:
+            return batch2
+        
+        for run_ind in range(batch1.n_runs):
+            batch2.runList[run_ind] = KMC_Run.time_sandwich(batch1.runList[run_ind], batch2.runList[run_ind])
+        return batch2

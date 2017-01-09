@@ -6,44 +6,41 @@ Created on Thu Jul 28 13:48:34 2016
 """
 
 import sys
-from sys import getsizeof
+import numpy as np
 
 sys.path.append('C:/Users/mpnun/Dropbox/Github/ZacrosWrapper/PythonCode')
 #sys.path.append('/home/vlachos/mpnunez/ZacrosWrapper')
 import KMCsim as zw
 
-################## User input ##################################
-
-#zacros_exe = '/home/vlachos/mpnunez/bin/zacros_ZW.x'
-#KMC_source = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/NonStiff/'
-BatchPath = 'C:/Users/mpnun/Desktop/WGSsample/'
-Product = 'CO2'
-#n_runs = 10
-
-################################################################
-
 if __name__ == '__main__':                 # Need this line to make parallelization work
 
     # Batch of runs ----------------
-    x = zw.Replicates()
-    x.ParentFolder = BatchPath
-#    x.runtemplate.Path = KMC_source
-#    x.runtemplate.exe_file = zacros_exe
-#    x.runtemplate.ReadAllInput()    
+    b1 = zw.Replicates()
+    b1.ParentFolder = 'C:\Users\mpnun\Documents\Local_research_files\ZacrosWrapper\iter_example\1'
+    b1.ReadMultipleRuns()
     
-    # Build and run
-#    x.n_runs = n_runs
-#    x.BuildJobsFromTemplate()
-#    x.BuildJobFiles()
-#    x.RunAllJobs()
+    b2 = zw.Replicates()
+    b2.ParentFolder = 'C:\Users\mpnun\Documents\Local_research_files\ZacrosWrapper\iter_example\2'
+    b2.ReadMultipleRuns()
     
-    x.ReadMultipleRuns()
+    b3 = zw.Replicates()
+    b3.ParentFolder = 'C:\Users\mpnun\Documents\Local_research_files\ZacrosWrapper\iter_example\3'
+    b3.ReadMultipleRuns()
+    
+    b2 = zw.Replicates.time_sandwich(b1, b2)
+    b3 = zw.Replicates.time_sandwich(b2, b3)
 
-#    # Trajectory average
-    x.AverageRuns()
+    b3.AverageRuns()
 #    
-    x.runAvg.PlotSurfSpecVsTime()
-#    x.runAvg.PlotGasSpecVsTime()
+    b3.runAvg.PlotSurfSpecVsTime()
+    b3.runAvg.PlotGasSpecVsTime()
+    
+    
+    b3.runAvg.gas_stoich = np.array([-1, 0, 1, 1, -1])        # stoichiometry of gas-phase reaction
+    b3.runAvg.calc_net_rxn()
+    b3.runAvg.PlotNetGasRxnVsTime()
+    print b3.runAvg.CheckNetRxnConvergence()
+    
 #    x.runAvg.PlotElemStepFreqs(window = [0.4, 1.0])
 #    
 #    x.runAvg.CalcRateTraj(Product)

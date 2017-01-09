@@ -21,19 +21,38 @@ class RateRescaling:
         self.scale_parent_fldr = ''
         self.batch = Replicates()
         
-    def ReachSteadyStateAndRescale(self, Product, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10):
+    def ReachSteadyStateAndRescale(self, Product, gas_stoich, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10, start_iter = 1):
 
-        Helper.ClearFolderContents(self.scale_parent_fldr)
+        prev_batch = Replicates()       # Set this if the starting iteration is not 1
 
         # Placeholder variables
-        prev_batch = Replicates()
+        if start_iter == 1:
+            Helper.ClearFolderContents(self.scale_parent_fldr)
+            SDF_vec = []        # scaledown factors for each iteration
+        else:
+            for i in range(start_iter-1):
+                batch_i = Replicates()
+                batch_i.Path = os.path.join(self.scale_parent_fldr, 'Iteration_' + str(i+1))
+                batch_i.ReadMultipleRuns()
+                prev_batch = Replicates.time_sandwich(prev_batch, batch_i)
+                
+                if i == start_iter-2:
+                    batch_i.AverageRuns()
+                    scaledown_data = RateRescaling.ProcessStepFreqs(batch_i.runAvg)         # compute change in scaledown factors based on simulation result
+                    delta_sdf = scaledown_data['delta_sdf']
+                    rxn_speeds = scaledown_data['rxn_speeds']                
+                
+            SDF_vec = prev_batch.runList[0].scaledown_factors
+            # Update scaledown factors
+            for ind in range(len(SDF_vec)):
+                SDF_vec[ind] = SDF_vec[ind] * delta_sdf[ind]
         
         # Convergence variables
         is_steady_state = False
         unstiff = False
         converged = unstiff and is_steady_state
-        iteration = 1
-        SDF_vec = []        # scaledown factors for each iteration
+        iteration = start_iter              # default is 1, but can be higher and use previous data
+        
         scale_final_time = ss_inc
 
         while not converged and iteration <= max_iterations:
@@ -96,26 +115,22 @@ class RateRescaling:
             cur_batch.SubmitJobArray()
             cur_batch.WaitForJobs()
             cur_batch.ReadMultipleRuns()
+            cum_batch = Replicates.time_sandwich(prev_batch, cur_batch)         # combine with previous data          
             
             # Test steady-state
-            if iteration == 1:
-                is_steady_state = False
-            else:
-                cur_batch.AverageRuns()
-                cur_batch.ParentFolder = iter_fldr
-                cur_batch.runAvg.Path = iter_fldr
-                correl = cur_batch.CheckAutocorrelation(Product)
-                is_steady_state = np.abs(correl[0]) < 0.05
-                
-                # Record information about the iteration
-                cur_batch.runAvg.CalcRateTraj(Product)
-        
-                cur_batch.runAvg.PlotSurfSpecVsTime()        
-                cur_batch.runAvg.PlotIntPropsVsTime()
-                cur_batch.runAvg.PlotRateVsTime()  
+            cum_batch.AverageRuns()
+            cum_batch.runAvg.gas_stoich = gas_stoich        # stoichiometry of gas-phase reaction
+            cum_batch.runAvg.calc_net_rxn()            
+            is_steady_state = cum_batch.runAvg.CheckNetRxnConvergence()
+            
+            # Record information about the iteration
+            cum_batch.runAvg.PlotGasSpecVsTime()
+            cum_batch.runAvg.PlotNetGasRxnVsTime()
+            cum_batch.runAvg.PlotSurfSpecVsTime()
             
             # Test stiffness
             cur_batch.AverageRuns()
+            cur_batch.runAvg.PlotElemStepFreqs()
             scaledown_data = RateRescaling.ProcessStepFreqs(cur_batch.runAvg)         # compute change in scaledown factors based on simulation result
             delta_sdf = scaledown_data['delta_sdf']
             rxn_speeds = scaledown_data['rxn_speeds']
@@ -127,10 +142,10 @@ class RateRescaling:
             # Record iteartion data in output file
             with open(os.path.join(iter_fldr, 'Iteration_summary.txt'), 'w') as txt:   
                 txt.write('----- Iteration #' + str(iteration) + ' -----\n')
-                txt.write('t_final: {0:.3E} \n'.format(cur_batch.runAvg.Specnum['t'][-1]))
+                txt.write('t_final: {0:.3E} \n'.format(cum_batch.runAvg.Specnum['t'][-1]))
                 txt.write('stiff: ' + str(not unstiff) + '\n')
                 txt.write('steady-state: ' + str(is_steady_state) + '\n')
-                for rxn_name in cur_batch.runAvg.Reactions['names']:
+                for rxn_name in cum_batch.runAvg.Reactions['names']:
                     txt.write(rxn_name + '\t')
                 txt.write('\n')
                 for sdf in delta_sdf:
@@ -145,7 +160,7 @@ class RateRescaling:
                 
             scale_final_time = np.max( [1.0/np.min(delta_sdf), ss_inc] )
             
-            prev_batch = copy.deepcopy(cur_batch)
+            prev_batch = copy.deepcopy(cum_batch)
             converged = unstiff and is_steady_state
             iteration += 1
             
