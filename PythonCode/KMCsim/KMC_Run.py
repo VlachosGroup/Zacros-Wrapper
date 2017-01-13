@@ -19,6 +19,17 @@ import copy
 import matplotlib.animation as animation
 from Helper import Helper
 
+from scipy.optimize import curve_fit
+
+def func(t, rss, tau):
+
+    t = np.asarray(t)
+    y = np.zeros(t.shape)
+    y += (t / tau >= 10) * rss * ( t - tau )
+    y += (t / tau < 10) * rss * ( t - tau * ( 1 - np.exp( - t / tau) ) )
+
+    return y
+
 class KMC_Run(IOdata):
     
     def __init__(self):
@@ -172,6 +183,8 @@ class KMC_Run(IOdata):
         sandwich.Binary['propCounter'] = np.vstack( [run1.Binary['propCounter'], run2.Binary['propCounter'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['propCounter'][-1,:]]  ) ] )
         sandwich.Binary['W_sen_anal']  = np.vstack( [run1.Binary['W_sen_anal'], run2.Binary['W_sen_anal'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['W_sen_anal'][-1,:]]  ) ] )      
         
+        sandwich.History = [ run1.History[0], run2.History[-1] ]     
+        
         return sandwich
     
     def time_avg_props(self):
@@ -196,6 +209,61 @@ class KMC_Run(IOdata):
 
         return diff1 < m
         
+    def CheckProductConvergence(self, Product, dimless_time_limit = 12.0):
+        
+        try:
+            product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
+        except:
+            raise Exception('Product species not found.')
+    
+        if self.Specnum['spec'][:,product_ind][-1] <= 0:
+            return False
+        else:
+            tau_fit = self.FitProductProfile(Product)
+            return self.Specnum['t'][-1] / tau_fit > dimless_time_limit
+
+    def FitProductProfile(self, Product, graph_compare = True):
+
+        try:
+            product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
+        except:
+            raise Exception('Product species not found.')
+    
+        rss_guess = self.Specnum['spec'][:,product_ind][-1] / self.Specnum['t'][-1]
+        tau_guess = self.Specnum['t'][-1] / 5.0
+    
+        popt, pcov = curve_fit(func, self.Specnum['t'], self.Specnum['spec'][:,product_ind], p0 = [rss_guess, tau_guess], bounds=[ np.array([-np.inf, 0]), np.array([np.inf, np.inf]) ])
+
+        if graph_compare:
+
+            spec_fit = func(self.Specnum['t'], popt[0], popt[1])
+
+            mat.rcParams['mathtext.default'] = 'regular'
+            mat.rcParams['text.latex.unicode'] = 'False'
+            mat.rcParams['legend.numpoints'] = 1
+            mat.rcParams['lines.linewidth'] = 2
+            mat.rcParams['lines.markersize'] = 12
+    
+            plt.figure()
+    
+            plt.plot(self.Specnum['t'], self.Specnum['spec'][:,product_ind])
+            plt.plot(self.Specnum['t'], spec_fit)
+    
+    
+            plt.xticks(size=20)
+            plt.yticks(size=20)
+            plt.xlabel('Time (s)', size=24)
+            plt.ylabel(Product + ' count', size=24)
+    
+            plt.legend(['data', 'fit'], loc=4, prop={'size':20}, frameon=False)
+    
+            ax = plt.subplot(111)
+            ax.set_position([0.2, 0.15, 0.7, 0.8])
+    
+            plt.savefig('fit_compare.png')
+            
+        return popt[1]
+
     ''' ==================================== Plotting methods ==================================== '''
     
     def PlotSurfSpecVsTime(self):

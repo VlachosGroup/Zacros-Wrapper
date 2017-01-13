@@ -216,7 +216,6 @@ class IOdata(object):
                 StiffCorrLine = i
                 
         if StiffCorrLine != -1:
-#            self.StiffnessRecondition['Mode'] = RawTxt[StiffCorrLine+1].split(':')[1].split('\n')[0].split()[0]
             self.scaledown_factors = [np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
         
         self.Reactions['nrxns'] = 0
@@ -452,7 +451,7 @@ class IOdata(object):
             txt.write('mechanism\n\n')
             if SDBool:
                 txt.write('# Automated stiffness reconditioning employed\n')
-                txt.write('# Mode: NA \n')
+                txt.write('# \n')
                 txt.write('# SDF: ')
                 for i in self.scaledown_factors:
                     txt.write('{0:.5e} \t'.format(i))

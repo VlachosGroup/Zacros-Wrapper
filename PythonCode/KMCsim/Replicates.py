@@ -226,7 +226,7 @@ class Replicates:
         for run in self.runList:
             Wdata[ind,:] = run.Binary['W_sen_anal'][end_ind,::2] - run.Binary['W_sen_anal'][start_ind,::2] + run.Binary['W_sen_anal'][end_ind,1::2] - run.Binary['W_sen_anal'][start_ind,1::2]
                                
-            TOF_output = run.ComputeTOF(product)
+            TOF_output = run.ComputeTOF(product, win = window)
             rdata[ind,0] = TOF_output['TOF_inst'] / Tof_out['TOF_inst']
             rdata[ind,1] = TOF_output['TOF_erg'] / Tof_out['TOF_erg']
             ind = ind + 1

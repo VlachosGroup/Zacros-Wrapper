@@ -21,7 +21,7 @@ class RateRescaling:
         self.scale_parent_fldr = ''
         self.batch = Replicates()
         
-    def ReachSteadyStateAndRescale(self, Product, gas_stoich, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10, start_iter = 1):
+    def ReachSteadyStateAndRescale(self, Product, gas_stoich, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10, start_iter = 1, platform = 'Farber'):
 
         prev_batch = Replicates()       # Set this if the starting iteration is not 1
 
@@ -111,7 +111,7 @@ class RateRescaling:
                     cur_batch.runList[run_ind].StateInput['Struct'] = prev_batch.runList[run_ind].History[-1]
             
             # Run jobs and read output
-            cur_batch.BuildJobFiles()
+            cur_batch.BuildJobFiles(server = platform)
             cur_batch.SubmitJobArray()
             cur_batch.WaitForJobs()
             cur_batch.ReadMultipleRuns()
@@ -121,7 +121,9 @@ class RateRescaling:
             cum_batch.AverageRuns()
             cum_batch.runAvg.gas_stoich = gas_stoich        # stoichiometry of gas-phase reaction
             cum_batch.runAvg.calc_net_rxn()            
-            is_steady_state = cum_batch.runAvg.CheckNetRxnConvergence()
+            net_rxn_converged = cum_batch.runAvg.CheckNetRxnConvergence()
+            product_converged = cum_batch.runAvg.CheckProductConvergence(Product)
+            is_steady_state = net_rxn_converged and product_converged
             
             # Record information about the iteration
             cum_batch.runAvg.PlotGasSpecVsTime()
@@ -164,13 +166,12 @@ class RateRescaling:
             converged = unstiff and is_steady_state
             iteration += 1
             
-        cur_batch.ComputeStats(Product)
-        cur_batch.WriteSA_output()
-        cur_batch.PlotSensitivities()
+        return cur_batch
     
     # Process KMC output and determine how to further scale down reactions
+    # Uses algorithm from ;A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic Monte Carlo simulations through the modification of rate constants, J. Chem. Phys. 132 (2010) 194101.
     @staticmethod
-    def ProcessStepFreqs(run, stiff_cut = 100, equilib_cut = 0.05):
+    def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):
         
         delta_sdf = np.ones(run.Reactions['nrxns'])    # initialize the marginal scaledown factors
         rxn_speeds = []
@@ -205,6 +206,8 @@ class RateRescaling:
         
         # Adjust fast reactions closer to the slow scale
         for i in fast_rxns:
-            delta_sdf[i] = np.min([1.0, stiff_cut * float(slow_scale) / tot_freqs[i]])
+            N_f = tot_freqs[i] / float(slow_scale)              # number of fast events per rare event
+#            alpha_UB = N_f .* delta ./ log(1 ./ delta) + 1             # Chatterjee formula
+            delta_sdf[i] = np.min([1.0, stiff_cut / N_f])
             
         return {'delta_sdf': delta_sdf, 'rxn_speeds': rxn_speeds}
