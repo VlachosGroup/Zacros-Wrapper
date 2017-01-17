@@ -144,7 +144,8 @@ class Replicates:
             job.Run_sim()
     
     def ReadMultipleRuns(self):
-        print self.ParentFolder
+        
+        print 'Reading all runs in ' + self.ParentFolder
         self.runList = []
         DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(os.path.join(self.ParentFolder, d))]      # List all folders in ParentFolder
         for direct in DirList:
@@ -431,9 +432,12 @@ class Replicates:
     @staticmethod
     def time_sandwich(batch1, batch2):
         
+        sand = copy.deepcopy(batch2)        
+        
         if batch1.n_runs == 1:
-            return batch2
+            return sand
         
         for run_ind in range(batch1.n_runs):
-            batch2.runList[run_ind] = KMC_Run.time_sandwich(batch1.runList[run_ind], batch2.runList[run_ind])
-        return batch2
+            sand.runList[run_ind] = KMC_Run.time_sandwich(batch1.runList[run_ind], sand.runList[run_ind])
+            
+        return sand

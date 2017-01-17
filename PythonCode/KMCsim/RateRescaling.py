@@ -135,26 +135,31 @@ class RateRescaling:
             cur_batch.runAvg.PlotElemStepFreqs()
             scaledown_data = RateRescaling.ProcessStepFreqs(cur_batch.runAvg)         # compute change in scaledown factors based on simulation result
             delta_sdf = scaledown_data['delta_sdf']
-            rxn_speeds = scaledown_data['rxn_speeds']
             if include_stiff_reduc:
                 unstiff = np.max(np.abs(np.log10(delta_sdf))) < stiff_cutoff
             else:
                 unstiff = True
     
             # Record iteartion data in output file
-            with open(os.path.join(iter_fldr, 'Iteration_summary.txt'), 'w') as txt:   
+            with open(os.path.join(iter_fldr, 'Iteration_' + str(iteration) + '_summary.txt'), 'w') as txt:  
+                
                 txt.write('----- Iteration #' + str(iteration) + ' -----\n')
                 txt.write('t_final: {0:.3E} \n'.format(cum_batch.runAvg.Specnum['t'][-1]))
                 txt.write('stiff: ' + str(not unstiff) + '\n')
                 txt.write('steady-state: ' + str(is_steady_state) + '\n')
-                for rxn_name in cum_batch.runAvg.Reactions['names']:
-                    txt.write(rxn_name + '\t')
-                txt.write('\n')
-                for sdf in delta_sdf:
-                    txt.write('{0:.3E} \t'.format(sdf))
-                txt.write('\n')
-                for rxn_speed in rxn_speeds:
-                    txt.write(rxn_speed + '\t')
+                
+                txt.write('Reaction name \t')
+                txt.write('Scaledown factor \t')
+                txt.write('Reaction speed \t')
+                txt.write('Total firings \t')
+                txt.write('Net firings \n')
+                
+                for rxn_ind in range(len(cum_batch.runAvg.Reactions['names'])):
+                    txt.write(cum_batch.runAvg.Reactions['names'][rxn_ind] + '\t')
+                    txt.write('{0:.3E} \t'.format(delta_sdf[rxn_ind]))
+                    txt.write(scaledown_data['rxn_speeds'][rxn_ind] + '\t')
+                    txt.write('{0:.3E} \t'.format(scaledown_data['tot'][rxn_ind]))
+                    txt.write('{0:.3E} \n'.format(scaledown_data['net'][rxn_ind]))
             
             # Update scaledown factors
             for ind in range(len(SDF_vec)):
@@ -169,7 +174,7 @@ class RateRescaling:
         return cur_batch
     
     # Process KMC output and determine how to further scale down reactions
-    # Uses algorithm from ;A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic Monte Carlo simulations through the modification of rate constants, J. Chem. Phys. 132 (2010) 194101.
+    # Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic Monte Carlo simulations through the modification of rate constants, J. Chem. Phys. 132 (2010) 194101.
     @staticmethod
     def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):
         
@@ -210,4 +215,4 @@ class RateRescaling:
 #            alpha_UB = N_f .* delta ./ log(1 ./ delta) + 1             # Chatterjee formula
             delta_sdf[i] = np.min([1.0, stiff_cut / N_f])
             
-        return {'delta_sdf': delta_sdf, 'rxn_speeds': rxn_speeds}
+        return {'delta_sdf': delta_sdf, 'rxn_speeds': rxn_speeds, 'tot': tot_freqs, 'net': net_freqs}

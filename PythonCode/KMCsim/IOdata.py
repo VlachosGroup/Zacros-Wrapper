@@ -640,9 +640,11 @@ class IOdata(object):
             #self.KMC_lat.Read_lattice_output(os.path.join(self.Path, 'lattice_output.txt'))
             self.ReadHistory()
             
-            # Extra binary files            
-            self.ReadProp(1)            
-            self.ReadSA()           
+            # Extra binary files
+            if os.path.isfile(os.path.join(self.Path, 'PropCounter_output.bin')):            
+                self.ReadProp(1)            
+            if os.path.isfile(os.path.join(self.Path, 'SA_output.bin')):
+                self.ReadSA()           
 #            self.ReadCluster()
 #            self.ReadProp(0)            
             

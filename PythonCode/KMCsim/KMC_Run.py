@@ -351,11 +351,11 @@ class KMC_Run(IOdata):
             if event_freqs[2*i] + event_freqs[2*i+1] > 0:
                 net_freq = abs(event_freqs[2*i] - event_freqs[2*i+1])
                 if event_freqs[2*i] > 0:              
-                    plt.barh(ind-0.4, event_freqs[2*i], width, color='r')
+                    plt.barh(ind-0.4, event_freqs[2*i], width, color='r', log = True)
                 if event_freqs[2*i+1] > 0:
-                    plt.barh(ind-0.6, event_freqs[2*i+1], width, color='b')
+                    plt.barh(ind-0.6, event_freqs[2*i+1], width, color='b', log = True)
                 if net_freq > 0:
-                    plt.barh(ind-0.8, net_freq, width, color='g')
+                    plt.barh(ind-0.8, net_freq, width, color='g', log = True)
                 ylabels.append(self.Reactions['names'][i])
                 yvals.append(ind-0.6)
                 ind = ind - 1
@@ -363,7 +363,6 @@ class KMC_Run(IOdata):
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('frequency',size=24)
-        plt.xscale('log')
         plt.yticks(yvals, ylabels)
         plt.legend(['fwd','bwd','net'],loc=4,prop={'size':20},frameon=False)
         ax = plt.subplot(111)        
@@ -372,6 +371,27 @@ class KMC_Run(IOdata):
         
         plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'))
         plt.close()
+
+
+    def PrintElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1.0):      # into an output file
+        
+        start_ind = self.fraction_search(window[0])
+        end_ind = self.fraction_search(window[1])
+        event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / site_norm
+        if time_norm:
+            event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
+                
+            
+        with open(os.path.join(self.Path, 'rxn_freqs.txt'), 'w') as txt:   
+            txt.write('----- Elementary reaction frequencies -----\n')
+            txt.write('Reaction Name \t Forward \t Reverse \t Net \n')
+            for i in range (self.Reactions['nrxns']):
+                net_freq = abs(event_freqs[2*i] - event_freqs[2*i+1])
+                txt.write(self.Reactions['names'][i] + '\t')
+                txt.write('{0:.3E} \t'.format(event_freqs[2*i]))
+                txt.write('{0:.3E} \t'.format(event_freqs[2*i+1]))
+                txt.write('{0:.3E} \n'.format(net_freq))
+
 
     def PlotRateVsTime(self):
         Helper.PlotTrajectory([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_vs_time.png'))
