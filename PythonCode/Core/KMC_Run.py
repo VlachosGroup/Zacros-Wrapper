@@ -215,11 +215,12 @@ class KMC_Run(IOdata):
             product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
         except:
             raise Exception('Product species not found.')
-    
-        if self.Specnum['spec'][:,product_ind][-1] <= 0:
+        
+        tau_fit = self.FitProductProfile(Product)
+		
+        if self.Specnum['spec'][:,product_ind][-1] <= 100:
             return False
         else:
-            tau_fit = self.FitProductProfile(Product)
             return self.Specnum['t'][-1] / tau_fit > dimless_time_limit
 
     def FitProductProfile(self, Product, graph_compare = True):
@@ -346,27 +347,37 @@ class KMC_Run(IOdata):
         ind = 0
         yvals = []
         ylabels = []
-
+        bar_vals = []
+        
         for i in range (self.Reactions['nrxns']):
             if event_freqs[2*i] + event_freqs[2*i+1] > 0:
                 net_freq = abs(event_freqs[2*i] - event_freqs[2*i+1])
                 if event_freqs[2*i] > 0:              
                     plt.barh(ind-0.4, event_freqs[2*i], width, color='r', log = True)
+                    bar_vals.append(event_freqs[2*i])
                 if event_freqs[2*i+1] > 0:
                     plt.barh(ind-0.6, event_freqs[2*i+1], width, color='b', log = True)
+                    bar_vals.append(event_freqs[2*i+1])
                 if net_freq > 0:
                     plt.barh(ind-0.8, net_freq, width, color='g', log = True)
+                    bar_vals.append(net_freq)
                 ylabels.append(self.Reactions['names'][i])
                 yvals.append(ind-0.6)
                 ind = ind - 1
 
+        bar_vals = np.array(bar_vals)
+        log_bar_vals = np.log10(bar_vals)
+        xmin = 10**np.floor(np.min(log_bar_vals))
+        xmax = 10**np.ceil(np.max(log_bar_vals))
+                
         plt.xticks(size=20)
-        plt.yticks(size=20)
-        plt.xlabel('frequency',size=24)
+        plt.yticks(size=10)
+        plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
         plt.legend(['fwd','bwd','net'],loc=4,prop={'size':20},frameon=False)
+        plt.xlim([xmin, xmax])
         ax = plt.subplot(111)        
-        pos = [0.2, 0.15, 0.7, 0.8]
+        pos = [0.30, 0.15, 0.65, 0.8]
         ax.set_position(pos)
         
         plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'))
