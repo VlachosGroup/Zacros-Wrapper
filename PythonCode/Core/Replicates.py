@@ -138,7 +138,7 @@ class Replicates:
                 if not job.CheckComplete():
                     all_jobs_done = False
     
-    def RunAllJobs(self):
+    def RunAllJobs(self):       # Serial version of running all jobs
 
         for job in self.runList:
             job.Run_sim()
@@ -276,7 +276,7 @@ class Replicates:
         
         plt.xticks(size=20)
         plt.yticks(size=20)
-        plt.xlabel('time (s)',size=24)
+        plt.xlabel('Time (s)',size=24)
         plt.ylabel('var(W)',size=24)
         plt.legend(labels,loc=4,prop={'size':20},frameon=False)        
         plt.show()
