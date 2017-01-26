@@ -102,8 +102,6 @@ class RateRescaling:
                 if include_stiff_reduc:
                     cur_batch.runtemplate.AdjustPreExponentials(SDF_vec)
                 
-            cur_batch.BuildJobsFromTemplate()
-                
             # Use continuation
             if iteration > 1:
                 for run_ind in range(n_runs):
@@ -113,7 +111,6 @@ class RateRescaling:
             # Run jobs and read output
             cur_batch.BuildJobFiles(server = platform)
             cur_batch.SubmitJobArray()
-            cur_batch.WaitForJobs()
             cur_batch.ReadMultipleRuns()
             cum_batch = Replicates.time_sandwich(prev_batch, cur_batch)         # combine with previous data          
             

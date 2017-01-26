@@ -23,10 +23,16 @@ class Replicates:
              
         # General info
         self.ParentFolder = ''
-        self.runList = []              # List of KMC_Run objects from which data is averaged
         self.runtemplate = KMC_Run()                             # Use this to build replicate jobs
         self.runAvg = KMC_Run()            # Values are averages of all runs from runList
         self.n_runs = 0
+        
+        # Input data for different trajectories
+        self.run_dirs = []
+        self.rand_seeds = []
+        
+        # Output data taken accross all trajectories
+        # Put here various multidimensional numpy arrays which will make it easier to do statistics
         
         # Analysis
         self.Product = ''
@@ -37,126 +43,168 @@ class Replicates:
         self.NSC_erg = []
         self.NSC_ci_erg = []
     
-    def BuildJobsFromTemplate(self):
-        
-        # Build list of KMC_Run objects
-        self.runList = []
-        for i in range(self.n_runs):
-            new_run = copy.deepcopy(self.runtemplate)
-            new_run.Conditions['Seed'] = self.runtemplate.Conditions['Seed'] + i
-            new_run.Path = os.path.join(self.ParentFolder, str(i+1))
-            self.runList.append(new_run)
-            
-    def BuildJobFiles(self, write_dir_list = True, max_cores = 100, server = 'Farber'):
+    
+    def BuildJobFiles(self, init_states = []):
         
         Helper.ClearFolderContents(self.ParentFolder)    
         
-        # Build folders and input files for each job
-        for run in self.runList:
-            if not os.path.exists(run.Path):
-                os.makedirs(run.Path)
-            run.WriteAllInput()
+        # List the directories and random seeds 
+        self.run_dirs = []
+        self.rand_seeds = []
+        seed = 5000
+        
+        # Go through the directories and write input files for trajectories with
+        # different random seeds and possibly different initial states
+        for i in range(self.n_runs):
             
-        if write_dir_list:
-            with open(os.path.join(self.ParentFolder, 'dir_list.txt'), 'w') as txt:
-                for job in self.runList:
-                    txt.write(job.Path + '\n')
+            # Set the random seed
+            self.runtemplate.Conditions['Seed'] = seed
+            self.rand_seeds.append(seed)
+            seed = seed + 1
             
-            n_cores = np.min([max_cores, self.n_runs])           
+            # Set the path
+            fldr = os.path.join(self.ParentFolder, str(i+1))
+            self.runtemplate.Path = fldr
+            self.run_dirs.append(fldr)
             
-            with open(os.path.join(self.ParentFolder, 'zacros_submit_JA.qs'), 'w') as txt:
+            # Set initial state
+            if not init_states == []:
+                self.runtemplate.StateInput['Type'] = 'history'
+                self.runtemplate.StateInput['Struct'] = init_states[i]
                 
-                if server == 'Farber':             
+            # Write input files in that folder
+            if not os.path.exists(fldr):
+                os.makedirs(fldr)
                 
-                    txt.write('#!/bin/bash\n')
-                    txt.write('#$ -cwd\n')
-                    txt.write('#$ -j y\n')
-                    txt.write('#$ -S /bin/bash\n')
-                    txt.write('#$ -l h_cpu=168:00:00\n')
-                    txt.write('#\n')
-                    txt.write('\n')
-                    txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
-                    txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
-                    txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
-                    txt.write('#$ -pe threads 1 				#Change the last field to the number of processors desired per task\n')
-                    txt.write('#\n')
-                    txt.write('# Change the following to #$ and set the amount of memory you need\n')
-                    txt.write('# per-slot if you are getting out-of-memory errors using the\n')
-                    txt.write('# default:\n')
-                    txt.write('#$ -l m_mem_free=4G\n')
-                    txt.write('\n')
-                    txt.write('source /etc/profile.d/valet.sh\n')
-                    txt.write('\n')
-                    txt.write('# Use vpkg_require to setup the environment:\n')
-                    txt.write('vpkg_require intel/2016\n')
-                    txt.write('\n')
-                    txt.write('# Ensure that the OpenMP runtime knows how many processors to use;\n')
-                    txt.write('# Grid Engine automatically sets NSLOTS to the number of cores granted\n')
-                    txt.write('# to this job:\n')
-                    txt.write('export OMP_NUM_THREADS=$NSLOTS\n')
-                    txt.write('\n')
-                    txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
-                    txt.write('#Change to the job directory\n')
-                    txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
-                    txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
-                    txt.write('                  #This could easily be modified to take a prefix; ask me how.\n')
-                    txt.write('\n')
-                    txt.write('# Now append whatever commands you use to run your OpenMP code:\n')
-                    txt.write(self.runtemplate.exe_file)
-                
-                else:       # Squidward
-                
-                    txt.write('#!/bin/bash\n')
-                    txt.write('#$ -cwd\n')
-                    txt.write('#$ -j y\n')
-                    txt.write('#$ -S /bin/bash\n')
-                    txt.write('#\n')
-                    txt.write('\n')
-                    txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
-                    txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
-                    txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
-                    txt.write('#$ -pe openmpi-smp 1 				#Change the last field to the number of processors desired per task\n')
-                    txt.write('\n')
-                    txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
-                    txt.write('#Change to the job directory\n')
-                    txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
-                    txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
-                    txt.write('\n\n')
-                    txt.write(self.runtemplate.exe_file)
+            self.runtemplate.WriteAllInput()
+        
+    def RunAllJobs_parallel_JobArray(self, max_cores = 100, server = 'Squidward'):
     
-    def SubmitJobArray(self):
+        with open(os.path.join(self.ParentFolder, 'dir_list.txt'), 'w') as txt:
+            for fldr in self.run_dirs:
+                txt.write(fldr + '\n')
+        
+        if server == 'Squidward':
+            max_cores = np.min([max_cores, 96]) 
+        elif server == 'Farber':
+            max_cores = np.min([max_cores, 100]) 
+        else:
+            raise Exception('Unrecognized server for parallel runs')
+        
+        n_cores = np.min([max_cores, self.n_runs])           
+        
+        with open(os.path.join(self.ParentFolder, 'zacros_submit_JA.qs'), 'w') as txt:
+            
+            if server == 'Farber':             
+            
+                txt.write('#!/bin/bash\n')
+                txt.write('#$ -cwd\n')
+                txt.write('#$ -j y\n')
+                txt.write('#$ -S /bin/bash\n')
+                txt.write('#$ -l h_cpu=168:00:00\n')
+                txt.write('#\n')
+                txt.write('\n')
+                txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
+                txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
+                txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
+                txt.write('#$ -pe threads 1 				#Change the last field to the number of processors desired per task\n')
+                txt.write('#\n')
+                txt.write('# Change the following to #$ and set the amount of memory you need\n')
+                txt.write('# per-slot if you are getting out-of-memory errors using the\n')
+                txt.write('# default:\n')
+                txt.write('#$ -l m_mem_free=4G\n')
+                txt.write('\n')
+                txt.write('source /etc/profile.d/valet.sh\n')
+                txt.write('\n')
+                txt.write('# Use vpkg_require to setup the environment:\n')
+                txt.write('vpkg_require intel/2016\n')
+                txt.write('\n')
+                txt.write('# Ensure that the OpenMP runtime knows how many processors to use;\n')
+                txt.write('# Grid Engine automatically sets NSLOTS to the number of cores granted\n')
+                txt.write('# to this job:\n')
+                txt.write('export OMP_NUM_THREADS=$NSLOTS\n')
+                txt.write('\n')
+                txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
+                txt.write('#Change to the job directory\n')
+                txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
+                txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
+                txt.write('                  #This could easily be modified to take a prefix; ask me how.\n')
+                txt.write('\n')
+                txt.write('# Now append whatever commands you use to run your OpenMP code:\n')
+                txt.write(self.runtemplate.exe_file)
+            
+            else:       # Squidward
+            
+                txt.write('#!/bin/bash\n')
+                txt.write('#$ -cwd\n')
+                txt.write('#$ -j y\n')
+                txt.write('#$ -S /bin/bash\n')
+                txt.write('#\n')
+                txt.write('\n')
+                txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
+                txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
+                txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
+                txt.write('#$ -pe openmpi-smp 1 				#Change the last field to the number of processors desired per task\n')
+                txt.write('\n')
+                txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
+                txt.write('#Change to the job directory\n')
+                txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
+                txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
+                txt.write('\n\n')
+                txt.write(self.runtemplate.exe_file)
+    
+        # Call to system to submit the job array
         os.chdir(self.ParentFolder)
         os.system('qsub ' + os.path.join(self.ParentFolder, 'zacros_submit_JA.qs'))
     
-    def WaitForJobs(self):
-        
+        # Wait for jobs to be done
         all_jobs_done = False
         while not all_jobs_done:
             time.sleep(60)
             all_jobs_done = True
-            for job in self.runList:
-                if not job.CheckComplete():
+            for fldr in self.run_dirs:
+                self.runtemplate.Path = fldr
+                if not self.runtemplate.CheckComplete():
                     all_jobs_done = False
+                    
+        print 'Jobs in ' + self.ParentFolder + ' have finished'
     
-    def RunAllJobs(self):       # Serial version of running all jobs
+    def RunAllJobs_serial(self):       # Serial version of running all jobs
 
-        for job in self.runList:
-            job.Run_sim()
+        # loop over array of directories and execute the Zacros executable in that folder
+        for fldr in self.run_dirs:
+            self.runtemplate.Path = fldr
+            self.runtemplate.Run_sim()
     
-    def ReadMultipleRuns(self):
+    def ReadMultipleRuns(self):     # Can take ~1 minutes to use this method
         
         print 'Reading all runs in ' + self.ParentFolder
-        self.runList = []
-        DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(os.path.join(self.ParentFolder, d))]      # List all folders in ParentFolder
-        for direct in DirList:
-            run = KMC_Run()
-            run.Path = os.path.join(self.ParentFolder, direct)
-            if run.CheckComplete():
-                self.runList.append(run)
-        self.n_runs = len(self.runList)
-
-        for job in self.runList:
-            job.ReadAllOutput()
+        
+        dummy_run = KMC_Run()       # Use this to transfer information
+        
+        # If directory list is empty, fill it with the directories in the current folder which have finished jobs
+        if self.run_dirs == []:
+        
+            DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(os.path.join(self.ParentFolder, d))]      # List all folders in ParentFolder
+            
+            for direct in DirList:
+            
+                full_direct = os.path.join(self.ParentFolder, direct)
+                dummy_run.Path = full_direct
+                
+                if dummy_run.CheckComplete():
+                    self.run_dirs.append(full_direct)
+                    
+            self.n_runs = len(self.runList)
+        
+        
+        for fldr in self.run_dirs:
+            dummy_run.Path = fldr
+            dummy_run.ReadAllOutput()
+            
+            # Pass the data from this run into the larger data structures in 
+            # so you will not have to store separate KMC_Run objects
+            # The large arrays of data will be easier to process
     
     @staticmethod
     def ReadPerformance(path):

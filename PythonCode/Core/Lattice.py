@@ -23,7 +23,7 @@ class Lattice:
         self.cart_coords = []
         self.neighbor_list = ''
         self.cell_list = ''
-        self.mol_dat = ''                           # ASE-compatible object for the atomic positions
+        self.mol_dat = ''                           # ASE Atoms object for the atomic positions
 
     def PlotLattice(self, cutoff = 3.0):
         
