@@ -6,8 +6,9 @@ Created on Tue Sep 13 10:59:52 2016
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib as mat
+mat.use('Agg')
+import matplotlib.pyplot as plt
 #from ase.neighborlist import NeighborList
 
 class Lattice:

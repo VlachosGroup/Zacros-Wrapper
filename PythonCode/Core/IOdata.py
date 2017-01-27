@@ -11,7 +11,7 @@ import re
 import linecache
 import random
 
-from Helper import Helper
+from Helper import FileIO
 from Lattice import Lattice     # will implement handling of lattice data structure later
 
 class IOdata(object):
@@ -122,7 +122,7 @@ class IOdata(object):
             self.ReadStateInput()
     
     def ReadEngIn(self): 
-        RawTxt = Helper.ReadWithoutBlankLines(os.path.join(self.Path, 'energetics_input.dat'), CommentLines=False)
+        RawTxt = FileIO.ReadWithoutBlankLines(os.path.join(self.Path, 'energetics_input.dat'), CommentLines=False)
         nLines = len(RawTxt)
         
         nCluster = 0
@@ -202,7 +202,7 @@ class IOdata(object):
         self.StateInput['Type'] = 'StateInput'
     
     def ReadMechIn(self): 
-        RawTxt = Helper.ReadWithoutBlankLines(os.path.join(self.Path, 'mechanism_input.dat'),CommentLines=True)
+        RawTxt = FileIO.ReadWithoutBlankLines(os.path.join(self.Path, 'mechanism_input.dat'),CommentLines=True)
         nLines = len(RawTxt)
         StiffCorrLine = -1
         
@@ -420,13 +420,13 @@ class IOdata(object):
                 txt.write('\n')
                 for j in range(0,nVariant):
                     txt.write('  variant ' + ClusterStr['variant'][j]['Name'] + '\n')
-                    txt.write(Helper.PadStr('    site_types',25))
+                    txt.write(FileIO.PadStr('    site_types',25))
                     for k in range(0,len(ClusterStr['variant'][j]['site_types'])):
                         txt.write(ClusterStr['variant'][j]['site_types'][k] + ' ')
                     txt.write('\n')
                     if int(ClusterStr['variant'][j]['graph_multiplicity'])>0:
-                        txt.write(Helper.PadStr('    graph_multiplicity',25) + str(ClusterStr['variant'][j]['graph_multiplicity']) + '\n')
-                    txt.write(Helper.PadStr('    cluster_eng',25) + str(ClusterStr['variant'][j]['eng']) + '\n')
+                        txt.write(FileIO.PadStr('    graph_multiplicity',25) + str(ClusterStr['variant'][j]['graph_multiplicity']) + '\n')
+                    txt.write(FileIO.PadStr('    cluster_eng',25) + str(ClusterStr['variant'][j]['eng']) + '\n')
                     txt.write('  end_variant\n\n')
 #                
                 txt.write('end_cluster\n\n')
@@ -441,7 +441,7 @@ class IOdata(object):
 # Need to fix this method
         
     def WriteMechanism(self):
-        if Helper.isblank(self.scaledown_factors):
+        if FileIO.isblank(self.scaledown_factors):
             SDBool = False
         else:
             SDBool = True
@@ -482,7 +482,7 @@ class IOdata(object):
                 txt.write('\n')
                 for j in range(nVariant):
                     txt.write('  variant ' + MechStr['variant'][j]['Name'] + '\n')
-                    txt.write(Helper.PadStr('    site_types',25))
+                    txt.write(FileIO.PadStr('    site_types',25))
                     for k in range(0,len(MechStr['variant'][j]['site_types'])):
                         txt.write(MechStr['variant'][j]['site_types'][k] + ' ')
                     txt.write('\n')
@@ -490,21 +490,21 @@ class IOdata(object):
                     if SDBool:
                         StiffCorrCounter += 1
                         if self.scaledown_factors[StiffCorrCounter] != 1:                            
-                            txt.write(Helper.PadStr('    pre_expon',25) 
+                            txt.write(FileIO.PadStr('    pre_expon',25) 
                             + '{0:.5e}'.format(pre_exp))
                             txt.write('    # Pre-exponential has been rescaled by a factor of ' + 
                             '{0:.5e}'.format(self.scaledown_factors[StiffCorrCounter]) + ' \n')
                         else:
-                            txt.write(Helper.PadStr('    pre_expon',25) 
+                            txt.write(FileIO.PadStr('    pre_expon',25) 
                             + '{0:.5e}'.format(pre_exp) + '\n')
                     else:                        
-                        txt.write(Helper.PadStr('    pre_expon',25) 
+                        txt.write(FileIO.PadStr('    pre_expon',25) 
                         + '{0:.5e}'.format(pre_exp) + '\n')
-                    txt.write(Helper.PadStr('    pe_ratio',25) + 
+                    txt.write(FileIO.PadStr('    pe_ratio',25) + 
                         '{0:.5e}'.format(MechStr['variant'][j]['pe_ratio']) + '\n')
-                    txt.write(Helper.PadStr('    activ_eng',25) + str(MechStr['variant'][j]['activ_eng']) + '\n')
+                    txt.write(FileIO.PadStr('    activ_eng',25) + str(MechStr['variant'][j]['activ_eng']) + '\n')
                     if MechStr['variant'][j]['prox_factor'] != '':
-                        txt.write(Helper.PadStr('    prox_factor',25) + str(MechStr['variant'][j]['prox_factor']) + '\n')
+                        txt.write(FileIO.PadStr('    prox_factor',25) + str(MechStr['variant'][j]['prox_factor']) + '\n')
                     txt.write('  end_variant\n\n')
               
                 txt.write('end_reversible_step\n\n')
@@ -526,23 +526,23 @@ class IOdata(object):
             txt.write('n_gas_species       ' + str(self.Species['n_gas']) + '\n')
             txt.write('gas_specs_names     ')
             for i in range(0,self.Species['n_gas']):
-                txt.write(Helper.PadStr(self.Species['gas_spec'][i],14) + ' ')
+                txt.write(FileIO.PadStr(self.Species['gas_spec'][i],14) + ' ')
                 
             GasList  = ['gas_energies','gas_molec_weights','gas_molar_fracs']
             GasList2 = ['gas_eng','gas_MW','gas_molfrac']
             for j in range(0,len(GasList)):
-                txt.write('\n' + Helper.PadStr(GasList[j],19) + ' ')
+                txt.write('\n' + FileIO.PadStr(GasList[j],19) + ' ')
                 for i in range(0,self.Species['n_gas']):
-                    txt.write(Helper.PadStr( '{0:.5f}'.format(self.Species[GasList2[j]][i]),14) + ' ')
+                    txt.write(FileIO.PadStr( '{0:.5f}'.format(self.Species[GasList2[j]][i]),14) + ' ')
 
             txt.write('\n\n')
             txt.write('n_surf_species      ' + str(self.Species['n_surf']) + '\n')
             txt.write('surf_specs_names    ')
             for i in range(0,self.Species['n_surf']):
-                txt.write(Helper.PadStr(self.Species['surf_spec'][i],14) + ' ')
+                txt.write(FileIO.PadStr(self.Species['surf_spec'][i],14) + ' ')
             txt.write('\nsurf_specs_dent     ')
             for i in range(0,self.Species['n_surf']):
-                txt.write(Helper.PadStr(str(self.Species['surf_dent'][i]),15))
+                txt.write(FileIO.PadStr(str(self.Species['surf_dent'][i]),15))
             txt.write('\n\n')    
             
             if self.Report['hist'][0] == 'off':
@@ -614,7 +614,7 @@ class IOdata(object):
                 with open(os.path.join(self.Path, 'state_input.dat'),'w') as txt:
                     txt.write('initial_state\n')
                     for i in range(0,nAds):
-                        txt.write('  seed_on_sites  ' + Helper.PadStr(self.Species['surf_spec'][SpecIden[i]-1],10))
+                        txt.write('  seed_on_sites  ' + FileIO.PadStr(self.Species['surf_spec'][SpecIden[i]-1],10))
                         for j in range(0,len(DentInfo[i])):
                             for k in range(0,len(DentInfo[i])):
                                 if j + 1 == DentInfo[i][k]:
@@ -711,7 +711,7 @@ class IOdata(object):
             nuList.append(nu)
 
         self.Reactions['Nu']      = nuList
-        self.Reactions['UniqNu']  = Helper.ReturnUnique(nuList).tolist()    
+        self.Reactions['UniqNu']  = FileIO.ReturnUnique(nuList).tolist()    
     
     def ReadHistory(self):
         
@@ -725,7 +725,7 @@ class IOdata(object):
         nSites = len(RawTxt) - 2
         self.n_sites = nSites
         HistPath = os.path.join(self.Path, 'history_output.txt')
-        nLines = Helper.rawbigcount(HistPath)
+        nLines = FileIO.rawbigcount(HistPath)
         self.n_snapshots = (nLines-6)/(nSites+2)
         self.History = []
         self.snap_times = []

@@ -11,7 +11,7 @@ import copy
 
 from Replicates import Replicates
 from KMC_Run import KMC_Run
-from Helper import Helper
+from Helper import FileIO
 
 class RateRescaling:
     
@@ -24,10 +24,11 @@ class RateRescaling:
     def ReachSteadyStateAndRescale(self, Product, gas_stoich, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10, start_iter = 1, platform = 'Farber'):
 
         prev_batch = Replicates()       # Set this if the starting iteration is not 1
-
+        initial_states = []
+        
         # Placeholder variables
         if start_iter == 1:
-            Helper.ClearFolderContents(self.scale_parent_fldr)
+            FileIO.ClearFolderContents(self.scale_parent_fldr)
             SDF_vec = []        # scaledown factors for each iteration
         else:
             for i in range(start_iter-1):
@@ -102,15 +103,12 @@ class RateRescaling:
                 if include_stiff_reduc:
                     cur_batch.runtemplate.AdjustPreExponentials(SDF_vec)
                 
-            # Use continuation
-            if iteration > 1:
-                for run_ind in range(n_runs):
-                    cur_batch.runList[run_ind].StateInput['Type'] = 'history'
-                    cur_batch.runList[run_ind].StateInput['Struct'] = prev_batch.runList[run_ind].History[-1]
+                # Use continuation
+                initial_states = prev_batch.History_final_snaps
             
             # Run jobs and read output
-            cur_batch.BuildJobFiles(server = platform)
-            cur_batch.SubmitJobArray()
+            cur_batch.BuildJobFiles(init_states = initial_states)
+            cur_batch.SubmitJobArray(server = platform)
             cur_batch.ReadMultipleRuns()
             cum_batch = Replicates.time_sandwich(prev_batch, cur_batch)         # combine with previous data          
             

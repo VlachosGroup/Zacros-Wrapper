@@ -13,9 +13,13 @@ import matplotlib.pyplot as plt
 import copy
 
 from KMC_Run import KMC_Run
-from Stats import Stats
-from Helper import Helper
+from Helper import FileIO, Stats
 import time
+
+'''
+Has data from muliple trajectories with the same input, but different 
+random seeds and possibly different initial states
+'''
 
 class Replicates:
     
@@ -33,6 +37,15 @@ class Replicates:
         
         # Output data taken accross all trajectories
         # Put here various multidimensional numpy arrays which will make it easier to do statistics
+        self.t_vec = []                     # times at which data is recorded
+        self.species_pops = []
+        self.rxn_freqs = []
+        self.History_final_snaps = []
+        self.props = []
+        self.Props_integ = []
+        self.traj_derivs = []
+        self.events_total = []
+        self.CPU_total = []
         
         # Analysis
         self.Product = ''
@@ -46,7 +59,7 @@ class Replicates:
     
     def BuildJobFiles(self, init_states = []):
         
-        Helper.ClearFolderContents(self.ParentFolder)    
+        FileIO.ClearFolderContents(self.ParentFolder)    
         
         # List the directories and random seeds 
         self.run_dirs = []
@@ -195,45 +208,45 @@ class Replicates:
                 if dummy_run.CheckComplete():
                     self.run_dirs.append(full_direct)
                     
-            self.n_runs = len(self.runList)
+            self.n_runs = len(self.run_dirs)
         
+        # Read first job to get some information
+        dummy_run.Path = self.run_dirs[i]
+        dummy_run.ReadAllOutput()
         
-        for fldr in self.run_dirs:
-            dummy_run.Path = fldr
+        # Create arrays for data
+        # Use input data from runtemplate to properly size the arrays
+        self.t_vec = np.array(dummy_run.Specnum['t'])
+        self.n_timepoints = len(self.t_vec)
+        
+        n_specs = dummy_run.Species['n_gas'] + dummy_run.Species['n_surf']
+        self.species_pops = np.zeros([self.n_runs, self.n_timepoints, n_specs])
+        
+        self.rxn_freqs = np.zeros([self.n_runs, self.n_timepoints, dummy_run.Reactions['nrxns']])
+        self.History_final_snaps = []            # list of the final states
+        self.props = np.zeros([self.n_runs, self.n_timepoints, dummy_run.Reactions['nrxns']])
+        self.Props_integ = np.zeros([self.n_runs, self.n_timepoints, dummy_run.Reactions['nrxns']])
+        self.traj_derivs = np.zeros([self.n_runs, self.n_timepoints, dummy_run.Reactions['nrxns']])
+        self.events_total = np.zeros(self.n_runs)
+        self.CPU_total = np.zeros(self.n_runs)
+        
+        for i in range(self.n_runs):
+        
+            # Switch to folder and read output files
+            dummy_run.Path = self.run_dirs[i]
             dummy_run.ReadAllOutput()
             
             # Pass the data from this run into the larger data structures in 
             # so you will not have to store separate KMC_Run objects
             # The large arrays of data will be easier to process
-    
-    @staticmethod
-    def ReadPerformance(path):
-        
-        t_final_cum = 0
-        events_occurred_cum = 0
-        CPU_time_cum = 0        
-        n_runs = 0        
-        
-        DirList = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]      # List all folders in ParentFolder
-        for direct in DirList:
-            run = KMC_Run()
-            run.Path =  os.path.join(path, direct)
-            if run.CheckComplete():
-                run.ReadAllInput()
-                run.ReadGeneral()
-                t_final_cum += run.Performance['t_final']
-                events_occurred_cum += run.Performance['events_occurred']
-                CPU_time_cum += run.Performance['CPU_time']
-                n_runs += 1
-                
-        with open(os.path.join(path, 'Performance_summary.txt'), 'w') as txt:   
-            txt.write('----- Performance totals -----\n')
-            txt.write('number of runs: ' + str(n_runs) + '\n' )      # number of runs
-            txt.write('KMC time: {0:.3E} \n'.format(t_final_cum))      # seconds
-            txt.write('events: ' + str(events_occurred_cum) + '\n' )                                  # events
-            txt.write('CPU time: {0:.3E} \n'.format(CPU_time_cum))                       # seconds
             
-        return {'t_final_cum': t_final_cum, 'events_occurred_cum': events_occurred_cum, 'CPU_time_cum': CPU_time_cum, 'n_runs': n_runs}
+            if not dummy_run.History == []:
+                self.History_final_snaps.append(dummy_run.History[-1])
+            self.events_total[i] = dummy_run.Performance['events_occurred']
+            self.CPU_total[i] = dummy_run.Performance['CPU_time']
+            
+        print 'Total CPU time is ' + str(np.sum(self.CPU_total)) + ' seconds.'
+    
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
@@ -313,7 +326,7 @@ class Replicates:
         
         ''' Plot results '''
         
-        Helper.PlotOptions()
+        FileIO.PlotOptions()
         plt.figure()
             
         labels = []
@@ -331,7 +344,7 @@ class Replicates:
         
     def PlotSensitivities(self): 
         
-        Helper.PlotOptions()
+        FileIO.PlotOptions()
         plt.figure()
         width = 0.8
         ind = 0

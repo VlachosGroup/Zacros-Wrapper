@@ -17,7 +17,7 @@ import sys
 import subprocess
 import copy
 import matplotlib.animation as animation
-from Helper import Helper
+from Helper import FileIO
 
 from scipy.optimize import curve_fit
 
@@ -276,7 +276,7 @@ class KMC_Run(IOdata):
             time_vecs.append(self.Specnum['t'])
             surf_spec_vecs.append(self.Specnum['spec'][:,i])
         
-        Helper.PlotTrajectory(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['surf_spec'], fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
+        FileIO.PlotTrajectory(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['surf_spec'], fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
     
     def PlotGasSpecVsTime(self):
         
@@ -286,10 +286,10 @@ class KMC_Run(IOdata):
             time_vecs.append(self.Specnum['t'])
             gas_spec_vecs.append(self.Specnum['spec'][:,i + len(self.Species['surf_spec']) ])
         
-        Helper.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['gas_spec'], fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
+        FileIO.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['gas_spec'], fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
         
     def PlotNetGasRxnVsTime(self):
-        Helper.PlotTrajectory([self.Specnum['t']], [self.net_rxn], xlab = 'Time (s)', ylab = 'spec. pop.', fname = os.path.join(self.Path, 'net_rxn_vs_time.png'))
+        FileIO.PlotTrajectory([self.Specnum['t']], [self.net_rxn], xlab = 'Time (s)', ylab = 'spec. pop.', fname = os.path.join(self.Path, 'net_rxn_vs_time.png'))
         
     def PlotPropsVsTime(self):
         
@@ -302,7 +302,7 @@ class KMC_Run(IOdata):
             gas_spec_vecs.append(self.props_avg[:,i])
             labels.append(self.Reactions['names'][i/2])
         
-        Helper.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'props (1/s)', series_labels = labels, fname = os.path.join(self.Path, 'props_vs_time.png'))
+        FileIO.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'props (1/s)', series_labels = labels, fname = os.path.join(self.Path, 'props_vs_time.png'))
         
     def PlotIntPropsVsTime(self, save = True):      # Helps analyze the sensitivty analysis
         
@@ -315,9 +315,9 @@ class KMC_Run(IOdata):
             gas_spec_vecs.append(self.Binary['propCounter'][:,i])
             labels.append(self.Reactions['names'][i/2])
         
-        Helper.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'int props', series_labels = labels, fname = os.path.join(self.Path + 'int_props_vs_time.png'))
+        FileIO.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'int props', series_labels = labels, fname = os.path.join(self.Path + 'int_props_vs_time.png'))
         
-        Helper.PlotOptions
+        FileIO.PlotOptions
         plt.figure()
     
     def PlotWVsTime(self):      # Helps analyze the sensitivty analysis
@@ -331,7 +331,7 @@ class KMC_Run(IOdata):
                 W_vecs.append( self.Binary['W_sen_anal'][:,i])
                 labels.append(self.Reactions['names'][i])
         
-        Helper.PlotTrajectory(time_vecs, W_vecs, xlab = 'Time (s)', ylab = 'traj. deriv.', series_labels = labels, fname = os.path.join(self.Path + 'traj_deriv_vs_time.png'))
+        FileIO.PlotTrajectory(time_vecs, W_vecs, xlab = 'Time (s)', ylab = 'traj. deriv.', series_labels = labels, fname = os.path.join(self.Path + 'traj_deriv_vs_time.png'))
     
     def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1.0):
         
@@ -341,7 +341,7 @@ class KMC_Run(IOdata):
         if time_norm:
             event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
         
-        Helper.PlotOptions
+        FileIO.PlotOptions
         plt.figure()        
         
         width = 0.2
@@ -406,8 +406,8 @@ class KMC_Run(IOdata):
 
 
     def PlotRateVsTime(self):
-        Helper.PlotTrajectory([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_vs_time.png'))
-        Helper.PlotTrajectory([self.Specnum['t'][1::]], [self.int_rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_erg_vs_time.png'))
+        FileIO.PlotTrajectory([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_vs_time.png'))
+        FileIO.PlotTrajectory([self.Specnum['t'][1::]], [self.int_rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_erg_vs_time.png'))
 
     def LatticeMovie(self):       # Need to complete this function by plotting adsorbates from the history file data
 
@@ -417,7 +417,7 @@ class KMC_Run(IOdata):
 #        self.KMC_lat.PlotLattice()
         border = np.dot(np.array([[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0],[0.0,0.0]]), lat)
         
-        Helper.PlotOptions
+        FileIO.PlotOptions
 
         fig = plt.figure()
         ax = plt.axes(xlim=[np.min(border[:,0]), np.max(border[:,0])], ylim=[np.min(border[:,1]), np.max(border[:,1])])

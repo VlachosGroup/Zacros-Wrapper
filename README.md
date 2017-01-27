@@ -1,4 +1,4 @@
-# ZacrosWrapper
-Python wrapper for the Zacros KMC code
+# Zacros-Wrapper
+Python wrapper for the Zacros kinetic Monte Carlo (KMC) code
 
-Please see repository wiki page (https://github.com/VlachosGroup/ZacrosWrapper/wiki) for detailed documentation.
+Documentation available at https://github.com/VlachosGroup/ZacrosWrapper/wiki.
