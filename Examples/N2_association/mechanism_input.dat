@@ -1,0 +1,845 @@
+# N* association on Ni/Pt, island with two types of steps
+
+mechanism
+
+# fcc_Pt fcc_edge_Pt hcp_Pt hcp_edge_Pt top_edge_Ni top_corner_Ni top_Pt fcc_edge_Ni_3fcc hcp_edge_Ni_3fcc step_110 step_100 fcc_Ni hcp_Ni top_Ni fcc_edge_Ni_3hcp hcp_edge_Ni_3hcp
+
+############################################################################
+
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_Pt-hcp_Pt # ElemStep 1 
+    site_types fcc_Pt hcp_Pt
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  1.5 #0.79
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Pt_3fcc-hcp_edge_Pt_3fcc # ElemStep 1 
+    site_types fcc_edge_Pt_3fcc hcp_edge_Pt_3fcc
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.71 #0.71
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Pt_3hcp-hcp_edge_Pt_3hcp # ElemStep 1 
+    site_types fcc_edge_Pt_3hcp hcp_edge_Pt_3hcp
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.88 #0.88
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Pt_3fcc-hcp_edge_Pt_3hcp # ElemStep 1 
+    site_types fcc_edge_Pt_3fcc hcp_edge_Pt_3hcp
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.71 #0.71
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Pt_3hcp-hcp_edge_Pt_3fcc # ElemStep 1 
+    site_types fcc_edge_Pt_3hcp hcp_edge_Pt_3fcc
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.88 #0.88
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Pt_3fcc-hcp_2edge_Pt_3fcc # ElemStep 1 
+    site_types fcc_edge_Pt_3fcc hcp_2edge_Pt_3fcc
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.6 #0.50
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant hcp_edge_Pt_3hcp-fcc_Pt # ElemStep 1 
+    site_types hcp_edge_Pt_3hcp fcc_Pt 
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.62 #0.62
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant hcp_2edge_Pt_3fcc-fcc_Pt # ElemStep 1 
+    site_types  hcp_2edge_Pt_3fcc fcc_Pt
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.82 #0.62
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Pt_3fcc-step_110 # ElemStep 1 
+    site_types fcc_edge_Pt_3fcc step_110
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.62 #0.52
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant hcp_edge_Pt_3fcc-step_110 # ElemStep 1 
+    site_types hcp_edge_Pt_3fcc step_110
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.5 #0.27
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Ni_3fcc-hcp_edge_Ni_3fcc # ElemStep 1 
+    site_types fcc_edge_Ni_3fcc hcp_edge_Ni_3fcc
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  1.2 #0.47
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Ni_3hcp-hcp_edge_Ni_3hcp # ElemStep 1 
+    site_types fcc_edge_Ni_3hcp hcp_edge_Ni_3hcp
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.9 #0.44
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Ni_3fcc-hcp_edge_Ni_3hcp # ElemStep 1 
+    site_types fcc_edge_Ni_3fcc hcp_edge_Ni_3hcp
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  1.1 #0.47
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant hcp_edge_Ni_3fcc-fcc_edge_Ni_3hcp # ElemStep 1 
+    site_types hcp_edge_Ni_3fcc fcc_edge_Ni_3hcp
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.95  #0.47
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Ni_3fcc-step_110 # ElemStep 1 
+    site_types fcc_edge_Ni_3fcc step_110
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    prox_factor 0.5
+    activ_eng  1.4 #0.81
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_Ni-hcp_Ni # ElemStep 1 
+    site_types fcc_Ni hcp_Ni
+    pre_expon  7.03e+012  #7.0e+012
+    pe_ratio   1.00
+    activ_eng  1.2  #0.75
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_Ni-hcp_edge_Ni_3fcc # ElemStep 1 
+    site_types fcc_Ni hcp_edge_Ni_3fcc
+    pre_expon  7.03e+012  #7.0e+012
+    pe_ratio   1.00
+    activ_eng  1.15 #0.75
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Ni_3hcp-hcp_Ni # ElemStep 1 
+    site_types fcc_edge_Ni_3hcp hcp_Ni
+    pre_expon  7.03e+012  #7.0e+012
+    pe_ratio   1.00
+    activ_eng  0.75
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant fcc_edge_Pt_3hcp-step_100 # ElemStep 1 
+    site_types fcc_edge_Pt_3hcp step_100
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    activ_eng  0.7 #0.36
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N*_diff
+  sites 2
+  neighboring 1-2
+  initial
+    1 N*    1
+    2 *     1
+  final
+    1 *     1
+    2 N*    1
+  variant hcp_edge_Ni_3hcp-step_100 # ElemStep 1 
+    site_types hcp_edge_Ni_3hcp step_100
+    pre_expon  7.03e+012
+    pe_ratio   1.00
+    prox_factor 0.5
+    activ_eng   1.6 #1.21
+    # delta_eng_0 = 0.10
+  end_variant
+end_reversible_step
+
+############################################################################
+
+############################################################################
+
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_Pt-fcc_Pt # ElemStep 3 
+    site_types top_Pt fcc_Pt fcc_Pt
+    pre_expon  9.23e+012  #devided by 2
+    pe_ratio   1.11
+    prox_factor 0.217
+    activ_eng  1.96
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_Ni-fcc_Ni # ElemStep 3 
+    site_types top_Ni fcc_Ni fcc_Ni
+    pre_expon  9.23e+012  #devided by 2
+    pe_ratio   1.11
+    prox_factor 0.217
+    activ_eng  2.29
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_edge_Ni_3fcc-fcc_edge_Ni_3fcc # ElemStep 3 
+    site_types top_edge_Ni fcc_edge_Ni_3fcc fcc_edge_Ni_3fcc
+    pre_expon  9.23e+012  #devided by 2
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  2.29
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_edge_Ni_3hcp-fcc_edge_Ni_3hcp # ElemStep 3 
+    site_types top_Ni fcc_edge_Ni_3hcp fcc_edge_Ni_3hcp
+    pre_expon  9.23e+012  #devided by 2
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  2.29
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_Pt-fcc_edge_Pt_3fcc # ElemStep 3 
+    site_types top_Pt fcc_Pt fcc_edge_Pt_3fcc
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.96
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_Pt-fcc_edge_Pt_3hcp # ElemStep 3 
+    site_types top_Pt fcc_Pt fcc_edge_Pt_3hcp
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.96
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_edge_Pt_3fcc-fcc_edge_Pt_3fcc # ElemStep 3 
+    site_types top_Pt fcc_edge_Pt_3fcc fcc_edge_Pt_3fcc
+    pre_expon  9.23e+012  #devided by 2
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.96
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_edge_Pt_3hcp-fcc_edge_Pt_3hcp # ElemStep 3 
+    site_types top_Pt fcc_edge_Pt_3hcp fcc_edge_Pt_3hcp
+    pre_expon  9.23e+012  #devided by 2
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.96
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant fcc_edge_Pt_3fcc-fcc_edge_Pt_3hcp # ElemStep 3 
+    site_types top_Pt fcc_edge_Pt_3fcc fcc_edge_Pt_3hcp
+    pre_expon  9.23e+012  #devided by 2
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.96
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 4
+  neighboring 1-2 2-3 2-4 1-4
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+  variant cornerNi-fcc_edge_Ni_3fcc-fcc_edge_Pt_3fcc # ElemStep 3 
+    site_types top_corner_Ni step_110 fcc_edge_Ni_3fcc fcc_edge_Pt_3fcc
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.86
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 4
+  neighboring 1-2 2-3 2-4 1-4
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+  variant edgeNi-fcc_edge_Ni_3fcc-fcc_edge_Pt_3fcc # ElemStep 3 
+    site_types top_edge_Ni step_110 fcc_edge_Ni_3fcc fcc_edge_Pt_3fcc
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.86
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+
+reversible_step 2N*_association
+  sites 4
+  neighboring 1-2 1-3 2-3 2-4 
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+  variant cornerNi-step_110-hcp_2edge_Pt_3fcc # ElemStep 3 
+    site_types top_corner_Ni fcc_edge_Pt_3fcc step_110 hcp_2edge_Pt_3fcc
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.28
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 4
+  neighboring 1-2 1-3 2-3 2-4 
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+  variant edgeNi-step_110-hcp_2edge_Pt_3fcc # ElemStep 3 
+    site_types top_edge_Ni fcc_edge_Pt_3fcc step_110 hcp_2edge_Pt_3fcc
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.28
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+
+reversible_step 2N*_association
+  sites 3
+  neighboring 1-2 2-3 1-3
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 N*    1
+    3 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+  variant hcp_edge_Ni_3hcp-hcp_edge_Ni_3hcp # ElemStep 3 
+    site_types top_edge_Ni hcp_edge_Ni_3hcp hcp_edge_Ni_3hcp
+    pre_expon  9.23e+012  #devided by 2
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.93
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 4
+  neighboring 1-2 2-3 2-4 1-4
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+  variant cornerNi-fcc_edge_Ni_3hcp-fcc_edge_Pt_3hcp # ElemStep 3 
+    site_types top_corner_Ni step_100 hcp_edge_Ni_3hcp fcc_edge_Pt_3hcp
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.60
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 4
+  neighboring 1-2 2-3 2-4 1-4
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+  variant edgeNi-fcc_edge_Ni_3hcp-fcc_edge_Pt_3hcp # ElemStep 3 
+    site_types top_edge_Ni step_100 hcp_edge_Ni_3hcp fcc_edge_Pt_3hcp
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  1.60
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 4
+  neighboring 1-2 1-3 2-3 2-4 
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+  variant cornerNi-step_100-hcp_edge_Pt_3hcp # ElemStep 3 
+    site_types top_corner_Ni fcc_edge_Pt_3hcp step_100 hcp_edge_Pt_3hcp
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  0.47
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+reversible_step 2N*_association
+  sites 4
+  neighboring 1-2 1-3 2-3 2-4 
+  initial # (entitynumber, species, dentate)
+    1 *     1
+    2 *     1
+    3 N*    1
+    4 N*    1
+  final
+    1 N2*   1
+    2 *     1
+    3 *     1
+    4 *     1
+  variant edgeNi-step_100-hcp_edge_Pt_3hcp # ElemStep 3 
+    site_types top_edge_Ni fcc_edge_Pt_3hcp step_100 hcp_edge_Pt_3hcp
+    pre_expon  1.85e+013
+    prox_factor 0.217
+    pe_ratio   1.11
+    activ_eng  0.47
+    # delta_eng_0 = 0.32
+  end_variant
+end_reversible_step
+############################################################################
+
+############################################################################
+
+reversible_step N2_desorption
+  gas_reacs_prods  N2 1
+  sites 1
+  initial
+    1 N2*  1
+  final
+    1 *    1
+  variant top_Pt # ElemStep 5 
+    site_types top_Pt 
+    pre_expon  2.76e+016
+    pe_ratio   3.59e+008
+    activ_eng  -0.064
+    # delta_eng_0 = -0.44
+  end_variant
+end_reversible_step
+
+############################################################################
+
+reversible_step N2_desorption
+  gas_reacs_prods  N2 1
+  sites 1
+  initial
+    1 N2*  1
+  final
+    1 *    1
+  variant top_edge_Ni # ElemStep 5 
+    site_types top_edge_Ni 
+    pre_expon  1.4e+016
+    pe_ratio   1.41e+008
+    activ_eng  0.45
+    # delta_eng_0 = -0.44
+  end_variant
+end_reversible_step
+
+############################################################################
+reversible_step N2_desorption
+  gas_reacs_prods  N2 1
+  sites 1
+  initial
+    1 N2*  1
+  final
+    1 *    1
+  variant top_corner_Ni # ElemStep 5 
+    site_types top_corner_Ni 
+    pre_expon  1.4e+016
+    pe_ratio   1.41e+008
+    activ_eng  0.68
+    # delta_eng_0 = -0.44
+  end_variant
+end_reversible_step
+
+############################################################################
+
+end_mechanism
+

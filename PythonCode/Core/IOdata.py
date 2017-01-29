@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Sep 08 16:58:21 2016
-
-@author: mpnun
-"""
-
 import os
 import numpy as np
 import re

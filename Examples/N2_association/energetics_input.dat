@@ -1,0 +1,1047 @@
+# Energetics for N2 association on Ni/Pt
+  
+energetics
+  
+############################################################################
+  
+cluster N2_point
+  
+  sites 1
+  lattice_state
+    1 N2*  1
+    
+  variant top_Pt
+    site_types          top_Pt
+    graph_multiplicity  1
+    cluster_eng         0.06  #with ZPE
+  end_variant
+  
+end_cluster
+  
+############################################################################
+
+cluster N2_point
+  
+  sites 1
+  lattice_state
+    1 N2*  1
+    
+  variant top_corner_Ni
+    site_types          top_corner_Ni
+    graph_multiplicity  1
+    cluster_eng         -0.68   #with ZPE
+  end_variant
+  
+end_cluster
+  
+############################################################################
+cluster N2_point
+  
+  sites 1
+  lattice_state
+    1 N2*  1
+    
+  variant top_edge_Ni
+    site_types          top_edge_Ni
+    graph_multiplicity  1
+    cluster_eng         -0.45  #with ZPE
+  end_variant
+  
+end_cluster
+  
+############################################################################
+cluster N2_point
+  
+  sites 1
+  lattice_state
+    1 N2*  1
+    
+  variant top_Ni
+    site_types          top_Ni
+    graph_multiplicity  1
+    cluster_eng         -0.60  #with ZPE
+  end_variant
+  
+end_cluster
+  
+############################################################################
+
+############################################################################
+  
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1
+    
+  variant fcc_Pt
+    site_types          fcc_Pt
+    graph_multiplicity  1
+    cluster_eng         0.43  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1
+    
+  variant hcp_Pt
+    site_types          hcp_Pt
+    graph_multiplicity  1
+    cluster_eng         0.60  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1
+    
+  variant hcp_Ni
+    site_types          hcp_Ni
+    graph_multiplicity  1
+    cluster_eng         -0.52  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1
+    
+  variant fcc_Ni
+    site_types          fcc_Ni
+    graph_multiplicity  1
+    cluster_eng         -0.58  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1
+    
+  variant fcc_edge_Pt_3fcc
+    site_types          fcc_edge_Pt_3fcc
+    graph_multiplicity  1
+    cluster_eng         0.97  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1
+    
+  variant fcc_edge_Pt_3hcp
+    site_types          fcc_edge_Pt_3hcp
+    graph_multiplicity  1
+    cluster_eng         0.83 #  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant hcp_edge_Pt_3fcc
+    site_types          hcp_edge_Pt_3fcc
+    graph_multiplicity  1
+    cluster_eng         1.13  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant hcp_edge_Pt_3hcp
+    site_types          hcp_edge_Pt_3hcp
+    graph_multiplicity  1
+    cluster_eng         1.02  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant hcp_2edge_Pt_3fcc
+    site_types          hcp_2edge_Pt_3fcc
+    graph_multiplicity  1
+    cluster_eng         0.81  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant fcc_edge_Ni_3fcc
+    site_types          fcc_edge_Ni_3fcc
+    graph_multiplicity  1
+    cluster_eng         -0.43  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant fcc_edge_Ni_3hcp
+    site_types          fcc_edge_Ni_3hcp
+    graph_multiplicity  1
+    cluster_eng         -0.05  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant hcp_edge_Ni_3hcp
+    site_types          hcp_edge_Ni_3hcp
+    graph_multiplicity  1
+    cluster_eng         -0.47  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant hcp_edge_Ni_3fcc
+    site_types          hcp_edge_Ni_3fcc
+    graph_multiplicity  1
+    cluster_eng         -0.28  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+  cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant step_100
+    site_types          step_100
+    graph_multiplicity  1
+    cluster_eng         0.72  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+  cluster N_point
+  
+  sites 1
+  lattice_state
+    1 N*  1 
+    
+  variant step_110
+    site_types          step_110
+    graph_multiplicity  1
+    cluster_eng         0.34  #with ZPE
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+############################################################################
+  
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Ni_3fcc
+    site_types          hcp_edge_Ni_3fcc hcp_edge_Ni_3fcc
+    graph_multiplicity  2
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Ni_3hcp
+    site_types          hcp_edge_Ni_3hcp hcp_edge_Ni_3hcp
+    graph_multiplicity  2
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_Ni
+    site_types          hcp_Ni hcp_Ni
+    graph_multiplicity  2
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_Pt
+    site_types          hcp_Pt hcp_Pt
+    graph_multiplicity  2
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Ni_3fcc-hcp_Ni
+    site_types          hcp_edge_Ni_3fcc hcp_Ni
+    graph_multiplicity  1
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Ni_3hcp-hcp_Ni
+    site_types          hcp_edge_Ni_3hcp hcp_Ni
+    graph_multiplicity  1
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3fcc
+    site_types          fcc_edge_Pt_3fcc fcc_edge_Pt_3fcc
+    graph_multiplicity  2
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3hcp
+    site_types          fcc_edge_Pt_3hcp fcc_edge_Pt_3hcp
+    graph_multiplicity  2
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3fcc-fcc_edge_Pt_3hcp
+    site_types          fcc_edge_Pt_3fcc fcc_edge_Pt_3hcp
+    graph_multiplicity  1
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3hcp-fcc_Pt
+    site_types          fcc_edge_Pt_3hcp fcc_Pt
+    graph_multiplicity  1
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3fcc-fcc_Pt
+    site_types          fcc_edge_Pt_3fcc fcc_Pt
+    graph_multiplicity  1
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc-Pt
+    site_types          fcc_Pt fcc_Pt
+    graph_multiplicity  2
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3fcc
+    site_types          fcc_edge_Ni_3fcc fcc_edge_Ni_3fcc
+    graph_multiplicity  2
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3hcp
+    site_types          fcc_edge_Ni_3hcp fcc_edge_Ni_3hcp
+    graph_multiplicity  2
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_Ni
+    site_types          fcc_Ni fcc_Ni
+    graph_multiplicity  2
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3fcc-fcc_Ni
+    site_types          fcc_edge_Ni_3fcc fcc_Ni
+    graph_multiplicity  1
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3hcp-fcc_Ni
+    site_types          fcc_edge_Ni_3hcp fcc_Ni
+    graph_multiplicity  1
+    cluster_eng         0.37
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3hcp-step_100
+    site_types          fcc_edge_Pt_3hcp step_100
+    graph_multiplicity  1
+    cluster_eng         0.41
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+ 
+ cluster N_pair
+  
+  sites 3
+  neighboring 1-2 2-3
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    & &   &
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3hcp-hcp_edge_Ni_3hcp
+    site_types          fcc_edge_Pt_3hcp step_100 hcp_edge_Ni_3hcp
+    graph_multiplicity  1
+    cluster_eng         0.14
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+ cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3fcc-hcp_edge_Ni_3fcc
+    site_types          fcc_edge_Ni_3fcc  hcp_edge_Ni_3fcc
+    graph_multiplicity  1
+    cluster_eng         2.07
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+ cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3hcp-hcp_edge_Ni_3hcp
+    site_types          fcc_edge_Ni_3hcp  hcp_edge_Ni_3hcp
+    graph_multiplicity  1
+    cluster_eng         2.07
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+ cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3hcp-hcp_edge_Ni_3fcc
+    site_types          fcc_edge_Ni_3hcp  hcp_edge_Ni_3fcc
+    graph_multiplicity  1
+    cluster_eng         2.07
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+ cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3fcc-hcp_edge_Ni_3hcp
+    site_types          fcc_edge_Ni_3fcc  hcp_edge_Ni_3hcp
+    graph_multiplicity  1
+    cluster_eng         2.07
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Ni_3hcp-step_100
+    site_types          hcp_edge_Ni_3hcp  step_100
+    graph_multiplicity  1
+    cluster_eng         2.04
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3fcc-hcp_edge_Pt_3fcc
+    site_types          fcc_edge_Pt_3fcc hcp_edge_Pt_3fcc
+    graph_multiplicity  1
+    cluster_eng         1.54
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3hcp-hcp_edge_Pt_3hcp
+    site_types          fcc_edge_Pt_3hcp hcp_edge_Pt_3hcp
+    graph_multiplicity  1
+    cluster_eng         1.54
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3fcc-hcp_edge_Pt_3hcp
+    site_types          fcc_edge_Pt_3fcc hcp_edge_Pt_3hcp
+    graph_multiplicity  1
+    cluster_eng         1.54
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3hcp-hcp_edge_Pt_3fcc
+    site_types          fcc_edge_Pt_3hcp hcp_edge_Pt_3fcc
+    graph_multiplicity  1
+    cluster_eng         1.54
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3fcc-hcp_2edge_Pt_3fcc
+    site_types          fcc_edge_Pt_3fcc hcp_2edge_Pt_3fcc
+    graph_multiplicity  1
+    cluster_eng         1.54
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_Pt-hcp_edge_Pt_3hcp
+    site_types          fcc_Pt hcp_edge_Pt_3hcp
+    graph_multiplicity  1
+    cluster_eng         1.54
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_Pt-hcp_2edge_Pt_3fcc
+    site_types          fcc_Pt hcp_2edge_Pt_3fcc
+    graph_multiplicity  1
+    cluster_eng         1.54
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_Pt-hcp_Pt
+    site_types          fcc_Pt hcp_Pt
+    graph_multiplicity  1
+    cluster_eng         1.54
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3fcc-step_110
+    site_types          fcc_edge_Pt_3fcc step_110
+    graph_multiplicity  1
+    cluster_eng         0.41
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 2
+  neighboring 1-2
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Pt_3fcc-step_110
+    site_types          hcp_edge_Pt_3fcc step_110
+    graph_multiplicity  1
+    cluster_eng         0.41
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+cluster N_pair
+  
+  sites 3
+  neighboring 1-2 2-3
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    & &   &
+    2 N*  1
+    
+  variant 2N_fcc_edge_Pt_3fcc-fcc_edge_Ni_3fcc
+    site_types          fcc_edge_Pt_3fcc step_110 fcc_edge_Ni_3fcc
+    graph_multiplicity  1
+    cluster_eng         0.11
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_fcc_edge_Ni_3fcc-step_110
+    site_types          fcc_edge_Ni_3fcc  step_110
+    graph_multiplicity  1
+    cluster_eng         1.81
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 3
+  neighboring 1-2 2-3
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    & &   &
+    2 N*  1
+    
+  variant 2N_step_110-hcp_2edge_Pt_3fcc
+    site_types          step_110 fcc_edge_Pt_3fcc hcp_2edge_Pt_3fcc
+    graph_multiplicity  1
+    cluster_eng         0.07
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_step_110
+    site_types          step_110  step_110
+    graph_multiplicity  2
+    cluster_eng         0.26
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_step_100
+    site_types          step_100  step_100
+    graph_multiplicity  2
+    cluster_eng         0.23
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_2edge_Pt_3fcc
+    site_types          hcp_2edge_Pt_3fcc hcp_2edge_Pt_3fcc
+    graph_multiplicity  2
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Pt_3fcc
+    site_types          hcp_edge_Pt_3fcc hcp_edge_Pt_3fcc
+    graph_multiplicity  2
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Pt_3hcp
+    site_types          hcp_edge_Pt_3hcp hcp_edge_Pt_3hcp
+    graph_multiplicity  2
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+  cluster N_pair
+  
+  sites 2
+  neighboring 1-2 
+  lattice_state # (entitynumber, species, dentate)
+    1 N*  1
+    2 N*  1
+    
+  variant 2N_hcp_edge_Pt_3fcc-hcp_edge_Pt_3hcp
+    site_types          hcp_edge_Pt_3fcc hcp_edge_Pt_3hcp
+    graph_multiplicity  2
+    cluster_eng         0.28
+  end_variant
+  
+ end_cluster 
+
+############################################################################
+
+
+end_energetics

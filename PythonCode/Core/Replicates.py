@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Apr 03 15:20:36 2016
-
-@author: robieta
-"""
-
 import os
 import numpy as np
 import matplotlib as mat
@@ -41,7 +34,7 @@ class Replicates:
         self.species_pops = []
         self.rxn_freqs = []
         self.History_final_snaps = []
-        self.props = []
+        #self.props = []            # We do not print out this output file
         self.Props_integ = []
         self.traj_derivs = []
         self.events_total = []
@@ -210,61 +203,68 @@ class Replicates:
                     
             self.n_runs = len(self.run_dirs)
         
-        # Read first job to get some information
-        dummy_run.Path = self.run_dirs[i]
-        dummy_run.ReadAllOutput()
-        
         # Create arrays for data
         # Use input data from runtemplate to properly size the arrays
-        self.t_vec = np.array(dummy_run.Specnum['t'])
-        self.n_timepoints = len(self.t_vec)
-        
-        n_specs = dummy_run.Species['n_gas'] + dummy_run.Species['n_surf']
-        self.species_pops = np.zeros([self.n_runs, self.n_timepoints, n_specs])
-        
-        self.rxn_freqs = np.zeros([self.n_runs, self.n_timepoints, dummy_run.Reactions['nrxns']])
+        self.t_vec = []
+        self.species_pops = []
+        self.rxn_freqs = []
         self.History_final_snaps = []            # list of the final states
-        self.props = np.zeros([self.n_runs, self.n_timepoints, dummy_run.Reactions['nrxns']])
-        self.Props_integ = np.zeros([self.n_runs, self.n_timepoints, dummy_run.Reactions['nrxns']])
-        self.traj_derivs = np.zeros([self.n_runs, self.n_timepoints, dummy_run.Reactions['nrxns']])
-        self.events_total = np.zeros(self.n_runs)
-        self.CPU_total = np.zeros(self.n_runs)
+        #self.props = []
+        self.Props_integ = []
+        self.traj_derivs = []
+        self.events_total = []
+        self.CPU_total = []
         
         for i in range(self.n_runs):
         
             # Switch to folder and read output files
             dummy_run.Path = self.run_dirs[i]
             dummy_run.ReadAllOutput()
+            self.runtemplate = dummy_run            # so we have an example
             
             # Pass the data from this run into the larger data structures in 
             # so you will not have to store separate KMC_Run objects
             # The large arrays of data will be easier to process
             
+            self.t_vec = np.array(dummy_run.Specnum['t'])
+            self.species_pops.append(dummy_run.Specnum['spec'])
+            self.rxn_freqs.append(dummy_run.Procstat['events'])
+            
             if not dummy_run.History == []:
                 self.History_final_snaps.append(dummy_run.History[-1])
-            self.events_total[i] = dummy_run.Performance['events_occurred']
-            self.CPU_total[i] = dummy_run.Performance['CPU_time']
             
-        print 'Total CPU time is ' + str(np.sum(self.CPU_total)) + ' seconds.'
+            #self.props.append(dummy_run.Binary['prop'])
+            self.Props_integ.append(dummy_run.Binary['propCounter'])
+            self.traj_derivs.append(dummy_run.Binary['W_sen_anal'])
+            
+            self.events_total.append(dummy_run.Performance['events_occurred'])
+            self.CPU_total.append(dummy_run.Performance['CPU_time'])
+        
+        # Convert the data from lists to arrays
+        self.species_pops = np.array(self.species_pops)
+        self.rxn_freqs = np.array(self.rxn_freqs)
+        #self.props = np.array(self.props)
+        self.Props_integ = np.array(self.Props_integ)
+        self.traj_derivs = np.array(self.traj_derivs)
+        self.events_total = np.array(self.events_total)
+        self.CPU_total = np.array(self.CPU_total)
     
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
         
         # Initialize run average with information from first run, then set data to zero
-        self.runAvg = copy.deepcopy(self.runList[0])
+        self.runAvg = copy.deepcopy(self.runtemplate)
         self.runAvg.Path = self.ParentFolder
 
-        self.runAvg.Specnum['spec'] = np.zeros(self.runList[0].Specnum['spec'].shape)
-        self.runAvg.Procstat['events'] = np.zeros(self.runList[0].Procstat['events'].shape)
-        self.runAvg.Binary['propCounter'] = np.zeros(self.runList[0].Binary['propCounter'].shape)
+        self.runAvg.Specnum['spec'] = np.mean(self.species_pops, axis = 0)
+        self.runAvg.Procstat['events'] = np.mean(self.rxn_freqs, axis = 0)
         
-        # Add data from each run
-        for run in self.runList:
-            self.runAvg.Specnum['spec'] = self.runAvg.Specnum['spec'] + run.Specnum['spec'].astype(float) / self.n_runs
-            self.runAvg.Procstat['events'] = self.runAvg.Procstat['events'] + run.Procstat['events'].astype(float) / self.n_runs
-            self.runAvg.Binary['propCounter'] = self.runAvg.Binary['propCounter'] + run.Binary['propCounter'] / self.n_runs
-
+        #self.runAvg.Binary['prop'] = np.mean(self.props, axis = 0)
+        self.runAvg.Binary['propCounter'] = np.mean(self.Props_integ, axis = 0)
+        
+        self.runAvg.Performance['events_occurred'] = np.mean(self.events_total)
+        self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
      
     def ComputeStats(self, product, window = [0.0, 1]):
         

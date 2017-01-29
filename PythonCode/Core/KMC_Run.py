@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Mar 03 14:54:26 2016
-
-@author: robieta
-"""
-
 from IOdata import IOdata
 import numpy as np
 import matplotlib as mat

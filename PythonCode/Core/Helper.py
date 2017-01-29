@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Mar 02 15:40:49 2016
-
-@author: robieta
-"""
-
 # This file has two classes with useful static methods
 
 from itertools import (takewhile,repeat)
@@ -99,7 +92,7 @@ class FileIO:
     @staticmethod
     def PlotTrajectory(x_series, y_series, xlab = '', ylab = '', series_labels = [], fname = '', logscale = False):
         
-        Helper.PlotOptions()
+        FileIO.PlotOptions()
         plt.figure()
         
         for i in range (len(y_series)):
