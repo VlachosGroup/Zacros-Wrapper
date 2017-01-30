@@ -248,13 +248,13 @@ class Replicates:
         self.traj_derivs = np.array(self.traj_derivs)
         self.events_total = np.array(self.events_total)
         self.CPU_total = np.array(self.CPU_total)
+        
+        self.runAvg = copy.deepcopy(dummy_run)      # Initialize run average with information from dummyrun
     
 
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
         
-        # Initialize run average with information from first run, then set data to zero
-        self.runAvg = copy.deepcopy(self.runtemplate)
         self.runAvg.Path = self.ParentFolder
 
         self.runAvg.Specnum['spec'] = np.mean(self.species_pops, axis = 0)
@@ -266,32 +266,60 @@ class Replicates:
         self.runAvg.Performance['events_occurred'] = np.mean(self.events_total)
         self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
      
-    def ComputeStats(self, product, window = [0.0, 1]):
+    def ComputeSA(self, product, window = [0.0, 1.0]):
+        
+        self.AverageRuns()      # make sure this has been done
+ 
+        # Find index of product molecule
+        try:
+            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(product)           # Find the index of the product species and adjust index to account for surface species
+        except:
+            raise Exception('Product species ' + product + ' not found.')
+        
+        nRxns = len(self.runAvg.Reactions['Nu'])
+        TOF_stoich = np.zeros(nRxns)
+        for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
+            TOF_stoich[i] = elem_stoich[product_ind]
+            
+        D_stoich = np.diag(TOF_stoich)      # will use this for computing rates
         
         # Find indices for the beginning and end of the time window
-        start_t = window[0] * self.runList[0].Specnum['t'][-1]
-        end_t = window[1] * self.runList[0].Specnum['t'][-1]
-        start_ind = self.runList[0].time_search(start_t)
-        end_ind = self.runList[0].time_search(end_t)
-        start_t = self.runList[0].Specnum['t'][start_ind]
-        end_t = self.runList[0].Specnum['t'][end_t]        
+        start_t = window[0] * self.runAvg.Specnum['t'][-1]
+        end_t = window[1] * self.runAvg.Specnum['t'][-1]
+        start_ind = self.runAvg.time_search(start_t)
+        end_ind = self.runAvg.time_search(end_t)
+        start_t = self.runAvg.Specnum['t'][start_ind]
+        end_t = self.runAvg.Specnum['t'][end_t]        
         
-        Tof_out = self.runAvg.ComputeTOF(product, win = window)
-        tof_fracs_inst = Tof_out['TOF_fracs_inst']
-        tof_fracs_inst = tof_fracs_inst[::2] + tof_fracs_inst[1::2]
-        tof_fracs_erg = Tof_out['TOF_fracs_erg']
-        tof_fracs_erg = tof_fracs_erg[::2] + tof_fracs_erg[1::2]
+        # Find instantaneous rates for each trajectory at each time in the window
+        props_inst = ( self.Props_integ[:,end_ind,:] - self.Props_integ[:,end_ind - 1,:] ) / ( self.t_vec[end_ind] - self.t_vec[end_ind-1] )
         
-        Wdata = np.zeros([self.n_runs, self.runList[0].Reactions['nrxns']])      # number of runs x number of reactions
-        rdata = np.zeros([self.n_runs, 2])     # 1st column: final rates, 2nd column: integral rates
-        ind = 0
-        for run in self.runList:
-            Wdata[ind,:] = run.Binary['W_sen_anal'][end_ind,::2] - run.Binary['W_sen_anal'][start_ind,::2] + run.Binary['W_sen_anal'][end_ind,1::2] - run.Binary['W_sen_anal'][start_ind,1::2]
-                               
-            TOF_output = run.ComputeTOF(product, win = window)
-            rdata[ind,0] = TOF_output['TOF_inst'] / Tof_out['TOF_inst']
-            rdata[ind,1] = TOF_output['TOF_erg'] / Tof_out['TOF_erg']
-            ind = ind + 1
+        props_inst_frac = np.dot(props_inst, D_stoich)
+        TOF_vec_inst = np.sum(props_inst_frac, axis = 1)
+        self.TOF = np.mean(TOF_vec_inst)            # also need to get the confidence interval for this
+        TOF_vec_inst.shape = [self.n_runs,1]
+        
+        mean_fracs = np.mean(props_inst_frac, axis = 0)
+        mean_fracs = mean_fracs / np.sum(mean_fracs)            # add this to NSC
+        mean_fracs = mean_fracs[::2] + mean_fracs[1::2]
+        
+        # Find ergodic rates for each trajectory at each time in the window
+        #props_erg = ( self.Props_integ[:,end_ind,:] - self.Props_integ[:,start_ind - 1,:] )  / delta t
+        
+        
+        # Find trajectory derivatives for each trajectory at the end of the window
+        Wdata = ( self.traj_derivs[:,end_ind,::2] + self.traj_derivs[:,end_ind,1::2] )  - ( self.traj_derivs[:,start_ind,::2] + self.traj_derivs[:,start_ind,1::2] )
+        
+        # Perform sensitivity analysis
+        W_and_rate_data = np.hstack([Wdata, TOF_vec_inst / self.TOF])
+        cov_out = Stats.cov_mat_ci( np.transpose(W_and_rate_data) )  
+        self.NSC_inst = cov_out['cov_mat'][:-1:,-1] + mean_fracs
+        self.NSC_ci_inst = cov_out['ci_mat'][:-1:,-1]
+        
+        print self.NSC_inst
+        print self.NSC_ci_inst
+        
+        '''
         
 #        # Rate data
 #        TOF_stats = Stats.mean_ci(TOF_output)
@@ -306,41 +334,8 @@ class Replicates:
         self.NSC_erg = cov_out['cov_mat'][:-2:,-1] + tof_fracs_erg
         self.NSC_ci_erg = cov_out['ci_mat'][:-2:,-1]
         
-        
+        '''
                            
-    def WvarCheck(self): 
-        
-        ''' Compute trajectory derivative variances vs. time '''        
-        
-        W_dims = self.runList[0].Binary['W_sen_anal'].shape
-        n_timepoints = W_dims[0]
-        n_rxns = W_dims[1]       
-        
-        Wvars = np.zeros([n_timepoints,n_rxns])
-        for i in range(0,n_timepoints):
-            for j in range(0,n_rxns):
-                data_vec = np.zeros((self.n_runs))
-                for k in range(0,self.n_runs):
-                    data_vec[k] = self.runList[k].Binary['W_sen_anal'][i,j]
-                Wvars[i,j] = np.var(data_vec)
-        
-        ''' Plot results '''
-        
-        FileIO.PlotOptions()
-        plt.figure()
-            
-        labels = []
-        for i in range (2*len(self.runList[0].Reactions['names'])):
-            if np.max(np.abs( Wvars[:,i] )) > 0:
-                plt.plot(self.runList[0].Specnum['t'], Wvars[:,i])
-                labels.append(self.runList[0].Reactions['names'][i/2])
-        
-        plt.xticks(size=20)
-        plt.yticks(size=20)
-        plt.xlabel('Time (s)',size=24)
-        plt.ylabel('var(W)',size=24)
-        plt.legend(labels,loc=4,prop={'size':20},frameon=False)        
-        plt.show()
         
     def PlotSensitivities(self): 
         

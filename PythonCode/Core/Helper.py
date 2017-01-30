@@ -151,10 +151,6 @@ class Stats:
         M = Stats.cov_mat_ci(B)
         return [M['cov_mat'][0,1], M['ci_mat'][0,1]]         
     
-    @staticmethod
-    def cov_calc(x,y):
-        cov_mat = np.cov(x,y)
-        return cov_mat[0,1]
         
     @staticmethod
     def cov_mat_ci(A, Nboot=100, p = 0.05):
