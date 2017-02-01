@@ -342,7 +342,6 @@ class KMC_Run(IOdata):
         yvals = []
         ylabels = []
         bar_vals = []
-        
         for i in range (self.Reactions['nrxns']):
             if event_freqs[2*i] + event_freqs[2*i+1] > 0:
                 net_freq = abs(event_freqs[2*i] - event_freqs[2*i+1])

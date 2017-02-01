@@ -212,6 +212,7 @@ class IOdata(object):
             self.scaledown_factors = [np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
         
         self.Reactions['nrxns'] = 0
+        self.Reactions['names'] = []
         
         MechInd = np.array([[0,0]]*nMech)
         Count = 0

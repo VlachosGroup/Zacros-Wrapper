@@ -4,6 +4,7 @@ import matplotlib as mat
 mat.use('Agg')
 import matplotlib.pyplot as plt
 import copy
+import sys
 
 from KMC_Run import KMC_Run
 from Helper import FileIO, Stats
@@ -44,6 +45,8 @@ class Replicates:
         self.Product = ''
         self.TOF = 0
         self.TOF_error = 0
+        self.TOF_erg = 0
+        self.TOF_error_erg = 0
         self.NSC_inst = []
         self.NSC_ci_inst = []
         self.NSC_erg = []
@@ -85,6 +88,9 @@ class Replicates:
             self.runtemplate.WriteAllInput()
         
     def RunAllJobs_parallel_JobArray(self, max_cores = 100, server = 'Squidward'):
+    
+        sys.stdout.write('Running parallel jobs')
+        sys.stdout.flush()
     
         with open(os.path.join(self.ParentFolder, 'dir_list.txt'), 'w') as txt:
             for fldr in self.run_dirs:
@@ -173,7 +179,8 @@ class Replicates:
                 if not self.runtemplate.CheckComplete():
                     all_jobs_done = False
                     
-        print 'Jobs in ' + self.ParentFolder + ' have finished'
+        sys.stdout.write('Jobs in ' + self.ParentFolder + ' have finished')
+        sys.stdout.flush()
     
     def RunAllJobs_serial(self):       # Serial version of running all jobs
 
@@ -184,7 +191,8 @@ class Replicates:
     
     def ReadMultipleRuns(self):     # Can take ~1 minutes to use this method
         
-        print 'Reading all runs in ' + self.ParentFolder
+        sys.stdout.write('Reading all runs in ' + self.ParentFolder)
+        sys.stdout.flush()
         
         dummy_run = KMC_Run()       # Use this to transfer information
         
@@ -256,7 +264,8 @@ class Replicates:
     def AverageRuns(self):
         
         self.runAvg.Path = self.ParentFolder
-
+        self.runAvg.Specnum['t'] = self.t_vec
+        
         self.runAvg.Specnum['spec'] = np.mean(self.species_pops, axis = 0)
         self.runAvg.Procstat['events'] = np.mean(self.rxn_freqs, axis = 0)
         
@@ -282,6 +291,7 @@ class Replicates:
             TOF_stoich[i] = elem_stoich[product_ind]
             
         D_stoich = np.diag(TOF_stoich)      # will use this for computing rates
+        TOF_stoich.shape = [nRxns, 1]
         
         # Find indices for the beginning and end of the time window
         start_t = window[0] * self.runAvg.Specnum['t'][-1]
@@ -293,49 +303,43 @@ class Replicates:
         
         # Find instantaneous rates for each trajectory at each time in the window
         props_inst = ( self.Props_integ[:,end_ind,:] - self.Props_integ[:,end_ind - 1,:] ) / ( self.t_vec[end_ind] - self.t_vec[end_ind-1] )
-        
-        props_inst_frac = np.dot(props_inst, D_stoich)
-        TOF_vec_inst = np.sum(props_inst_frac, axis = 1)
-        self.TOF = np.mean(TOF_vec_inst)            # also need to get the confidence interval for this
+        TOF_vec_inst = np.dot(props_inst, TOF_stoich)
         TOF_vec_inst.shape = [self.n_runs,1]
         
+        props_inst_frac = np.dot(props_inst, D_stoich)
         mean_fracs = np.mean(props_inst_frac, axis = 0)
         mean_fracs = mean_fracs / np.sum(mean_fracs)            # add this to NSC
         mean_fracs = mean_fracs[::2] + mean_fracs[1::2]
         
-        # Find ergodic rates for each trajectory at each time in the window
-        #props_erg = ( self.Props_integ[:,end_ind,:] - self.Props_integ[:,start_ind - 1,:] )  / delta t
+        TOF_stats = Stats.mean_ci(TOF_vec_inst)                 # Compute the rate
+        self.TOF = TOF_stats[0]
+        self.TOF_error = TOF_stats[1]
         
+        # Find ergodic rates for each trajectory at each time in the window
+        props_erg = ( self.Props_integ[:,end_ind,:] - self.Props_integ[:,start_ind,:] )  / ( self.t_vec[end_ind] - self.t_vec[start_ind] )
+        TOF_vec_erg = np.dot(props_erg, TOF_stoich)
+        TOF_vec_erg.shape = [self.n_runs,1]
+        
+        props_erg_frac = np.dot(props_erg, D_stoich)
+        mean_fracs_erg = np.mean(props_erg_frac, axis = 0)
+        mean_fracs_erg = mean_fracs_erg / np.sum(mean_fracs_erg)            # add this to NSC
+        mean_fracs_erg = mean_fracs_erg[::2] + mean_fracs_erg[1::2]
+        
+        TOF_stats_erg = Stats.mean_ci(TOF_vec_erg)          # Compute the rate
+        self.TOF_erg = TOF_stats_erg[0]
+        self.TOF_error_erg = TOF_stats_erg[1]
         
         # Find trajectory derivatives for each trajectory at the end of the window
         Wdata = ( self.traj_derivs[:,end_ind,::2] + self.traj_derivs[:,end_ind,1::2] )  - ( self.traj_derivs[:,start_ind,::2] + self.traj_derivs[:,start_ind,1::2] )
         
         # Perform sensitivity analysis
-        W_and_rate_data = np.hstack([Wdata, TOF_vec_inst / self.TOF])
+        W_and_rate_data = np.hstack([Wdata, TOF_vec_inst / self.TOF, TOF_vec_erg / self.TOF_erg])
         cov_out = Stats.cov_mat_ci( np.transpose(W_and_rate_data) )  
-        self.NSC_inst = cov_out['cov_mat'][:-1:,-1] + mean_fracs
-        self.NSC_ci_inst = cov_out['ci_mat'][:-1:,-1]
-        
-        print self.NSC_inst
-        print self.NSC_ci_inst
-        
-        '''
-        
-#        # Rate data
-#        TOF_stats = Stats.mean_ci(TOF_output)
-#        self.TOF = TOF_stats[0]
-#        self.TOF_error = TOF_stats[1]        
-        
-        # Sensitivity data
-        A = np.hstack([Wdata, rdata])
-        cov_out = Stats.cov_mat_ci( np.transpose(A) )    
-        self.NSC_inst = cov_out['cov_mat'][:-2:,-2] + tof_fracs_inst
+        self.NSC_inst = cov_out['cov_mat'][:-2:,-2] + mean_fracs
         self.NSC_ci_inst = cov_out['ci_mat'][:-2:,-2]
-        self.NSC_erg = cov_out['cov_mat'][:-2:,-1] + tof_fracs_erg
+        self.NSC_erg = cov_out['cov_mat'][:-2:,-1] + mean_fracs_erg
         self.NSC_ci_erg = cov_out['ci_mat'][:-2:,-1]
         
-        '''
-                           
         
     def PlotSensitivities(self): 
         
@@ -346,22 +350,22 @@ class Replicates:
         yvals = []
         ylabels = []
         
-        for i in range (self.runList[0].Reactions['nrxns']):
+        for i in range (self.runAvg.Reactions['nrxns']):
             cutoff = 0.05
             if self.NSC_inst[i] + self.NSC_ci_inst[i] > cutoff or self.NSC_inst[i] - self.NSC_ci_inst[i] < -cutoff:     
                 plt.barh(ind-0.9, self.NSC_inst[i], width, color='r', xerr = self.NSC_ci_inst[i], ecolor='k')               
-                ylabels.append(self.runList[0].Reactions['names'][i])              
+                ylabels.append(self.runAvg.Reactions['names'][i])              
                 yvals.append(ind-0.6)                
                 ind = ind - 1
 
         plt.plot([0, 0], [0, ind], color='k')
         plt.xlim([0,1])
         plt.xticks(size=20)
-        plt.yticks(size=20)
+        plt.yticks(size=10)
         plt.xlabel('NSC',size=24)
         plt.yticks(yvals, ylabels)
         ax = plt.subplot(111)
-        pos = [0.2, 0.15, 0.7, 0.8]
+        pos = [0.30, 0.15, 0.65, 0.8]
         ax.set_position(pos)
         
         plt.savefig(os.path.join(self.ParentFolder, 'SA_inst_output.png'))
@@ -373,37 +377,38 @@ class Replicates:
         yvals = []
         ylabels = []
         
-        for i in range (self.runList[0].Reactions['nrxns']):
+        for i in range (self.runAvg.Reactions['nrxns']):
             cutoff = 0.05
             if self.NSC_erg[i] + self.NSC_ci_erg[i] > cutoff or self.NSC_erg[i] - self.NSC_ci_erg[i] < -cutoff:     
                 plt.barh(ind-0.9, self.NSC_erg[i], width, color='r', xerr = self.NSC_ci_erg[i], ecolor='k')               
-                ylabels.append(self.runList[0].Reactions['names'][i])              
+                ylabels.append(self.runAvg.Reactions['names'][i])              
                 yvals.append(ind-0.6)                
                 ind = ind - 1
 
         plt.plot([0, 0], [0, ind], color='k')
         plt.xlim([0,1])
         plt.xticks(size=20)
-        plt.yticks(size=20)
+        plt.yticks(size=10)
         plt.xlabel('NSC',size=24)
         plt.yticks(yvals, ylabels)
         ax = plt.subplot(111)
-        pos = [0.2, 0.15, 0.7, 0.8]
+        pos = [0.30, 0.15, 0.65, 0.8]
         ax.set_position(pos)
         
         plt.savefig(os.path.join(self.ParentFolder, 'SA_erg_output.png'))
         plt.close()
     
     def WriteSA_output(self):
+    
         with open(os.path.join(self.ParentFolder, 'SA_output.txt'), 'w') as txt:
             txt.write('Normalized sensitivity coefficients \n\n')
             txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
             txt.write('Reaction name \t NSC \t NSC confidence \n')
 
-            for rxn_ind in range(self.runList[0].Reactions['nrxns']):
+            for rxn_ind in range(self.runAvg.Reactions['nrxns']):
                 txt.write(self.runAvg.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC_inst[rxn_ind]) + '{0:.3f}\t'.format(self.NSC_ci_inst[rxn_ind]) + '{0:.3f} +- '.format(self.NSC_erg[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci_erg[rxn_ind]) + '\n')
                 
-    def FD_SA(self, rxn_inds = [1], pert_frac = 0.05, n_runs = 20, setup = True, exec_run = True, analyze_bool = True):
+    def FD_SA(self, rxn_inds = [1], pert_frac = 0.05, n_runs = 20, setup = True, exec_run = True, analyze_bool = True):     # Need to redo this function
         
         # Create objects for perturbed systems
         plus = copy.deepcopy(self)
@@ -465,35 +470,38 @@ class Replicates:
             
             return [NSC, NSC_ci]
             
-    def CheckAutocorrelation(self, Product, limits = [0.0, 1]):
-        
-        data1 = []
-        data2 = []
-        for run in self.runList:
-            run.CalcRateTraj(Product)
-            
-#            ind1 = run.fraction_search(limits[0])
-#            ind2 = run.fraction_search(limits[1])
-            
-            data1.append(run.rate_traj[0])
-            data2.append(run.rate_traj[-1])
-        
-        var1 = np.var(data1)
-        var2 = np.var(data2)
-        if var1 == 0 or var2 == 0:
-            return [1.0, 0.0]
-        else:
-            return Stats.cov_ci(data1,data2) / np.sqrt( np.var(data1) * np.var(data2) )
             
     @staticmethod
     def time_sandwich(batch1, batch2):
         
-        sand = copy.deepcopy(batch2)        
+        sand = copy.deepcopy(batch2)
         
-        if batch1.n_runs == 1:
-            return sand
+        sand.t_vec = np.hstack( [ batch1.t_vec, batch2.t_vec[1::] + batch1.t_vec[-1]] ) 
         
-        for run_ind in range(batch1.n_runs):
-            sand.runList[run_ind] = KMC_Run.time_sandwich(batch1.runList[run_ind], sand.runList[run_ind])
+        #sand.History_final_snaps = batch2.History_final_snaps          # history will already have been copied
+        sand.events_total = batch1.events_total + batch2.events_total
+        sand.CPU_total = batch1.CPU_total + batch2.CPU_total
+        
+        # Cumulative data structures
+        
+        # Add data from the end of the first calculation to the second calculation
+        for traj_ind in range(batch2.n_runs):
+            for time_ind in range(len(batch2.t_vec)):
+            
+                for rxn_ind in range(len(batch2.runAvg.Reactions['Nu'])):
+            
+                    sand.rxn_freqs[traj_ind, time_ind, rxn_ind] += batch1.rxn_freqs[traj_ind, -1, rxn_ind]
+                    sand.Props_integ[traj_ind, time_ind, rxn_ind] += batch1.Props_integ[traj_ind, -1, rxn_ind]
+                    sand.traj_derivs[traj_ind, time_ind, rxn_ind] += batch1.traj_derivs[traj_ind, -1, rxn_ind]
+                
+                # Add to the end for gas phase populations                
+                for spec_ind in range( batch2.runAvg.Species['n_surf'] , batch2.runAvg.Species['n_surf'] + batch2.runAvg.Species['n_gas'] ):
+                    sand.species_pops[traj_ind, time_ind, spec_ind] += batch1.species_pops[traj_ind, -1, spec_ind]
+        
+        # Combine the data
+        sand.species_pops = np.concatenate( [batch1.species_pops, sand.species_pops[:,1::,:]], axis = 1 )
+        sand.rxn_freqs = np.concatenate( [batch1.rxn_freqs, sand.rxn_freqs[:,1::,:]], axis = 1 )
+        sand.Props_integ = np.concatenate( [batch1.Props_integ, sand.Props_integ[:,1::,:]], axis = 1 )
+        sand.traj_derivs = np.concatenate( [batch1.traj_derivs, sand.traj_derivs[:,1::,:]], axis = 1 )
             
         return sand

@@ -87,12 +87,13 @@ class RateRescaling:
                 cur_batch.runtemplate.Conditions['MaxStep'] = 'inf'
                 cur_batch.runtemplate.Conditions['WallTime']['Max'] = 'inf'
                 cur_batch.runtemplate.Conditions['restart'] = False
-                cur_batch.runtemplate.Conditions['SimTime']['Max'] = prev_batch.runList[0].Performance['t_final'] * scale_final_time
+                cur_batch.runtemplate.Conditions['SimTime']['Max'] = prev_batch.t_vec[-1] * scale_final_time
                 cur_batch.runtemplate.Conditions['SimTime']['Max'] = float('{0:.3E} \t'.format(cur_batch.runtemplate.Conditions['SimTime']['Max']))     # round to 4 significant figures
                 cur_batch.runtemplate.Report['procstat'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
                 cur_batch.runtemplate.Report['specnum'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
                 cur_batch.runtemplate.Report['hist'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max']]
                 
+                # Adjust pre-exponential factors based on the stiffness assessment of the previous iteration
                 if include_stiff_reduc:
                     cur_batch.runtemplate.AdjustPreExponentials(SDF_vec)
                 
@@ -101,9 +102,13 @@ class RateRescaling:
             
             # Run jobs and read output
             cur_batch.BuildJobFiles(init_states = initial_states)
-            cur_batch.SubmitJobArray(server = platform)
+            cur_batch.RunAllJobs_parallel_JobArray(server = platform)
             cur_batch.ReadMultipleRuns()
-            cum_batch = Replicates.time_sandwich(prev_batch, cur_batch)         # combine with previous data          
+            
+            if iteration == 1:
+                cum_batch = copy.deepcopy(cur_batch)
+            else:
+                cum_batch = Replicates.time_sandwich(prev_batch, cur_batch)         # combine with previous data          
             
             # Test steady-state
             cum_batch.AverageRuns()
@@ -141,7 +146,7 @@ class RateRescaling:
                 txt.write('Reaction speed \t')
                 txt.write('Total firings \t')
                 txt.write('Net firings \n')
-                
+
                 for rxn_ind in range(len(cum_batch.runAvg.Reactions['names'])):
                     txt.write(cum_batch.runAvg.Reactions['names'][rxn_ind] + '\t')
                     txt.write('{0:.3E} \t'.format(delta_sdf[rxn_ind]))
