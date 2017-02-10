@@ -26,7 +26,7 @@ class Lattice:
         self.cell_list = ''
         self.mol_dat = ''                           # ASE Atoms object for the atomic positions
 
-    def PlotLattice(self, cutoff = 3.0):
+    def PlotLattice(self, cutoff = 3.0, plot_neighbs = False, type_symbols = ['o','s','^','v']):
         
         cart_coords = np.dot(self.frac_coords, self.lattice_matrix)      
         border = np.dot(np.array([[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0],[0.0,0.0]]),self.lattice_matrix)             
@@ -39,20 +39,31 @@ class Lattice:
         
         plt.figure()
         
-        plt.plot(border[:,0], border[:,1], '--k', linewidth = 4)                  # cell border            
-        for pair in self.neighbor_list:                                             # neighbors
-            p1 = np.array([cart_coords[pair[0]-1,0], cart_coords[pair[0]-1,1]])
-            p2 = np.array([cart_coords[pair[1]-1,0], cart_coords[pair[1]-1,1]])
-            if np.linalg.norm(p2 - p1) < cutoff:
-                plt.plot([p1[0], p2[0]], [p1[1], p2[1]], '-k', linewidth = 1)
-        plt.plot(cart_coords[:,0], cart_coords[:,1], 'o', markersize = 15)          # sites  
+        plt.plot(border[:,0], border[:,1], '--k', linewidth = 2)                  # cell border 
+
+        if plot_neighbs:
+            for pair in self.neighbor_list:                                             # neighbors
+                p1 = np.array([cart_coords[pair[0]-1,0], cart_coords[pair[0]-1,1]])
+                p2 = np.array([cart_coords[pair[1]-1,0], cart_coords[pair[1]-1,1]])
+                if np.linalg.norm(p2 - p1) < cutoff:
+                    plt.plot([p1[0], p2[0]], [p1[1], p2[1]], '-k', linewidth = 1)
+
+        for site_type in range(1, np.max(np.array(self.site_type_inds))+1 ):
+
+            is_of_type = []
+            
+            for site_ind in range(len(self.site_type_inds)):
+                if self.site_type_inds[site_ind] == site_type:
+                    is_of_type.append(site_ind)
+            
+            plt.plot(cart_coords[is_of_type,0], cart_coords[is_of_type,1], linestyle='None', marker = type_symbols[(site_type-1) % len(type_symbols)], color = [0.8, 0.8, 0.8], markersize = 4)          # sites  
         
         plt.xticks(size=20)
         plt.yticks(size=20)
         plt.xlabel('x-coord (ang)',size=24)
         plt.ylabel('y-coord (ang)',size=24)
-#        plt.legend(self.Species['surf_spec'],loc=4,prop={'size':20},frameon=False)        
-        plt.show()
+        
+        return plt
     
     def Read_lattice_output(self,fname):
         with open(fname,'r') as txt:
@@ -70,9 +81,11 @@ class Lattice:
         
         # Fill in site coordinates and neighbors
         self.neighbor_list = []
+        self.site_type_inds = []
         for site_ind in range(n_sites):
             line = RawTxt[site_ind+2].split()
             self.cart_coords[site_ind,:] = [line[1], line[2]]
+            self.site_type_inds.append(int(line[3]))
             neighbs = line[5::]
             for site_2 in neighbs:
                 if int(site_2) > 0:         # Zeros are placeholders in the output file

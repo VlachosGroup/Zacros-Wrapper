@@ -7,6 +7,7 @@ import matplotlib as mat
 mat.use('Agg')
 import matplotlib.pyplot as plt
 from scipy import stats
+from matplotlib.ticker import FormatStrFormatter
 
 class FileIO:
 
@@ -98,8 +99,8 @@ class FileIO:
         for i in range (len(y_series)):
             plt.plot(x_series[i], y_series[i])
         
-        plt.xticks(size=20)
-        plt.yticks(size=20)
+        #plt.xticks(size=20)
+        #plt.yticks(size=20)
         plt.xlabel(xlab, size=24)
         plt.ylabel(ylab, size=24)
         
@@ -107,6 +108,7 @@ class FileIO:
             plt.legend(series_labels, loc=4, prop={'size':20}, frameon=False)
         ax = plt.subplot(111)
         ax.set_position([0.2, 0.15, 0.7, 0.8])
+        #ax.xaxis.set_major_formatter(FormatStrFormatter('%.2e'))
         
         if logscale:
             plt.yscale('log')

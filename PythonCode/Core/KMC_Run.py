@@ -1,15 +1,15 @@
 from IOdata import IOdata
 import numpy as np
 import matplotlib as mat
-mat.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 
 # For executable
 import os
 import sys
 import subprocess
 import copy
-import matplotlib.animation as animation
+
 from Helper import FileIO
 
 from scipy.optimize import curve_fit
@@ -255,21 +255,26 @@ class KMC_Run(IOdata):
             ax = plt.subplot(111)
             ax.set_position([0.2, 0.15, 0.7, 0.8])
     
-            plt.savefig('fit_compare.png')
+            plt.savefig( os.path.join(self.Path, 'fit_compare.png') )
             
         return popt[1]
 
     ''' ==================================== Plotting methods ==================================== '''
     
-    def PlotSurfSpecVsTime(self):
+    def PlotSurfSpecVsTime(self, site_norm = 1):
+        
+        if site_norm == 1:
+            ylabel = 'Species count'
+        else:
+            ylabel = 'Coverage'
         
         time_vecs = []
         surf_spec_vecs = []
         for i in range (len(self.Species['surf_spec'])):
             time_vecs.append(self.Specnum['t'])
-            surf_spec_vecs.append(self.Specnum['spec'][:,i])
+            surf_spec_vecs.append(self.Specnum['spec'][:,i] / float(site_norm))
         
-        FileIO.PlotTrajectory(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['surf_spec'], fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
+        FileIO.PlotTrajectory(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = self.Species['surf_spec'], fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
     
     def PlotGasSpecVsTime(self):
         
@@ -326,11 +331,11 @@ class KMC_Run(IOdata):
         
         FileIO.PlotTrajectory(time_vecs, W_vecs, xlab = 'Time (s)', ylab = 'traj. deriv.', series_labels = labels, fname = os.path.join(self.Path + 'traj_deriv_vs_time.png'))
     
-    def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1.0):
+    def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1):
         
         start_ind = self.fraction_search(window[0])
         end_ind = self.fraction_search(window[1])
-        event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / site_norm
+        event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / float(site_norm)
         if time_norm:
             event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
         
@@ -401,76 +406,49 @@ class KMC_Run(IOdata):
         FileIO.PlotTrajectory([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_vs_time.png'))
         FileIO.PlotTrajectory([self.Specnum['t'][1::]], [self.int_rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_erg_vs_time.png'))
 
-    def LatticeMovie(self):       # Need to complete this function by plotting adsorbates from the history file data
+        
+    def PlotLattice(self):
+    
+        plt = self.KMC_lat.PlotLattice()
+        plt.savefig(os.path.join(self.Path, 'lattice.png'))
+        plt.close()
+        
+    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need to complete this function by plotting adsorbates from the history file data
 
-        self.KMC_lat.Read_lattice_output(os.path.join(self.Path, 'lattice_output.txt'))
         cart_coords = self.KMC_lat.cart_coords
-        lat = self.KMC_lat.lattice_matrix
-#        self.KMC_lat.PlotLattice()
-        border = np.dot(np.array([[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0],[0.0,0.0]]), lat)
+        spec_label_list = self.Species['surf_spec']
         
-        FileIO.PlotOptions
-
-        fig = plt.figure()
-        ax = plt.axes(xlim=[np.min(border[:,0]), np.max(border[:,0])], ylim=[np.min(border[:,1]), np.max(border[:,1])])
-        plt.axis('equal')        
+        frame_fldr = os.path.join(self.Path, 'lattice_frames')
+        if not os.path.exists( frame_fldr ):
+                os.makedirs( frame_fldr )
+                
+        print str(self.n_snapshots) + ' total snapshots'
         
-        # Plot cell border 
-        plt.plot(border[:,0], border[:,1], '--k', linewidth = 4)
-        
-        # Plot neighbors
-        cutoff = 3.0
-        for pair in self.KMC_lat.neighbor_list:
-                p1 = np.array([cart_coords[pair[0]-1,0], cart_coords[pair[0]-1,1]])
-                p2 = np.array([cart_coords[pair[1]-1,0], cart_coords[pair[1]-1,1]])
-                if np.linalg.norm(p2 - p1) < cutoff:
-                    plt.plot([p1[0], p2[0]], [p1[1], p2[1]], '-k', linewidth = 1)
-        
-        # Plot sites
-        plt.plot(cart_coords[:,0], cart_coords[:,1], 'bo', markersize = 15)
+        for frame_num in range(self.n_snapshots):
             
-        color_list = ['g','r','c','m','y','k']
-        line_list = []
-        for ind in range(self.Species['n_surf']):    
-            line, = ax.plot([], [], 's' + color_list[ind % len(color_list)], markersize = 10, label=self.Species['surf_spec'][ind])
-            line_list.append(line)
-        plt.xticks(size=20)
-        plt.yticks(size=20)
-        plt.xlabel('x-coord (ang)',size=24)
-        plt.ylabel('y-coord (ang)',size=24)        
-        plt.legend(handles = line_list, frameon=False)
+            print 'Draw frame number ' + str(frame_num+1)
+            snap = self.History[frame_num]        
         
-        # initialization function: plot the background of each frame
-        def init():
-            for line in line_list:
-                line.set_data([], [])
-            return line_list
+            plt = self.KMC_lat.PlotLattice()            # plot the lattice in this frame
         
-        # animation function.  This is called sequentially
-        def animate(i):
-            
-            snap = self.History[i]            
             
             for ind in range(self.Species['n_surf']):
                 
                 # Find all coordinates with species ind occupying it
                 x_list = []
                 y_list = []
-                for site_ind in range(self.n_sites):
-                    if snap[site_ind,2] == ind + 1:
+                for site_ind in range(self.n_sites):      # include empty sites
+                    if snap[site_ind,2] == ind+1:
                         x_list.append(cart_coords[site_ind,0])
                         y_list.append(cart_coords[site_ind,1])
         
                 x = np.array(x_list)
                 y = np.array(y_list)                
                 
-                line = line_list[ind]
-                line.set_data(x,y)
+                plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 3, label=spec_label_list[ind])
+            
+            plt.title('Time: ' + str(self.snap_times[frame_num]) + ' sec')
+            plt.legend(frameon=False)
                 
-            return line_list
-        
-        # call the animator.  blit=True means only re-draw the parts that have changed.
-        self.anim = animation.FuncAnimation(fig, animate, init_func=init,
-                                       frames=self.n_snapshots, interval=40, blit=True, repeat_delay = 500)
-        
-        plt.show()
+            plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)))
+            plt.close()

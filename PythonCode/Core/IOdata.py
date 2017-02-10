@@ -5,7 +5,7 @@ import linecache
 import random
 
 from Helper import FileIO
-from Lattice import Lattice     # will implement handling of lattice data structure later
+from Lattice import Lattice     # will fill in this object later when it is used
 
 class IOdata(object):
     
@@ -54,9 +54,11 @@ class IOdata(object):
         self.Cluster['Input']                 = ''
         
         self.Reactions                        = {}
-        self.Reactions['nrxns']               = ''
+        self.Reactions['nrxns']               = ''      # does not include reversible reactions for irreversible reactions
+        self.Reactions['nrxns_total']         = ''      # does include reversible reactions for irreversible reactions
         self.Reactions['Input']               = ''
-        self.Reactions['names']               = []  
+        self.Reactions['names']               = []
+        self.Reactions['is_reversible']       = []
         
         self.StateInput                       = {}
         self.StateInput['Type']               = 'none'
@@ -204,15 +206,19 @@ class IOdata(object):
             if RawTxt[i].split()[0]=='reversible_step':
                 nMech += 1
             elif RawTxt[i].split()[0]=='step':
-                raise NameError('Wrapper does not support irreversable steps')
+                pass
+                #raise NameError('Wrapper does not support irreversible steps')
             elif re.search('# Automated stiffness reconditioning employed',RawTxt[i]):
                 StiffCorrLine = i
                 
         if StiffCorrLine != -1:
             self.scaledown_factors = [np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
         
+        # Initialize varibles
         self.Reactions['nrxns'] = 0
+        self.Reactions['nrxns_total'] = 0
         self.Reactions['names'] = []
+        self.Reactions['is_reversible']       = []
         
         MechInd = np.array([[0,0]]*nMech)
         Count = 0
@@ -631,7 +637,7 @@ class IOdata(object):
             self.ReadGeneral()
             self.ReadProcstat()
             self.ReadSpecnum()
-            #self.KMC_lat.Read_lattice_output(os.path.join(self.Path, 'lattice_output.txt'))
+            self.KMC_lat.Read_lattice_output(os.path.join(self.Path, 'lattice_output.txt'))
             self.ReadHistory()
             
             # Extra binary files
