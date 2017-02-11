@@ -275,7 +275,7 @@ class Replicates:
         self.runAvg.Performance['events_occurred'] = np.mean(self.events_total)
         self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
      
-    def ComputeSA(self, product, window = [0.0, 1.0]):
+    def ComputeSA(self, product, window = [0.0, 1.0]):          # Need to make this compatible with irreversible reactions
         
         self.AverageRuns()      # make sure this has been done
  

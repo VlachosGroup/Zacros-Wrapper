@@ -340,22 +340,35 @@ class KMC_Run(IOdata):
             event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
         
         FileIO.PlotOptions
-        plt.figure()        
+        plt.figure()
         
         width = 0.2
         ind = 0
         yvals = []
         ylabels = []
         bar_vals = []
+        
+        store_ind = 0       # index of where the data is stored
         for i in range (self.Reactions['nrxns']):
-            if event_freqs[2*i] + event_freqs[2*i+1] > 0:
-                net_freq = abs(event_freqs[2*i] - event_freqs[2*i+1])
+        
+            fwd_rate = event_freqs[store_ind]
+            store_ind += 1
+            bwd_rate = 0
+            
+            if self.Reactions['is_reversible'][i]:
+                bwd_rate = event_freqs[store_ind]
+                store_ind += 1
+        
+            if fwd_rate + bwd_rate > 0:
+            
+                net_freq = abs(fwd_rate - bwd_rate)
+                
                 if event_freqs[2*i] > 0:              
-                    plt.barh(ind-0.4, event_freqs[2*i], width, color='r', log = True)
-                    bar_vals.append(event_freqs[2*i])
+                    plt.barh(ind-0.4, fwd_rate, width, color='r', log = True)
+                    bar_vals.append(fwd_rate)
                 if event_freqs[2*i+1] > 0:
-                    plt.barh(ind-0.6, event_freqs[2*i+1], width, color='b', log = True)
-                    bar_vals.append(event_freqs[2*i+1])
+                    plt.barh(ind-0.6, bwd_rate, width, color='b', log = True)
+                    bar_vals.append(bwd_rate)
                 if net_freq > 0:
                     plt.barh(ind-0.8, net_freq, width, color='g', log = True)
                     bar_vals.append(net_freq)
