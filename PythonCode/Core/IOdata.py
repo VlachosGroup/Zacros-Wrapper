@@ -58,6 +58,7 @@ class IOdata(object):
         self.Reactions['nrxns_total']         = ''      # does include reversible reactions for irreversible reactions
         self.Reactions['Input']               = ''
         self.Reactions['names']               = []
+        self.Reactions['reversibilities']     = []
         self.Reactions['is_reversible']       = []
         
         self.StateInput                       = {}
@@ -203,11 +204,8 @@ class IOdata(object):
         
         nMech = 0
         for i in range(0,nLines):
-            if RawTxt[i].split()[0]=='reversible_step':
+            if RawTxt[i].split()[0]=='reversible_step' or RawTxt[i].split()[0]=='step':
                 nMech += 1
-            elif RawTxt[i].split()[0]=='step':
-                pass
-                #raise NameError('Wrapper does not support irreversible steps')
             elif re.search('# Automated stiffness reconditioning employed',RawTxt[i]):
                 StiffCorrLine = i
                 
@@ -218,19 +216,36 @@ class IOdata(object):
         self.Reactions['nrxns'] = 0
         self.Reactions['nrxns_total'] = 0
         self.Reactions['names'] = []
-        self.Reactions['is_reversible']       = []
+        self.Reactions['reversibilities'] = []
+        self.Reactions['is_reversible'] = []
         
         MechInd = np.array([[0,0]]*nMech)
         Count = 0
         for i in range(0,nLines):
+        
             if RawTxt[i].split()[0]=='reversible_step':
                 MechInd[Count,0] = i
-            if RawTxt[i].split()[0]=='end_reversible_step':
+                self.Reactions['reversibilities'].append(True)
+                
+            elif RawTxt[i].split()[0]=='step':
+                MechInd[Count,0] = i
+                self.Reactions['reversibilities'].append(False)
+                
+            elif RawTxt[i].split()[0]=='end_reversible_step':
+                MechInd[Count,1] = i
+                Count += 1
+                
+            elif RawTxt[i].split()[0]=='end_step':
                 MechInd[Count,1] = i
                 Count += 1
 
         MechDict = [{'Name':'','nSites':0,'neighboring':'','initial':'','final':'','variant':'','gas_reacs_prods':''} for k in range(0,nMech)]
         for j in range(0,nMech):
+        
+            reversible = self.Reactions['reversibilities'][j]
+        
+            # Count the variants
+        
             MechDict[j]['Name'] = RawTxt[MechInd[j,0]].split()[1]
             Count = 0
             InVariant = False
@@ -277,7 +292,17 @@ class IOdata(object):
                     variantInd[Count,1] = i
                     Count +=1
             
+            
+            # Enumerate reversibilities
+            
             self.Reactions['nrxns'] += nVariant
+            self.Reactions['is_reversible'] += [reversible for i in range(nVariant)]
+            
+            if reversible:
+                self.Reactions['nrxns_total'] += 2 * nVariant
+            else:
+                self.Reactions['nrxns_total'] += nVariant
+            
             
             for k in range(0,nVariant):
                 for i in range(variantInd[k,0],variantInd[k,1]):
@@ -457,9 +482,17 @@ class IOdata(object):
                     txt.write('{0:.5e} \t'.format(i))
                 txt.write('\n\n')
             for i in range(0,nMech):
+            
+                reversible = self.Reactions['reversibilities'][i]
+            
                 txt.write('#'*80 + '\n\n')
                 MechStr = self.Reactions['Input'][i]
-                txt.write('reversible_step ' + MechStr['Name'] + '\n')
+                
+                if reversible:
+                    txt.write('reversible_step ' + MechStr['Name'] + '\n')
+                else:
+                    txt.write('step ' + MechStr['Name'] + '\n')
+                    
                 txt.write('  sites ' + str(MechStr['nSites']) + '\n')             
                 if MechStr['neighboring'] != '':
                     txt.write('  neighboring')
@@ -500,14 +533,18 @@ class IOdata(object):
                     else:                        
                         txt.write(FileIO.PadStr('    pre_expon',25) 
                         + '{0:.5e}'.format(pre_exp) + '\n')
-                    txt.write(FileIO.PadStr('    pe_ratio',25) + 
-                        '{0:.5e}'.format(MechStr['variant'][j]['pe_ratio']) + '\n')
+                    if reversible:
+                        txt.write(FileIO.PadStr('    pe_ratio',25) + '{0:.5e}'.format(MechStr['variant'][j]['pe_ratio']) + '\n')
                     txt.write(FileIO.PadStr('    activ_eng',25) + str(MechStr['variant'][j]['activ_eng']) + '\n')
                     if MechStr['variant'][j]['prox_factor'] != '':
                         txt.write(FileIO.PadStr('    prox_factor',25) + str(MechStr['variant'][j]['prox_factor']) + '\n')
                     txt.write('  end_variant\n\n')
-              
-                txt.write('end_reversible_step\n\n')
+                
+                if reversible:
+                    txt.write('end_reversible_step\n\n')
+                else:
+                    txt.write('end_step\n\n')
+                    
                 txt.write('#'*80 + '\n\n')
             txt.write('\n\nend_mechanism')
     
