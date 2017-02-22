@@ -6,6 +6,8 @@ from Replicates import Replicates
 from KMC_Run import KMC_Run
 from Helper import FileIO
 
+import numpy as np
+
 class RateRescaling:
     
     def __init__(self):
@@ -114,9 +116,7 @@ class RateRescaling:
             cum_batch.AverageRuns()
             cum_batch.runAvg.gas_stoich = gas_stoich        # stoichiometry of gas-phase reaction
             cum_batch.runAvg.calc_net_rxn()            
-            net_rxn_converged = cum_batch.runAvg.CheckNetRxnConvergence()
-            product_converged = cum_batch.runAvg.CheckProductConvergence(Product)
-            is_steady_state = net_rxn_converged and product_converged
+            is_steady_state = cum_batch.runAvg.CheckGasConvergence(np.array(gas_stoich))
             
             # Record information about the iteration
             cum_batch.runAvg.PlotGasSpecVsTime()
@@ -169,7 +169,7 @@ class RateRescaling:
     # Process KMC output and determine how to further scale down reactions
     # Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic Monte Carlo simulations through the modification of rate constants, J. Chem. Phys. 132 (2010) 194101.
     @staticmethod
-    def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):
+    def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):        # Change to allow for irreversible reactions
         
         delta_sdf = np.ones(run.Reactions['nrxns'])    # initialize the marginal scaledown factors
         rxn_speeds = []

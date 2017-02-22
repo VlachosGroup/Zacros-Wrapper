@@ -11,18 +11,8 @@ import subprocess
 import copy
 
 from Helper import FileIO
-
 from scipy.optimize import curve_fit
-
-# Use this functional form to regress the gas profiles
-def func(t, rss, tau):
-
-    t = np.asarray(t)
-    y = np.zeros(t.shape)
-    y += (t / tau >= 10) * rss * ( t - tau )
-    y += (t / tau < 10) * rss * ( t - tau * ( 1 - np.exp( - t / tau) ) )
-
-    return y
+from scipy import linspace, polyval, polyfit, sqrt, stats, randn
 
 class KMC_Run(IOdata):
     
@@ -189,75 +179,56 @@ class KMC_Run(IOdata):
         self.props_avg = np.zeros([prop_shape[0]-1, prop_shape[1]])
         
         for rxn_ind in range(prop_shape[1]):
-            self.props_avg[:,rxn_ind] = props[:,rxn_ind] / delt
+            self.props_avg[:,rxn_ind] = props[:,rxn_ind] / delt 
+    
+        
+    def CheckGasConvergence(self, gas_stoich, r_sqr_cut = 0.98, rate_perc = 0.03):
+    
+        window = [0.0, 1.0]
+        start_ind = self.fraction_search(window[0])
+        end_ind = self.fraction_search(window[1])
+        rates = []
+        r_sqr_vals = []
+    
+        for gas_spec_ind in range (len(self.Species['gas_spec'])):
+        
+            x = self.Specnum['t'][start_ind:end_ind]
+            y = self.Specnum['spec'][start_ind:end_ind, gas_spec_ind + len(self.Species['surf_spec']) ]
+
+            (a_s, b_s, r, tt, stderr) = stats.linregress(x, y)
+            print('Linear regression using stats.linregress')
+            print('\nregression: a=%.2f b=%.2f, std error= %.3f' % (a_s, b_s, stderr))
+            print('r^2 value: %.2f' % (r**2))
             
-    def calc_net_rxn(self):
-        
-        gas_mat = self.Specnum['spec'][:, len(self.Species['surf_spec']) : ]        # gas species only
-        self.net_rxn = np.dot(gas_mat, np.abs(self.gas_stoich))
-    
-    def CheckNetRxnConvergence(self, m = 0.04):
-        
-        half_ind = self.fraction_search(0.5)
-        diff1 = np.abs( (self.net_rxn[half_ind] - self.net_rxn[-1]) / (self.net_rxn[-1] - self.net_rxn[0]) )
-
-        return diff1 < m
-        
-    def CheckProductConvergence(self, Product, dimless_time_limit = 12.0):
-        
-        try:
-            product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
-        except:
-            raise Exception('Product species not found.')
-        
-        tau_fit = self.FitProductProfile(Product)
-		
-        if self.Specnum['spec'][:,product_ind][-1] <= 100:
-            return False
-        else:
-            return self.Specnum['t'][-1] / tau_fit > dimless_time_limit
-
-    def FitProductProfile(self, Product, graph_compare = True):
-
-        try:
-            product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
-        except:
-            raise Exception('Product species not found.')
-    
-        rss_guess = self.Specnum['spec'][:,product_ind][-1] / self.Specnum['t'][-1]
-        tau_guess = self.Specnum['t'][-1] / 5.0
-    
-        popt, pcov = curve_fit(func, self.Specnum['t'], self.Specnum['spec'][:,product_ind], p0 = [rss_guess, tau_guess], bounds=[ np.array([-np.inf, 0]), np.array([np.inf, np.inf]) ])
-
-        if graph_compare:
-
-            spec_fit = func(self.Specnum['t'], popt[0], popt[1])
-
             mat.rcParams['mathtext.default'] = 'regular'
             mat.rcParams['text.latex.unicode'] = 'False'
             mat.rcParams['legend.numpoints'] = 1
             mat.rcParams['lines.linewidth'] = 2
             mat.rcParams['lines.markersize'] = 12
-    
+                    
             plt.figure()
-    
-            plt.plot(self.Specnum['t'], self.Specnum['spec'][:,product_ind])
-            plt.plot(self.Specnum['t'], spec_fit)
-    
-    
-            plt.xticks(size=20)
-            plt.yticks(size=20)
+            
+            plt.plot(self.Specnum['t'], self.Specnum['spec'][:, gas_spec_ind + len(self.Species['surf_spec']) ])
+            plt.plot(self.Specnum['t'], self.Specnum['t'] * a_s + b_s)
+            #plt.plot(self.Specnum['t'], self.Specnum['spec'][:, gas_spec_ind + len(self.Species['surf_spec']) ] - (self.Specnum['t'] * a_s + b_s))
+            
             plt.xlabel('Time (s)', size=24)
-            plt.ylabel(Product + ' count', size=24)
-    
-            plt.legend(['data', 'fit'], loc=4, prop={'size':20}, frameon=False)
-    
+            plt.ylabel('Gas population', size=24)
+            plt.legend(['data', 'fit'], loc=1, prop={'size':20}, frameon=False)
+            
             ax = plt.subplot(111)
             ax.set_position([0.2, 0.15, 0.7, 0.8])
-    
-            plt.savefig( os.path.join(self.Path, 'fit_compare.png') )
             
-        return popt[1]
+            plt.savefig(os.path.join(self.Path, self.Species['gas_spec'][gas_spec_ind] + '_fit.png'))
+            plt.close()
+            
+            if gas_stoich[gas_spec_ind] != 0:
+                rates.append(a_s / gas_stoich[gas_spec_ind])
+                r_sqr_vals.append(r**2)
+                
+        print rates
+        print r_sqr_vals    
+            
 
     ''' ==================================== Plotting methods ==================================== '''
     
