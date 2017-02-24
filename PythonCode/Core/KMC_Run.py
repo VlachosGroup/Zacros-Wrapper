@@ -334,10 +334,10 @@ class KMC_Run(IOdata):
             
                 net_freq = abs(fwd_rate - bwd_rate)
                 
-                if event_freqs[2*i] > 0:              
+                if fwd_rate > 0:              
                     plt.barh(ind-0.4, fwd_rate, width, color='r', log = True)
                     bar_vals.append(fwd_rate)
-                if event_freqs[2*i+1] > 0:
+                if bwd_rate > 0:
                     plt.barh(ind-0.6, bwd_rate, width, color='b', log = True)
                     bar_vals.append(bwd_rate)
                 if net_freq > 0:

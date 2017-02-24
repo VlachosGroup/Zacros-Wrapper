@@ -43,8 +43,8 @@ class Lattice:
         if plot_neighbs:
             ind = 0
             for pair in self.neighbor_list:                                             # neighbors
-                p1 = self.cart_coords[pair[0]-1,:]
-                p2 = self.cart_coords[pair[1]-1,:]
+                p1 = self.cart_coords[pair[0],:]
+                p2 = self.cart_coords[pair[1],:]
                 if self.cell_list[ind] == 'self':
                     plt.plot([p1[0], p2[0]], [p1[1], p2[1]], '-k', linewidth = 1)
                 ind += 1
@@ -138,7 +138,7 @@ class Lattice:
             txt.write('neighboring_structure \t # site-neighsite cell\n');
             ind = 0
             for pair in self.neighbor_list:
-                txt.write('\t {}-{} {} \n'.format(pair[0],pair[1],self.cell_list[ind]))
+                txt.write('\t {}-{} {} \n'.format(pair[0]+1,pair[1]+1,self.cell_list[ind]))
                 ind += 1
             txt.write('end_neighboring_structure\n\n')
             
@@ -173,24 +173,24 @@ class Lattice:
                 c_2_east = c2 + self.lattice_matrix[0,:]
                 c_2_southeast = c2 + self.lattice_matrix[0,:] - self.lattice_matrix[1,:]
             
-                if site_1 <= site_2:        # check self
+                if site_1 < site_2:        # check self
                     if np.linalg.norm( c1 - c2 ) < cut:
-                        self.neighbor_list.append([site_1+1, site_2+1])
+                        self.neighbor_list.append([site_1, site_2])
                         self.cell_list.append('self')
                         
                 if np.linalg.norm( c1 - c_2_north ) < cut:
-                    self.neighbor_list.append([site_1+1, site_2+1])
+                    self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('north')
                         
                 if np.linalg.norm( c1 - c_2_northeast ) < cut:
-                    self.neighbor_list.append([site_1+1, site_2+1])
+                    self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('northeast')
                     
                 if np.linalg.norm( c1 - c_2_east ) < cut:
-                    self.neighbor_list.append([site_1+1, site_2+1])
+                    self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('east')
                     
                 if np.linalg.norm( c1 - c_2_southeast ) < cut:
-                    self.neighbor_list.append([site_1+1, site_2+1])
+                    self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('southeast')
         
