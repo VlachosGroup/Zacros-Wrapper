@@ -270,7 +270,8 @@ class Replicates:
         self.runAvg.Procstat['events'] = np.mean(self.rxn_freqs, axis = 0)
         
         #self.runAvg.Binary['prop'] = np.mean(self.props, axis = 0)
-        self.runAvg.Binary['propCounter'] = np.mean(self.Props_integ, axis = 0)
+        if not self.runAvg.Binary['propCounter'] == '':
+            self.runAvg.Binary['propCounter'] = np.mean(self.Props_integ, axis = 0)
         
         self.runAvg.Performance['events_occurred'] = np.mean(self.events_total)
         self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
