@@ -11,12 +11,19 @@ import subprocess
 import copy
 
 from Helper import FileIO
-from scipy.optimize import curve_fit
-from scipy import linspace, polyval, polyfit, sqrt, stats, randn
+import scipy
 
 class KMC_Run(IOdata):
     
+    '''
+    Handles a single Zacros trajectory. Inherits from IOdata.
+    '''
+    
     def __init__(self):
+        
+        '''
+        Initializes additional class variables
+        '''
         
         super(KMC_Run, self).__init__()
 
@@ -29,6 +36,10 @@ class KMC_Run(IOdata):
         self.net_rxn = []        # net mass, conserved at steady-state
         
     def Run_sim(self):
+        
+        '''
+        Call the Zacros executable and run the simulation
+        '''
         
         os.chdir(self.Path)
         
@@ -43,6 +54,10 @@ class KMC_Run(IOdata):
             raise Exception('Zacros run failed.')
     
     def ComputeTOF(self, Product, win = [0.0, 1.0]):                       # return TOF and TOF error
+        
+        '''
+        Compute the turnover frequency over a given window
+        '''
         
         # Find the index of the product species
         try:
@@ -78,6 +93,10 @@ class KMC_Run(IOdata):
     
     def AdjustPreExponentials(self, delta_sdf):
         
+        '''
+        Adjust the pre-exponential ratios of all elementary reactions
+        '''
+        
         rxn_ind = 0
         for rxn_type in self.Reactions['Input']:
             for variant in rxn_type['variant']:
@@ -86,6 +105,10 @@ class KMC_Run(IOdata):
                 rxn_ind += 1    
     
     def CalcRateTraj(self, Product):
+        
+        '''
+        Compute instantaneous rates
+        '''
         
         try:
             product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
@@ -115,6 +138,10 @@ class KMC_Run(IOdata):
     
     def time_search(self, t):           # Convert KMC time to index of time series
         
+        '''
+        Given a time, look up the index of the time vector nearest to that time
+        '''
+        
         if t > self.Specnum['t'][-1] or t < 0:
             raise Exception('Time is out of range.')
         
@@ -126,16 +153,29 @@ class KMC_Run(IOdata):
         
     def fraction_search(self, frac):       # Convert percentage of time interval to index of time series
         
+        '''
+        Given a fraction of the final time, compute the time point
+        '''
+        
         t = frac * self.Specnum['t'][-1]
         return self.time_search(t)
         
     def avg_in_window(self, data, limits):
+    
+        '''
+        Ergodically average data within a time window
+        '''
+    
         high_ind = self.time_search(limits[1])
         low_ind = self.time_search(limits[0])
         return (data[high_ind] - data[low_ind]) / (self.Specnum['t'][high_ind] - self.Specnum['t'][low_ind])
     
     def CheckSteadyState(self, Product, frac_sample = 0.2, cut = 0.05, show_graph = False):
-           
+        
+        '''
+        Determine whether the simulation is at steady state
+        '''
+        
         self.CalcRateTraj(Product)
         
         if self.rate_traj[-1] == 0:          # Simulation is not in steady-state if rate of production of product species is 0
@@ -152,6 +192,10 @@ class KMC_Run(IOdata):
         
     @staticmethod
     def time_sandwich(run1, run2):
+        
+        '''
+        Take two trajectories and append them
+        '''
         
         sandwich = copy.deepcopy(run1)
         sandwich.Performance['t_final'] = run1.Performance['t_final'] + run2.Performance['t_final']
@@ -173,6 +217,10 @@ class KMC_Run(IOdata):
     
     def time_avg_props(self):
         
+        '''
+        Adjust the pre-exponential ratios of all elementary reactions
+        '''
+        
         delt = self.Specnum['t'][1::] - self.Specnum['t'][:-1:]
         props = self.Binary['propCounter'][1::,:] - self.Binary['propCounter'][:-1:,:]
         prop_shape = self.Binary['propCounter'].shape
@@ -183,6 +231,10 @@ class KMC_Run(IOdata):
     
         
     def CheckGasConvergence(self, gas_stoich, r_sqr_cut = 0.98, rate_perc = 0.03):
+    
+        '''
+        Check whether the simulation is at steady state using gas species profiles
+        '''
     
         window = [0.0, 1.0]
         start_ind = self.fraction_search(window[0])
@@ -195,7 +247,7 @@ class KMC_Run(IOdata):
             x = self.Specnum['t'][start_ind:end_ind]
             y = self.Specnum['spec'][start_ind:end_ind, gas_spec_ind + len(self.Species['surf_spec']) ]
 
-            (a_s, b_s, r, tt, stderr) = stats.linregress(x, y)
+            (a_s, b_s, r, tt, stderr) = scipy.stats.linregress(x, y)
             print('Linear regression using stats.linregress')
             print('\nregression: a=%.2f b=%.2f, std error= %.3f' % (a_s, b_s, stderr))
             print('r^2 value: %.2f' % (r**2))
@@ -234,6 +286,10 @@ class KMC_Run(IOdata):
     
     def PlotSurfSpecVsTime(self, site_norm = 1):
         
+        '''
+        Plot surface species profiles versus time
+        '''
+        
         if site_norm == 1:
             ylabel = 'Species count'
         else:
@@ -249,6 +305,10 @@ class KMC_Run(IOdata):
     
     def PlotGasSpecVsTime(self):
         
+        '''
+        Plot gas phase species profiles versus time
+        '''
+        
         time_vecs = []
         gas_spec_vecs = []
         for i in range (len(self.Species['gas_spec'])):
@@ -257,10 +317,12 @@ class KMC_Run(IOdata):
         
         FileIO.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['gas_spec'], fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
         
-    def PlotNetGasRxnVsTime(self):
-        FileIO.PlotTrajectory([self.Specnum['t']], [self.net_rxn], xlab = 'Time (s)', ylab = 'spec. pop.', fname = os.path.join(self.Path, 'net_rxn_vs_time.png'))
         
     def PlotPropsVsTime(self):
+        
+        '''
+        Plot elementary step propensities versus time
+        '''
         
         self.time_avg_props()
         time_vecs = []
@@ -274,6 +336,10 @@ class KMC_Run(IOdata):
         FileIO.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'props (1/s)', series_labels = labels, fname = os.path.join(self.Path, 'props_vs_time.png'))
         
     def PlotIntPropsVsTime(self, save = True):      # Helps analyze the sensitivty analysis
+        
+        '''
+        Plot integral propensities versus time
+        '''
         
         self.time_avg_props()
         time_vecs = []
@@ -291,6 +357,10 @@ class KMC_Run(IOdata):
     
     def PlotWVsTime(self):      # Helps analyze the sensitivty analysis
     
+        '''
+        Plot trajectory derivatives versus time
+        '''
+    
         time_vecs = []
         W_vecs = []
         labels = []
@@ -303,6 +373,10 @@ class KMC_Run(IOdata):
         FileIO.PlotTrajectory(time_vecs, W_vecs, xlab = 'Time (s)', ylab = 'traj. deriv.', series_labels = labels, fname = os.path.join(self.Path + 'traj_deriv_vs_time.png'))
     
     def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1):
+        
+        '''
+        Plot a bar graph of elementary step frequencies versus time
+        '''
         
         start_ind = self.fraction_search(window[0])
         end_ind = self.fraction_search(window[1])
@@ -368,6 +442,10 @@ class KMC_Run(IOdata):
 
     def PrintElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1.0):      # into an output file
         
+        '''
+        Write elementary step frequencies into an output file
+        '''
+        
         start_ind = self.fraction_search(window[0])
         end_ind = self.fraction_search(window[1])
         event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / site_norm
@@ -387,11 +465,20 @@ class KMC_Run(IOdata):
 
 
     def PlotRateVsTime(self):
+    
+        '''
+        Plot instantaneous rate versus time
+        '''
+    
         FileIO.PlotTrajectory([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_vs_time.png'))
         FileIO.PlotTrajectory([self.Specnum['t'][1::]], [self.int_rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_erg_vs_time.png'))
 
         
     def PlotLattice(self):
+    
+        '''
+        Plot the lattice
+        '''
     
         plt = self.KMC_lat.PlotLattice()
         plt.savefig(os.path.join(self.Path, 'lattice.png'))
@@ -399,6 +486,10 @@ class KMC_Run(IOdata):
         
     def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need to complete this function by plotting adsorbates from the history file data
 
+        '''
+        Create a .png file with a picture of a lattice for every snapshot in history_output.txt
+        '''
+    
         cart_coords = self.KMC_lat.cart_coords
         spec_label_list = self.Species['surf_spec']
         

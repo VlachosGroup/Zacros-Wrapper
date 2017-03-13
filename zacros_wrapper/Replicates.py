@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import matplotlib as mat
-mat.use('Agg')
+#mat.use('Agg')
 import matplotlib.pyplot as plt
 import copy
 import sys
@@ -10,12 +10,14 @@ from KMC_Run import KMC_Run
 from Helper import FileIO, Stats
 import time
 
-'''
-Has data from muliple trajectories with the same input, but different 
-random seeds and possibly different initial states
-'''
+
 
 class Replicates:
+
+    '''
+    Has data from muliple trajectories with the same input, but different 
+    random seeds and possibly different initial states
+    '''
     
     def __init__(self):
              
@@ -55,6 +57,10 @@ class Replicates:
     
     def BuildJobFiles(self, init_states = []):
         
+        '''
+        Builds folders with Zacros input files. The only difference is the random seed.
+        '''
+        
         FileIO.ClearFolderContents(self.ParentFolder)    
         
         # List the directories and random seeds 
@@ -88,6 +94,10 @@ class Replicates:
             self.runtemplate.WriteAllInput()
         
     def RunAllJobs_parallel_JobArray(self, max_cores = 100, server = 'Squidward'):
+    
+        '''
+        Runs a job array on Squidward or Farber
+        '''
     
         sys.stdout.write('Running parallel jobs')
         sys.stdout.flush()
@@ -184,12 +194,20 @@ class Replicates:
     
     def RunAllJobs_serial(self):       # Serial version of running all jobs
 
+        '''
+        Runs all Zacros jobs in serial
+        '''
+    
         # loop over array of directories and execute the Zacros executable in that folder
         for fldr in self.run_dirs:
             self.runtemplate.Path = fldr
             self.runtemplate.Run_sim()
     
     def ReadMultipleRuns(self):     # Can take ~1 minutes to use this method
+        
+        '''
+        Read all Zacros jobs in a given folder
+        '''
         
         sys.stdout.write('Reading all runs in ' + self.ParentFolder)
         sys.stdout.flush()
@@ -263,6 +281,10 @@ class Replicates:
     # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
         
+        '''
+        Average multiple trajectories
+        '''
+        
         self.runAvg.Path = self.ParentFolder
         self.runAvg.Specnum['t'] = self.t_vec
         
@@ -277,6 +299,10 @@ class Replicates:
         self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
      
     def ComputeSA(self, product, window = [0.0, 1.0]):          # Need to make this compatible with irreversible reactions
+        
+        '''
+        Perform sensitivity analysis
+        '''
         
         self.AverageRuns()      # make sure this has been done
  
@@ -344,6 +370,10 @@ class Replicates:
         
     def PlotSensitivities(self): 
         
+        '''
+        Plot the results of sensitivity analysis
+        '''
+        
         FileIO.PlotOptions()
         plt.figure()
         width = 0.8
@@ -401,6 +431,10 @@ class Replicates:
     
     def WriteSA_output(self):
     
+        '''
+        Write the results of sensitivity analysis into an SA_output.txt
+        '''
+    
         with open(os.path.join(self.ParentFolder, 'SA_output.txt'), 'w') as txt:
             txt.write('Normalized sensitivity coefficients \n\n')
             txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
@@ -410,6 +444,10 @@ class Replicates:
                 txt.write(self.runAvg.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC_inst[rxn_ind]) + '{0:.3f}\t'.format(self.NSC_ci_inst[rxn_ind]) + '{0:.3f} +- '.format(self.NSC_erg[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci_erg[rxn_ind]) + '\n')
                 
     def FD_SA(self, rxn_inds = [1], pert_frac = 0.05, n_runs = 20, setup = True, exec_run = True, analyze_bool = True):     # Need to redo this function
+        
+        '''
+        Perform finite difference sensitivity analysis
+        '''
         
         # Create objects for perturbed systems
         plus = copy.deepcopy(self)
@@ -474,6 +512,10 @@ class Replicates:
             
     @staticmethod
     def time_sandwich(batch1, batch2):
+        
+        '''
+        Append two sets of trajectories
+        '''
         
         sand = copy.deepcopy(batch2)
         

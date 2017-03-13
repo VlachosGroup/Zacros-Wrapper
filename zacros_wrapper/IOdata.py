@@ -9,7 +9,15 @@ from Lattice import Lattice     # will fill in this object later when it is used
 
 class IOdata(object):
     
+    '''
+    Handles the reading and writing of Zacros input/output files
+    '''
+    
     def __init__(self):
+        
+        '''
+        Set default values of class variables
+        '''
         
         super(IOdata, self).__init__()        
         
@@ -109,6 +117,10 @@ class IOdata(object):
 
     def ReadAllInput(self):   
     
+        '''
+        Read all input files. state_input.dat will be read only if it is present.
+        '''
+    
         self.ReadSimIn()
         self.ReadLatticeIn()
         self.ReadEngIn()
@@ -117,7 +129,12 @@ class IOdata(object):
         if os.path.isfile(os.path.join(self.Path, 'state_input.dat')):
             self.ReadStateInput()
     
-    def ReadEngIn(self): 
+    def ReadEngIn(self):
+
+        '''
+        Read energetics_input.dat
+        '''
+    
         RawTxt = FileIO.ReadWithoutBlankLines(os.path.join(self.Path, 'energetics_input.dat'), CommentLines=False)
         nLines = len(RawTxt)
         
@@ -183,13 +200,23 @@ class IOdata(object):
         self.Cluster['nClusterVariant'] = nClusterTotal
         
     def ReadLatticeIn(self):
+    
+        '''
+        Read lattice_input.dat
+        '''
+    
         self.Lattice['Input'] = []
         with open(os.path.join(self.Path, 'lattice_input.dat'),'r') as Txt:
             RawTxt = Txt.readlines()   
         for i in RawTxt:
             self.Lattice['Input'].append(i.split('\n')[0])
     
-    def ReadStateInput(self): 
+    def ReadStateInput(self):
+
+        '''
+        Read state_input.dat
+        '''
+    
         self.StateInput['Struct'] = []
         with open(os.path.join(self.Path, 'state_input.dat'),'r') as Txt:
             RawTxt = Txt.readlines()   
@@ -197,7 +224,12 @@ class IOdata(object):
             self.StateInput['Struct'].append(i.split('\n')[0])
         self.StateInput['Type'] = 'StateInput'
     
-    def ReadMechIn(self): 
+    def ReadMechIn(self):
+
+        '''
+        Read mechanism_input.dat
+        '''
+    
         RawTxt = FileIO.ReadWithoutBlankLines(os.path.join(self.Path, 'mechanism_input.dat'),CommentLines=True)
         nLines = len(RawTxt)
         StiffCorrLine = -1
@@ -331,6 +363,11 @@ class IOdata(object):
         self.Reactions['Input'] = MechDict    
         
     def ReadSimIn(self):
+    
+        '''
+        Read simulation_input.dat
+        '''
+    
         with open(os.path.join(self.Path, 'simulation_input.dat'),'r') as txt:
             RawTxt = txt.readlines()
             
@@ -398,6 +435,11 @@ class IOdata(object):
 #                        print i
         
     def StateInc(self,i):
+    
+        '''
+        Read state_input.dat
+        '''
+    
         if re.search('off',i):
             state = 'off'
             inc = ''
@@ -414,6 +456,10 @@ class IOdata(object):
 
     def WriteAllInput(self):
         
+        '''
+        Write all Zacros input files
+        '''
+        
         self.WriteSimIn()
         self.WriteMechanism()
         self.WriteEnergetics()
@@ -421,6 +467,11 @@ class IOdata(object):
         self.WriteLattice()
 
     def WriteEnergetics(self):
+    
+        '''
+        Write energetics_input.dat
+        '''
+    
         nCluster = self.Cluster['nCluster']
 
         with open(os.path.join(self.Path, 'energetics_input.dat'), 'w') as txt:
@@ -459,6 +510,11 @@ class IOdata(object):
             txt.write('\n\nend_energetics')
             
     def WriteLattice(self):
+    
+        '''
+        Write lattice_input.dat
+        '''
+    
         with open(os.path.join(self.Path, 'lattice_input.dat'), 'w') as txt:
             for i in self.Lattice['Input']:
                 txt.write(i + '\n')
@@ -466,6 +522,11 @@ class IOdata(object):
 # Need to fix this method
         
     def WriteMechanism(self):
+    
+        '''
+        Write mechanism_input.dat
+        '''
+    
         if FileIO.isblank(self.scaledown_factors):
             SDBool = False
         else:
@@ -549,6 +610,11 @@ class IOdata(object):
             txt.write('\n\nend_mechanism')
     
     def WriteSimIn(self):
+    
+        '''
+        Write simulation_input.dat
+        '''
+    
         with open(os.path.join(self.Path, 'simulation_input.dat'), 'w') as txt:
             SeedTxt = ''
             if self.Conditions['Seed'] == '':
@@ -624,6 +690,11 @@ class IOdata(object):
             txt.write('\nfinish\n')
 
     def WriteStateIn(self):
+    
+        '''
+        Write state_input.dat
+        '''
+    
         if self.StateInput['Type'] == 'none':
             return
             
@@ -666,6 +737,10 @@ class IOdata(object):
 
     def ReadAllOutput(self):
         
+        '''
+        Read all Zacros output files
+        '''
+        
         self.ReadAllInput()
         
         if self.CheckComplete():
@@ -689,6 +764,11 @@ class IOdata(object):
             print 'general_output.txt not found in ' + self.Path
   
     def CheckComplete(self):
+    
+        '''
+        Check to see if a Zacros run has completed successfully
+        '''
+    
         Complete = False
         if os.path.isfile(os.path.join(self.Path, 'general_output.txt')):
             with open(os.path.join(self.Path, 'general_output.txt'),'r') as txt:
@@ -698,7 +778,12 @@ class IOdata(object):
                     Complete = True
         return Complete
 
-    def ReadGeneral(self):          # general_output.txt
+    def ReadGeneral(self):
+    
+        '''
+        Read general_output.txt
+        '''
+    
         with open(os.path.join(self.Path, 'general_output.txt'),'r') as txt:
             RawTxt = txt.readlines()                
                 
@@ -752,6 +837,10 @@ class IOdata(object):
     
     def ReadHistory(self):
         
+        '''
+        Read history_output.txt
+        '''
+        
         # Check if file exists
         if not os.path.isfile(os.path.join(self.Path, 'history_output.txt')):
             return
@@ -777,6 +866,11 @@ class IOdata(object):
             self.History.append(snap_data)
         
     def ReadProcstat(self):
+    
+        '''
+        Read procstat_output.txt
+        '''
+    
         MaxLen = np.int(2e4)
         with open(os.path.join(self.Path, 'procstat_output.txt'),'r') as txt:
             RawTxt = txt.readlines()
@@ -808,6 +902,10 @@ class IOdata(object):
     
     def ReadSpecnum(self):
 
+        '''
+        Read specnum_output.txt
+        '''
+    
         MaxLen = np.int(2e4)
         with open(os.path.join(self.Path, 'specnum_output.txt'),'r') as txt:
             RawTxt = txt.readlines()
@@ -846,6 +944,11 @@ class IOdata(object):
         self.Specnum['spec']      = np.asarray(spec)
     
     def ReadCluster(self):
+    
+        '''
+        Read clusterocc.bin
+        '''
+    
         dt=np.dtype(np.int32)
         virtual_arr = np.memmap(os.path.join(self.Path, 'clusterocc.bin'), dt, "r")
         nCluster = self.Cluster['nClusterVariant']
@@ -856,6 +959,12 @@ class IOdata(object):
         del virtual_arr
     
     def ReadProp(self,Mode):
+    
+        '''
+        Mode = 0: Read Prop_output.bin
+        Mode = 1: Read PropCounter_output.bin
+        '''
+    
         dt=np.dtype(np.float64)
         if Mode==0:     #Instantaneous propensities
             FileName = 'Prop_output.bin'
@@ -879,6 +988,11 @@ class IOdata(object):
         del virtual_arr
     
     def ReadSA(self):
+    
+        '''
+        Read SA_output.bin
+        '''
+    
         dt=np.dtype(np.float64)
         FileName = 'SA_output.bin'
         if os.path.isfile(os.path.join(self.Path, FileName)):

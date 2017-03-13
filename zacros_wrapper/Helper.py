@@ -1,13 +1,13 @@
 # This file has two classes with useful static methods
 
+# Make this just a list of functions that can be imported, rather than having these useless classes
+
 from itertools import (takewhile,repeat)
 import numpy as np
 import os, shutil
 import matplotlib as mat
-mat.use('Agg')
 import matplotlib.pyplot as plt
-from scipy import stats
-from matplotlib.ticker import FormatStrFormatter
+import scipy
 
 class FileIO:
 
@@ -108,7 +108,6 @@ class FileIO:
             plt.legend(series_labels, loc=4, prop={'size':20}, frameon=False)
         ax = plt.subplot(111)
         ax.set_position([0.2, 0.15, 0.7, 0.8])
-        #ax.xaxis.set_major_formatter(FormatStrFormatter('%.2e'))
         
         if logscale:
             plt.yscale('log')
@@ -127,7 +126,7 @@ class Stats:
     def mean_ci(Data,p=0.05):
         xbar = np.mean(Data)
         nPts = len(Data)
-        CI = np.std(Data) * stats.t.isf(p,nPts-1)/np.sqrt(nPts)
+        CI = np.std(Data) * scipy.stats.t.isf(p,nPts-1)/np.sqrt(nPts)
         return [xbar, CI]
         
     @staticmethod
@@ -142,7 +141,7 @@ class Stats:
         nPts2 = len(data2)
         
         diff = xbar1 - xbar2
-        CI = stats.t.isf(p,nPts1-1) * np.sqrt( sd1**2 / nPts1 + sd2**2 / nPts2 )
+        CI = scipy.stats.t.isf(p,nPts1-1) * np.sqrt( sd1**2 / nPts1 + sd2**2 / nPts2 )
         
         return [diff, CI]
     
