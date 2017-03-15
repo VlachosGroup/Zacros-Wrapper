@@ -1,0 +1,48 @@
+Description of the Replicates class
+***********************************
+
+class Replicates.Replicates
+
+   Has data from muliple trajectories with the same input, but
+   different  random seeds and possibly different initial states
+
+   AverageRuns()
+
+      Average multiple trajectories
+
+   BuildJobFiles(init_states=[])
+
+      Builds folders with Zacros input files. The only difference is
+      the random seed.
+
+   ComputeSA(product, window=[0.0, 1.0])
+
+      Perform sensitivity analysis
+
+   FD_SA(rxn_inds=[1], pert_frac=0.05, n_runs=20, setup=True, exec_run=True, analyze_bool=True)
+
+      Perform finite difference sensitivity analysis
+
+   PlotSensitivities()
+
+      Plot the results of sensitivity analysis
+
+   ReadMultipleRuns()
+
+      Read all Zacros jobs in a given folder
+
+   RunAllJobs_parallel_JobArray(max_cores=100, server='Squidward')
+
+      Runs a job array on Squidward or Farber
+
+   RunAllJobs_serial()
+
+      Runs all Zacros jobs in serial
+
+   WriteSA_output()
+
+      Write the results of sensitivity analysis into an SA_output.txt
+
+   static time_sandwich(batch1, batch2)
+
+      Append two sets of trajectories

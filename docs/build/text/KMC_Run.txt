@@ -1,0 +1,93 @@
+Description of the KMC_Run class
+********************************
+
+class KMC_Run.kmc_traj
+
+   Handles a single Zacros trajectory. Inherits from IOdata.
+
+   AdjustPreExponentials(delta_sdf)
+
+      Adjust the pre-exponential ratios of all elementary reactions
+
+   CalcRateTraj(Product)
+
+      Compute instantaneous rates
+
+   CheckGasConvergence(gas_stoich, r_sqr_cut=0.98, rate_perc=0.03)
+
+      Check whether the simulation is at steady state using gas
+      species profiles
+
+   CheckSteadyState(Product, frac_sample=0.2, cut=0.05, show_graph=False)
+
+      Determine whether the simulation is at steady state
+
+   ComputeTOF(Product, win=[0.0, 1.0])
+
+      Compute the turnover frequency over a given window
+
+   LatticeMovie(include_neighbor_lines=False, spec_color_list=['b', 'g', 'r', 'c', 'm', 'y', 'k'])
+
+      Create a .png file with a picture of a lattice for every
+      snapshot in history_output.txt
+
+   PlotElemStepFreqs(window=[0.0, 1.0], time_norm=False, site_norm=1)
+
+      Plot a bar graph of elementary step frequencies versus time
+
+   PlotGasSpecVsTime()
+
+      Plot gas phase species profiles versus time
+
+   PlotIntPropsVsTime(save=True)
+
+      Plot integral propensities versus time
+
+   PlotLattice()
+
+      Plot the lattice
+
+   PlotPropsVsTime()
+
+      Plot elementary step propensities versus time
+
+   PlotRateVsTime()
+
+      Plot instantaneous rate versus time
+
+   PlotSurfSpecVsTime(site_norm=1)
+
+      Plot surface species profiles versus time
+
+   PlotWVsTime()
+
+      Plot trajectory derivatives versus time
+
+   PrintElemStepFreqs(window=[0.0, 1.0], time_norm=False, site_norm=1.0)
+
+      Write elementary step frequencies into an output file
+
+   Run_sim()
+
+      Call the Zacros executable and run the simulation
+
+   avg_in_window(data, limits)
+
+      Ergodically average data within a time window
+
+   fraction_search(frac)
+
+      Given a fraction of the final time, compute the time point
+
+   time_avg_props()
+
+      Adjust the pre-exponential ratios of all elementary reactions
+
+   static time_sandwich(run1, run2)
+
+      Take two trajectories and append them
+
+   time_search(t)
+
+      Given a time, look up the index of the time vector nearest to
+      that time

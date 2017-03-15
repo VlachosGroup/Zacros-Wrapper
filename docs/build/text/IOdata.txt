@@ -1,0 +1,96 @@
+Description of the IOdata class
+*******************************
+
+class IOdata.IOdata
+
+   Handles the reading and writing of Zacros input/output files
+
+   CheckComplete()
+
+      Check to see if a Zacros run has completed successfully
+
+   ReadAllInput()
+
+      Read all input files. state_input.dat will be read only if it is
+      present.
+
+   ReadAllOutput()
+
+      Read all Zacros output files
+
+   ReadCluster()
+
+      Read clusterocc.bin
+
+   ReadEngIn()
+
+      Read energetics_input.dat
+
+   ReadGeneral()
+
+      Read general_output.txt
+
+   ReadHistory()
+
+      Read history_output.txt
+
+   ReadLatticeIn()
+
+      Read lattice_input.dat
+
+   ReadMechIn()
+
+      Read mechanism_input.dat
+
+   ReadProcstat()
+
+      Read procstat_output.txt
+
+   ReadProp(Mode)
+
+      Mode = 0: Read Prop_output.bin Mode = 1: Read
+      PropCounter_output.bin
+
+   ReadSA()
+
+      Read SA_output.bin
+
+   ReadSimIn()
+
+      Read simulation_input.dat
+
+   ReadSpecnum()
+
+      Read specnum_output.txt
+
+   ReadStateInput()
+
+      Read state_input.dat
+
+   StateInc(i)
+
+      Read state_input.dat
+
+   WriteAllInput()
+
+      Write all Zacros input files
+
+   WriteEnergetics()
+
+      Write energetics_input.dat
+
+   WriteLattice()
+
+      Write lattice_input.dat
+
+   WriteMechanism()
+
+      Write mechanism_input.dat
+
+   WriteSimIn()
+
+      Write simulation_input.dat
+
+   WriteStateIn()
+
+      Write state_input.dat
