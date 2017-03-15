@@ -46,11 +46,3 @@ Known issues
 * In energetics_input.dat, all clusters must be specified as a variant.
 * In mechanism_input.dat, all reactions must be specified as a variant
 * Trajectory derivatives do not include the truncation term. They report data since the last event.
-
-Development progress
---------------------
-
-* Create a test_dependencies.py demonstration file which will run if all dependencies are met.
-* Use an atomic description for the KMC lattice so you can build lattice from a POSCAR and output a state as a POSCAR
-* Interface with first-principles data, i.e. take DFT data and make KMC input
-* Parallelize the bootstrapping confidence intervals for sensitivity estimates.

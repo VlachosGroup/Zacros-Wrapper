@@ -27,13 +27,12 @@ class kmc_traj(IOdata):
         
         super(kmc_traj, self).__init__()
 
-        self.exe_file = ''
-        self.anim = []          # animation object used for lattice movie
-        self.props_avg = []
-        self.rate_traj = []
-        self.int_rate_traj = []
-        self.gas_stoich = []        # stoichiometry of gas-phase reaction
-        self.net_rxn = []        # net mass, conserved at steady-state
+        self.exe_file = None
+        self.props_avg = None
+        self.rate_traj = None
+        self.int_rate_traj = None
+        self.gas_stoich = None        # stoichiometry of gas-phase reaction
+        self.net_rxn = None        # net mass, conserved at steady-state
         
     def Run_sim(self):
         
@@ -43,7 +42,7 @@ class kmc_traj(IOdata):
         
         os.chdir(self.Path)
         
-        if self.exe_file == '':
+        if self.exe_file is None:
             raise Exception('Zacros exe file not specified.')        
         
         try:
@@ -170,25 +169,6 @@ class kmc_traj(IOdata):
         low_ind = self.time_search(limits[0])
         return (data[high_ind] - data[low_ind]) / (self.Specnum['t'][high_ind] - self.Specnum['t'][low_ind])
     
-    def CheckSteadyState(self, Product, frac_sample = 0.2, cut = 0.05, show_graph = False):
-        
-        '''
-        Determine whether the simulation is at steady state
-        '''
-        
-        self.CalcRateTraj(Product)
-        
-        if self.rate_traj[-1] == 0:          # Simulation is not in steady-state if rate of production of product species is 0
-            return False        
-
-        batch_1 = self.avg_in_window(self.int_rate_traj, [0, 0.5 * self.Specnum['t'][-1]])
-        batch_2 = self.avg_in_window(self.int_rate_traj, [0.5 * self.Specnum['t'][-1], self.Specnum['t'][-1]])
-        
-        frac_change = (batch_2 - batch_1) / batch_2
-        
-        print '{0:.3f}'.format(frac_change) + ' change in last 50% of window'
-            
-        return np.abs(frac_change) < cut
         
     @staticmethod
     def time_sandwich(run1, run2):
@@ -218,7 +198,7 @@ class kmc_traj(IOdata):
     def time_avg_props(self):
         
         '''
-        Adjust the pre-exponential ratios of all elementary reactions
+        ???
         '''
         
         delt = self.Specnum['t'][1::] - self.Specnum['t'][:-1:]

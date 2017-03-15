@@ -26,58 +26,58 @@ class IOdata(object):
 # -------------------- Input data --------------------
         
         self.Conditions                       = {}
-        self.Conditions['T']                  = ''
-        self.Conditions['P']                  = ''
-        self.Conditions['Seed']               = ''
+        self.Conditions['T']                  = None
+        self.Conditions['P']                  = None
+        self.Conditions['Seed']               = None
         self.Conditions['restart']            = False
         self.Conditions['SimTime']            = {}
-        self.Conditions['SimTime']['Max']     = ''
-        self.Conditions['SimTime']['Actual']  = ''
+        self.Conditions['SimTime']['Max']     = None
+        self.Conditions['SimTime']['Actual']  = None
         self.Conditions['WallTime']           = {}
-        self.Conditions['WallTime']['Max']    = ''
-        self.Conditions['WallTime']['Actual'] = ''
-        self.Conditions['CPUTime']            = ''
-        self.Conditions['nEvents']            = ''
-        self.Conditions['MaxStep']            = ''
+        self.Conditions['WallTime']['Max']    = None
+        self.Conditions['WallTime']['Actual'] = None
+        self.Conditions['CPUTime']            = None
+        self.Conditions['nEvents']            = None
+        self.Conditions['MaxStep']            = None
     
         self.Species                          = {}
-        self.Species['n_gas']                 = ''
-        self.Species['gas_spec']              = ''
-        self.Species['gas_eng']               = ''
-        self.Species['gas_MW']                = ''
-        self.Species['gas_molfrac']           = ''
-        self.Species['n_surf']                = ''
-        self.Species['surf_spec']             = ''
-        self.Species['surf_dent']             = ''
+        self.Species['n_gas']                 = None
+        self.Species['gas_spec']              = None
+        self.Species['gas_eng']               = None
+        self.Species['gas_MW']                = None
+        self.Species['gas_molfrac']           = None
+        self.Species['n_surf']                = None
+        self.Species['surf_spec']             = None
+        self.Species['surf_dent']             = None
     
         self.Report                           = {}
-        self.Report['specnum']                = ['','']
-        self.Report['procstat']               = ['','']
-        self.Report['hist']                   = ['','']
+        self.Report['specnum']                = [None, None]
+        self.Report['procstat']               = [None, None]
+        self.Report['hist']                   = [None, None]
         self.Report['event']                  = 'off'
     
         self.Cluster                          = {}
-        self.Cluster['nCluster']              = ''
-        self.Cluster['nClusterVariant']       = ''
-        self.Cluster['Input']                 = ''
+        self.Cluster['nCluster']              = None
+        self.Cluster['nClusterVariant']       = None
+        self.Cluster['Input']                 = None
         
         self.Reactions                        = {}
-        self.Reactions['nrxns']               = ''      # does not include reversible reactions for irreversible reactions
-        self.Reactions['nrxns_total']         = ''      # does include reversible reactions for irreversible reactions
-        self.Reactions['Input']               = ''
+        self.Reactions['nrxns']               = None      # does not include reversible reactions for irreversible reactions
+        self.Reactions['nrxns_total']         = None      # does include reversible reactions for irreversible reactions
+        self.Reactions['Input']               = None
         self.Reactions['names']               = []
         self.Reactions['reversibilities']     = []
         self.Reactions['is_reversible']       = []
         
         self.StateInput                       = {}
         self.StateInput['Type']               = 'none'
-        self.StateInput['Struct']             = ''
+        self.StateInput['Struct']             = None
         
         self.Lattice                          = {}
-        self.Lattice['Input']                 = ''
+        self.Lattice['Input']                 = None
         self.KMC_lat = Lattice()
 
-        self.scaledown_factors    = []
+        self.scaledown_factors    = None
 
 # -------------------- Output data --------------------
 
@@ -527,7 +527,7 @@ class IOdata(object):
         Write mechanism_input.dat
         '''
     
-        if isblank(self.scaledown_factors):
+        if self.scaledown_factors is None:
             SDBool = False
         else:
             SDBool = True
@@ -735,10 +735,12 @@ class IOdata(object):
                 
 #------------------------------------- Read output files ----------------------------
 
-    def ReadAllOutput(self):
+    def ReadAllOutput(self, build_lattice = False):
         
         '''
         Read all Zacros output files
+        Set build_lattice = True if you want to build the lattice object file.
+        This will make it take a lot longer to read
         '''
         
         self.ReadAllInput()
@@ -749,7 +751,8 @@ class IOdata(object):
             self.ReadGeneral()
             self.ReadProcstat()
             self.ReadSpecnum()
-            self.KMC_lat.Read_lattice_output(os.path.join(self.Path, 'lattice_output.txt'))
+            if build_lattice:
+                self.KMC_lat.Read_lattice_output(os.path.join(self.Path, 'lattice_output.txt'))
             self.ReadHistory()
             
             # Extra binary files
@@ -762,6 +765,7 @@ class IOdata(object):
             
         else:
             print 'general_output.txt not found in ' + self.Path
+  
   
     def CheckComplete(self):
     

@@ -22,7 +22,7 @@ class Replicates:
     def __init__(self):
              
         # General info
-        self.ParentFolder = ''
+        self.ParentFolder = None
         self.runtemplate = kmc_traj()                             # Use this to build replicate jobs
         self.runAvg = kmc_traj()            # Values are averages of all runs from runList
         self.n_runs = 0
@@ -33,26 +33,28 @@ class Replicates:
         
         # Output data taken accross all trajectories
         # Put here various multidimensional numpy arrays which will make it easier to do statistics
-        self.t_vec = []                     # times at which data is recorded
-        self.species_pops = []
-        self.rxn_freqs = []
-        self.History_final_snaps = []
-        #self.props = []            # We do not print out this output file
-        self.Props_integ = []
-        self.traj_derivs = []
-        self.events_total = []
-        self.CPU_total = []
+        self.t_vec = None                    # times at which data is recorded
+        self.species_pops = None
+        self.rxn_freqs = None
+        self.History_final_snaps = None
+        #self.props = None            # We do not print out this output file
+        self.Props_integ = None
+        self.traj_derivs = None
+        self.events_total = None
+        self.CPU_total = None
         
         # Analysis
+        self.rates_data = None
+        
         self.Product = ''
-        self.TOF = 0
-        self.TOF_error = 0
-        self.TOF_erg = 0
-        self.TOF_error_erg = 0
-        self.NSC_inst = []
-        self.NSC_ci_inst = []
-        self.NSC_erg = []
-        self.NSC_ci_erg = []
+        self.TOF = None
+        self.TOF_error = None
+        self.TOF_erg = None
+        self.TOF_error_erg = None
+        self.NSC_inst = None
+        self.NSC_ci_inst = None
+        self.NSC_erg = None
+        self.NSC_ci_erg = None
     
     
     def BuildJobFiles(self, init_states = []):
@@ -97,6 +99,8 @@ class Replicates:
     
         '''
         Runs a job array on Squidward or Farber
+        Writes the .qs file with certain parameters changed
+        Then, it submits it to the gridengine and waits for them to finish
         '''
     
         sys.stdout.write('Running parallel jobs')
@@ -214,8 +218,8 @@ class Replicates:
         
         dummy_run = kmc_traj()       # Use this to transfer information
         
-        # If directory list is empty, fill it with the directories in the current folder which have finished jobs
-        if self.run_dirs == []:
+        
+        if not self.run_dirs:   # If directory list is empty, fill it with the directories in the current folder which have finished jobs
         
             DirList = [d for d in os.listdir(self.ParentFolder) if os.path.isdir(os.path.join(self.ParentFolder, d))]      # List all folders in ParentFolder
             
@@ -292,16 +296,82 @@ class Replicates:
         self.runAvg.Procstat['events'] = np.mean(self.rxn_freqs, axis = 0)
         
         #self.runAvg.Binary['prop'] = np.mean(self.props, axis = 0)
-        if not self.runAvg.Binary['propCounter'] == '':
+        if not self.runAvg.Binary['propCounter'] is None:
             self.runAvg.Binary['propCounter'] = np.mean(self.Props_integ, axis = 0)
         
         self.runAvg.Performance['events_occurred'] = np.mean(self.events_total)
         self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
-     
-    def ComputeSA(self, product, window = [0.0, 1.0]):          # Need to make this compatible with irreversible reactions
+    
+    
+    def PlotRatesVsTime(self, product):          # Need to make this compatible with irreversible reactions
         
         '''
-        Perform sensitivity analysis
+        Plot instantaneous rates vs. time for all trajectories
+        '''
+        
+        self.AverageRuns()      # make sure this has been done
+ 
+        # Find index of product molecule
+        try:
+            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(product)           # Find the index of the product species and adjust index to account for surface species
+        except:
+            raise Exception('Product species ' + product + ' not found.')
+        
+        nRxns = len(self.runAvg.Reactions['Nu'])
+        TOF_stoich = np.zeros(nRxns)
+        for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
+            TOF_stoich[i] = elem_stoich[product_ind]
+            
+        D_stoich = np.diag(TOF_stoich)      # will use this for computing rates
+        TOF_stoich.shape = [nRxns, 1]
+        
+        rates_to_plot = np.zeros([len(self.t_vec) - 1, self.n_runs])
+        
+        for i in range(self.n_runs):
+            for j in range(len(self.t_vec) - 1):
+                rates_to_plot[j,i] = np.dot( self.Props_integ[i,j+1,:] - self.Props_integ[i,j,:] , TOF_stoich )
+        
+        self.rates_data = rates_to_plot
+        
+        PlotTimeSeries([ self.t_vec[1::] for i in range(self.n_runs)], [rates_to_plot[:,i] for i in range(self.n_runs)], xlab = 'Time (s)', ylab = 'Rate', fname = './rates_vs_time_WGS.png')
+        
+        '''
+        Continue here
+        '''
+        
+        ## Find instantaneous rates for each trajectory at each time in the window
+        #props_inst = ( self.Props_integ[:,end_ind,:] - self.Props_integ[:,end_ind - 1,:] ) / ( self.t_vec[end_ind] - self.t_vec[end_ind-1] )
+        #TOF_vec_inst = np.dot(props_inst, TOF_stoich)
+        #TOF_vec_inst.shape = [self.n_runs,1]
+        #
+        #props_inst_frac = np.dot(props_inst, D_stoich)
+        #mean_fracs = np.mean(props_inst_frac, axis = 0)
+        #mean_fracs = mean_fracs / np.sum(mean_fracs)            # add this to NSC
+        #mean_fracs = mean_fracs[::2] + mean_fracs[1::2]
+        #
+        #TOF_stats = mean_ci(TOF_vec_inst)                 # Compute the rate
+        #self.TOF = TOF_stats[0]
+        #self.TOF_error = TOF_stats[1]
+        #
+        ## Find ergodic rates for each trajectory at each time in the window
+        #props_erg = ( self.Props_integ[:,end_ind,:] - self.Props_integ[:,start_ind,:] )  / ( self.t_vec[end_ind] - self.t_vec[start_ind] )
+        #TOF_vec_erg = np.dot(props_erg, TOF_stoich)
+        #TOF_vec_erg.shape = [self.n_runs,1]
+        #
+        #props_erg_frac = np.dot(props_erg, D_stoich)
+        #mean_fracs_erg = np.mean(props_erg_frac, axis = 0)
+        #mean_fracs_erg = mean_fracs_erg / np.sum(mean_fracs_erg)            # add this to NSC
+        #mean_fracs_erg = mean_fracs_erg[::2] + mean_fracs_erg[1::2]
+        #
+        #TOF_stats_erg = mean_ci(TOF_vec_erg)          # Compute the rate
+        #self.TOF_erg = TOF_stats_erg[0]
+        #self.TOF_error_erg = TOF_stats_erg[1]
+        
+    
+    def ComputeRates(self, product, window = [0.0, 1.0]):          # Need to make this compatible with irreversible reactions
+        
+        '''
+        Compute rates from propensity information
         '''
         
         self.AverageRuns()      # make sure this has been done
@@ -355,7 +425,14 @@ class Replicates:
         TOF_stats_erg = mean_ci(TOF_vec_erg)          # Compute the rate
         self.TOF_erg = TOF_stats_erg[0]
         self.TOF_error_erg = TOF_stats_erg[1]
-        
+    
+
+    def PerformSA(self, product, window = [0.0, 1.0]):      # make it so that delta_t is the only input into this, and everything is nicely ergodically averaged
+    
+        '''
+        Perform sensitivity analysis
+        '''
+    
         # Find trajectory derivatives for each trajectory at the end of the window
         Wdata = ( self.traj_derivs[:,end_ind,::2] + self.traj_derivs[:,end_ind,1::2] )  - ( self.traj_derivs[:,start_ind,::2] + self.traj_derivs[:,start_ind,1::2] )
         
@@ -537,7 +614,7 @@ class Replicates:
                     sand.Props_integ[traj_ind, time_ind, rxn_ind] += batch1.Props_integ[traj_ind, -1, rxn_ind]
                     sand.traj_derivs[traj_ind, time_ind, rxn_ind] += batch1.traj_derivs[traj_ind, -1, rxn_ind]
                 
-                # Add to the end for gas phase populations                
+                # Add to the end for gas phase populations
                 for spec_ind in range( batch2.runAvg.Species['n_surf'] , batch2.runAvg.Species['n_surf'] + batch2.runAvg.Species['n_gas'] ):
                     sand.species_pops[traj_ind, time_ind, spec_ind] += batch1.species_pops[traj_ind, -1, spec_ind]
         

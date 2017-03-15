@@ -10,14 +10,25 @@ import numpy as np
 
 class RateRescaling:
     
+    '''
+    Class which handles rate rescaling and continuation of KMC runs
+    '''
+    
     def __init__(self):
         
-        self.summary_filename = 'rescaling_output.txt'
-        self.scale_parent_fldr = ''
-        self.batch = Replicates()
+        '''
+        Class constructor
+        '''
         
-    def ReachSteadyStateAndRescale(self, Product, gas_stoich, template_folder, exe, include_stiff_reduc = True, max_events = int(1e4), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10, start_iter = 1, platform = 'Farber'):
+        self.summary_filename = 'rescaling_output.txt'
+        self.scale_parent_fldr = None
+        
+    def ReachSteadyStateAndRescale(self, Product, gas_stoich, template_folder, exe, include_stiff_reduc = True, max_events = int(1e3), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, n_runs = 10, start_iter = 1, platform = 'Farber'):
 
+        '''
+        Executes all of the rate rescaling
+        '''
+    
         prev_batch = Replicates()       # Set this if the starting iteration is not 1
         initial_states = []
         
@@ -112,7 +123,7 @@ class RateRescaling:
             else:
                 cum_batch = Replicates.time_sandwich(prev_batch, cur_batch)         # combine with previous data          
             
-            # Test steady-state
+            # Test steady-state ===== NEED TO CHANGE THIS
             cum_batch.AverageRuns()
             cum_batch.runAvg.gas_stoich = gas_stoich        # stoichiometry of gas-phase reaction
             cum_batch.runAvg.calc_net_rxn()            
@@ -170,6 +181,10 @@ class RateRescaling:
     # Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic Monte Carlo simulations through the modification of rate constants, J. Chem. Phys. 132 (2010) 194101.
     @staticmethod
     def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):        # Change to allow for irreversible reactions
+        
+        '''
+        Takes an average KMC trajectory and assesses the reaction frequencies to identify fast reactions
+        '''
         
         delta_sdf = np.ones(run.Reactions['nrxns'])    # initialize the marginal scaledown factors
         rxn_speeds = []

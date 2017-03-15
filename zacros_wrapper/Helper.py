@@ -96,7 +96,7 @@ def PlotOptions():
     mat.rcParams['lines.markersize'] = 12
             
 
-def PlotTimeSeries(x_series, y_series, xlab = '', ylab = '', series_labels = [], fname = '', logscale = False):
+def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labels = [], fname = '', logscale = False):
     
     '''
     Plot multiple series against time
@@ -106,7 +106,7 @@ def PlotTimeSeries(x_series, y_series, xlab = '', ylab = '', series_labels = [],
     plt.figure()
     
     for i in range (len(y_series)):
-        plt.plot(x_series[i], y_series[i])
+        plt.plot(x_series[i], y_series[i], '.k')
     
     #plt.xticks(size=20)
     #plt.yticks(size=20)
