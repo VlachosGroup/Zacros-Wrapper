@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import copy
 import sys
 
-from KMC_Run import KMC_Run
-from Helper import FileIO, Stats
+from KMC_Run import kmc_traj
+from Helper import *
 import time
 
 
@@ -23,8 +23,8 @@ class Replicates:
              
         # General info
         self.ParentFolder = ''
-        self.runtemplate = KMC_Run()                             # Use this to build replicate jobs
-        self.runAvg = KMC_Run()            # Values are averages of all runs from runList
+        self.runtemplate = kmc_traj()                             # Use this to build replicate jobs
+        self.runAvg = kmc_traj()            # Values are averages of all runs from runList
         self.n_runs = 0
         
         # Input data for different trajectories
@@ -61,7 +61,7 @@ class Replicates:
         Builds folders with Zacros input files. The only difference is the random seed.
         '''
         
-        FileIO.ClearFolderContents(self.ParentFolder)    
+        ClearFolderContents(self.ParentFolder)    
         
         # List the directories and random seeds 
         self.run_dirs = []
@@ -212,7 +212,7 @@ class Replicates:
         sys.stdout.write('Reading all runs in ' + self.ParentFolder)
         sys.stdout.flush()
         
-        dummy_run = KMC_Run()       # Use this to transfer information
+        dummy_run = kmc_traj()       # Use this to transfer information
         
         # If directory list is empty, fill it with the directories in the current folder which have finished jobs
         if self.run_dirs == []:
@@ -249,7 +249,7 @@ class Replicates:
             self.runtemplate = dummy_run            # so we have an example
             
             # Pass the data from this run into the larger data structures in 
-            # so you will not have to store separate KMC_Run objects
+            # so you will not have to store separate kmc_traj objects
             # The large arrays of data will be easier to process
             
             self.t_vec = np.array(dummy_run.Specnum['t'])
@@ -338,7 +338,7 @@ class Replicates:
         mean_fracs = mean_fracs / np.sum(mean_fracs)            # add this to NSC
         mean_fracs = mean_fracs[::2] + mean_fracs[1::2]
         
-        TOF_stats = Stats.mean_ci(TOF_vec_inst)                 # Compute the rate
+        TOF_stats = mean_ci(TOF_vec_inst)                 # Compute the rate
         self.TOF = TOF_stats[0]
         self.TOF_error = TOF_stats[1]
         
@@ -352,7 +352,7 @@ class Replicates:
         mean_fracs_erg = mean_fracs_erg / np.sum(mean_fracs_erg)            # add this to NSC
         mean_fracs_erg = mean_fracs_erg[::2] + mean_fracs_erg[1::2]
         
-        TOF_stats_erg = Stats.mean_ci(TOF_vec_erg)          # Compute the rate
+        TOF_stats_erg = mean_ci(TOF_vec_erg)          # Compute the rate
         self.TOF_erg = TOF_stats_erg[0]
         self.TOF_error_erg = TOF_stats_erg[1]
         
@@ -361,7 +361,7 @@ class Replicates:
         
         # Perform sensitivity analysis
         W_and_rate_data = np.hstack([Wdata, TOF_vec_inst / self.TOF, TOF_vec_erg / self.TOF_erg])
-        cov_out = Stats.cov_mat_ci( np.transpose(W_and_rate_data) )  
+        cov_out = cov_mat_ci( np.transpose(W_and_rate_data) )  
         self.NSC_inst = cov_out['cov_mat'][:-2:,-2] + mean_fracs
         self.NSC_ci_inst = cov_out['ci_mat'][:-2:,-2]
         self.NSC_erg = cov_out['cov_mat'][:-2:,-1] + mean_fracs_erg
@@ -374,7 +374,7 @@ class Replicates:
         Plot the results of sensitivity analysis
         '''
         
-        FileIO.PlotOptions()
+        PlotOptions()
         plt.figure()
         width = 0.8
         ind = 0
@@ -502,7 +502,7 @@ class Replicates:
     
             all_TOFs = plus_stats + minus_stats
             TOF_mean = np.mean(all_TOFs)
-            diff_stats = Stats.diff_ci(plus_stats, minus_stats)   
+            diff_stats = diff_ci(plus_stats, minus_stats)   
             
             NSC = diff_stats[0] / TOF_mean / (2 * pert_frac)
             NSC_ci = diff_stats[1] / TOF_mean / (2 * pert_frac)

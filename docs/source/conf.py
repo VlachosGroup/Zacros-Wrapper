@@ -19,8 +19,7 @@
 import os
 import sys
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../../zacros_wrapper'))
-sys.path.insert(0, os.path.abspath('../zacros_wrapper'))
+sys.path.append('/home/vlachos/mpnunez/Github/Zacros-Wrapper/zacros_wrapper')
 
 # -- General configuration ------------------------------------------------
 

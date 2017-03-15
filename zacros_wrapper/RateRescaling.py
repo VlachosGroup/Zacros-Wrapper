@@ -3,8 +3,8 @@ import os
 import copy
 
 from Replicates import Replicates
-from KMC_Run import KMC_Run
-from Helper import FileIO
+from KMC_Run import kmc_traj
+from Helper import *
 
 import numpy as np
 
@@ -23,7 +23,7 @@ class RateRescaling:
         
         # Placeholder variables
         if start_iter == 1:
-            FileIO.ClearFolderContents(self.scale_parent_fldr)
+            ClearFolderContents(self.scale_parent_fldr)
             SDF_vec = []        # scaledown factors for each iteration
         else:
             for i in range(start_iter-1):
@@ -64,7 +64,7 @@ class RateRescaling:
             cur_batch.n_runs = n_runs
             cur_batch.Product = Product
             
-            cur_batch.runtemplate = KMC_Run()
+            cur_batch.runtemplate = kmc_traj()
             cur_batch.runtemplate.exe_file = exe
             cur_batch.runtemplate.Path = template_folder
             cur_batch.runtemplate.ReadAllInput()

@@ -3,20 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Zacros Wrapper's documentation!
-==========================================
-
-This is my introduction to this project.
-
-Requirements:
-
-My project depends on xyz package.
+.. include:: ../../README.rst
 
 Contents:
+
+Code descriptions
+-----------------
 
 .. toctree::
    :maxdepth: 2
 
+   compile_zacros
    Replicates
    Lattice
    IOdata

@@ -10,10 +10,10 @@ import sys
 import subprocess
 import copy
 
-from Helper import FileIO
+from Helper import *
 import scipy
 
-class KMC_Run(IOdata):
+class kmc_traj(IOdata):
     
     '''
     Handles a single Zacros trajectory. Inherits from IOdata.
@@ -25,7 +25,7 @@ class KMC_Run(IOdata):
         Initializes additional class variables
         '''
         
-        super(KMC_Run, self).__init__()
+        super(kmc_traj, self).__init__()
 
         self.exe_file = ''
         self.anim = []          # animation object used for lattice movie
@@ -301,7 +301,7 @@ class KMC_Run(IOdata):
             time_vecs.append(self.Specnum['t'])
             surf_spec_vecs.append(self.Specnum['spec'][:,i] / float(site_norm))
         
-        FileIO.PlotTrajectory(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = self.Species['surf_spec'], fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
+        PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = self.Species['surf_spec'], fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
     
     def PlotGasSpecVsTime(self):
         
@@ -315,7 +315,7 @@ class KMC_Run(IOdata):
             time_vecs.append(self.Specnum['t'])
             gas_spec_vecs.append(self.Specnum['spec'][:,i + len(self.Species['surf_spec']) ])
         
-        FileIO.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['gas_spec'], fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
+        PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['gas_spec'], fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
         
         
     def PlotPropsVsTime(self):
@@ -333,7 +333,7 @@ class KMC_Run(IOdata):
             gas_spec_vecs.append(self.props_avg[:,i])
             labels.append(self.Reactions['names'][i/2])
         
-        FileIO.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'props (1/s)', series_labels = labels, fname = os.path.join(self.Path, 'props_vs_time.png'))
+        PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'props (1/s)', series_labels = labels, fname = os.path.join(self.Path, 'props_vs_time.png'))
         
     def PlotIntPropsVsTime(self, save = True):      # Helps analyze the sensitivty analysis
         
@@ -350,9 +350,9 @@ class KMC_Run(IOdata):
             gas_spec_vecs.append(self.Binary['propCounter'][:,i])
             labels.append(self.Reactions['names'][i/2])
         
-        FileIO.PlotTrajectory(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'int props', series_labels = labels, fname = os.path.join(self.Path + 'int_props_vs_time.png'))
+        PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'int props', series_labels = labels, fname = os.path.join(self.Path + 'int_props_vs_time.png'))
         
-        FileIO.PlotOptions
+        PlotOptions
         plt.figure()
     
     def PlotWVsTime(self):      # Helps analyze the sensitivty analysis
@@ -370,7 +370,7 @@ class KMC_Run(IOdata):
                 W_vecs.append( self.Binary['W_sen_anal'][:,i])
                 labels.append(self.Reactions['names'][i])
         
-        FileIO.PlotTrajectory(time_vecs, W_vecs, xlab = 'Time (s)', ylab = 'traj. deriv.', series_labels = labels, fname = os.path.join(self.Path + 'traj_deriv_vs_time.png'))
+        PlotTimeSeries(time_vecs, W_vecs, xlab = 'Time (s)', ylab = 'traj. deriv.', series_labels = labels, fname = os.path.join(self.Path + 'traj_deriv_vs_time.png'))
     
     def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1):
         
@@ -384,7 +384,7 @@ class KMC_Run(IOdata):
         if time_norm:
             event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
         
-        FileIO.PlotOptions
+        PlotOptions
         plt.figure()
         
         width = 0.2
@@ -470,8 +470,8 @@ class KMC_Run(IOdata):
         Plot instantaneous rate versus time
         '''
     
-        FileIO.PlotTrajectory([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_vs_time.png'))
-        FileIO.PlotTrajectory([self.Specnum['t'][1::]], [self.int_rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_erg_vs_time.png'))
+        PlotTimeSeries([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_vs_time.png'))
+        PlotTimeSeries([self.Specnum['t'][1::]], [self.int_rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_erg_vs_time.png'))
 
         
     def PlotLattice(self):
