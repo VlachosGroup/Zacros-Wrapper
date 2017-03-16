@@ -6,6 +6,8 @@ import os, shutil
 import matplotlib as mat
 import matplotlib.pyplot as plt
 import scipy
+import copy
+from numpy.matlib import repmat
 
 
 def ReadWithoutBlankLines(File,CommentLines=True):
@@ -201,4 +203,38 @@ def cov_mat_ci(A, Nboot=100, p = 0.05):
     ind_low = int(round(Nboot * p) - 1)
     ci_mat = ( pop[:,:,ind_high] - pop[:,:,ind_low]) / 2.0        
     
-    return {'cov_mat': np.cov(A), 'ci_mat': ci_mat}            
+    return {'cov_mat': np.cov(A), 'ci_mat': ci_mat}
+
+
+def weighted_lin_regress(x, y, vars):
+
+    '''
+    Perform weighted linear regression on time series data
+    x: vector of times
+    y: vector of data
+    vars: vector of variances
+    
+    Returns a solumn vector with the slope and intercept
+    '''
+    
+    # Construct variables
+
+    X = np.hstack([ np.transpose(x), np.ones([ x.shape[1] , 1 ]) ])
+    Y = np.transpose(y)
+    W = np.diag(1 / vars[0,:])
+    
+    print '\n'
+    print X
+    print '\n'
+    print Y 
+    print '\n'
+    print W
+    # Solve equation
+    M0 = np.dot( W , X)
+    print 'before matrix inversion'
+    M1 = np.linalg.inv( np.dot( np.transpose(X) , M0 ) )
+    print 'matrix inversion finished'
+    M2 = np.dot(M1, np.transpose(X))
+    M3 = np.dot(M2, W)
+    beta = np.dot(M3, Y)
+    return beta

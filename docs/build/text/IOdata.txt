@@ -14,9 +14,11 @@ class IOdata.IOdata
       Read all input files. state_input.dat will be read only if it is
       present.
 
-   ReadAllOutput()
+   ReadAllOutput(build_lattice=False)
 
-      Read all Zacros output files
+      Read all Zacros output files Set build_lattice = True if you
+      want to build the lattice object file. This will make it take a
+      lot longer to read
 
    ReadCluster()
 

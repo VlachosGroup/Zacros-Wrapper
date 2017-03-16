@@ -37,16 +37,22 @@ If you wish to compile Zacros on Farber you will need to make some configuration
 
 ``
 cd path/to/source/of/Zacros 
-mkdir build` # If it does not exist yet   
+mkdir build # If it does not exist yet   
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 ``
+
 * Instead of ``make`` as usual, type:  ``ccmake`` .
 * Once within the ccmake, press ``t`` for advanced mode, then set the following flags
+
 ``
 CMAKE_BUILD_TYPE=Release
+
 OMP_NUM_PROCS=1
+
 OpenMP_Fortran_FLAGS=-qopenmp
+
 CMAKE_Fortran_COMPILER=ifort
 ``
+
 * Press ``c`` to configure, and then ``g`` to generate and exit. Finally: ``make``  

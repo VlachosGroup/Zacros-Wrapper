@@ -15,13 +15,21 @@ class Replicates.Replicates
       Builds folders with Zacros input files. The only difference is
       the random seed.
 
-   ComputeSA(product, window=[0.0, 1.0])
+   ComputeRates(product, window=[0.0, 1.0])
 
-      Perform sensitivity analysis
+      Compute rates from propensity information
 
    FD_SA(rxn_inds=[1], pert_frac=0.05, n_runs=20, setup=True, exec_run=True, analyze_bool=True)
 
       Perform finite difference sensitivity analysis
+
+   PerformSA(product, window=[0.0, 1.0])
+
+      Perform sensitivity analysis
+
+   PlotRatesVsTime(product)
+
+      Plot instantaneous rates vs. time for all trajectories
 
    PlotSensitivities()
 
@@ -33,7 +41,9 @@ class Replicates.Replicates
 
    RunAllJobs_parallel_JobArray(max_cores=100, server='Squidward')
 
-      Runs a job array on Squidward or Farber
+      Runs a job array on Squidward or Farber Writes the .qs file with
+      certain parameters changed Then, it submits it to the gridengine
+      and waits for them to finish
 
    RunAllJobs_serial()
 

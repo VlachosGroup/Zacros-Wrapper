@@ -303,6 +303,39 @@ class Replicates:
         self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
     
     
+    def Plot_data_prod_spec(self, product):
+    
+        '''
+        Do some fancy statistics
+        '''
+        
+        # Find index of product molecule
+        try:
+            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(product)           # Find the index of the product species and adjust index to account for surface species
+        except:
+            raise Exception('Product species ' + product + ' not found.')
+        
+        data = self.species_pops[:,:,product_ind]       # rows are trajectory, columns are time points
+        half_ind = self.runAvg.time_search(0.5 * self.t_vec[-1])
+        #PlotTimeSeries([ np.transpose(self.t_vec[half_ind::]) for i in range(self.n_runs)], [data[i,half_ind::] for i in range(self.n_runs)], xlab = 'Time (s)', ylab = 'Rate', fname = './B_counts_latter.png')
+        
+        # Resphape the data to do weighted linear regression
+        n_data_tot = self.n_runs * len( self.t_vec[half_ind::] )
+        
+        x_fit = np.zeros([1, n_data_tot])
+        y_fit = np.zeros([1, n_data_tot])
+        
+        
+        ind = 0
+        for i in range( len( self.t_vec[half_ind::] ) ):
+            for j in range(self.n_runs):
+                x_fit[0,ind] = self.t_vec[half_ind + i]
+                y_fit[0,ind] = self.species_pops[j, half_ind + i, product_ind]
+                ind = ind + 1
+                
+        print weighted_lin_regress(x_fit, y_fit, x_fit / self.t_vec[-1])
+        
+    
     def PlotRatesVsTime(self, product):          # Need to make this compatible with irreversible reactions
         
         '''

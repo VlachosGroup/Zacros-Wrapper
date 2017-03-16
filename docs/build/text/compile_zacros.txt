@@ -16,7 +16,7 @@ Installation instructions
 
 
 Additional output files
------------------------
+***********************
 
 +--------------------------+----------------------------------------------------+
 | file name                | description                                        |
@@ -38,7 +38,7 @@ Additional output files
 
 
 Compiling on [Farber](http://farber.hpc.udel.edu/) (University of Delaware computing cluster)
----------------------------------------------------------------------------------------------
+*********************************************************************************************
 
 If you wish to compile Zacros on Farber you will need to make some
 configurational changes as the default compile settings are very
@@ -50,10 +50,21 @@ inefficient.
 
 * Usual installation
 
-`` cd path/to/source/of/Zacros mkdir build`` # If it does not exist yet
-cd build cmake .. -DCMAKE_BUILD_TYPE=Release `` * Instead of "make" as
-usual, type:  "ccmake" . * Once within the ccmake, press "t" for
-advanced mode, then set the following flags ``
-CMAKE_BUILD_TYPE=Release OMP_NUM_PROCS=1 OpenMP_Fortran_FLAGS=-qopenmp
-CMAKE_Fortran_COMPILER=ifort `` * Press "c" to configure, and then "g"
-to generate and exit. Finally: "make"
+`` cd path/to/source/of/Zacros mkdir build # If it does not exist yet
+cd build cmake .. -DCMAKE_BUILD_TYPE=Release ``
+
+* Instead of "make" as usual, type:  "ccmake" .
+
+* Once within the ccmake, press "t" for advanced mode, then set the
+  following flags
+
+`` CMAKE_BUILD_TYPE=Release
+
+OMP_NUM_PROCS=1
+
+OpenMP_Fortran_FLAGS=-qopenmp
+
+CMAKE_Fortran_COMPILER=ifort ``
+
+* Press "c" to configure, and then "g" to generate and exit.
+  Finally: "make"

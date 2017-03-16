@@ -32,7 +32,6 @@ class kmc_traj(IOdata):
         self.rate_traj = None
         self.int_rate_traj = None
         self.gas_stoich = None        # stoichiometry of gas-phase reaction
-        self.net_rxn = None        # net mass, conserved at steady-state
         
     def Run_sim(self):
         
@@ -43,7 +42,7 @@ class kmc_traj(IOdata):
         os.chdir(self.Path)
         
         if self.exe_file is None:
-            raise Exception('Zacros exe file not specified.')        
+            raise Exception('Zacros executable not specified.')        
         
         try:
             print '--- Zacros run starting ---'
@@ -135,7 +134,7 @@ class kmc_traj(IOdata):
         self.rate_traj = self.rate_traj[1::]
         self.int_rate_traj = self.int_rate_traj[1::]
     
-    def time_search(self, t):           # Convert KMC time to index of time series
+    def time_search(self, t):
         
         '''
         Given a time, look up the index of the time vector nearest to that time
@@ -150,10 +149,10 @@ class kmc_traj(IOdata):
             
         return ind
         
-    def fraction_search(self, frac):       # Convert percentage of time interval to index of time series
+    def fraction_search(self, frac):
         
         '''
-        Given a fraction of the final time, compute the time point
+        Given a fraction of the final time, compute the index of the time point
         '''
         
         t = frac * self.Specnum['t'][-1]
