@@ -195,6 +195,7 @@ class Replicates:
                     
         sys.stdout.write('Jobs in ' + self.ParentFolder + ' have finished')
         sys.stdout.flush()
+        
     
     def RunAllJobs_serial(self):       # Serial version of running all jobs
 
@@ -206,14 +207,15 @@ class Replicates:
         for fldr in self.run_dirs:
             self.runtemplate.Path = fldr
             self.runtemplate.Run_sim()
+            
     
-    def ReadMultipleRuns(self):     # Can take ~1 minutes to use this method
+    def ReadMultipleRuns(self):
         
         '''
         Read all Zacros jobs in a given folder
         '''
         
-        sys.stdout.write('Reading all runs in ' + self.ParentFolder)
+        sys.stdout.write('Reading all runs in ' + self.ParentFolder + '\n')
         sys.stdout.flush()
         
         dummy_run = kmc_traj()       # Use this to transfer information
@@ -282,7 +284,6 @@ class Replicates:
         self.runAvg = copy.deepcopy(dummy_run)      # Initialize run average with information from dummyrun
     
 
-    # Create a KMC run object with averaged species numbers, reaction firings, and propensities
     def AverageRuns(self):
         
         '''
@@ -309,31 +310,41 @@ class Replicates:
         Do some fancy statistics
         '''
         
+        self.AverageRuns()
+        
         # Find index of product molecule
         try:
             product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(product)           # Find the index of the product species and adjust index to account for surface species
         except:
             raise Exception('Product species ' + product + ' not found.')
         
-        data = self.species_pops[:,:,product_ind]       # rows are trajectory, columns are time points
         half_ind = self.runAvg.time_search(0.5 * self.t_vec[-1])
-        #PlotTimeSeries([ np.transpose(self.t_vec[half_ind::]) for i in range(self.n_runs)], [data[i,half_ind::] for i in range(self.n_runs)], xlab = 'Time (s)', ylab = 'Rate', fname = './B_counts_latter.png')
+
+        params = weighted_lin_regress(self.t_vec[half_ind::], self.runAvg.Specnum['spec'][ half_ind:: , product_ind ], self.t_vec[half_ind::] / self.t_vec[-1])
+        gas_rate = params[0,0]
+        gas_intercept = params[1,0]
+        y_pred = self.t_vec * gas_rate + gas_intercept
+        data = self.species_pops[:, half_ind:: , product_ind]       # rows are trajectory, columns are time points
         
-        # Resphape the data to do weighted linear regression
-        n_data_tot = self.n_runs * len( self.t_vec[half_ind::] )
+        PlotOptions()
+        plt.figure()
         
-        x_fit = np.zeros([1, n_data_tot])
-        y_fit = np.zeros([1, n_data_tot])
+        for i in range ( self.n_runs ):
+            resid = ( self.species_pops[ i , 1:: , product_ind ] - y_pred[1::] ) / np.sqrt( self.t_vec[1::] / self.t_vec[-1] )
+            plt.plot(self.t_vec[1::], resid, '.k')          # plot scaled residuals for all points except the first one
+            
+        #plt.plot(self.t_vec, y_pred, '-b')
         
+        #plt.xticks(size=20)
+        #plt.yticks(size=20)
+        plt.xlabel('Time (s)', size=24)
+        plt.ylabel(product + ' count', size=24)
         
-        ind = 0
-        for i in range( len( self.t_vec[half_ind::] ) ):
-            for j in range(self.n_runs):
-                x_fit[0,ind] = self.t_vec[half_ind + i]
-                y_fit[0,ind] = self.species_pops[j, half_ind + i, product_ind]
-                ind = ind + 1
-                
-        print weighted_lin_regress(x_fit, y_fit, x_fit / self.t_vec[-1])
+        ax = plt.subplot(111)
+        ax.set_position([0.2, 0.15, 0.7, 0.8])
+        
+        plt.savefig('fitted_gas_resid.png')
+        plt.close()
         
     
     def PlotRatesVsTime(self, product):          # Need to make this compatible with irreversible reactions
@@ -538,6 +549,7 @@ class Replicates:
         
         plt.savefig(os.path.join(self.ParentFolder, 'SA_erg_output.png'))
         plt.close()
+        
     
     def WriteSA_output(self):
     

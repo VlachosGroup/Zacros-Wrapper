@@ -217,23 +217,15 @@ def weighted_lin_regress(x, y, vars):
     Returns a solumn vector with the slope and intercept
     '''
     
-    # Construct variables
+    # Reshape data
+    n_data = len(x)
+    X = np.hstack([ x.reshape([n_data, 1]), np.ones([ n_data , 1 ]) ])
+    Y = y.reshape([n_data, 1])
+    W = np.diag(1 / vars)
 
-    X = np.hstack([ np.transpose(x), np.ones([ x.shape[1] , 1 ]) ])
-    Y = np.transpose(y)
-    W = np.diag(1 / vars[0,:])
-    
-    print '\n'
-    print X
-    print '\n'
-    print Y 
-    print '\n'
-    print W
     # Solve equation
     M0 = np.dot( W , X)
-    print 'before matrix inversion'
     M1 = np.linalg.inv( np.dot( np.transpose(X) , M0 ) )
-    print 'matrix inversion finished'
     M2 = np.dot(M1, np.transpose(X))
     M3 = np.dot(M2, W)
     beta = np.dot(M3, Y)
