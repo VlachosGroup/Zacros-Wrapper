@@ -149,14 +149,6 @@ class kmc_traj(IOdata):
             
         return ind
         
-    def fraction_search(self, frac):
-        
-        '''
-        Given a fraction of the final time, compute the index of the time point
-        '''
-        
-        t = frac * self.Specnum['t'][-1]
-        return self.time_search(t)
         
     def avg_in_window(self, data, limits):
     
