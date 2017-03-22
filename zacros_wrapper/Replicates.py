@@ -17,6 +17,7 @@ class Replicates:
     '''
     Has data from muliple trajectories with the same input, but different 
     random seeds and possibly different initial states
+    This class handles all of the statistics
     '''
     
     def __init__(self):
@@ -307,7 +308,7 @@ class Replicates:
     def Plot_data_prod_spec(self, product):
     
         '''
-        Do some fancy statistics
+        Do some fancy statistics to detect steady state
         '''
         
         self.AverageRuns()

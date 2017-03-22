@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from Helper import *
 from IOdata import IOdata
-from KMC_Run import kmc_traj
 from Lattice import Lattice
-from RateRescaling import RateRescaling
+from KMC_Run import kmc_traj
 from Replicates import Replicates
+from RateRescaling import *

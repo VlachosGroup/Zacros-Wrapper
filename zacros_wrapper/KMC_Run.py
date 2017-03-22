@@ -31,6 +31,7 @@ class kmc_traj(IOdata):
         self.props_avg = None
         self.rate_traj = None
         self.int_rate_traj = None
+        self.gas_prod = None
         self.gas_stoich = None        # stoichiometry of gas-phase reaction
         
     def Run_sim(self):
@@ -50,44 +51,7 @@ class kmc_traj(IOdata):
             print '--- Zacros run completed ---'
         except:
             raise Exception('Zacros run failed.')
-    
-    def ComputeTOF(self, Product, win = [0.0, 1.0]):                       # return TOF and TOF error
-        
-        '''
-        Compute the turnover frequency over a given window
-        '''
-        
-        # Find the index of the product species
-        try:
-            product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
-        except:
-            raise Exception('Product species not found.')
-        
-        # Find indices for the beginning and end of the time window
-        start_t = win[0] * self.Specnum['t'][-1]
-        end_t = win[1] * self.Specnum['t'][-1]
-        start_ind = self.time_search(start_t)
-        end_ind = self.time_search(end_t)
-        del_t = self.Specnum['t'][end_t] - self.Specnum['t'][start_ind]          
-        
-        # Compute rates based on propensities and stoichiometries
-        nRxns = len(self.Reactions['Nu'])
-        TOF_contributions_inst = np.zeros(nRxns)
-        TOF_contributions_erg = np.zeros(nRxns)
-        for i, elem_stoich in enumerate(self.Reactions['Nu']):
-            TOF_stoich = elem_stoich[product_ind]
-            r_inst = ( self.Binary['propCounter'][end_ind,i] - self.Binary['propCounter'][end_ind-1,i] ) / ( self.Specnum['t'][end_ind] - self.Specnum['t'][end_ind-1] )
-            r_erg = ( self.Binary['propCounter'][end_ind,i] - self.Binary['propCounter'][start_ind,i] ) / del_t      # ergodic average
-            TOF_contributions_inst[i] = TOF_stoich * r_inst            
-            TOF_contributions_erg[i] = TOF_stoich * r_erg         
-        
-        # Total the rates
-        TOF_inst = np.sum(TOF_contributions_inst)
-        TOF_fracs_inst = TOF_contributions_inst / TOF_inst
-        TOF_erg = np.sum(TOF_contributions_erg)
-        TOF_fracs_erg = TOF_contributions_erg / TOF_erg
-
-        return {'TOF_inst': TOF_inst, 'TOF_fracs_inst': TOF_fracs_inst, 'TOF_erg': TOF_erg, 'TOF_fracs_erg': TOF_fracs_erg}    
+       
     
     def AdjustPreExponentials(self, delta_sdf):
         
@@ -102,37 +66,6 @@ class kmc_traj(IOdata):
                 self.scaledown_factors[rxn_ind] = self.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
                 rxn_ind += 1    
     
-    def CalcRateTraj(self, Product):
-        
-        '''
-        Compute instantaneous rates
-        '''
-        
-        try:
-            product_ind = self.Species['n_surf'] + self.Species['gas_spec'].index(Product)           # Find the index of the product species and adjust index to account for surface species
-        except:
-            raise Exception('Product species not found.')
-        
-        n_t_points = len(self.Specnum['t'])
-        self.rate_traj = np.zeros(n_t_points)
-        self.int_rate_traj = np.zeros(n_t_points)
-        
-        for t_point in range(n_t_points):
-            for i, elem_stoich in enumerate(self.Reactions['Nu']):
-                
-                TOF_stoich = elem_stoich[product_ind]
-                
-                if t_point == 0:
-                    self.rate_traj[t_point] = 0
-                    self.int_rate_traj[t_point] = 0
-                else:                    
-                    r = (self.Binary['propCounter'][t_point,i] - self.Binary['propCounter'][t_point-1,i]) / (self.Specnum['t'][t_point] - self.Specnum['t'][t_point-1])      # averaged in an interval
-                    r_int = self.Binary['propCounter'][t_point,i] / self.Specnum['t'][t_point]      # ergodic average              
-                    self.rate_traj[t_point] = self.rate_traj[t_point] + TOF_stoich * r
-                    self.int_rate_traj[t_point] = self.int_rate_traj[t_point] + TOF_stoich * r_int
-                        
-        self.rate_traj = self.rate_traj[1::]
-        self.int_rate_traj = self.int_rate_traj[1::]
     
     def time_search(self, t):
         
@@ -148,17 +81,6 @@ class kmc_traj(IOdata):
             ind += 1
             
         return ind
-        
-        
-    def avg_in_window(self, data, limits):
-    
-        '''
-        Ergodically average data within a time window
-        '''
-    
-        high_ind = self.time_search(limits[1])
-        low_ind = self.time_search(limits[0])
-        return (data[high_ind] - data[low_ind]) / (self.Specnum['t'][high_ind] - self.Specnum['t'][low_ind])
     
         
     @staticmethod
@@ -186,74 +108,10 @@ class kmc_traj(IOdata):
         
         return sandwich
     
-    def time_avg_props(self):
-        
-        '''
-        ???
-        '''
-        
-        delt = self.Specnum['t'][1::] - self.Specnum['t'][:-1:]
-        props = self.Binary['propCounter'][1::,:] - self.Binary['propCounter'][:-1:,:]
-        prop_shape = self.Binary['propCounter'].shape
-        self.props_avg = np.zeros([prop_shape[0]-1, prop_shape[1]])
-        
-        for rxn_ind in range(prop_shape[1]):
-            self.props_avg[:,rxn_ind] = props[:,rxn_ind] / delt 
-    
-        
-    def CheckGasConvergence(self, gas_stoich, r_sqr_cut = 0.98, rate_perc = 0.03):
-    
-        '''
-        Check whether the simulation is at steady state using gas species profiles
-        '''
-    
-        window = [0.0, 1.0]
-        start_ind = self.fraction_search(window[0])
-        end_ind = self.fraction_search(window[1])
-        rates = []
-        r_sqr_vals = []
-    
-        for gas_spec_ind in range (len(self.Species['gas_spec'])):
-        
-            x = self.Specnum['t'][start_ind:end_ind]
-            y = self.Specnum['spec'][start_ind:end_ind, gas_spec_ind + len(self.Species['surf_spec']) ]
 
-            (a_s, b_s, r, tt, stderr) = scipy.stats.linregress(x, y)
-            print('Linear regression using stats.linregress')
-            print('\nregression: a=%.2f b=%.2f, std error= %.3f' % (a_s, b_s, stderr))
-            print('r^2 value: %.2f' % (r**2))
-            
-            mat.rcParams['mathtext.default'] = 'regular'
-            mat.rcParams['text.latex.unicode'] = 'False'
-            mat.rcParams['legend.numpoints'] = 1
-            mat.rcParams['lines.linewidth'] = 2
-            mat.rcParams['lines.markersize'] = 12
-                    
-            plt.figure()
-            
-            plt.plot(self.Specnum['t'], self.Specnum['spec'][:, gas_spec_ind + len(self.Species['surf_spec']) ])
-            plt.plot(self.Specnum['t'], self.Specnum['t'] * a_s + b_s)
-            #plt.plot(self.Specnum['t'], self.Specnum['spec'][:, gas_spec_ind + len(self.Species['surf_spec']) ] - (self.Specnum['t'] * a_s + b_s))
-            
-            plt.xlabel('Time (s)', size=24)
-            plt.ylabel('Gas population', size=24)
-            plt.legend(['data', 'fit'], loc=1, prop={'size':20}, frameon=False)
-            
-            ax = plt.subplot(111)
-            ax.set_position([0.2, 0.15, 0.7, 0.8])
-            
-            plt.savefig(os.path.join(self.Path, self.Species['gas_spec'][gas_spec_ind] + '_fit.png'))
-            plt.close()
-            
-            if gas_stoich[gas_spec_ind] != 0:
-                rates.append(a_s / gas_stoich[gas_spec_ind])
-                r_sqr_vals.append(r**2)
-                
-        print rates
-        print r_sqr_vals    
-            
-
-    ''' ==================================== Plotting methods ==================================== '''
+    '''
+    ==================================== Plotting methods ====================================
+    '''
     
     def PlotSurfSpecVsTime(self, site_norm = 1):
         
@@ -454,6 +312,7 @@ class kmc_traj(IOdata):
         plt = self.KMC_lat.PlotLattice()
         plt.savefig(os.path.join(self.Path, 'lattice.png'))
         plt.close()
+        
         
     def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need to complete this function by plotting adsorbates from the history file data
 
