@@ -47,15 +47,12 @@ class Replicates:
         # Analysis
         self.rates_data = None
         
-        self.Product = ''
+        self.gas_product = None
+        self.gas_stoich = None
         self.TOF = None
         self.TOF_error = None
-        self.TOF_erg = None
-        self.TOF_error_erg = None
-        self.NSC_inst = None
-        self.NSC_ci_inst = None
-        self.NSC_erg = None
-        self.NSC_ci_erg = None
+        self.NSC = None
+        self.NSC_ci = None
     
     
     def BuildJobFiles(self, init_states = []):
@@ -348,50 +345,35 @@ class Replicates:
         plt.close()
         
     
-    def Compute_inst_rates(self, product, delta_t, toplot = False):          # Need to make this compatible with irreversible reactions
+    def Compute_inst_rates(self, delta_t = None, ergodic = False, toplot = False):          # Need to make this compatible with irreversible reactions
         
         '''
-        Plot instantaneous rates vs. time for all trajectories
+        Perform sensitivity analysis with a combination of
+        time and trajectory averaging
+        
+        delta_t             size of the time window
+        ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval 
+        
+        The time-averaging could be improved in here. Right now it is a little weird...
         '''
+        
+        # Use entire trajectory length as the default time window
+        if delta_t is None:
+            delta_t = self.t_vec[-1]
         
         self.AverageRuns()      # make sure this has been done
  
         # Find index of product molecule
         try:
-            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(product)           # Find the index of the product species and adjust index to account for surface species
+            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
         except:
-            raise Exception('Product species ' + product + ' not found.')
+            raise Exception('Product species ' + self.gas_product + ' not found.')
         
         nRxns = len(self.runAvg.Reactions['Nu'])
         TOF_stoich = np.zeros(nRxns)
         for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
             TOF_stoich[i] = elem_stoich[product_ind]
             
-        #D_stoich = np.diag(TOF_stoich)      # will use this for computing rates
-        #TOF_stoich.shape = [nRxns, 1]
-        #
-        #rates_to_plot = np.zeros([len(self.t_vec) - 1, self.n_runs])
-        #
-        #for i in range(self.n_runs):
-        #    for j in range(len(self.t_vec) - 1):
-        #        rates_to_plot[j,i] = np.dot( ( self.Props_integ[i,j+1,:] - self.Props_integ[i,j,:] ) / ( self.t_vec[j+1] - self.t_vec[j] ) , TOF_stoich )
-        #
-        #self.rates_data = rates_to_plot
-        #
-        #if toplot:
-        #    PlotTimeSeries([ self.t_vec[1::] for i in range(self.n_runs)], [rates_to_plot[:,i] for i in range(self.n_runs)], xlab = 'Time (s)', ylab = 'Rate', fname = './rates_vs_time_WGS.png')
-    
-        # You also need to compute the different contributions to the overall rate here
-
-    #def PerformSA(self, product, delta_t):
-    
-        '''
-        Perform sensitivity analysis with a combination of
-        time and trajectory averaging
-        '''
-        
-        #self.Compute_inst_rates(product)
-        
         if delta_t > self.t_vec[-1] or delta_t < 0:
             print 'Time window: ' + str(delta_t)
             print 'Final time: ' + str(self.t_vec[-1])
@@ -403,18 +385,24 @@ class Replicates:
         NSCs = np.zeros(self.traj_derivs.shape[2])
         W_mean = np.zeros(self.traj_derivs.shape[2])
         mean_rate = 0
+        rate_contributions_avgs = np.zeros(self.traj_derivs.shape[2])
         
         for traj_ind in range(self.n_runs):
-        
-            print 'Trajectory ' + str(traj_ind+1)
-        
+            print 'Trajectory #: ' + str(traj_ind+1)
             for time_ind in range(delt_ind, len( self.t_vec ) ):
             
                 t = self.t_vec[time_ind]
                 t_begin_win_ind = self.runAvg.time_search(t - delta_t)
                 t_begin_win = self.t_vec[t_begin_win_ind]
                 
-                rate = np.dot( ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, time_ind-1, :] ) / ( self.t_vec[time_ind] - self.t_vec[time_ind-1] ) , TOF_stoich )
+                if ergodic:             # Average the rate over the entire time window
+                    rate_contributions = ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, t_begin_win_ind, :] ) / ( self.t_vec[time_ind] - self.t_vec[t_begin_win_ind] ) * TOF_stoich
+                else:                   # Take the final value of the rate
+                    rate_contributions = ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, time_ind-1, :] ) / ( self.t_vec[time_ind] - self.t_vec[time_ind-1] ) * TOF_stoich 
+                
+                rate_contributions_avgs = rate_contributions_avgs + rate_contributions
+                rate = np.sum(rate_contributions)
+                
                 Ws = self.traj_derivs[traj_ind, time_ind , :] - self.traj_derivs[ traj_ind, t_begin_win_ind , :]
                 
                 mean_rate += rate
@@ -425,21 +413,24 @@ class Replicates:
         NSCs = NSCs / n_data_points
         mean_rate = mean_rate / n_data_points
         W_mean = W_mean / n_data_points
+        rate_contributions_avgs = rate_contributions_avgs / n_data_points
         
-        NSCs = ( NSCs - W_mean * mean_rate ) / mean_rate
+        NSCs = ( NSCs - W_mean * mean_rate ) / mean_rate + rate_contributions_avgs / mean_rate
         
-        print NSCs
+        # Combine forward and backwards NSCs for reversible reactions
+        NSC_rev = np.zeros(self.runAvg.Reactions['nrxns'])
+        ind = 0
+        for i in range(self.runAvg.Reactions['nrxns']):
+            
+            if self.runAvg.Reactions['is_reversible'][i]:
+                NSC_rev[i] = NSCs[ind] + NSCs[ind+1]
+                ind += 2
+            else:
+                NSC_rev[i] = NSCs[ind]
+                ind += 1
         
-        ## Find trajectory derivatives for each trajectory at the end of the window
-        #Wdata = ( self.traj_derivs[:,end_ind,::2] + self.traj_derivs[:,end_ind,1::2] )  - ( self.traj_derivs[:,start_ind,::2] + self.traj_derivs[:,start_ind,1::2] )
-        #
-        ## Perform sensitivity analysis
-        #W_and_rate_data = np.hstack([Wdata, TOF_vec_inst / self.TOF, TOF_vec_erg / self.TOF_erg])
-        #cov_out = cov_mat_ci( np.transpose(W_and_rate_data) )  
-        #self.NSC_inst = cov_out['cov_mat'][:-2:,-2] + mean_fracs
-        #self.NSC_ci_inst = cov_out['ci_mat'][:-2:,-2]
-        #self.NSC_erg = cov_out['cov_mat'][:-2:,-1] + mean_fracs_erg
-        #self.NSC_ci_erg = cov_out['ci_mat'][:-2:,-1]
+        print 'Normalized sensitivity coefficients: ' + str(NSC_rev)
+        print 'Turnover frequency: ' + str(mean_rate)
         
         
     def PlotSensitivities(self): 
