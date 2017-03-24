@@ -92,6 +92,7 @@ class Replicates:
                 os.makedirs(fldr)
                 
             self.runtemplate.WriteAllInput()
+            
         
     def RunAllJobs_parallel_JobArray(self, max_cores = 100, server = 'Squidward'):
     
@@ -302,19 +303,20 @@ class Replicates:
         self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
     
     
-    def Plot_data_prod_spec(self, product):
+    def DetectSteadyState(self):
     
         '''
-        Do some fancy statistics to detect steady state
+        Check whether or not the simulation is at steady state
+        Find the relaxation time
         '''
         
         self.AverageRuns()
         
         # Find index of product molecule
         try:
-            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(product)           # Find the index of the product species and adjust index to account for surface species
+            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
         except:
-            raise Exception('Product species ' + product + ' not found.')
+            raise Exception('Product species ' + self.gas_product + ' not found.')
         
         half_ind = self.runAvg.time_search(0.5 * self.t_vec[-1])
 
@@ -324,28 +326,94 @@ class Replicates:
         y_pred = self.t_vec * gas_rate + gas_intercept
         data = self.species_pops[:, half_ind:: , product_ind]       # rows are trajectory, columns are time points
         
+        resid = ( self.runAvg.Specnum['spec'][ 1:: , product_ind ] - y_pred[1::] ) / np.sqrt( self.t_vec[1::] / self.t_vec[-1] )
+        
+        # Cut off tail region at the beginning
+        keep_going = True
+        n_cut = 0
+        
+        while keep_going and n_cut < len(self.t_vec) - 1:
+        
+            if (resid[n_cut] > np.max( resid[n_cut + 1::] ) or resid[n_cut] > np.max( resid[n_cut + 1::] ) ):
+                n_cut += 1
+            else:
+                keep_going = False
+                
+                
+        
+        
+        #
+        #   Plot the result
+        #
+        
         PlotOptions()
         plt.figure()
         
-        for i in range ( self.n_runs ):
-            resid = ( self.species_pops[ i , 1:: , product_ind ] - y_pred[1::] ) / np.sqrt( self.t_vec[1::] / self.t_vec[-1] )
-            plt.plot(self.t_vec[1::], resid, '.k')          # plot scaled residuals for all points except the first one
-            
+        #for i in range ( self.n_runs ):
+        #    resid = ( self.species_pops[ i , 1:: , product_ind ] - y_pred[1::] ) / np.sqrt( self.t_vec[1::] / self.t_vec[-1] )
+        #    plt.plot(self.t_vec[1::], resid, '.k')          # plot scaled residuals for all points except the first one
+               
+        
+        #plt.plot(self.t_vec[1::], resid, '.k')          # plot scaled residuals for all points except the first one
+        plt.plot(self.t_vec[n_cut+1::], resid[n_cut::], '.k')          # plot scaled residuals for all points except the first one
+         
         #plt.plot(self.t_vec, y_pred, '-b')
         
         #plt.xticks(size=20)
         #plt.yticks(size=20)
         plt.xlabel('Time (s)', size=24)
-        plt.ylabel(product + ' count', size=24)
+        plt.ylabel(self.gas_product + ' count', size=24)
         
         ax = plt.subplot(111)
         ax.set_position([0.2, 0.15, 0.7, 0.8])
         
-        plt.savefig('fitted_gas_resid.png')
+        plt.savefig('avg_gas_resids.png')
         plt.close()
         
+        
+    def DetectSteadyState2(self):
     
-    def Compute_inst_rates(self, delta_t = None, ergodic = False, toplot = False):          # Need to make this compatible with irreversible reactions
+        '''
+        Check steady state on the basis of batch means
+        '''
+        
+        self.AverageRuns()
+        
+        # Find index of product molecule
+        try:
+            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
+        except:
+            raise Exception('Product species ' + self.gas_product + ' not found.')
+            
+        nRxns = len(self.runAvg.Reactions['Nu'])
+        TOF_stoich = np.zeros(nRxns)
+        for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
+            TOF_stoich[i] = elem_stoich[product_ind]
+            
+        Nb = 1000
+        Nbpt = np.max( [ 3 , (Nb-1) / self.n_runs + 1 ] )
+        
+        bin_edges = np.linspace(0, self.t_vec[-1], Nbpt + 1)
+        bin_edges_inds = np.zeros(bin_edges.shape)
+        for i in range(len(bin_edges)):
+            bin_edges_inds[i] = self.runAvg.time_search(bin_edges[i])
+        
+        
+        rate_data = np.zeros([self.n_runs, Nbpt])
+        
+        for i in range(Nbpt):
+            rate_data[:,i] = np.dot ( ( self.Props_integ[:, bin_edges_inds[i+1], :] - self.Props_integ[:, bin_edges_inds[i], :] ) / ( bin_edges[i+1] - bin_edges[i] ) , TOF_stoich )
+        
+        c1 = rate_data[:,1:-1:]
+        c1 = c1.reshape( np.prod(c1.shape) )
+        c2 = rate_data[:,2::]
+        c2 = c2.reshape( np.prod(c2.shape) )
+        
+        c = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.sqrt( np.var(c1) * np.var(c2) )
+        
+        print c
+    
+    def PerformSA(self, delta_t = None, ergodic = False, toplot = False):          # Need to make this compatible with irreversible reactions
         
         '''
         Perform sensitivity analysis with a combination of
@@ -355,6 +423,8 @@ class Replicates:
         ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval 
         
         The time-averaging could be improved in here. Right now it is a little weird...
+        You can use linear interpolation to get data between time points
+        Can also make it so that the statistics make sense for non-evenly spaced time points
         '''
         
         # Use entire trajectory length as the default time window
