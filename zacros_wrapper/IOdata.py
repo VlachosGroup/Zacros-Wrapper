@@ -6,7 +6,7 @@ import random
 
 from Helper import *
 from Lattice import Lattice     # will fill in this object later when it is used
-
+# GRW Comment
 class IOdata(object):
     
     '''
