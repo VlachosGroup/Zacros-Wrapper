@@ -32,7 +32,7 @@ class kmc_traj(IOdata):
         self.rate_traj = None
         self.int_rate_traj = None
         self.gas_prod = None
-        self.gas_stoich = None        # stoichiometry of gas-phase reaction
+        
         
     def Run_sim(self):
         
@@ -80,7 +80,7 @@ class kmc_traj(IOdata):
         while self.Specnum['t'][ind] < t:
             ind += 1
             
-        return ind
+        return int(ind)
     
         
     @staticmethod
@@ -207,8 +207,8 @@ class kmc_traj(IOdata):
         Plot a bar graph of elementary step frequencies versus time
         '''
         
-        start_ind = self.fraction_search(window[0])
-        end_ind = self.fraction_search(window[1])
+        start_ind = self.time_search(window[0] * self.Specnum['t'][-1])
+        end_ind = self.time_search(window[1] * self.Specnum['t'][-1])
         event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / float(site_norm)
         if time_norm:
             event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )

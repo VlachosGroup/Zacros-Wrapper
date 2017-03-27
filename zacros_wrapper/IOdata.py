@@ -120,14 +120,18 @@ class IOdata(object):
         '''
         Read all input files. state_input.dat will be read only if it is present.
         '''
-    
-        self.ReadSimIn()
-        self.ReadLatticeIn()
-        self.ReadEngIn()
-        self.ReadMechIn()
-       
-        if os.path.isfile(os.path.join(self.Path, 'state_input.dat')):
-            self.ReadStateInput()
+        
+        try:
+            self.ReadSimIn()
+            self.ReadLatticeIn()
+            self.ReadEngIn()
+            self.ReadMechIn()
+        
+            if os.path.isfile(os.path.join(self.Path, 'state_input.dat')):
+                self.ReadStateInput()
+                
+        except:
+            raise Exception('Failed to read Zacros input files in ' + self.Path)
     
     def ReadEngIn(self):
 

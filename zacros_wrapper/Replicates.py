@@ -24,9 +24,13 @@ class Replicates:
              
         # General info
         self.ParentFolder = None
-        self.runtemplate = kmc_traj()                             # Use this to build replicate jobs
-        self.runAvg = kmc_traj()            # Values are averages of all runs from runList
+        self.runtemplate = None                             # Use this to build replicate jobs
+        self.runAvg = None            # Values are averages of all runs from runList
+        self.avg_updated = False        # Whether we need to update the trajectory averages
         self.n_runs = 0
+        self.N_batches = 1000
+        self.Nbpt = None
+        self.gas_product = None
         
         # Input data for different trajectories
         self.run_dirs = []
@@ -46,14 +50,21 @@ class Replicates:
         
         # Analysis
         self.rates_data = None
-        
-        self.gas_product = None
-        self.gas_stoich = None
         self.TOF = None
         self.TOF_error = None
         self.NSC = None
         self.NSC_ci = None
     
+    
+    def Set_kmc_template(self, kmc_temp):
+        
+        '''
+        Set the KMC trajectory template as well as other useful variables
+        '''
+        
+        self.runtemplate = copy.deepcopy(kmc_temp)
+        self.gas_product = kmc_temp.gas_prod
+        
     
     def BuildJobFiles(self, init_states = []):
         
@@ -61,6 +72,8 @@ class Replicates:
         Builds folders with Zacros input files. The only difference is the random seed.
         '''
         
+        if not os.path.exists(self.ParentFolder):
+            os.makedirs(self.ParentFolder)
         ClearFolderContents(self.ParentFolder)    
         
         # List the directories and random seeds 
@@ -156,7 +169,7 @@ class Replicates:
                 txt.write('                  #This could easily be modified to take a prefix; ask me how.\n')
                 txt.write('\n')
                 txt.write('# Now append whatever commands you use to run your OpenMP code:\n')
-                txt.write(self.runtemplate.exe_file)
+                txt.write('time ' + self.runtemplate.exe_file)
             
             else:       # Squidward
             
@@ -176,7 +189,7 @@ class Replicates:
                 txt.write('job_path=$(sed -n "$SGE_TASK_ID p" "$job_file")\n')
                 txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
                 txt.write('\n\n')
-                txt.write(self.runtemplate.exe_file)
+                txt.write('time ' + self.runtemplate.exe_file)
     
         # Call to system to submit the job array
         os.chdir(self.ParentFolder)
@@ -281,7 +294,8 @@ class Replicates:
         self.CPU_total = np.array(self.CPU_total)
         
         self.runAvg = copy.deepcopy(dummy_run)      # Initialize run average with information from dummyrun
-    
+        self.avg_updated = False
+        
 
     def AverageRuns(self):
         
@@ -301,83 +315,18 @@ class Replicates:
         
         self.runAvg.Performance['events_occurred'] = np.mean(self.events_total)
         self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
-    
-    
-    def DetectSteadyState(self):
-    
-        '''
-        Check whether or not the simulation is at steady state
-        Find the relaxation time
-        '''
         
-        self.AverageRuns()
-        
-        # Find index of product molecule
-        try:
-            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
-        except:
-            raise Exception('Product species ' + self.gas_product + ' not found.')
-        
-        half_ind = self.runAvg.time_search(0.5 * self.t_vec[-1])
-
-        params = weighted_lin_regress(self.t_vec[half_ind::], self.runAvg.Specnum['spec'][ half_ind:: , product_ind ], self.t_vec[half_ind::] / self.t_vec[-1])
-        gas_rate = params[0,0]
-        gas_intercept = params[1,0]
-        y_pred = self.t_vec * gas_rate + gas_intercept
-        data = self.species_pops[:, half_ind:: , product_ind]       # rows are trajectory, columns are time points
-        
-        resid = ( self.runAvg.Specnum['spec'][ 1:: , product_ind ] - y_pred[1::] ) / np.sqrt( self.t_vec[1::] / self.t_vec[-1] )
-        
-        # Cut off tail region at the beginning
-        keep_going = True
-        n_cut = 0
-        
-        while keep_going and n_cut < len(self.t_vec) - 1:
-        
-            if (resid[n_cut] > np.max( resid[n_cut + 1::] ) or resid[n_cut] > np.max( resid[n_cut + 1::] ) ):
-                n_cut += 1
-            else:
-                keep_going = False
-                
-                
+        self.avg_updated = True
         
         
-        #
-        #   Plot the result
-        #
-        
-        PlotOptions()
-        plt.figure()
-        
-        #for i in range ( self.n_runs ):
-        #    resid = ( self.species_pops[ i , 1:: , product_ind ] - y_pred[1::] ) / np.sqrt( self.t_vec[1::] / self.t_vec[-1] )
-        #    plt.plot(self.t_vec[1::], resid, '.k')          # plot scaled residuals for all points except the first one
-               
-        
-        #plt.plot(self.t_vec[1::], resid, '.k')          # plot scaled residuals for all points except the first one
-        plt.plot(self.t_vec[n_cut+1::], resid[n_cut::], '.k')          # plot scaled residuals for all points except the first one
-         
-        #plt.plot(self.t_vec, y_pred, '-b')
-        
-        #plt.xticks(size=20)
-        #plt.yticks(size=20)
-        plt.xlabel('Time (s)', size=24)
-        plt.ylabel(self.gas_product + ' count', size=24)
-        
-        ax = plt.subplot(111)
-        ax.set_position([0.2, 0.15, 0.7, 0.8])
-        
-        plt.savefig('avg_gas_resids.png')
-        plt.close()
-        
-        
-    def DetectSteadyState2(self):
+    def Compute_ACF(self):          # Need to also put error bars on this
     
         '''
         Check steady state on the basis of batch means
         '''
         
-        self.AverageRuns()
+        if not self.avg_updated:
+            self.AverageRuns()
         
         # Find index of product molecule
         try:
@@ -390,30 +339,39 @@ class Replicates:
         for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
             TOF_stoich[i] = elem_stoich[product_ind]
             
-        Nb = 1000
-        Nbpt = np.max( [ 3 , (Nb-1) / self.n_runs + 1 ] )
+        self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 1 ] )            # Set the number of batches per trajectory
         
-        bin_edges = np.linspace(0, self.t_vec[-1], Nbpt + 1)
+        bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt + 1)
         bin_edges_inds = np.zeros(bin_edges.shape)
         for i in range(len(bin_edges)):
             bin_edges_inds[i] = self.runAvg.time_search(bin_edges[i])
+        bin_edges_inds.astype(int)
         
+        rate_data = np.zeros([self.n_runs, self.Nbpt])
         
-        rate_data = np.zeros([self.n_runs, Nbpt])
-        
-        for i in range(Nbpt):
+        #print bin_edges_inds
+        #print self.Nbpt
+        for i in range(self.Nbpt):
+            #print self.Props_integ[:, bin_edges_inds[i+1], :]
+            #print self.Props_integ[:, bin_edges_inds[i], :]
+            #print bin_edges[i+1]
+            #print bin_edges[i]
             rate_data[:,i] = np.dot ( ( self.Props_integ[:, bin_edges_inds[i+1], :] - self.Props_integ[:, bin_edges_inds[i], :] ) / ( bin_edges[i+1] - bin_edges[i] ) , TOF_stoich )
         
+        # Compute the autocorrelation function for the batch means of the rate
         c1 = rate_data[:,1:-1:]
         c1 = c1.reshape( np.prod(c1.shape) )
         c2 = rate_data[:,2::]
         c2 = c2.reshape( np.prod(c2.shape) )
         
-        c = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.sqrt( np.var(c1) * np.var(c2) )
+        if np.var(c1) * np.var(c2) == 0:        # Covers the case where we have zero rate
+            return 1.0
+        else:
+            c = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.sqrt( np.var(c1) * np.var(c2) )
+            return c
         
-        print c
     
-    def PerformSA(self, delta_t = None, ergodic = False, toplot = False):          # Need to make this compatible with irreversible reactions
+    def PerformSA(self, delta_t = None, ergodic = False,):          # Need to make this compatible with irreversible reactions
         
         '''
         Perform sensitivity analysis with a combination of
@@ -429,9 +387,10 @@ class Replicates:
         
         # Use entire trajectory length as the default time window
         if delta_t is None:
-            delta_t = self.t_vec[-1]
+            delta_t = self.t_vec[-1] / self.Nbpt
         
-        self.AverageRuns()      # make sure this has been done
+        if not self.avg_updated:
+            self.AverageRuns()
  
         # Find index of product molecule
         try:
@@ -502,8 +461,11 @@ class Replicates:
         print 'Normalized sensitivity coefficients: ' + str(NSC_rev)
         print 'Turnover frequency: ' + str(mean_rate)
         
+        self.NSC = NSC_rev
+        self.NSC_ci = np.zeros([len(self.NSC)])
         
-    def PlotSensitivities(self): 
+        
+    def PlotSensitivities(self, NSC_cut = 0.05): 
         
         '''
         Plot the results of sensitivity analysis
@@ -517,11 +479,11 @@ class Replicates:
         ylabels = []
         
         for i in range (self.runAvg.Reactions['nrxns']):
-            cutoff = 0.05
-            if self.NSC_inst[i] + self.NSC_ci_inst[i] > cutoff or self.NSC_inst[i] - self.NSC_ci_inst[i] < -cutoff:     
-                plt.barh(ind-0.9, self.NSC_inst[i], width, color='r', xerr = self.NSC_ci_inst[i], ecolor='k')               
+            
+            if self.NSC[i] + self.NSC_ci[i] > NSC_cut or self.NSC[i] - self.NSC_ci[i] < -NSC_cut:     
+                plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')               
                 ylabels.append(self.runAvg.Reactions['names'][i])              
-                yvals.append(ind-0.6)                
+                yvals.append(ind-0.6)
                 ind = ind - 1
 
         plt.plot([0, 0], [0, ind], color='k')
@@ -534,34 +496,7 @@ class Replicates:
         pos = [0.30, 0.15, 0.65, 0.8]
         ax.set_position(pos)
         
-        plt.savefig(os.path.join(self.ParentFolder, 'SA_inst_output.png'))
-        plt.close()
-        
-        plt.figure()
-        width = 0.8
-        ind = 0
-        yvals = []
-        ylabels = []
-        
-        for i in range (self.runAvg.Reactions['nrxns']):
-            cutoff = 0.05
-            if self.NSC_erg[i] + self.NSC_ci_erg[i] > cutoff or self.NSC_erg[i] - self.NSC_ci_erg[i] < -cutoff:     
-                plt.barh(ind-0.9, self.NSC_erg[i], width, color='r', xerr = self.NSC_ci_erg[i], ecolor='k')               
-                ylabels.append(self.runAvg.Reactions['names'][i])              
-                yvals.append(ind-0.6)                
-                ind = ind - 1
-
-        plt.plot([0, 0], [0, ind], color='k')
-        plt.xlim([0,1])
-        plt.xticks(size=20)
-        plt.yticks(size=10)
-        plt.xlabel('NSC',size=24)
-        plt.yticks(yvals, ylabels)
-        ax = plt.subplot(111)
-        pos = [0.30, 0.15, 0.65, 0.8]
-        ax.set_position(pos)
-        
-        plt.savefig(os.path.join(self.ParentFolder, 'SA_erg_output.png'))
+        plt.savefig(os.path.join(self.ParentFolder, 'SA_output.png'))
         plt.close()
         
     
@@ -573,11 +508,11 @@ class Replicates:
     
         with open(os.path.join(self.ParentFolder, 'SA_output.txt'), 'w') as txt:
             txt.write('Normalized sensitivity coefficients \n\n')
-            txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
+            #txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
             txt.write('Reaction name \t NSC \t NSC confidence \n')
 
             for rxn_ind in range(self.runAvg.Reactions['nrxns']):
-                txt.write(self.runAvg.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC_inst[rxn_ind]) + '{0:.3f}\t'.format(self.NSC_ci_inst[rxn_ind]) + '{0:.3f} +- '.format(self.NSC_erg[rxn_ind]) + '{0:.3f}'.format(self.NSC_ci_erg[rxn_ind]) + '\n')
+                txt.write(self.runAvg.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC[rxn_ind]) + '\n')
             
             
     @staticmethod
@@ -616,5 +551,7 @@ class Replicates:
         sand.rxn_freqs = np.concatenate( [batch1.rxn_freqs, sand.rxn_freqs[:,1::,:]], axis = 1 )
         sand.Props_integ = np.concatenate( [batch1.Props_integ, sand.Props_integ[:,1::,:]], axis = 1 )
         sand.traj_derivs = np.concatenate( [batch1.traj_derivs, sand.traj_derivs[:,1::,:]], axis = 1 )
+        
+        sand.avg_updated = False
             
         return sand

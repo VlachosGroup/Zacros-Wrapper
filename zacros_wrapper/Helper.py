@@ -108,7 +108,7 @@ def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labe
     plt.figure()
     
     for i in range (len(y_series)):
-        plt.plot(x_series[i], y_series[i], '.k')
+        plt.plot(x_series[i], y_series[i])
     
     #plt.xticks(size=20)
     #plt.yticks(size=20)

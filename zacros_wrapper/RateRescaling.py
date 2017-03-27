@@ -7,7 +7,7 @@ from Helper import *
 
 
   
-def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 10, include_stiff_reduc = True, max_events = int(1e3), max_iterations = 15, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, platform = 'Squidward'):
+def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_batches = 1000, acf_cut = 0.05, include_stiff_reduc = True, max_events = int(1e3), max_iterations = 30, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, platform = 'Squidward'):
 
     '''
     Handles rate rescaling and continuation of KMC runs
@@ -28,6 +28,8 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 10, inc
     initial_states = []
     
     # Placeholder variables
+    if not os.path.exists(scale_parent_fldr):
+        os.makedirs(scale_parent_fldr)
     ClearFolderContents(scale_parent_fldr)
     SDF_vec = None        # scaledown factors for each iteration
     
@@ -50,11 +52,10 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 10, inc
         cur_batch = Replicates()
         cur_batch.ParentFolder = iter_fldr
         cur_batch.n_runs = n_runs
+        cur_batch.N_batches = n_batches
+        cur_batch.Set_kmc_template(kmc_template)        # Set template KMC trajectory
         
-        # Set template KMC trajectory
-        cur_batch.runtemplate = kmc_template
-        
-        if iteration == 1:              # Event sampling
+        if iteration == 1:              # Sample on events, because we do not know the time scales
         
             # Set sampling parameters
             cur_batch.runtemplate.Conditions['MaxStep'] = max_events
@@ -98,12 +99,12 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 10, inc
             cum_batch = Replicates.time_sandwich(prev_batch, cur_batch)         # combine with previous data          
         
         # Test steady-state
-        cum_batch.AverageRuns()           
-        is_steady_state = cum_batch.CheckGasConvergence()
+        cum_batch.AverageRuns()
+        acf = cum_batch.Compute_ACF()
+        is_steady_state = ( np.abs(acf) < acf_cut )
         
         # Record information about the iteration
         cum_batch.runAvg.PlotGasSpecVsTime()
-        cum_batch.runAvg.PlotNetGasRxnVsTime()
         cum_batch.runAvg.PlotSurfSpecVsTime()
         
         # Test stiffness
@@ -146,7 +147,7 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 10, inc
         prev_batch = copy.deepcopy(cum_batch)
         converged = unstiff and is_steady_state
         iteration += 1
-        
+       
     return cum_batch
     
 
