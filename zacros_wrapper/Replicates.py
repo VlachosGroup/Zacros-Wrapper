@@ -205,7 +205,7 @@ class Replicates:
                 if not self.runtemplate.CheckComplete():
                     all_jobs_done = False
                     
-        sys.stdout.write('Jobs in ' + self.ParentFolder + ' have finished')
+        sys.stdout.write('Jobs in ' + self.ParentFolder + ' have finished\n')
         sys.stdout.flush()
         
     
@@ -342,21 +342,17 @@ class Replicates:
         self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 1 ] )            # Set the number of batches per trajectory
         
         bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt + 1)
-        bin_edges_inds = np.zeros(bin_edges.shape)
-        for i in range(len(bin_edges)):
-            bin_edges_inds[i] = self.runAvg.time_search(bin_edges[i])
-        bin_edges_inds.astype(int)
-        
         rate_data = np.zeros([self.n_runs, self.Nbpt])
         
-        #print bin_edges_inds
-        #print self.Nbpt
         for i in range(self.Nbpt):
-            #print self.Props_integ[:, bin_edges_inds[i+1], :]
-            #print self.Props_integ[:, bin_edges_inds[i], :]
-            #print bin_edges[i+1]
-            #print bin_edges[i]
-            rate_data[:,i] = np.dot ( ( self.Props_integ[:, bin_edges_inds[i+1], :] - self.Props_integ[:, bin_edges_inds[i], :] ) / ( bin_edges[i+1] - bin_edges[i] ) , TOF_stoich )
+        
+            idb_start = self.runAvg.time_search_interp(bin_edges[i])
+            idb_end = self.runAvg.time_search_interp(bin_edges[i+1])
+            
+            prop_integ_start = idb_start[1][0] * self.Props_integ[:, idb_start[0][0], :] + idb_start[1][1] * self.Props_integ[:, idb_start[0][1], :]
+            prop_integ_end = idb_end[1][0] * self.Props_integ[:, idb_end[0][0], :] + idb_end[1][1] * self.Props_integ[:, idb_end[0][1], :]
+            
+            rate_data[:,i] = np.dot ( ( prop_integ_end - prop_integ_start ) / ( bin_edges[i+1] - bin_edges[i] ) , TOF_stoich )
         
         # Compute the autocorrelation function for the batch means of the rate
         c1 = rate_data[:,1:-1:]

@@ -70,7 +70,7 @@ class kmc_traj(IOdata):
     def time_search(self, t):
         
         '''
-        Given a time, look up the index of the time vector nearest to that time
+        Given a time, look up the index of the smallest time greater than or equal to that time
         '''
         
         if t > self.Specnum['t'][-1] or t < 0:
@@ -80,7 +80,36 @@ class kmc_traj(IOdata):
         while self.Specnum['t'][ind] < t:
             ind += 1
             
-        return int(ind)
+        return ind
+        
+        
+    def time_search_interp(self, t):
+        
+        '''
+        Get the information necessary to linearly interpolate data between time points
+        '''
+        
+        if t > self.Specnum['t'][-1] or t < 0:
+            raise Exception('Time is out of range.')
+        
+        ind_geq = 0
+        while self.Specnum['t'][ind_geq] < t:
+            ind_geq += 1
+            
+        ind_leq = len(self.Specnum['t']) - 1        # set it initially equal to the last index
+        while self.Specnum['t'][ind_leq] > t:
+            ind_leq -= 1
+        
+        if ind_geq - ind_leq < 0 or ind_geq - ind_leq > 1:
+            raise Exception('Time indices are wrong')
+        
+        low_frac = 1.0
+        if not (ind_geq == ind_leq):
+            low_frac = (self.Specnum['t'][ind_geq] - t) / (self.Specnum['t'][ind_geq] - self.Specnum['t'][ind_leq])
+            
+        high_frac = 1.0 - low_frac
+        
+        return [[ind_leq, ind_geq], [low_frac, high_frac]]
     
         
     @staticmethod
