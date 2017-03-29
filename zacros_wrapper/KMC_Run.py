@@ -11,7 +11,6 @@ import subprocess
 import copy
 
 from Helper import *
-import scipy
 
 class kmc_traj(IOdata):
     

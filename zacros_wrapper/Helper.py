@@ -5,7 +5,7 @@ import numpy as np
 import os, shutil
 import matplotlib as mat
 import matplotlib.pyplot as plt
-import scipy
+import scipy.stats
 import copy
 from numpy.matlib import repmat
 

@@ -5,6 +5,7 @@ import matplotlib as mat
 import matplotlib.pyplot as plt
 import copy
 import sys
+import scipy.stats
 
 from KMC_Run import kmc_traj
 from Helper import *
@@ -47,6 +48,10 @@ class Replicates:
         self.traj_derivs = None
         self.events_total = None
         self.CPU_total = None
+        
+        # Needed for computing the rates
+        self.gas_prod_ind = None
+        self.TOF_stoich = None
         
         # Analysis
         self.rates_data = None
@@ -297,6 +302,27 @@ class Replicates:
         self.avg_updated = False
         
 
+    def Set_analysis_varaibles(self):
+    
+        '''
+        Compute varaibles needed for the analysis, based on the input
+        '''
+    
+        # Find index of product molecule
+        try:
+            self.gas_prod_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
+        except:
+            raise Exception('Product species ' + self.gas_product + ' not found.')
+        
+        # Find the stochiometry of the product molecule for each reaction         
+        nRxns = len(self.runAvg.Reactions['Nu'])
+        self.TOF_stoich = np.zeros(nRxns)
+        for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
+            self.TOF_stoich[i] = elem_stoich[self.gas_prod_ind]
+            
+        self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 1 ] )            # Set the number of batches per trajectory
+    
+        
     def AverageRuns(self):
         
         '''
@@ -318,7 +344,64 @@ class Replicates:
         
         self.avg_updated = True
         
+    
+    def Test_surfspecs_flat(self, z_cut = 4):
+    
+        '''
+        Test whether the species profiles of surface species are flat
+        p: p-value for significance test
+        '''
         
+        if not self.avg_updated:
+            self.AverageRuns()
+        
+        self.Set_analysis_varaibles()
+        
+        all_species_flat = True
+        
+        points_per_batch = 2
+        new_t = np.linspace(0, self.t_vec[-1], points_per_batch * self.Nbpt + 1)
+        new_specs = np.zeros([ len(new_t) , self.runAvg.Species['n_surf'] ])
+        
+        for t_ind in range(len(new_t)):
+        
+            id = self.runAvg.time_search_interp(new_t[t_ind])
+            #print id
+            #print self.runAvg.Specnum['spec'][ id[0][0] , :]
+            #print self.runAvg.Specnum['spec'][ id[0][1] , :]
+            #print id[1][0] *  np.array( self.runAvg.Specnum['spec'][ id[0][0] , :] ) + id[1][1] * np.array( self.runAvg.Specnum['spec'][ id[0][1] , :] )
+            
+            new_specs[t_ind, :] = id[1][0] *  np.array( self.runAvg.Specnum['spec'][ id[0][0] , 0:self.runAvg.Species['n_surf']:] ) + id[1][1] * np.array( self.runAvg.Specnum['spec'][ id[0][1] , 0:self.runAvg.Species['n_surf']:] )
+        
+        # Loop through all surface species
+        for surf_spec_ind in range(self.runAvg.Species['n_surf']):
+        
+            # Take surface profiles in steady state region
+            x_list = new_t[points_per_batch::]
+            y_list = new_specs[ points_per_batch::, surf_spec_ind ]
+            
+            z, cov = np.polyfit(x_list, y_list, 1, cov=True)
+            
+            slope = z[0]
+            slope_std = np.sqrt(cov[0,0])
+            
+            print '\n'
+            print self.runAvg.Species['surf_spec'][surf_spec_ind]
+            print 'slope: ' + str(slope)
+            print 'slope std: ' + str(slope_std)
+            print '\n'
+            
+            if slope == 0:
+                z_score = 0
+            else:
+                z_score = np.abs(slope / slope_std)
+            
+            if z_score > z_cut:
+                all_species_flat = False
+        
+        return all_species_flat
+        
+    
     def Compute_ACF(self):          # Need to also put error bars on this
     
         '''
@@ -328,19 +411,8 @@ class Replicates:
         if not self.avg_updated:
             self.AverageRuns()
         
-        # Find index of product molecule
-        try:
-            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
-        except:
-            raise Exception('Product species ' + self.gas_product + ' not found.')
+        self.Set_analysis_varaibles()
             
-        nRxns = len(self.runAvg.Reactions['Nu'])
-        TOF_stoich = np.zeros(nRxns)
-        for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
-            TOF_stoich[i] = elem_stoich[product_ind]
-            
-        self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 1 ] )            # Set the number of batches per trajectory
-        
         bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt + 1)
         rate_data = np.zeros([self.n_runs, self.Nbpt])
         
@@ -352,7 +424,7 @@ class Replicates:
             prop_integ_start = idb_start[1][0] * self.Props_integ[:, idb_start[0][0], :] + idb_start[1][1] * self.Props_integ[:, idb_start[0][1], :]
             prop_integ_end = idb_end[1][0] * self.Props_integ[:, idb_end[0][0], :] + idb_end[1][1] * self.Props_integ[:, idb_end[0][1], :]
             
-            rate_data[:,i] = np.dot ( ( prop_integ_end - prop_integ_start ) / ( bin_edges[i+1] - bin_edges[i] ) , TOF_stoich )
+            rate_data[:,i] = np.dot ( ( prop_integ_end - prop_integ_start ) / ( bin_edges[i+1] - bin_edges[i] ) , self.TOF_stoich )
         
         # Compute the autocorrelation function for the batch means of the rate
         c1 = rate_data[:,1:-1:]
@@ -367,7 +439,7 @@ class Replicates:
             return c
         
     
-    def PerformSA(self, delta_t = None, ergodic = False,):          # Need to make this compatible with irreversible reactions
+    def PerformSA(self, delta_t = None, ergodic = False,):          # Need implement time point interpolation
         
         '''
         Perform sensitivity analysis with a combination of
@@ -381,23 +453,14 @@ class Replicates:
         Can also make it so that the statistics make sense for non-evenly spaced time points
         '''
         
+        self.Set_analysis_varaibles()
+        
         # Use entire trajectory length as the default time window
         if delta_t is None:
             delta_t = self.t_vec[-1] / self.Nbpt
         
         if not self.avg_updated:
             self.AverageRuns()
- 
-        # Find index of product molecule
-        try:
-            product_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
-        except:
-            raise Exception('Product species ' + self.gas_product + ' not found.')
-        
-        nRxns = len(self.runAvg.Reactions['Nu'])
-        TOF_stoich = np.zeros(nRxns)
-        for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
-            TOF_stoich[i] = elem_stoich[product_ind]
             
         if delta_t > self.t_vec[-1] or delta_t < 0:
             print 'Time window: ' + str(delta_t)
@@ -413,7 +476,7 @@ class Replicates:
         rate_contributions_avgs = np.zeros(self.traj_derivs.shape[2])
         
         for traj_ind in range(self.n_runs):
-            print 'Trajectory #: ' + str(traj_ind+1)
+
             for time_ind in range(delt_ind, len( self.t_vec ) ):
             
                 t = self.t_vec[time_ind]
@@ -421,9 +484,9 @@ class Replicates:
                 t_begin_win = self.t_vec[t_begin_win_ind]
                 
                 if ergodic:             # Average the rate over the entire time window
-                    rate_contributions = ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, t_begin_win_ind, :] ) / ( self.t_vec[time_ind] - self.t_vec[t_begin_win_ind] ) * TOF_stoich
+                    rate_contributions = ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, t_begin_win_ind, :] ) / ( self.t_vec[time_ind] - self.t_vec[t_begin_win_ind] ) * self.TOF_stoich
                 else:                   # Take the final value of the rate
-                    rate_contributions = ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, time_ind-1, :] ) / ( self.t_vec[time_ind] - self.t_vec[time_ind-1] ) * TOF_stoich 
+                    rate_contributions = ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, time_ind-1, :] ) / ( self.t_vec[time_ind] - self.t_vec[time_ind-1] ) * self.TOF_stoich 
                 
                 rate_contributions_avgs = rate_contributions_avgs + rate_contributions
                 rate = np.sum(rate_contributions)
