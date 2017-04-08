@@ -23,7 +23,7 @@ for x in range(0, len(dict_array)):
     dict[dict_array[x]] = x
 T_ref = []
 for s in lines[3:]:
-    T_ref.append(_thermo.Reference(s.split('\t'), dict))
+    T_ref.append(_thermo.Reference(s.split('\t'), dict, Base_path))
 
 '''
  Read target species and calculate all thermodynamic quantities
@@ -37,4 +37,4 @@ for x in range(0, len(dict_array)):
     dict[dict_array[x]] = x
 T_target = []
 for s in lines[3:]:
-    T_target.append(_thermo.Target(s.split('\t'), dict))
+    T_target.append(_thermo.Target(s.split('\t'), dict, Base_path))
