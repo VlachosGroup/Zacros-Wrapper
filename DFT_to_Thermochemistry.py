@@ -18,7 +18,7 @@ Created on Fri Mar 31 16:20:43 2017
 @author: wittregr
 
 Adopted from Matlab code written and modified by:
-    
+
                      Vassili Vorotnikov
                             and
                          Geun Ho Gu
@@ -44,10 +44,9 @@ class Particle(object):
     Tstp = 298.15                # Standard reference temperature [K]
     Cp_Range = _np.linspace(100, 1500, 15)
     VibScalingFactor = 1         # Vibrational Scaling Factor
-    Base_path = 'C:\Users\wittregr\Documents\Python Scripts'
     DFT_library_path = 'Input\Reference_set_info.txt'
 
-    def __init__(self, data, dict):
+    def __init__(self, data, dict, Base_path):
 
         '''
         Fill object with species name and associated thermodynamic data
@@ -68,6 +67,7 @@ class Particle(object):
             self.vibfreq.append(Particle.VibScalingFactor *
                                 float(data[dict['vibfreq'] + x]))
         self.vibfreq = _np.array(self.vibfreq)
+        self.Base_path = Base_path
 
         self.ThermoProperties()
 
@@ -234,6 +234,7 @@ class Particle(object):
     def Calc_Enthalpy(self):
         h = 1.5836687E-34
         kB = 3.299829159077406E-24
+        R2 = 5.189478952438986e+19  # eV/mol-K
         T = self.Tstp
         '''
         Calculate zero-point energy
@@ -274,7 +275,6 @@ class Particle(object):
         '''
         Sum all contribution to enthalpy for total enthalpy
         '''
-        R2 = 5.189478952438986e+19  # eV/mol-K
         self.dfth = self.etotal*self.R/R2*self.N_A/1000 + self.zpe +\
             self.E_Tstp_vib + self.E_Tstp_trans + self.E_Tstp_rot +\
             self.pv_Tstp
@@ -284,22 +284,22 @@ class Reference(Particle):
     '''
     SubClass object to add specific fields for reference species
     '''
-    def __init__(self, data, dict):
+    def __init__(self, data, dict, Base_path):
         self.sigma = int(data[dict['sigma']])            # Sigma
         self.islinear = int(data[dict['islinear']])      # Is molecule linear?
         self.hf298nist = float(data[dict['hf298nist']])  # NIST Std enthalpy
         self.phase = str.upper(data[dict['phase']])  # Phase (G=gas, S=surface)
-        super(Reference, self).__init__(data, dict)  # Call superclass
+        super(Reference, self).__init__(data, dict, Base_path) # Call superclass
 
 
 class Target(Particle):
     '''
     SubClass object to add specific fields for target surface species
     '''
-    def __init__(self, data, dict):
+    def __init__(self, data, dict, Base_path):
         self.surface = str(data[dict['surface']])          # Surface
         self.functional = str(data[dict['functional']])    # Functional
         self.kpoints = str(data[dict['kpoints']])          # k-Points
         self.vibfreqpath = str(data[dict['vibfreqpath']])  # Unused
         self.phase = None                            # Phase (G=gas, S=surface)
-        super(Target, self).__init__(data, dict)     # Call superclass
+        super(Target, self).__init__(data, dict, Base_path)   # Call superclass
