@@ -14,7 +14,7 @@ os.chdir(Base_path)
 '''
  Read reference species and calculate all thermodynamic quantities
 '''
-fid = open('Reference_set_info.txt', 'r')
+fid = open('Input\Reference_set_info.txt', 'r')
 file = fid.read()
 lines = file.splitlines()
 dict_array = lines[2].lower().split('\t')
@@ -28,7 +28,7 @@ for s in lines[3:]:
 '''
  Read target species and calculate all thermodynamic quantities
 '''
-fid = open('Tobe_Referenced.txt', 'r')
+fid = open('Input\Tobe_Referenced.txt', 'r')
 file = fid.read()
 lines = file.splitlines()
 dict_array = lines[2].lower().split('\t')
