@@ -32,6 +32,7 @@ import numpy as _np
 from numpy import pi
 import os
 import ase.io as _ase
+import re
 
 
 class Particle(object):
@@ -61,7 +62,6 @@ class Particle(object):
         self.edisp = float(data[dict['edisp']])  # Dispersion energy
         self.numvibfreq = int(data[dict['numvibfreq']])  # No. vib frequencies
         self.phase = None                        # Phase (G=gas, S=surface)
-        self.islinear = 0
         self.vibfreq = []                        # Vibration frequencies
         for x in range(0, self.numvibfreq):
             self.vibfreq.append(Particle.VibScalingFactor *
@@ -75,7 +75,6 @@ class Particle(object):
         '''
         Calculate all thermodynamic properties from input data
         '''
-        os.chdir(self.Base_path)
 
         self.Determine_Phase()
 
@@ -86,11 +85,12 @@ class Particle(object):
         if self.phase == 'G':
             amu_to_kg = 1.66053904e-27  # kg/amu
             A2_to_m2 = 1.0e-20          # m^2/A^2
+            self.totengpath = os.path.join(*re.split(r'\\|/', self.totengpath.strip('.').strip('\\')))
             filepath = os.path.join(self.Base_path.strip('.').strip('\\'),
-                                    'Input', self.totengpath.strip('.').strip('\\'),
+                                    'Input', self.totengpath,
                                     'CONTCAR')
             VASP = _ase.read(filepath)
-            self.I3 = _np.product(VASP.get_moments_of_inertia()*A2_to_m2*amu_to_kg)
+            self.I3 = VASP.get_moments_of_inertia()*A2_to_m2*amu_to_kg
             self.T_I = self.h**2/(8*pi**2*self.kB)
             self.MW = sum(VASP.get_masses())/self.N_A/1000.
         '''
@@ -161,23 +161,25 @@ class Particle(object):
                 '''
                 Non-linear species
                 '''
-                self.S_Tstp_rot = self.R*(3./2. + 1./2.*_np.log(pi*T**3/self.T_I**3*self.I3) -
+                I = _np.product(self.I3)
+                self.S_Tstp_rot = self.R*(3./2. + 1./2.*_np.log(pi*T**3/self.T_I**3*I) -
                                           _np.log(self.sigma))
-                self.Srotm = self.R*(1./2.*_np.log(_np.pi*T**3/self.T_I**3*self.I3) -
+                self.Srotm = self.R*(1./2.*_np.log(_np.pi*T**3/self.T_I**3*I) -
                                      _np.log(self.sigma))
             else:
                 '''
                 Linear species
                 '''
-                self.S_Tstp_rot = self.R*(1. + 1./2.*_np.log(pi*T**3/self.T_I**3*self.I3) -
+                I = _np.max(self.I3)
+                self.S_Tstp_rot = self.R*(1. + _np.log(T/self.T_I*I) -
                                           _np.log(self.sigma))
-                self.Srotm = self.R*(1./2.*_np.log(pi*T**3/self.T_I**3*self.I3) -
+                self.Srotm = self.R*(_np.log(T/self.T_I*I) -
                                      _np.log(self.sigma))
-            p = 100000  # Presure of 1 atm or 1000000 Pa
+            p = 100000  # Presure of 1 atm or 100000 Pa
             self.S_Tstp_trans = self.R*(5./2. + 3./2.*_np.log(2.*pi*self.MW/self.h**2) +
                                         5./2.*_np.log(Particle.kB*T) - _np.log(p))
             self.Stransm = self.R*(3./2.*_np.log(2.*pi*self.MW/self.h**2) +
-                                   _np.log(Particle.kB*T) - _np.log(p))
+                                   5./2.*_np.log(Particle.kB*T) - _np.log(p))
         else:
             '''
             Surface phase calculation

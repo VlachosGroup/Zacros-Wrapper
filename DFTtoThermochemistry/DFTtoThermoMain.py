@@ -7,14 +7,19 @@ Created on Fri Apr 07 09:39:17 2017
 
 import DFT_to_Thermochemistry as _thermo
 import os
+import platform
+import re
 
-Base_path = 'C:\Users\wittregr\Documents\Python Scripts'
-os.chdir(Base_path)
+if platform.system() == 'Windows':
+    Base_path = 'C:\Users\wittregr\Documents\Python Scripts'
+else:
+    Base_path = '/home/1729'
 
 '''
  Read reference species and calculate all thermodynamic quantities
 '''
-fid = open('Input\Reference_set_info.txt', 'r')
+filepath = os.path.join(Base_path, os.path.join(*re.split('\\|/', 'Input/Reference_set_info.txt')))
+fid = open(filepath, 'r')
 file = fid.read()
 lines = file.splitlines()
 dict_array = lines[2].lower().split('\t')
@@ -28,7 +33,8 @@ for s in lines[3:]:
 '''
  Read target species and calculate all thermodynamic quantities
 '''
-fid = open('Input\Tobe_Referenced.txt', 'r')
+filepath = os.path.join(Base_path, os.path.join(*re.split('\\|/', 'Input/Tobe_Referenced.txt')))
+fid = open(filepath, 'r')
 file = fid.read()
 lines = file.splitlines()
 dict_array = lines[2].lower().split('\t')
