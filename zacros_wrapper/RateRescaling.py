@@ -100,10 +100,9 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         
         # Test steady-state
         cum_batch.AverageRuns()
-        acf = cum_batch.Compute_ACF()
-        #surf_spec_flat = cum_batch.Test_surfspecs_flat()
-        surf_spec_flat = True               # Put this in as a placeholder to test without the linear regression
-        is_steady_state = ( np.abs(acf) < acf_cut ) and surf_spec_flat
+        acf_data = cum_batch.Compute_ACF()
+        acf = acf_data[0]
+        is_steady_state = np.abs(acf) < acf_cut
         
         # Record information about the iteration
         cum_batch.runAvg.PlotGasSpecVsTime()
@@ -201,17 +200,16 @@ def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):        # Change
     return {'delta_sdf': delta_sdf, 'rxn_speeds': rxn_speeds, 'tot': tot_freqs, 'net': net_freqs}
     
     
-def ReadScaledown(RunPath):
+def ReadScaledown(RunPath, plot_analysis = False):
     
     '''
     Read a scaledown that has already been run
     '''
 
     # Count the iterations
-    #n_folders = len([d for d in os.listdir(RunPath) if os.path.isdir(RunPath + d + '/')])
     n_folders = len(os.listdir(RunPath))
 
-    print n_folders
+    print str(n_folders) + ' iterations found'
 
     cum_batch = None
     for ind in range(1,n_folders+1):
@@ -224,6 +222,15 @@ def ReadScaledown(RunPath):
             cum_batch = x
         else:
             cum_batch = Replicates.time_sandwich(cum_batch, x)
+            
+        cum_batch.gas_product = 'CO2'
+        #cum_batch.gas_product = 'B'
+        acf = cum_batch.Compute_ACF()
+        print 'Iteration ' + str(ind)
+        print 'ACF: ' + str(acf[0])
+        print acf[1]
+        print acf[2]
+        print '\n'
             
     return cum_batch
 

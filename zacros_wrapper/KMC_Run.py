@@ -342,7 +342,7 @@ class kmc_traj(IOdata):
         plt.close()
         
         
-    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need to complete this function by plotting adsorbates from the history file data
+    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need make marker type consistent with the site type
 
         '''
         Create a .png file with a picture of a lattice for every snapshot in history_output.txt

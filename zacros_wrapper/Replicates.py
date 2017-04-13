@@ -5,12 +5,12 @@ import matplotlib as mat
 import matplotlib.pyplot as plt
 import copy
 import sys
-import scipy.stats
+import scipy.stats      # causes trouble with newer version of Python
 
 from KMC_Run import kmc_traj
 from Helper import *
 import time
-
+import scipy
 
 
 class Replicates:
@@ -29,7 +29,7 @@ class Replicates:
         self.runAvg = None            # Values are averages of all runs from runList
         self.avg_updated = False        # Whether we need to update the trajectory averages
         self.n_runs = 0
-        self.N_batches = 1000
+        self.N_batches = 4000       # Used to be 1000
         self.Nbpt = None
         self.gas_product = None
         
@@ -320,7 +320,7 @@ class Replicates:
         for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
             self.TOF_stoich[i] = elem_stoich[self.gas_prod_ind]
             
-        self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 1 ] )            # Set the number of batches per trajectory
+        self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 2 ] )            # Set the number of batches per trajectory
     
         
     def AverageRuns(self):
@@ -426,17 +426,108 @@ class Replicates:
             
             rate_data[:,i] = np.dot ( ( prop_integ_end - prop_integ_start ) / ( bin_edges[i+1] - bin_edges[i] ) , self.TOF_stoich )
         
+        '''
+        Plot Rates
+        '''
+        
+        PlotOptions()
+        plt.figure()
+        
+        for i in range(self.n_runs):
+            plt.plot(bin_edges[2::], rate_data[i,1::], '.')
+        
+        #plt.xticks(size=20)
+        #plt.yticks(size=20)
+        plt.xlabel('Time (s)', size=24)
+        plt.ylabel('Rate', size=24)
+        
+        ax = plt.subplot(111)
+        ax.set_position([0.2, 0.15, 0.7, 0.8])
+        
+        
+        plt.savefig(os.path.join(self.ParentFolder, 'bin_rates.png'))
+        plt.close()
+        
+        
+        plt.figure()
+        
+        plt.plot(bin_edges[2::], np.mean( rate_data[:,1::], axis=0 ) , '.')
+        
+        #plt.xticks(size=20)
+        #plt.yticks(size=20)
+        plt.xlabel('Time (s)', size=24)
+        plt.ylabel('Rate', size=24)
+        
+        ax = plt.subplot(111)
+        ax.set_position([0.2, 0.15, 0.7, 0.8])
+        
+        
+        plt.savefig(os.path.join(self.ParentFolder, 'mean_bin_rates.png'))
+        plt.close()
+        
+        '''
+        Compute confidence in the rate (assuming IID)
+        '''
+        
+        alldata = rate_data[:,1::]
+        alldata = alldata.reshape(np.prod(alldata.shape))
+
+        confidence=0.90
+        n = len(alldata)
+        m, se = np.mean(alldata), scipy.stats.sem(alldata)
+        
+        if m == 0:
+            print 'No rate'
+            return [1.0, 1.0, 1.0]
+        
+        h = se * scipy.stats.t._ppf((1+confidence)/2., n - 1)
+        
+        print 'Average rate'
+        print m
+        print 'Confidence interval half-length'
+        print h
+        
+        #if np.abs( h / m) > 0.1:
+        #    return [1.0, 1.0, 1.0]
+
+        
+        '''
+        Compute ACF
+        '''
+        
         # Compute the autocorrelation function for the batch means of the rate
         c1 = rate_data[:,1:-1:]
         c1 = c1.reshape( np.prod(c1.shape) )
         c2 = rate_data[:,2::]
         c2 = c2.reshape( np.prod(c2.shape) )
         
-        if np.var(c1) * np.var(c2) == 0:        # Covers the case where we have zero rate
-            return 1.0
+        
+        if ( np.var(c1) * np.var(c2) == 0 ) or ( np.mean(rate_data[ : , 1 ]) == 0 ):        # Covers the case where we have zero rate
+            ACF = 1.0
         else:
-            c = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.sqrt( np.var(c1) * np.var(c2) )
-            return c
+            ACF = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.var(alldata)
+            #ACF = np.mean(c1 * c2) - np.mean(alldata) ** 2          # test not normalizing the rate
+
+        '''
+        Compute error bounds on ACF
+        '''
+        
+        N_boot = 100
+        
+        ACF_dist = np.zeros(N_boot)
+        for i in range(N_boot):
+            subpop_inds = np.random.randint(len(c1), size=len(c1))
+            c1_new = c1[subpop_inds]
+            c2_new = c2[subpop_inds]
+            ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new) ) / np.var(alldata)
+            #ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate
+            
+        ACF_dist = sorted(ACF_dist)
+        ACF_high = ACF_dist[int(0.95 * N_boot)]
+        ACF_low = ACF_dist[int(0.05 * N_boot)]
+        
+        return {'Rate': None, 'Rate_ci': None, 'ACF': None, 'ACF_ci': None}
+        #return [ACF, ACF_high, ACF_low]
         
     
     def PerformSA(self, delta_t = None, ergodic = False,):          # Need implement time point interpolation

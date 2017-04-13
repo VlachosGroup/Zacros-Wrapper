@@ -5,7 +5,7 @@ import numpy as np
 import os, shutil
 import matplotlib as mat
 import matplotlib.pyplot as plt
-import scipy.stats
+import scipy.stats      # causes trouble with newer version of Python
 import copy
 from numpy.matlib import repmat
 

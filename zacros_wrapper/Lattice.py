@@ -22,8 +22,8 @@ class Lattice:
         Initialize class variables
         '''
         
-        self.workingdir = ''
-        self.lattice_matrix = np.zeros([2,2])         # each row is a lattice vector
+        self.workingdir = '.'
+        self.lattice_matrix = None         # each row is a lattice vector
         self.repeat = [1,1]
         self.site_type_names = []
         self.site_type_inds = []
@@ -32,6 +32,54 @@ class Lattice:
         self.neighbor_list = []
         self.cell_list = []     # self, north, northeast, east, or southeast
 
+        
+    def set_frac_coords(self, fc):
+        
+        '''
+        Set the fractional and Cartesian coordinates
+        '''
+        
+        self.frac_coords = fc
+        self.cart_coords = self.cart_coords = np.dot(self.frac_coords, self.lattice_matrix)
+        
+        
+    def set_cart_coords(self, cc):
+    
+        '''
+        Set the Cartesian and fractional coordinates
+        '''
+    
+        self.cart_coords = cc
+        self.frac_coords = np.dot(self.cart_coords, np.linalg.inv(self.lattice_matrix))
+        
+
+    def coord_shift(self, a_ind, b_ind):
+
+        '''
+        Give the coordinates of the periodic image of B which is closest to A
+        '''
+
+        a_coords = self.cart_coords[ a_ind , : ]
+
+        image_coords = [ self.cart_coords[ b_ind , : ] for i in range(9) ]
+        dist_list = [None for i in range(9)]
+        ind = 0
+        for we in [-1, 0, 1]:
+            for sn in [-1, 0, 1]:
+                image_coords[ind] = image_coords[ind] + np.dot(np.array([we, sn]), self.lattice_matrix)
+                dist_list[ind] = np.linalg.norm( image_coords[ind] - a_coords )
+                ind += 1
+
+        min_d = dist_list[0]
+        min_d_ind = 0
+        for i in range(1,9):
+            if dist_list[i] < min_d:
+                min_d = dist_list[i]
+                min_d_ind = i
+        
+        return image_coords[min_d_ind]
+    
+    
     def PlotLattice(self, cutoff = 3.0, plot_neighbs = False, type_symbols = ['o','s','^','v'], ms = 4):
         
         '''
@@ -89,6 +137,7 @@ class Lattice:
         plt.ylabel('y-coord (ang)',size=24)
         
         return plt
+        
     
     def Read_lattice_output(self,fname):
     
@@ -102,6 +151,7 @@ class Lattice:
         self.cart_coords = np.zeros([n_sites,2])        
         
         # Fill in lattice vectors
+        self.lattice_matrix = np.zeros([2,2])
         line1 = RawTxt[0].split()
         self.lattice_matrix[0,0] = float(line1[1])
         self.lattice_matrix[0,1] = float(line1[2])
@@ -124,6 +174,7 @@ class Lattice:
         # Convert to fractional coordinates
         self.frac_coords = np.dot(self.cart_coords, np.linalg.inv(self.lattice_matrix))
     
+    
     def Read_lattice_input(self):
     
         '''
@@ -131,10 +182,11 @@ class Lattice:
         '''
     
         input_text = []
-        with open(self.workingdir + '/lattice_input.dat','r') as Txt:
+        with open(os.path.join(self.workingdir, '/lattice_input.dat'),'r') as Txt:
             RawTxt = Txt.readlines()   
         for i in RawTxt:
             input_text.append(i.split('\n')[0])
+    
     
     def Write_lattice_input(self):
 
@@ -183,6 +235,7 @@ class Lattice:
             
             txt.write('end_lattice\n')
         txt.close()
+        
         
     def Build_neighbor_list(self, cut = 3.0, cut_mat = []):     # appending lists causes this method to be slow
     
