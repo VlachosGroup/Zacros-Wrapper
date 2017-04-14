@@ -33,6 +33,8 @@ from numpy import pi
 import os
 import ase.io as _ase
 import re
+import scipy.interpolate as _sp
+import datetime
 
 
 class Particle(object):
@@ -45,9 +47,8 @@ class Particle(object):
     Tstp = 298.15                # Standard reference temperature [K]
     Cp_Range = _np.linspace(100, 1500, 15)
     VibScalingFactor = 1         # Vibrational Scaling Factor
-    DFT_library_path = 'Input\Reference_set_info.txt'
 
-    def __init__(self, data, dict, Base_path):
+    def __init__(self, data, dict, Base_path, Input):
 
         '''
         Fill object with species name and associated thermodynamic data
@@ -57,7 +58,9 @@ class Particle(object):
         self.hydrogen = int(data[dict['numh']])  # No. of hydrogem atoms [int]
         self.oxygen = int(data[dict['numo']])    # No. of oxygen atoms [int]
         self.nitrogen = int(data[dict['numn']])  # Number of nitrogen atoms
-        self.totengpath = str(data[dict['totengpath']])  # VASP files location
+        self.totengpath = os.path.join(*re.split(r'\\|/',
+                                       str(data[dict['totengpath']]).
+                                       strip('.').strip('\\')))
         self.etotal = float(data[dict['etotal']])  # Total energy
         self.edisp = float(data[dict['edisp']])  # Dispersion energy
         self.numvibfreq = int(data[dict['numvibfreq']])  # No. vib frequencies
@@ -68,6 +71,7 @@ class Particle(object):
                                 float(data[dict['vibfreq'] + x]))
         self.vibfreq = _np.array(self.vibfreq)
         self.Base_path = Base_path
+        self.Input = Input
 
         self.ThermoProperties()
 
@@ -85,9 +89,9 @@ class Particle(object):
         if self.phase == 'G':
             amu_to_kg = 1.66053904e-27  # kg/amu
             A2_to_m2 = 1.0e-20          # m^2/A^2
-            self.totengpath = os.path.join(*re.split(r'\\|/', self.totengpath.strip('.').strip('\\')))
-            filepath = os.path.join(self.Base_path.strip('.').strip('\\'),
-                                    'Input', self.totengpath,
+            filepath = os.path.join(self.Base_path,
+                                    self.Input,
+                                    self.totengpath,
                                     'CONTCAR')
             VASP = _ase.read(filepath)
             self.I3 = VASP.get_moments_of_inertia()*A2_to_m2*amu_to_kg
@@ -148,7 +152,8 @@ class Particle(object):
         Calculate vibrational component of entropy for gas and surface species
         '''
         T = self.Tstp
-        self.S_Tstp_vib = self.R * sum((self.theta/T)/(_np.exp(self.theta/T)-1) -
+        self.S_Tstp_vib = self.R * sum((self.theta/T) /
+                                       (_np.exp(self.theta/T)-1) -
                                        _np.log(1 - _np.exp(-self.theta/T)))
         '''
         Calculate rotational and translational components of enthalpy
@@ -162,7 +167,8 @@ class Particle(object):
                 Non-linear species
                 '''
                 I = _np.product(self.I3)
-                self.S_Tstp_rot = self.R*(3./2. + 1./2.*_np.log(pi*T**3/self.T_I**3*I) -
+                self.S_Tstp_rot = self.R*(3./2. + 1./2. *
+                                          _np.log(pi*T**3/self.T_I**3*I) -
                                           _np.log(self.sigma))
                 self.Srotm = self.R*(1./2.*_np.log(_np.pi*T**3/self.T_I**3*I) -
                                      _np.log(self.sigma))
@@ -176,8 +182,10 @@ class Particle(object):
                 self.Srotm = self.R*(_np.log(T/self.T_I*I) -
                                      _np.log(self.sigma))
             p = 100000  # Presure of 1 atm or 100000 Pa
-            self.S_Tstp_trans = self.R*(5./2. + 3./2.*_np.log(2.*pi*self.MW/self.h**2) +
-                                        5./2.*_np.log(Particle.kB*T) - _np.log(p))
+            self.S_Tstp_trans = self.R*(5./2. + 3./2. *
+                                        _np.log(2.*pi*self.MW/self.h**2) +
+                                        5./2.*_np.log(Particle.kB*T) -
+                                        _np.log(p))
             self.Stransm = self.R*(3./2.*_np.log(2.*pi*self.MW/self.h**2) +
                                    5./2.*_np.log(Particle.kB*T) - _np.log(p))
         else:
@@ -286,22 +294,224 @@ class Reference(Particle):
     '''
     SubClass object to add specific fields for reference species
     '''
-    def __init__(self, data, dict, Base_path):
+    def __init__(self, data, dict, Base_path, Input):
         self.sigma = int(data[dict['sigma']])            # Sigma
         self.islinear = int(data[dict['islinear']])      # Is molecule linear?
         self.hf298nist = float(data[dict['hf298nist']])  # NIST Std enthalpy
-        self.phase = str.upper(data[dict['phase']])  # Phase (G=gas, S=surface)
-        super(Reference, self).__init__(data, dict, Base_path) # Call superclass
+        self.phase = str.upper(data[dict['phase']])     # Phase (G=gas, S=surf)
+        super(Reference, self).__init__(data,
+                                        dict,
+                                        Base_path,
+                                        Input)           # Call superclass
 
 
 class Target(Particle):
     '''
     SubClass object to add specific fields for target surface species
     '''
-    def __init__(self, data, dict, Base_path):
+    def __init__(self, data, dict, Base_path, Input):
         self.surface = str(data[dict['surface']])          # Surface
         self.functional = str(data[dict['functional']])    # Functional
         self.kpoints = str(data[dict['kpoints']])          # k-Points
         self.vibfreqpath = str(data[dict['vibfreqpath']])  # Unused
-        self.phase = None                            # Phase (G=gas, S=surface)
-        super(Target, self).__init__(data, dict, Base_path)   # Call superclass
+        self.phase = None                               # Phase (G=gas, S=surf)
+        super(Target, self).__init__(data,
+                                     dict,
+                                     Base_path,
+                                     Input)   # Call superclass
+
+
+class Surface:
+    '''
+    Class object to populate slab energies for surfaces
+    '''
+    def __init__(self, data, dict):
+        self.name = str(data[dict['name']])          # Surface
+        self.etotal = float(data[dict['etotal']])    # Functional
+        self.edisp = float(data[dict['edisp']])          # k-Points
+
+
+def DFTFileRead(filepath):
+    fid = open(filepath, 'r')
+    file = fid.read()
+    lines = file.splitlines()
+    dict_array = lines[2].lower().split('\t')
+    dict = {}
+    for x in range(0, len(dict_array)):
+        dict[dict_array[x]] = x
+    return(lines, dict)
+
+
+def BasisSet(RefSpecies):
+    A = []
+    b_nist = []
+    b_dfth = []
+    for x in range(0, len(RefSpecies)):
+        A.append([RefSpecies[x].carbon, RefSpecies[x].hydrogen,
+                  RefSpecies[x].oxygen, RefSpecies[x].nitrogen])
+        b_nist.append([RefSpecies[x].hf298nist])
+        b_dfth.append([RefSpecies[x].dfth])
+    ref = _np.linalg.lstsq(A, _np.array(b_nist) - _np.array(b_dfth))
+    return(ref[0])
+
+
+def ReferenceDFT(Species, Surface, Basis):
+    ev_atom_2_kcal_mol = 23.06055
+    for x in range(0, len(Species)):
+        Molecule = _np.array([Species[x].carbon, Species[x].hydrogen,
+                              Species[x].oxygen, Species[x].nitrogen])
+        if Species[x].phase == 'G':
+            Species[x].hf_Tstp = (Species[x].dfth +
+                                  _np.dot(Molecule, Basis))[0]
+            if hasattr(Species[x], 'edisp'):
+                Species[x].convedisp = (Species[x].edisp * ev_atom_2_kcal_mol)
+        else:
+            Slab = next((y for y in Surface if y.name == Species[x].surface),
+                        None)
+            if Slab is None:
+                print 'Error'
+            else:
+                Species[x].hf_Tstp = (Species[x].dfth +
+                                      _np.dot(Molecule, Basis) -
+                                      Slab.etotal * ev_atom_2_kcal_mol)[0]
+                if hasattr(Species[x], 'edisp'):
+                    Species[x].convedisp = (Species[x].edisp *
+                                            ev_atom_2_kcal_mol -
+                                            Slab.edisp * ev_atom_2_kcal_mol)
+    return(Species)
+
+
+def CreateThermdat(Species, Base_path, Output):
+    '''
+    Calculate the seven coefficients for the NASA polynomials for two
+    temperature ranges and output the results in a Chemkin format thermdat file
+    '''
+    T_mid = 500
+    R = Species[0].R
+    Tstp = Species[0].Tstp
+
+    def HS_NASA(T, a):
+        '''
+        7-coefficient NASA polynomials for enthalpy and entropy
+        '''
+        Enthalpy = a[0] + a[1]*T/2 + a[2]*T**2/3 + a[3]*T**3/4 + a[4]*T**4/5
+        Entropy = a[0]*_np.log(T) + a[1]*T + a[2]*T**2/2 + \
+            a[3]*T**3/3 + a[4]*T**4/4
+        return[Enthalpy, Entropy]
+
+    for x in range(0, len(Species)):
+        T_rng_low = _np.linspace(min(Species[x].Cp_Range), T_mid, 1000)
+        T_rng_high = _np.linspace(T_mid, max(Species[x].Cp_Range), 2500)
+        T_func = _sp.UnivariateSpline(Species[x].Cp_Range, Species[x].Cp/R)
+        '''
+        Fit coefficients A1-A5 to heat capacity data
+        '''
+        Species[x].a_low = _np.polyfit(T_rng_low, T_func(T_rng_low), 4)[::-1]
+        Species[x].a_high = _np.polyfit(T_rng_high, T_func(T_rng_high), 4)[::-1]
+        '''
+        Correct A6 high temperature range coefficient to eliminate
+        discontinuity between high and low temperature range polynomials
+        '''
+        Species[x].a_high[0] = Species[x].a_high[0] + \
+            _np.polyval(Species[x].a_low[::-1], T_mid) - \
+            _np.polyval(Species[x].a_high[::-1], T_mid)
+
+        '''
+        Determine A6 coefficient for enthalpy calculations
+        '''
+        a6_high = (Species[x].hf_Tstp/R/Species[x].Tstp*1000 -
+                   HS_NASA(Tstp, Species[x].a_high)[0]) *Tstp
+        a6_low = (Species[x].hf_Tstp/R/Tstp*1000 -
+                  HS_NASA(Tstp, Species[x].a_low)[0]) *Tstp
+        '''
+        Correct A6 high temperature range coefficient to eliminate
+        discontinuity between high and low temperature range polynomials
+        '''
+        a6_high_delta = (HS_NASA(T_mid, Species[x].a_low)[0] +
+                         a6_low/T_mid) - \
+                        (HS_NASA(T_mid,
+                         Species[x].a_high)[0] + a6_high/T_mid)
+        a6_high = a6_high + a6_high_delta
+        Species[x].a_high = _np.append(Species[x].a_high, a6_high)
+        Species[x].a_low = _np.append(Species[x].a_low, a6_low)
+
+        '''
+        Determine A7 coefficient for entropy calculations
+        '''
+        a7_high = Species[x].S_Tstp/R - \
+            HS_NASA(Tstp, Species[x].a_high)[1]
+        a7_low = Species[x].S_Tstp/R - \
+            HS_NASA(Tstp, Species[x].a_low)[1]
+
+        '''
+        Correct A7 high temperature range coefficient to eliminate
+        discontinuity between high and low temperature range polynomials
+        '''
+        a7_high_delta = (HS_NASA(Tstp, Species[x].a_low)[1] +
+                         a7_low) - (HS_NASA(Tstp,
+                                    Species[x].a_high)[1] + a7_high)
+        a7_high = a7_high + a7_high_delta
+        Species[x].a_high = _np.append(Species[x].a_high, a7_high)
+        Species[x].a_low = _np.append(Species[x].a_low, a7_low)
+
+    '''
+    Write the species name, seven NASA coefficients for both a high and a low
+    temperature range and other data in the Chemkin thermdat file format
+    '''
+    if os.path.isdir(os.path.join(Base_path, Output)) is False:
+        os.mkdir(os.path.join(Base_path, Output))
+    filepath = os.path.join(Base_path, Output, 'thermdat')
+    fid = open(filepath, 'w')
+    fid.truncate()
+    '''
+    Write thermdat file header
+    '''
+    fid.write('THERMO ALL\n')
+    for s in range(0, _np.size(Species)):
+        '''
+        Write header line for each species on line 1
+        '''
+        fid.write('%-16s' % (Species[s].name))
+        fid.write('%-8s' % (datetime.date.today().strftime('%Y%m%d')))
+        fid.write('%1s%-4i' % ('C', Species[s].carbon))
+        fid.write('%1s%-4i' % ('O', Species[s].oxygen))
+        fid.write('%1s%-4i' % ('H', Species[s].hydrogen))
+        fid.write('%1s%-4i' % ('N', Species[s].nitrogen))
+        if Species[s].name.find('(S)'):
+            fid.write('S')
+        else:
+            fid.write('G')
+        fid.write('%10.0f%10.0f%8.0f' % (min(Species[x].Cp_Range),
+                                         max(Species[x].Cp_Range),
+                                         T_mid))
+        fid.write('%6s%1i\n' % ('', 1))
+        '''
+        Write first five NASA coefficients for low temperature range on line 2
+        '''
+        for x in range(0, 5):
+            fid.write('%15E' % (Species[s].a_low[x]))
+        fid.write('%4s%1i\n' % ('', 2))
+        '''
+        Write final two NASA coefficients for low temperature range on line 2
+        '''
+        for x in range(0, 2):
+            fid.write('%15E' % (Species[s].a_low[x+4]))
+        '''
+        Write first three NASA coeficients for high temperature range on line 3
+        '''
+        for x in range(0, 3):
+            fid.write('%15E' % (Species[s].a_high[x]))
+        fid.write('%4s%1i\n' % ('', 3))
+        '''
+        Write final four NASA coefficients for high temperature range on line 4
+        '''
+        for x in range(0, 4):
+            fid.write('%15E' % (Species[s].a_high[x+3]))
+        fid.write('%19s%1i\n' % ('', 4))
+    '''
+    Write file footer and close the file
+    '''
+    fid.write('END\n')
+    fid.close()
+
+    return(Species)
