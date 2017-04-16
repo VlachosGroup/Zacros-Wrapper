@@ -39,7 +39,7 @@ for s in lines[3:]:
 '''
 Create basis set from reference molecules
 '''
-Basis = _thermo.BasisSet(T_ref)
+Basis = _thermo.Reference.BasisSet(T_ref)
 
 '''
 Read surface slab energy from input file
@@ -53,12 +53,12 @@ for s in lines[3:]:
 '''
 Apply reference nolecule correct to thermodynamic data
 '''
-T_target = _thermo.ReferenceDFT(T_target, T_surface, Basis)
+T_target = _thermo.Target.ReferenceDFT(T_target, T_surface, Basis)
 
 '''
 Output thermat file from calculated thermodynamic data
 '''
-T_target = _thermo.CreateThermdat(T_target, Base_path, Output)
+T_target = _thermo.Target.CreateThermdat(T_target, Base_path, Output)
 
 '''
 Output Zacros input file from thermodynamic data
