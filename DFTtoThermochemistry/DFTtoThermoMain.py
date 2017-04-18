@@ -51,7 +51,7 @@ for s in lines[3:]:
     T_surface.append(_thermo.Surface(s.split('\t'), dict))
 
 '''
-Apply reference nolecule correct to thermodynamic data
+Apply reference molecule correct to thermodynamic data
 '''
 T_target = _thermo.Target.ReferenceDFT(T_target, T_surface, Basis)
 

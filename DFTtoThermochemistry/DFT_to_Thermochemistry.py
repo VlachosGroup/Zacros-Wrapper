@@ -314,8 +314,9 @@ class Reference(Particle):
                       RefSpecies[x].oxygen, RefSpecies[x].nitrogen])
             b_nist.append([RefSpecies[x].hf298nist])
             b_dfth.append([RefSpecies[x].dfth])
-        ref = _np.linalg.lstsq(A, _np.array(b_nist) - _np.array(b_dfth))
-        return(ref[0])
+        ref = _np.linalg.lstsq(A, _np.array(b_nist) - _np.array(b_dfth))[0]
+        #ref = _np.array([[210.1786], [74.2280], [108.5391], [0]])
+        return(ref)
 
 
 class Target(Particle):
@@ -343,9 +344,11 @@ class Target(Particle):
                 Species[x].hf_Tstp = (Species[x].dfth +
                                       _np.dot(Molecule, Basis))[0]
                 if hasattr(Species[x], 'edisp'):
-                    Species[x].convedisp = (Species[x].edisp * ev_atom_2_kcal_mol)
+                    Species[x].convedisp = (Species[x].edisp *
+                                            ev_atom_2_kcal_mol)
             else:
-                Slab = next((y for y in Surface if y.name == Species[x].surface),
+                Slab = next((y for y in Surface if y.name ==
+                             Species[x].surface),
                             None)
                 if Slab is None:
                     print 'Error'
@@ -363,45 +366,50 @@ class Target(Particle):
     def CreateThermdat(Species, Base_path, Output):
         '''
         Calculate the seven coefficients for the NASA polynomials for two
-        temperature ranges and output the results in a Chemkin format thermdat file
+        temperature ranges and output the results in a Chemkin format thermdat
+        file
         '''
         T_mid = 500
         R = Species[0].R
         Tstp = Species[0].Tstp
-    
+
         def HS_NASA(T, a):
             '''
             7-coefficient NASA polynomials for enthalpy and entropy
             '''
-            Enthalpy = a[0] + a[1]*T/2 + a[2]*T**2/3 + a[3]*T**3/4 + a[4]*T**4/5
+            Enthalpy = a[0] + a[1]*T/2 + a[2]*T**2/3 + \
+                a[3]*T**3/4 + a[4]*T**4/5
             Entropy = a[0]*_np.log(T) + a[1]*T + a[2]*T**2/2 + \
                 a[3]*T**3/3 + a[4]*T**4/4
             return[Enthalpy, Entropy]
-    
+
         for x in range(0, len(Species)):
-            T_rng_low = _np.linspace(min(Species[x].Cp_Range), T_mid, 1000)
-            T_rng_high = _np.linspace(T_mid, max(Species[x].Cp_Range), 2500)
-            T_func = _sp.UnivariateSpline(Species[x].Cp_Range, Species[x].Cp/R)
+            T_rng_low = _np.linspace(min(Species[x].Cp_Range), T_mid, 1600)
+            T_rng_high = _np.linspace(T_mid, max(Species[x].Cp_Range), 4000)
+            T_func = _sp.InterpolatedUnivariateSpline(Species[x].Cp_Range,
+                                                      Species[x].Cp/R, k=4)
             '''
             Fit coefficients A1-A5 to heat capacity data
             '''
-            Species[x].a_low = _np.polyfit(T_rng_low, T_func(T_rng_low), 4)[::-1]
-            Species[x].a_high = _np.polyfit(T_rng_high, T_func(T_rng_high), 4)[::-1]
+            Species[x].a_low = _np.polyfit(T_rng_low,
+                                           T_func(T_rng_low), 4)[::-1]
+            Species[x].a_high = _np.polyfit(T_rng_high,
+                                            T_func(T_rng_high), 4)[::-1]
             '''
-            Correct A6 high temperature range coefficient to eliminate
+            Correct A1 high temperature range coefficient to eliminate
             discontinuity between high and low temperature range polynomials
             '''
             Species[x].a_high[0] = Species[x].a_high[0] + \
-                _np.polyval(Species[x].a_low[::-1], T_mid) - \
-                _np.polyval(Species[x].a_high[::-1], T_mid)
-    
+                (_np.polyval(Species[x].a_low[::-1], T_mid) -
+                 _np.polyval(Species[x].a_high[::-1], T_mid))
+
             '''
             Determine A6 coefficient for enthalpy calculations
             '''
-            a6_high = (Species[x].hf_Tstp/R/Species[x].Tstp*1000 -
-                       HS_NASA(Tstp, Species[x].a_high)[0]) *Tstp
+            a6_high = (Species[x].hf_Tstp/R/Tstp*1000 -
+                       HS_NASA(Tstp, Species[x].a_high)[0])*Tstp
             a6_low = (Species[x].hf_Tstp/R/Tstp*1000 -
-                      HS_NASA(Tstp, Species[x].a_low)[0]) *Tstp
+                      HS_NASA(Tstp, Species[x].a_low)[0])*Tstp
             '''
             Correct A6 high temperature range coefficient to eliminate
             discontinuity between high and low temperature range polynomials
@@ -410,10 +418,10 @@ class Target(Particle):
                              a6_low/T_mid) - \
                             (HS_NASA(T_mid,
                              Species[x].a_high)[0] + a6_high/T_mid)
-            a6_high = a6_high + a6_high_delta
+            a6_high = a6_high + a6_high_delta * T_mid
             Species[x].a_high = _np.append(Species[x].a_high, a6_high)
             Species[x].a_low = _np.append(Species[x].a_low, a6_low)
-    
+
             '''
             Determine A7 coefficient for entropy calculations
             '''
@@ -421,21 +429,22 @@ class Target(Particle):
                 HS_NASA(Tstp, Species[x].a_high)[1]
             a7_low = Species[x].S_Tstp/R - \
                 HS_NASA(Tstp, Species[x].a_low)[1]
-    
+
             '''
             Correct A7 high temperature range coefficient to eliminate
             discontinuity between high and low temperature range polynomials
             '''
-            a7_high_delta = (HS_NASA(Tstp, Species[x].a_low)[1] +
-                             a7_low) - (HS_NASA(Tstp,
+            a7_high_delta = (HS_NASA(T_mid, Species[x].a_low)[1] +
+                             a7_low) - (HS_NASA(T_mid,
                                         Species[x].a_high)[1] + a7_high)
             a7_high = a7_high + a7_high_delta
             Species[x].a_high = _np.append(Species[x].a_high, a7_high)
             Species[x].a_low = _np.append(Species[x].a_low, a7_low)
-    
+
         '''
-        Write the species name, seven NASA coefficients for both a high and a low
-        temperature range and other data in the Chemkin thermdat file format
+        Write the species name, seven NASA coefficients for both a high and
+        a low temperature range and other data in the Chemkin thermdat
+        file format
         '''
         if os.path.isdir(os.path.join(Base_path, Output)) is False:
             os.mkdir(os.path.join(Base_path, Output))
