@@ -1,0 +1,33 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Apr 22 16:24:26 2017
+
+@author: wittregr
+"""
+
+
+class constant:
+
+        ''' Gas Constants '''
+        R1 = 1.9872036                 # [cal/mol-K]
+        R2 = 5.189478952438986e+19     # [eV/mol-K]
+    
+        ''' Planck's Constant '''
+        h1 = 6.626070040E-34           # [J-s] or [m2-kg/s]
+        h2 = 1.5836687E-34             # [cal/Hz]
+        h3 = 4.135667662E-15           # [eV-s]
+    
+        ''' Boltzmann's constant '''
+        kb1 = 1.38064852E-23           # [J/K] or [m2-kg/s-K]
+        kb2 = 3.299829159077406E-24    # [cal/K]
+        ''' Speed of light '''
+        c1 = 186000                    # [miles/s]
+        c2 = 299792458                 # [m/s]
+    
+        ''' Avogadro's number '''
+        NA = 6.022140857E23            # 1/molecules
+    
+        ''' Conversions '''
+        ev_atom_2_kcal_mol = 23.06055
+        amu_to_kg = 1.66053904e-27
+        A2_to_m2 = 1.0e-20

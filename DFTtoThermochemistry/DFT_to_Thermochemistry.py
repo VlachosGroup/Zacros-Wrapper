@@ -35,15 +35,11 @@ import ase.io as _ase
 import re
 import scipy.interpolate as _sp
 import datetime
+from constants import constant as c
 
 
 class Particle(object):
 
-    h = 6.626070040E-34          # Planck constant [J-s]
-    c = 299792458                # Speed of light [m/s]
-    N_A = 6.022140857E23         # Avogadro's number [1/mol]
-    kB = 1.38064852E-23          # Boltzmann constant [J/K]
-    R = 1.9872036                # Gas constant [cal/mol-K]
     Tstp = 298.15                # Standard reference temperature [K]
     Cp_Range = _np.linspace(100, 1500, 15)
     VibScalingFactor = 1         # Vibrational Scaling Factor
@@ -87,21 +83,19 @@ class Particle(object):
         Atomic Simulation Environment (ASE) libraries for python
         '''
         if self.phase == 'G':
-            amu_to_kg = 1.66053904e-27  # kg/amu
-            A2_to_m2 = 1.0e-20          # m^2/A^2
             filepath = os.path.join(self.Base_path,
                                     self.Input,
                                     self.totengpath,
                                     'CONTCAR')
             VASP = _ase.read(filepath)
-            self.I3 = VASP.get_moments_of_inertia()*A2_to_m2*amu_to_kg
-            self.T_I = self.h**2/(8*pi**2*self.kB)
-            self.MW = sum(VASP.get_masses())/self.N_A/1000.
+            self.I3 = VASP.get_moments_of_inertia()*c.A2_to_m2*c.amu_to_kg
+            self.T_I = c.h1**2/(8*pi**2*c.kb1)
+            self.MW = sum(VASP.get_masses())/c.NA/1000.
         '''
         Calulcate common frequency data for vibrational components
         '''
-        self.nu = self.vibfreq * 100 * self.c
-        self.theta = self.h * self.nu / self.kB
+        self.nu = self.vibfreq * 100 * c.c2
+        self.theta = c.h1 * self.nu / c.kb1
 
         '''
         Call Entropy method to calculate standard state entropy
@@ -152,7 +146,7 @@ class Particle(object):
         Calculate vibrational component of entropy for gas and surface species
         '''
         T = self.Tstp
-        self.S_Tstp_vib = self.R * sum((self.theta/T) /
+        self.S_Tstp_vib = c.R1 * sum((self.theta/T) /
                                        (_np.exp(self.theta/T)-1) -
                                        _np.log(1 - _np.exp(-self.theta/T)))
         '''
@@ -167,27 +161,27 @@ class Particle(object):
                 Non-linear species
                 '''
                 I = _np.product(self.I3)
-                self.S_Tstp_rot = self.R*(3./2. + 1./2. *
-                                          _np.log(pi*T**3/self.T_I**3*I) -
-                                          _np.log(self.sigma))
-                self.Srotm = self.R*(1./2.*_np.log(_np.pi*T**3/self.T_I**3*I) -
-                                     _np.log(self.sigma))
+                self.S_Tstp_rot = c.R1*(3./2. + 1./2. *
+                                        _np.log(pi*T**3/self.T_I**3*I) -
+                                        _np.log(self.sigma))
+                self.Srotm = c.R1*(1./2.*_np.log(_np.pi*T**3/self.T_I**3*I) -
+                                   _np.log(self.sigma))
             else:
                 '''
                 Linear species
                 '''
                 I = _np.max(self.I3)
-                self.S_Tstp_rot = self.R*(1. + _np.log(T/self.T_I*I) -
-                                          _np.log(self.sigma))
-                self.Srotm = self.R*(_np.log(T/self.T_I*I) -
-                                     _np.log(self.sigma))
+                self.S_Tstp_rot = c.R1*(1. + _np.log(T/self.T_I*I) -
+                                        _np.log(self.sigma))
+                self.Srotm = c.R1*(_np.log(T/self.T_I*I) -
+                                   _np.log(self.sigma))
             p = 100000  # Presure of 1 atm or 100000 Pa
-            self.S_Tstp_trans = self.R*(5./2. + 3./2. *
-                                        _np.log(2.*pi*self.MW/self.h**2) +
-                                        5./2.*_np.log(Particle.kB*T) -
-                                        _np.log(p))
-            self.Stransm = self.R*(3./2.*_np.log(2.*pi*self.MW/self.h**2) +
-                                   5./2.*_np.log(Particle.kB*T) - _np.log(p))
+            self.S_Tstp_trans = c.R1*(5./2. + 3./2. *
+                                      _np.log(2.*pi*self.MW/c.h1**2) +
+                                      5./2.*_np.log(c.kb1*T) -
+                                      _np.log(p))
+            self.Stransm = c.R1*(3./2.*_np.log(2.*pi*self.MW/c.h1**2) +
+                                 5./2.*_np.log(c.kb1*T) - _np.log(p))
         else:
             '''
             Surface phase calculation
@@ -239,23 +233,20 @@ class Particle(object):
         '''
         Sum all contribution to heat capacity for total heat capapcity
         '''
-        self.Cp = self.R*(self.Cp_trans + self.Cp_rot + self.Cp_vib + 1)
+        self.Cp = c.R1*(self.Cp_trans + self.Cp_rot + self.Cp_vib + 1)
 
     def Calc_Enthalpy(self):
-        h = 1.5836687E-34
-        kB = 3.299829159077406E-24
-        R2 = 5.189478952438986e+19  # eV/mol-K
         T = self.Tstp
         '''
         Calculate zero-point energy
         '''
-        self.zpe = sum(_np.multiply(h, self.nu)/2)*self.N_A/1000
+        self.zpe = sum(_np.multiply(c.h2, self.nu)/2)*c.NA/1000
         '''
         Calculate vibrational component of enthalpy
         '''
-        self.E_Tstp_vib = kB*sum(_np.divide(self.theta*_np.exp(-self.theta/T),
-                                            (1 - _np.exp(-self.theta/T)))) *\
-                                            self.N_A/1000
+        self.E_Tstp_vib = c.kb2*sum(_np.divide(self.theta*_np.exp(-self.theta/T),
+                                               (1 - _np.exp(-self.theta/T)))) *\
+                                               c.NA/1000
         '''
         Calculate translational and rotational component of enthalpy
         '''
@@ -263,18 +254,18 @@ class Particle(object):
             '''
             Gas phase calculation
             '''
-            self.E_Tstp_trans = 3./2.*self.R*T/1000
+            self.E_Tstp_trans = 3./2.*c.R1*T/1000
             if self.islinear == 0:
                 '''
                 Non-linear species
                 '''
-                self.E_Tstp_rot = 3./2.*self.R*T/1000
+                self.E_Tstp_rot = 3./2.*c.R1*T/1000
             else:
                 '''
                 Linear species
                 '''
-                self.E_Tstp_rot = 1.*self.R*T/1000
-            self.pv_Tstp = 1.*self.R*T/1000
+                self.E_Tstp_rot = 1.*c.R1*T/1000
+            self.pv_Tstp = 1.*c.R1*T/1000
         else:
             '''
             Surface phase calculation
@@ -285,7 +276,7 @@ class Particle(object):
         '''
         Sum all contribution to enthalpy for total enthalpy
         '''
-        self.dfth = self.etotal*self.R/R2*self.N_A/1000 + self.zpe +\
+        self.dfth = self.etotal*c.R1/c.R2*c.NA/1000 + self.zpe +\
             self.E_Tstp_vib + self.E_Tstp_trans + self.E_Tstp_rot +\
             self.pv_Tstp
 
@@ -315,7 +306,6 @@ class Reference(Particle):
             b_nist.append([RefSpecies[x].hf298nist])
             b_dfth.append([RefSpecies[x].dfth])
         ref = _np.linalg.lstsq(A, _np.array(b_nist) - _np.array(b_dfth))[0]
-        #ref = _np.array([[210.1786], [74.2280], [108.5391], [0]])
         return(ref)
 
 
@@ -336,7 +326,6 @@ class Target(Particle):
 
     @staticmethod
     def ReferenceDFT(Species, Surface, Basis):
-        ev_atom_2_kcal_mol = 23.06055
         for x in range(0, len(Species)):
             Molecule = _np.array([Species[x].carbon, Species[x].hydrogen,
                                   Species[x].oxygen, Species[x].nitrogen])
@@ -345,7 +334,7 @@ class Target(Particle):
                                       _np.dot(Molecule, Basis))[0]
                 if hasattr(Species[x], 'edisp'):
                     Species[x].convedisp = (Species[x].edisp *
-                                            ev_atom_2_kcal_mol)
+                                            c.ev_atom_2_kcal_mol)
             else:
                 Slab = next((y for y in Surface if y.name ==
                              Species[x].surface),
@@ -355,11 +344,11 @@ class Target(Particle):
                 else:
                     Species[x].hf_Tstp = (Species[x].dfth +
                                           _np.dot(Molecule, Basis) -
-                                          Slab.etotal * ev_atom_2_kcal_mol)[0]
+                                          Slab.etotal * c.ev_atom_2_kcal_mol)[0]
                     if hasattr(Species[x], 'edisp'):
                         Species[x].convedisp = (Species[x].edisp *
-                                                ev_atom_2_kcal_mol -
-                                                Slab.edisp * ev_atom_2_kcal_mol)
+                                                c.ev_atom_2_kcal_mol -
+                                                Slab.edisp * c.ev_atom_2_kcal_mol)
         return(Species)
 
     @staticmethod
@@ -370,7 +359,6 @@ class Target(Particle):
         file
         '''
         T_mid = 500
-        R = Species[0].R
         Tstp = Species[0].Tstp
 
         def HS_NASA(T, a):
@@ -387,7 +375,7 @@ class Target(Particle):
             T_rng_low = _np.linspace(min(Species[x].Cp_Range), T_mid, 1600)
             T_rng_high = _np.linspace(T_mid, max(Species[x].Cp_Range), 4000)
             T_func = _sp.InterpolatedUnivariateSpline(Species[x].Cp_Range,
-                                                      Species[x].Cp/R, k=4)
+                                                      Species[x].Cp/c.R1, k=4)
             '''
             Fit coefficients A1-A5 to heat capacity data
             '''
@@ -406,9 +394,9 @@ class Target(Particle):
             '''
             Determine A6 coefficient for enthalpy calculations
             '''
-            a6_high = (Species[x].hf_Tstp/R/Tstp*1000 -
+            a6_high = (Species[x].hf_Tstp/c.R1/Tstp*1000 -
                        HS_NASA(Tstp, Species[x].a_high)[0])*Tstp
-            a6_low = (Species[x].hf_Tstp/R/Tstp*1000 -
+            a6_low = (Species[x].hf_Tstp/c.R1/Tstp*1000 -
                       HS_NASA(Tstp, Species[x].a_low)[0])*Tstp
             '''
             Correct A6 high temperature range coefficient to eliminate
@@ -425,9 +413,9 @@ class Target(Particle):
             '''
             Determine A7 coefficient for entropy calculations
             '''
-            a7_high = Species[x].S_Tstp/R - \
+            a7_high = Species[x].S_Tstp/c.R1 - \
                 HS_NASA(Tstp, Species[x].a_high)[1]
-            a7_low = Species[x].S_Tstp/R - \
+            a7_low = Species[x].S_Tstp/c.R1 - \
                 HS_NASA(Tstp, Species[x].a_low)[1]
 
             '''
