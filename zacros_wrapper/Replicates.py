@@ -29,8 +29,9 @@ class Replicates:
         self.runAvg = None            # Values are averages of all runs from runList
         self.avg_updated = False        # Whether we need to update the trajectory averages
         self.n_runs = 0
-        self.N_batches = 4000       # Used to be 1000
+        self.N_batches = 5000       # Used to be 1000
         self.Nbpt = None
+        self.batch_length = None    # Length of time in one batch
         self.gas_product = None
         
         # Input data for different trajectories
@@ -321,7 +322,8 @@ class Replicates:
             self.TOF_stoich[i] = elem_stoich[self.gas_prod_ind]
             
         self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 2 ] )            # Set the number of batches per trajectory
-    
+        self.batch_length = self.t_vec[-1] / self.Nbpt
+        
         
     def AverageRuns(self):
         
@@ -345,64 +347,7 @@ class Replicates:
         self.avg_updated = True
         
     
-    def Test_surfspecs_flat(self, z_cut = 4):
-    
-        '''
-        Test whether the species profiles of surface species are flat
-        p: p-value for significance test
-        '''
-        
-        if not self.avg_updated:
-            self.AverageRuns()
-        
-        self.Set_analysis_varaibles()
-        
-        all_species_flat = True
-        
-        points_per_batch = 2
-        new_t = np.linspace(0, self.t_vec[-1], points_per_batch * self.Nbpt + 1)
-        new_specs = np.zeros([ len(new_t) , self.runAvg.Species['n_surf'] ])
-        
-        for t_ind in range(len(new_t)):
-        
-            id = self.runAvg.time_search_interp(new_t[t_ind])
-            #print id
-            #print self.runAvg.Specnum['spec'][ id[0][0] , :]
-            #print self.runAvg.Specnum['spec'][ id[0][1] , :]
-            #print id[1][0] *  np.array( self.runAvg.Specnum['spec'][ id[0][0] , :] ) + id[1][1] * np.array( self.runAvg.Specnum['spec'][ id[0][1] , :] )
-            
-            new_specs[t_ind, :] = id[1][0] *  np.array( self.runAvg.Specnum['spec'][ id[0][0] , 0:self.runAvg.Species['n_surf']:] ) + id[1][1] * np.array( self.runAvg.Specnum['spec'][ id[0][1] , 0:self.runAvg.Species['n_surf']:] )
-        
-        # Loop through all surface species
-        for surf_spec_ind in range(self.runAvg.Species['n_surf']):
-        
-            # Take surface profiles in steady state region
-            x_list = new_t[points_per_batch::]
-            y_list = new_specs[ points_per_batch::, surf_spec_ind ]
-            
-            z, cov = np.polyfit(x_list, y_list, 1, cov=True)
-            
-            slope = z[0]
-            slope_std = np.sqrt(cov[0,0])
-            
-            print '\n'
-            print self.runAvg.Species['surf_spec'][surf_spec_ind]
-            print 'slope: ' + str(slope)
-            print 'slope std: ' + str(slope_std)
-            print '\n'
-            
-            if slope == 0:
-                z_score = 0
-            else:
-                z_score = np.abs(slope / slope_std)
-            
-            if z_score > z_cut:
-                all_species_flat = False
-        
-        return all_species_flat
-        
-    
-    def Compute_ACF(self):          # Need to also put error bars on this
+    def Compute_ACF(self):
     
         '''
         Check steady state on the basis of batch means
@@ -424,7 +369,7 @@ class Replicates:
             prop_integ_start = idb_start[1][0] * self.Props_integ[:, idb_start[0][0], :] + idb_start[1][1] * self.Props_integ[:, idb_start[0][1], :]
             prop_integ_end = idb_end[1][0] * self.Props_integ[:, idb_end[0][0], :] + idb_end[1][1] * self.Props_integ[:, idb_end[0][1], :]
             
-            rate_data[:,i] = np.dot ( ( prop_integ_end - prop_integ_start ) / ( bin_edges[i+1] - bin_edges[i] ) , self.TOF_stoich )
+            rate_data[:,i] = np.dot ( ( prop_integ_end - prop_integ_start ) / self.batch_length , self.TOF_stoich )
         
         '''
         Plot Rates
@@ -474,22 +419,8 @@ class Replicates:
 
         confidence=0.90
         n = len(alldata)
-        m, se = np.mean(alldata), scipy.stats.sem(alldata)
-        
-        if m == 0:
-            print 'No rate'
-            return [1.0, 1.0, 1.0]
-        
-        h = se * scipy.stats.t._ppf((1+confidence)/2., n - 1)
-        
-        print 'Average rate'
-        print m
-        print 'Confidence interval half-length'
-        print h
-        
-        #if np.abs( h / m) > 0.1:
-        #    return [1.0, 1.0, 1.0]
-
+        mean_rate, se = np.mean(alldata), scipy.stats.sem(alldata)
+        rate_ci = se * scipy.stats.t._ppf((1+confidence)/2., n - 1)
         
         '''
         Compute ACF
@@ -502,35 +433,38 @@ class Replicates:
         c2 = c2.reshape( np.prod(c2.shape) )
         
         
-        if ( np.var(c1) * np.var(c2) == 0 ) or ( np.mean(rate_data[ : , 1 ]) == 0 ):        # Covers the case where we have zero rate
-            ACF = 1.0
+        if ( np.var(alldata) == 0 ) or ( np.mean(rate_data[ : , 1 ]) == 0 ):        # Covers the case where we have zero rate
+            ACF = None
+            ACF_ci = None
         else:
             ACF = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.var(alldata)
-            #ACF = np.mean(c1 * c2) - np.mean(alldata) ** 2          # test not normalizing the rate
 
-        '''
-        Compute error bounds on ACF
-        '''
-        
-        N_boot = 100
-        
-        ACF_dist = np.zeros(N_boot)
-        for i in range(N_boot):
-            subpop_inds = np.random.randint(len(c1), size=len(c1))
-            c1_new = c1[subpop_inds]
-            c2_new = c2[subpop_inds]
-            ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new) ) / np.var(alldata)
-            #ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate
+
+            '''
+            Compute error bounds on ACF
+            '''
             
-        ACF_dist = sorted(ACF_dist)
-        ACF_high = ACF_dist[int(0.95 * N_boot)]
-        ACF_low = ACF_dist[int(0.05 * N_boot)]
+            N_boot = 100
+            
+            ACF_dist = np.zeros(N_boot)
+            for i in range(N_boot):
+                subpop_inds = np.random.randint(len(c1), size=len(c1))
+                c1_new = c1[subpop_inds]
+                c2_new = c2[subpop_inds]
+                ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new) ) / np.var(alldata)
+                #ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(alldata) ** 2 ) / np.var(alldata)
+                #ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate
+                
+            ACF_dist = sorted(ACF_dist)
+            ACF_high = ACF_dist[int(0.95 * N_boot)]
+            ACF_low = ACF_dist[int(0.05 * N_boot)]
+            ACF_ci = (ACF_high - ACF_low) / 2
         
-        return {'Rate': None, 'Rate_ci': None, 'ACF': None, 'ACF_ci': None}
+        return {'Rate': mean_rate, 'Rate_ci': rate_ci, 'ACF': ACF, 'ACF_ci': ACF_ci}
         #return [ACF, ACF_high, ACF_low]
         
     
-    def PerformSA(self, delta_t = None, ergodic = False,):          # Need implement time point interpolation
+    def PerformSA(self, delta_t = None, ergodic = False):          # Need implement time point interpolation
         
         '''
         Perform sensitivity analysis with a combination of
@@ -548,7 +482,7 @@ class Replicates:
         
         # Use entire trajectory length as the default time window
         if delta_t is None:
-            delta_t = self.t_vec[-1] / self.Nbpt
+            delta_t = self.batch_length
         
         if not self.avg_updated:
             self.AverageRuns()

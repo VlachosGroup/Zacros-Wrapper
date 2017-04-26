@@ -39,7 +39,7 @@ class Lattice:
         Set the fractional and Cartesian coordinates
         '''
         
-        self.frac_coords = fc
+        self.frac_coords = np.array(fc)
         self.cart_coords = self.cart_coords = np.dot(self.frac_coords, self.lattice_matrix)
         
         
@@ -49,7 +49,7 @@ class Lattice:
         Set the Cartesian and fractional coordinates
         '''
     
-        self.cart_coords = cc
+        self.cart_coords = np.array(cc)
         self.frac_coords = np.dot(self.cart_coords, np.linalg.inv(self.lattice_matrix))
         
 
@@ -80,7 +80,8 @@ class Lattice:
         return image_coords[min_d_ind]
     
     
-    def PlotLattice(self, cutoff = 3.0, plot_neighbs = False, type_symbols = ['o','s','^','v'], ms = 4):
+    def PlotLattice(self, cutoff = 3.0, plot_neighbs = False, type_symbols = ['o','s','^','v', '<', '>', '8', 
+        'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms = 4):
         
         '''
         Return a pyplot object with the lattice graphed on it
@@ -135,6 +136,7 @@ class Lattice:
         plt.yticks(size=20)
         plt.xlabel('x-coord (ang)',size=24)
         plt.ylabel('y-coord (ang)',size=24)
+        plt.axis('equal')
         
         return plt
         

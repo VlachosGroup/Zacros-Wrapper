@@ -5,9 +5,12 @@ import copy
 from Replicates import Replicates
 from Helper import *
 
-
+import matplotlib as mat
+import matplotlib.pyplot as plt
   
-def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_batches = 1000, acf_cut = 0.05, include_stiff_reduc = True, max_events = int(1e3), max_iterations = 30, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, platform = 'Squidward'):
+def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_batches = 1000, 
+                                acf_cut = 0.05, include_stiff_reduc = True, max_events = int(1e3), 
+                                max_iterations = 30, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, platform = 'Squidward'):
 
     '''
     Handles rate rescaling and continuation of KMC runs
@@ -101,8 +104,10 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         # Test steady-state
         cum_batch.AverageRuns()
         acf_data = cum_batch.Compute_ACF()
-        acf = acf_data[0]
-        is_steady_state = np.abs(acf) < acf_cut
+        is_steady_state = False
+        if not acf_data['ACF'] is None:
+            if acf_data['ACF'] + acf_data['ACF_ci'] < 0.05 and acf_data['ACF'] - acf_data['ACF_ci'] > -0.05:
+                is_steady_state = True
         
         # Record information about the iteration
         cum_batch.runAvg.PlotGasSpecVsTime()
@@ -146,7 +151,8 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         scale_final_time = np.max( [1.0/np.min(delta_sdf), ss_inc] )
         
         prev_batch = copy.deepcopy(cum_batch)
-        converged = unstiff and is_steady_state
+        #converged = unstiff and is_steady_state
+        converged = is_steady_state
         iteration += 1
        
     return cum_batch
@@ -206,6 +212,16 @@ def ReadScaledown(RunPath, plot_analysis = False):
     Read a scaledown that has already been run
     '''
 
+    # Prepare data to graph
+    t_vec_rates = []
+    rates_vec = []
+    rates_vec_ci = []
+    
+    t_vec_acf = []
+    acf_vec = []
+    acf_vec_ci = []
+    
+    
     # Count the iterations
     n_folders = len(os.listdir(RunPath))
 
@@ -223,14 +239,54 @@ def ReadScaledown(RunPath, plot_analysis = False):
         else:
             cum_batch = Replicates.time_sandwich(cum_batch, x)
             
-        cum_batch.gas_product = 'CO2'
+        #cum_batch.gas_product = 'CO2'
         #cum_batch.gas_product = 'B'
-        acf = cum_batch.Compute_ACF()
-        print 'Iteration ' + str(ind)
-        print 'ACF: ' + str(acf[0])
-        print acf[1]
-        print acf[2]
-        print '\n'
+        #acf_data = cum_batch.Compute_ACF()
+        #print 'Iteration ' + str(ind)
+        #print 'Rate: ' + str(acf_data['Rate']) + ' +- ' + str(acf_data['Rate_ci'])
+        #print 'ACF: ' + str(acf_data['ACF']) + ' +- ' + str(acf_data['ACF_ci'])
+        #print '\n'
+        #
+        #t_vec_rates.append(cum_batch.batch_length)
+        #rates_vec.append(acf_data['Rate'])
+        #rates_vec_ci.append(acf_data['Rate_ci'])
+        #
+        #if not acf_data['ACF'] is None:
+        #    t_vec_acf.append(cum_batch.batch_length)
+        #    acf_vec.append(acf_data['ACF'])
+        #    acf_vec_ci.append(acf_data['ACF_ci'])
+        
+    return cum_batch
+            
+            
+    if plot_analysis:
+        
+        PlotOptions()
+        # Plot reaction rates
+        plt.figure()
+        plt.errorbar(t_vec_rates, rates_vec, yerr = rates_vec_ci, marker='o', linestyle = '--')
+        plt.xlabel('Batch length (s)', size=24)
+        plt.ylabel('Rate (1/s)', size=24)
+        plt.xscale('log')
+        plt.ylim([0, None])
+        ax = plt.subplot(111)
+        ax.set_position([0.2, 0.15, 0.7, 0.8])
+        
+        plt.savefig(os.path.join(RunPath, 'Rate_estimations.png'))
+        plt.close()
+        
+        
+        # Plot reaction rates
+        plt.figure()
+        plt.errorbar(t_vec_acf, acf_vec, yerr = acf_vec_ci, marker='o', linestyle = '--')
+        plt.xlabel('Batch length (s)', size=24)
+        plt.ylabel('ACF (1/s)', size=24)
+        plt.xscale('log')
+        ax = plt.subplot(111)
+        ax.set_position([0.2, 0.15, 0.7, 0.8])
+        
+        plt.savefig(os.path.join(RunPath, 'ACF_estimations.png'))
+        plt.close()
             
     return cum_batch
 
