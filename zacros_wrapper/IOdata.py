@@ -270,7 +270,7 @@ class IOdata(object):
             elif RawTxt[i].split()[0]=='end_step':
                 MechInd[Count,1] = i
                 Count += 1
-        print MechInd
+
         MechDict = [{'Name':'','nSites':0,'neighboring':'','initial':'','final':'','variant':'','gas_reacs_prods':''} for k in range(0,nMech)]
         for j in range(0,nMech):
         
@@ -694,10 +694,10 @@ class IOdata(object):
         '''
         Write state_input.dat
         '''
-    
+
         if self.StateInput['Type'] == 'none':
             return
-            
+        print "next"
         if self.StateInput['Type'] == 'StateInput':   #Copy from prior state_input file
             with open(os.path.join(self.Path, 'Output', 'state_input.dat'), 'w') as txt:
                 for i in self.StateInput['Struct']:
