@@ -1,9 +1,36 @@
 # -*- coding: utf-8 -*-
-"""
+'''
+         -----------------------------------------------------
+               Read all Zacros input and output files.
+            Calculate cluster energies, pre-exponential
+             factors and activation energeies using the
+           DFT_to_Thermochemistry.py code.  Replace those
+           values in the Zacros energetics_input.dat and
+            mechanism_input.dat files and write the new
+                         file versions.
+
+                     Vlachos Research Group
+                Chemical and Biomolecular Egineering
+                      University of Delaware
+
+                     Gerhard R Wittreich, P.E.
+          -----------------------------------------------------
+
 Created on Fri Apr 28 10:49:53 2017
 
 @author: wittregr
-"""
+
+Adopted from Matlab code written and modified by:
+
+                        Marcel Nunez
+                            and
+                        Taylor Robie
+
+ This program contains the class objects used to read energy, vibration and
+ molecular configuration data and determine the standard entropy and enthalpy
+ and heat capacities at various temperatures.
+
+'''
 
 import os as _os
 import numpy as _np
@@ -13,6 +40,18 @@ import random as _random
 from Helper import ReadWithoutBlankLines
 
 Path = 'C:\Users\wittregr\Documents\Python Scripts'
+
+'''
+ Class definitions for:
+
+     Zacros input file      Class object
+     -----------------      ------------
+     energetics_input.dat   ClusterIn
+     mechanism_input.dat    MechanismIn
+     simulation_input.dat   SimIN
+     lattice_input.dat      LatticeIn
+     state_input.dat        StateIn
+'''
 
 
 class ClusterIn(object):
@@ -82,11 +121,9 @@ def WriteAllInput():
 
 
 def ReadEngIn():
-
     '''
     Read energetics_input.dat
     '''
-
     RawTxt = ReadWithoutBlankLines(_os.path.join(Path, 'Input',
                                                  'energetics_input.dat'),
                                    CommentLines=False)
@@ -151,11 +188,9 @@ def ReadEngIn():
 
 
 def WriteEnergetics(Cluster):
-
     '''
     Write energetics_input.dat
     '''
-
     nCluster = len(Cluster)
 
     with open(_os.path.join(Path, 'Output',
@@ -198,11 +233,9 @@ def WriteEnergetics(Cluster):
 
 
 def ReadMechIn():
-
     '''
     Read mechanism_input.dat
     '''
-
     RawTxt = ReadWithoutBlankLines(_os.path.join(Path, 'Input',
                                                  'mechanism_input.dat'),
                                    CommentLines=True)
@@ -223,12 +256,7 @@ def ReadMechIn():
                              split(':')[1].split()]
 
     # Initialize varibles
-    Reactions = {}
-    Reactions['nrxns'] = 0
-    Reactions['nrxns_total'] = 0
-    Reactions['names'] = []
-    Reactions['reversibilities'] = []
-    Reactions['is_reversible'] = []
+    Rxn = []
 
     MechInd = _np.array([[0, 0]]*nMech)
     Count = 0
@@ -236,11 +264,11 @@ def ReadMechIn():
 
         if RawTxt[i].split()[0] == 'reversible_step':
             MechInd[Count, 0] = i
-            Reactions['reversibilities'].append(True)
+            Rxn.append(True)
 
         elif RawTxt[i].split()[0] == 'step':
             MechInd[Count, 0] = i
-            Reactions['reversibilities'].append(False)
+            Rxn.append(False)
 
         elif RawTxt[i].split()[0] == 'end_reversible_step':
             MechInd[Count, 1] = i
@@ -254,7 +282,7 @@ def ReadMechIn():
     for j in range(0, nMech):
 
         Reaction.append(MechanismIn())
-        Reaction[j].reversible = Reactions['reversibilities'][j]
+        Reaction[j].reversible = Rxn[j]
 
         # Count the variants
 
@@ -303,8 +331,6 @@ def ReadMechIn():
 
         # Enumerate reversibilities
 
-        Reactions['nrxns'] += nVariant
-
 #        if reversible:
 #            Reactions['nrxns_total'] += 2 * nVariant
 #        else:
@@ -334,19 +360,20 @@ def ReadMechIn():
 #                    else:
 #                        print 'Unparsed line in mechanism variant:'
 #                        print RawTxt[i]
-
+    pass
     if StiffCorrLine == -1:
-        scaledown_factors = _np.ones(Reactions['nrxns'])
+        scaledown_factors = _np.ones(sum(len(s.variant_name)
+                                     for s in Reaction))
     return(Reaction, scaledown_factors)
 
 
 def WriteMechanism(Reaction=None, scaledown_factors=None):
-    if Reaction is None or scaledown_factors is None:
-        print 'None'
-        [Reaction, scaledown_factors] = ReadMechIn()
     '''
     Write mechanism_input.dat
     '''
+    if Reaction is None or scaledown_factors is None:
+        print 'None'
+        [Reaction, scaledown_factors] = ReadMechIn()
 
     if scaledown_factors is None:
         SDBool = False
@@ -436,7 +463,6 @@ def WriteMechanism(Reaction=None, scaledown_factors=None):
 
 
 def ReadSimIn():
-
     '''
     Read simulation_input.dat
     '''
@@ -516,12 +542,11 @@ def ReadSimIn():
 
 
 def WriteSimIn(Conditions=None):
-    if Conditions is None:
-        Conditions = ReadSimIn()
-
     '''
     Write simulation_input.dat
     '''
+    if Conditions is None:
+        Conditions = ReadSimIn()
 
     with open(_os.path.join(Path, 'Output',
                             'simulation_input.dat'), 'w') as txt:
@@ -615,7 +640,6 @@ def WriteSimIn(Conditions=None):
 
 
 def ReadLatticeIn():
-
     '''
     Read lattice_input.dat
     '''
@@ -628,11 +652,12 @@ def ReadLatticeIn():
 
 
 def WriteLattice(Lattice=None):
-    if Lattice is None:
-        Lattice = ReadLatticeIn()
     '''
     Write lattice_input.dat
     '''
+    if Lattice is None:
+        Lattice = ReadLatticeIn()
+
     with open(_os.path.join(Path, 'Output', 'lattice_input.dat'), 'w') as txt:
         for i in Lattice.Input:
             txt.write(i + '\n')
@@ -652,11 +677,11 @@ def ReadStateInput():
 
 
 def WriteStateIn(State=None):
-    if State is None:
-        State = ReadStateInput()
     '''
     Write state_input.dat
     '''
+    if State is None:
+        State = ReadStateInput()
     if State.Type == 'none':
         return
 
