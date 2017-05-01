@@ -187,10 +187,13 @@ def ReadEngIn():
     return(Cluster)
 
 
-def WriteEnergetics(Cluster):
+def WriteEnergetics(Cluster=None):
     '''
     Write energetics_input.dat
     '''
+    if Cluster is None:
+        Cluster = ReadEngIn()
+
     nCluster = len(Cluster)
 
     with open(_os.path.join(Path, 'Output',
@@ -647,7 +650,7 @@ def ReadLatticeIn():
     with open(_os.path.join(Path, 'Input', 'lattice_input.dat'), 'r') as Txt:
         RawTxt = Txt.readlines()
     for i in RawTxt:
-        Lattice.Input.append(i.split('\n')[0])
+        Lattice.input.append(i.split('\n')[0])
     return Lattice
 
 
@@ -659,7 +662,7 @@ def WriteLattice(Lattice=None):
         Lattice = ReadLatticeIn()
 
     with open(_os.path.join(Path, 'Output', 'lattice_input.dat'), 'w') as txt:
-        for i in Lattice.Input:
+        for i in Lattice.input:
             txt.write(i + '\n')
 
 
