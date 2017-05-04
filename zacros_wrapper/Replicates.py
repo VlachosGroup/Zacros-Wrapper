@@ -29,7 +29,7 @@ class Replicates:
         self.runAvg = None            # Values are averages of all runs from runList
         self.avg_updated = False        # Whether we need to update the trajectory averages
         self.n_runs = 0
-        self.N_batches = 5000       # Used to be 1000
+        self.N_batches = 1000       # Used to be 1000
         self.Nbpt = None
         self.batch_length = None    # Length of time in one batch
         self.gas_product = None
@@ -463,8 +463,8 @@ class Replicates:
         return {'Rate': mean_rate, 'Rate_ci': rate_ci, 'ACF': ACF, 'ACF_ci': ACF_ci}
         #return [ACF, ACF_high, ACF_low]
         
-    
-    def PerformSA(self, delta_t = None, ergodic = False):          # Need implement time point interpolation
+
+    def Compute_rate(self, delta_t = None):          # Need implement time point interpolation
         
         '''
         Perform sensitivity analysis with a combination of
@@ -492,61 +492,177 @@ class Replicates:
             print 'Final time: ' + str(self.t_vec[-1])
             raise Exception('Time window is too large. Insufficient sampling.')
         
-        delt_ind = self.runAvg.time_search(delta_t)
-        n_data_points = ( len( self.t_vec ) - delt_ind ) * self.n_runs
+        bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt + 1)
         
-        NSCs = np.zeros(self.traj_derivs.shape[2])
-        W_mean = np.zeros(self.traj_derivs.shape[2])
-        mean_rate = 0
-        rate_contributions_avgs = np.zeros(self.traj_derivs.shape[2])
+        rate_data_erg = np.zeros( self.n_runs )
+        rate_contributions_all = np.zeros(self.traj_derivs.shape[2])
+         
         
+        data_ind = 0
         for traj_ind in range(self.n_runs):
-
-            for time_ind in range(delt_ind, len( self.t_vec ) ):
             
-                t = self.t_vec[time_ind]
-                t_begin_win_ind = self.runAvg.time_search(t - delta_t)
-                t_begin_win = self.t_vec[t_begin_win_ind]
-                
-                if ergodic:             # Average the rate over the entire time window
-                    rate_contributions = ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, t_begin_win_ind, :] ) / ( self.t_vec[time_ind] - self.t_vec[t_begin_win_ind] ) * self.TOF_stoich
-                else:                   # Take the final value of the rate
-                    rate_contributions = ( self.Props_integ[traj_ind, time_ind,:] - self.Props_integ[traj_ind, time_ind-1, :] ) / ( self.t_vec[time_ind] - self.t_vec[time_ind-1] ) * self.TOF_stoich 
-                
-                rate_contributions_avgs = rate_contributions_avgs + rate_contributions
-                rate = np.sum(rate_contributions)
-                
-                Ws = self.traj_derivs[traj_ind, time_ind , :] - self.traj_derivs[ traj_ind, t_begin_win_ind , :]
-                
-                mean_rate += rate
-                W_mean = W_mean + Ws
-                NSCs = NSCs + Ws * rate
+            idb_start = self.runAvg.time_search_interp( bin_edges[1] )
+            idb_end = self.runAvg.time_search_interp( bin_edges[-1] )
+            
+            prop_integ_start = idb_start[1][0] * self.Props_integ[traj_ind, idb_start[0][0], :] + idb_start[1][1] * self.Props_integ[traj_ind, idb_start[0][1], :]
+            prop_integ_end = idb_end[1][0] * self.Props_integ[traj_ind, idb_end[0][0], :] + idb_end[1][1] * self.Props_integ[traj_ind, idb_end[0][1], :]
+            rate_data_erg[data_ind] = np.dot ( ( prop_integ_end - prop_integ_start ) / ( bin_edges[-1] - bin_edges[1] ) , self.TOF_stoich )
+          
+            data_ind += 1
         
-        # Finalize the averaging
-        NSCs = NSCs / n_data_points
-        mean_rate = mean_rate / n_data_points
-        W_mean = W_mean / n_data_points
-        rate_contributions_avgs = rate_contributions_avgs / n_data_points
+        # Calculate NSCs
+        mean_rate = 0
         
-        NSCs = ( NSCs - W_mean * mean_rate ) / mean_rate + rate_contributions_avgs / mean_rate
+        for dp in range( self.n_runs):
+            mean_rate = mean_rate + rate_data_erg[dp]
+            
+        # Normalize means
+        mean_rate = mean_rate / self.n_runs
         
-        # Combine forward and backwards NSCs for reversible reactions
-        NSC_rev = np.zeros(self.runAvg.Reactions['nrxns'])
+        return mean_rate
+
+        
+    def PerformSA(self, delta_t = None, ergodic = True):          # Need implement time point interpolation
+        
+        '''
+        Perform sensitivity analysis with a combination of
+        time and trajectory averaging
+        
+        delta_t             size of the time window
+        ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval 
+        
+        The time-averaging could be improved in here. Right now it is a little weird...
+        You can use linear interpolation to get data between time points
+        Can also make it so that the statistics make sense for non-evenly spaced time points
+        '''
+        
+        self.Set_analysis_varaibles()
+        
+        # Use entire trajectory length as the default time window
+        if delta_t is None:
+            delta_t = self.batch_length
+        
+        if not self.avg_updated:
+            self.AverageRuns()
+            
+        if delta_t > self.t_vec[-1] or delta_t < 0:
+            print 'Time window: ' + str(delta_t)
+            print 'Final time: ' + str(self.t_vec[-1])
+            raise Exception('Time window is too large. Insufficient sampling.')
+        
+        dp_per_bin = 10
+        bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt * dp_per_bin + 1)
+        
+        dp_per_traj = dp_per_bin * (self.Nbpt-1) + 1 
+        rate_data_erg = np.zeros( self.n_runs * dp_per_traj  )
+        W_data_all = np.zeros([ self.traj_derivs.shape[2] , self.n_runs * dp_per_traj ] )
+        fW_data = np.zeros( self.n_runs * dp_per_traj )
+        rate_contributions_all = np.zeros(self.traj_derivs.shape[2])
+         
+        
+        data_ind = 0
+        for traj_ind in range(self.n_runs):
+            for i in range(dp_per_traj):
+            
+                idb_start = self.runAvg.time_search_interp( bin_edges[i] )
+                idb_end = self.runAvg.time_search_interp( bin_edges[i+dp_per_bin] )
+                
+                W_start = idb_start[1][0] * self.traj_derivs[ traj_ind, idb_start[0][0] , :] + idb_start[1][1] * self.traj_derivs[ traj_ind, idb_start[0][1] , :]
+                W_end = idb_end[1][0] * self.traj_derivs[ traj_ind, idb_end[0][0] , :] + idb_end[1][1] * self.traj_derivs[ traj_ind, idb_end[0][1] , :]
+                W_data_all[:, data_ind] = W_end - W_start
+                
+                if not ergodic:
+                    idb_start = self.runAvg.time_search_interp( bin_edges[i+dp_per_bin-1] )
+                
+                prop_integ_start = idb_start[1][0] * self.Props_integ[traj_ind, idb_start[0][0], :] + idb_start[1][1] * self.Props_integ[traj_ind, idb_start[0][1], :]
+                prop_integ_end = idb_end[1][0] * self.Props_integ[traj_ind, idb_end[0][0], :] + idb_end[1][1] * self.Props_integ[traj_ind, idb_end[0][1], :]
+                rate_data_erg[data_ind] = np.dot ( ( prop_integ_end - prop_integ_start ) / self.batch_length , self.TOF_stoich )
+                rate_contributions_all = rate_contributions_all + ( ( prop_integ_end - prop_integ_start ) / self.batch_length * self.TOF_stoich )
+            
+                data_ind += 1
+        
+        # Normalize rate contributions by the number of data points
+        rate_contributions_all = rate_contributions_all / ( self.n_runs * dp_per_traj )
+        
+        # Combine forward and reverse reactions
+        W_data = np.zeros([self.runAvg.Reactions['nrxns'], self.n_runs * dp_per_traj])
+        rate_contributions = np.zeros(self.runAvg.Reactions['nrxns'])
         ind = 0
         for i in range(self.runAvg.Reactions['nrxns']):
             
             if self.runAvg.Reactions['is_reversible'][i]:
-                NSC_rev[i] = NSCs[ind] + NSCs[ind+1]
+                W_data[i, :] = W_data_all[ind, :] + W_data_all[ind+1, :]
+                rate_contributions[i] = rate_contributions_all[ind] + rate_contributions_all[ind+1]
                 ind += 2
             else:
-                NSC_rev[i] = NSCs[ind]
+                W_data[i, :] = W_data_all[ind, :]
+                rate_contributions[i] = rate_contributions_all[i]
                 ind += 1
         
-        print 'Normalized sensitivity coefficients: ' + str(NSC_rev)
-        print 'Turnover frequency: ' + str(mean_rate)
+        # Calculate NSCs
+        mean_rate = 0
+        W_mean = np.zeros(self.runAvg.Reactions['nrxns'])
+        NSCs = np.zeros(self.runAvg.Reactions['nrxns'])
         
-        self.NSC = NSC_rev
-        self.NSC_ci = np.zeros([len(self.NSC)])
+        for dp in range( self.n_runs * dp_per_traj ):
+            mean_rate = mean_rate + rate_data_erg[dp]
+            W_mean = W_mean + W_data[ : , dp ]
+            NSCs = NSCs + rate_data_erg[dp] * W_data[ : , dp ]
+            
+        # Normalize means
+        mean_rate = mean_rate / ( self.n_runs * dp_per_traj )
+        W_mean = W_mean / ( self.n_runs * dp_per_traj )
+        NSCs = NSCs / ( self.n_runs * dp_per_traj )
+        
+        NSCs = NSCs - W_mean * mean_rate + rate_contributions       # Convert from ELR to CELR
+        NSCs = NSCs / mean_rate     # normalize 
+        
+        print NSCs
+        
+        '''
+        Compute error bounds on NSCs
+        '''
+        
+        N_boot = 100
+        
+        NSC_sam = np.zeros([ N_boot , len(NSCs) ])
+        for i in range(N_boot):
+        
+            # Prepare new set of data
+            subpop_inds = np.random.randint(self.n_runs * dp_per_traj, size = self.n_runs * dp_per_traj )
+            
+            rate_data_erg_sub = rate_data_erg[subpop_inds]
+            W_sub = W_data[:, subpop_inds]
+            
+            # Calculate NSCs
+            mean_rate = 0
+            W_mean = np.zeros(self.runAvg.Reactions['nrxns'])
+            NSCsub = np.zeros(self.runAvg.Reactions['nrxns'])
+            
+            for dp in range( self.n_runs * dp_per_traj ):
+                mean_rate = mean_rate + rate_data_erg_sub[dp]
+                W_mean = W_mean + W_sub[ : , dp ]
+                NSCsub = NSCsub + rate_data_erg_sub[dp] * W_sub[ : , dp ]
+                
+            # Normalize means
+            mean_rate = mean_rate / ( self.n_runs * dp_per_traj )
+            W_mean = W_mean / ( self.n_runs * dp_per_traj )
+            NSCsub = NSCsub / ( self.n_runs * dp_per_traj )
+            
+            NSCsub = NSCsub - W_mean * mean_rate + rate_contributions       # Convert from ELR to CELR
+            NSCsub = NSCsub / mean_rate     # normalize 
+            
+            NSC_sam[i,:] = NSCsub
+        
+        # Sort each column of the data and compute confidence interval
+        NSC_ci = np.zeros(NSCs.shape)
+        for rxn_ind in range(len(NSCs)):
+            NSC_dist = sorted(NSC_sam[:,rxn_ind])
+            NSC_dist_high = NSC_dist[int(0.95 * N_boot)]
+            NSC_dist_low = NSC_dist[int(0.05 * N_boot)]
+            NSC_ci[rxn_ind] = (NSC_dist_high - NSC_dist_low) / 2
+        
+        print NSC_ci
         
         
     def PlotSensitivities(self, NSC_cut = 0.05): 
