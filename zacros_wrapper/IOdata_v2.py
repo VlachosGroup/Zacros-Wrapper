@@ -77,7 +77,7 @@ class IOdata(object):
         self.WriteStateIn()
         self.WriteLattice()
 
-    def FindCluster(self):
+    def FindCluster(self, Cluster_Num):
         '''
         Method finds the Cluster and Variant index of the nth
         Cluster-Variant where n is specified by Cluster_Num and
@@ -85,19 +85,20 @@ class IOdata(object):
         and V.index (Variant) such that Cluster[C_index].variant_name[V_index]
         represents the name of the nth Cluster-Variant
         '''
+        Cluster_Num = int(Cluster_Num)
         Tvariants = sum(s.nVariant for s in self.Cluster)
-        if Tvariants >= self.Cluster_Num:
+        if Tvariants >= Cluster_Num and Cluster_Num >= 1:
             var = []
             for s in self.Cluster:
                 var.append(s.nVariant)
             var = _np.array(var)
-            self.C_index = _np.argmin(var.cumsum() < self.Cluster_Num)
-            self.V_index = self.Cluster_Num - sum(var[0:self.C_index]) - 1
+            C_index = _np.argmin(var.cumsum() < Cluster_Num)
+            V_index = Cluster_Num - sum(var[0:C_index]) - 1
         else:
-            self.C_index = -1
-            self.V_index = -1
+            C_index = V_index = -1
+        return(C_index, V_index)
 
-    def FindReaction(self):
+    def FindReaction(self, Reaction_Num):
         '''
         Method finds the Reaction and Variant index of the nth
         Reaction-Variant where n is specified by Cluster_Num and
@@ -105,17 +106,18 @@ class IOdata(object):
         and V.index (Variant) such that Reaction[R_index].variant_name[V_index]
         represents the name of the nth Reaction-Variant
         '''
+        Reaction_Num = int(Reaction_Num)
         Tvariants = sum(s.nVariant for s in self.Reaction)
-        if Tvariants >= self.Reaction_Num:
+        if Tvariants >= Reaction_Num and Reaction_Num >= 1:
             var = []
             for s in self.Reaction:
                 var.append(s.nVariant)
             var = _np.array(var)
-            self.R_index = _np.argmin(var.cumsum() < self.Reaction_Num)
-            self.V_index = self.Reaction_Num - sum(var[0:self.R_index]) - 1
+            R_index = _np.argmin(var.cumsum() < Reaction_Num)
+            V_index = Reaction_Num - sum(var[0:R_index]) - 1
         else:
-            self.R_index = -1
-            self.V_index = -1
+            R_index = V_index = -1
+        return(R_index, V_index)
 
     def ReadEngIn(self):
         '''
@@ -738,6 +740,19 @@ class IOdata(object):
             print 'Unrecognized state_input type'
             print 'state_input not written'
 
+    def CheckComplete(self):
+        '''
+        Check to see if a Zacros run has completed successfully
+        '''
+        Complete = False
+        if _os.path.isfile(_os.path.join(self.Path, 'general_output.txt')):
+            with open(_os.path.join(self.Path,
+                                    'general_output.txt'), 'r') as txt:
+                RawTxt = txt.readlines()
+            for i in RawTxt:
+                if _re.search('Normal termination', i):
+                    Complete = True
+        return Complete
 
 '''
  Class definitions for:
