@@ -37,8 +37,11 @@ import numpy as _np
 import re as _re
 import random as _random
 import IOdata_v2 as _ClassIn
+import linecache as _linecache
 
 from Helper import ReadWithoutBlankLines as _ReadWithoutBlankLines
+from Helper import ReturnUnique as _ReturnUnique
+from Helper import rawbigcount as _rawbigcount
 
 
 class IOdata(object):
@@ -61,7 +64,7 @@ class IOdata(object):
         self.ReadEngIn()
         self.ReadMechIn()
 
-        if _os.path.isfile(_os.path.join(self.Path, 'Input',
+        if _os.path.isfile(_os.path.join(self.Path,
                                          'state_input.dat')):
             self.ReadStateInput()
         else:
@@ -76,6 +79,39 @@ class IOdata(object):
         self.WriteEnergetics()
         self.WriteStateIn()
         self.WriteLattice()
+
+    def ReadAllOutput(self, build_lattice=False):
+        '''
+        Read all Zacros output files
+        Set build_lattice = True if you want to build the lattice object file.
+        This will make it take a lot longer to read
+        '''
+        self.ReadAllInput()
+
+        if self.CheckComplete():
+
+            # Standard output files
+            self.ReadGeneral()
+            self.ReadProcstat()
+            self.ReadSpecnum()
+            if build_lattice:
+                self.KMC_lat.Read_lattice_output(_os.path.join
+                                                 (self.Path,
+                                                  'lattice_output.txt'))
+            self.ReadHistory()
+
+            # Extra binary files
+            if _os.path.isfile(_os.path.join(self.Path,
+                                             'PropCounter_output.bin')):
+                self.ReadProp(1)
+            if _os.path.isfile(_os.path.join(self.Path,
+                                             'SA_output.bin')):
+                self.ReadSA()
+#            self.ReadCluster()
+#            self.ReadProp(0)
+
+        else:
+            print 'general_output.txt not found in ' + self.Path
 
     def FindCluster(self, Cluster_Num):
         '''
@@ -119,11 +155,27 @@ class IOdata(object):
             R_index = V_index = -1
         return(R_index, V_index)
 
+    def CheckComplete(self):
+        '''
+        Check to see if a Zacros run has completed successfully
+        '''
+        Complete = False
+        if _os.path.isfile(_os.path.join(self.Path,
+                                         'general_output.txt')):
+            with open(_os.path.join(self.Path,
+                                    'general_output.txt'),
+                      'r') as txt:
+                RawTxt = txt.readlines()
+            for i in RawTxt:
+                if _re.search('Normal termination', i):
+                    Complete = True
+        return Complete
+
     def ReadEngIn(self):
         '''
         Read energetics_input.dat
         '''
-        RawTxt = _ReadWithoutBlankLines(_os.path.join(self.Path, 'Input',
+        RawTxt = _ReadWithoutBlankLines(_os.path.join(self.Path,
                                                       'energetics_input.dat'),
                                         CommentLines=False)
         nLines = len(RawTxt)
@@ -197,7 +249,7 @@ class IOdata(object):
 
         nCluster = len(self.Cluster)
 
-        with open(_os.path.join(self.Path, 'Output',
+        with open(_os.path.join(self.Path,
                                 'energetics_input.dat'), 'w') as txt:
             txt.write('energetics\n\n')
             for i in range(0, nCluster):
@@ -242,7 +294,7 @@ class IOdata(object):
         '''
         Read mechanism_input.dat
         '''
-        RawTxt = _ReadWithoutBlankLines(_os.path.join(self.Path, 'Input',
+        RawTxt = _ReadWithoutBlankLines(_os.path.join(self.Path,
                                                       'mechanism_input.dat'),
                                         CommentLines=True)
         nLines = len(RawTxt)
@@ -325,9 +377,9 @@ class IOdata(object):
                              append(LatState[k].split('\n')[0])
                     for k in range(0, nSites):
                         StateLine.append(i+1+k)
-    #                elif not InVariant and i not in StateLine:
-    #                    print 'Unparsed line in mechanism input:'
-    #                    print RawTxt[i]
+                elif not InVariant and i not in StateLine:
+                    print 'Unparsed line in mechanism input:'
+                    print RawTxt[i]
             self.Reaction[j].nVariant = Count
             variantInd = _np.array([[0, 0]]*self.Reaction[j].nVariant)
             Count = 0
@@ -389,7 +441,7 @@ class IOdata(object):
             SDBool = True
         nMech = len(self.Reaction)
         StiffCorrCounter = -1
-        with open(_os.path.join(self.Path, 'Output',
+        with open(_os.path.join(self.Path,
                                 'mechanism_input.dat'), 'w') as txt:
             txt.write('mechanism\n\n')
             if SDBool:
@@ -461,7 +513,7 @@ class IOdata(object):
                                   self.Reaction[i].variant_pe_ratio[j]))
                     txt.write('    {:25}{}\n'.format('activ_eng',
                               str(self.Reaction[i].variant_activ_eng[j])))
-                    if hasattr(self.Reaction[i], 'variant_prox_factor'):
+                    if self.Reaction[i].variant_prox_factor != []:
                         txt.write('    {:25}{}\n'.format('prox_factor',
                                   str(self.Reaction[i].
                                       variant_prox_factor[j])))
@@ -491,7 +543,7 @@ class IOdata(object):
                 inc = _np.int(i.split()[3])
             return (state, inc)
 
-        with open(_os.path.join(self.Path, 'Input',
+        with open(_os.path.join(self.Path,
                                 'simulation_input.dat'), 'r') as txt:
             RawTxt = txt.readlines()
 
@@ -560,7 +612,7 @@ class IOdata(object):
         if not hasattr(self, 'Conditions'):
             self.ReadSimIn()
 
-        with open(_os.path.join(self.Path, 'Output',
+        with open(_os.path.join(self.Path,
                                 'simulation_input.dat'), 'w') as txt:
             SeedTxt = ''
             if self.Conditions.Seed is None:
@@ -661,7 +713,7 @@ class IOdata(object):
         Read lattice_input.dat
         '''
         self.Lattice = _ClassIn.LatticeIn()
-        with open(_os.path.join(self.Path, 'Input',
+        with open(_os.path.join(self.Path,
                                 'lattice_input.dat'), 'r') as Txt:
             RawTxt = Txt.readlines()
         for i in RawTxt:
@@ -674,7 +726,7 @@ class IOdata(object):
         if not hasattr(self, 'Lattice'):
             self.ReadLatticeIn()
 
-        with open(_os.path.join(self.Path, 'Output',
+        with open(_os.path.join(self.Path,
                                 'lattice_input.dat'), 'w') as txt:
             for i in self.Lattice.input:
                 txt.write(i + '\n')
@@ -684,7 +736,7 @@ class IOdata(object):
         Read state_input.dat
         '''
         self.State = _ClassIn.StateIn()
-        with open(_os.path.join(self.Path, 'Input',
+        with open(_os.path.join(self.Path,
                                 'state_input.dat'), 'r') as Txt:
             RawTxt = Txt.readlines()
         for i in RawTxt:
@@ -701,7 +753,7 @@ class IOdata(object):
             return
 
         if self.State.Type == 'StateInput':
-            with open(_os.path.join(self.Path, 'Output',
+            with open(_os.path.join(self.Path,
                                     'state_input.dat'), 'w') as txt:
                 for i in self.State.Struct:
                     txt.write(i + '\n')
@@ -723,15 +775,15 @@ class IOdata(object):
                         SpecIden[i] = self.Lattice[j, 2]
 
             if nAds > 0:
-                with open(_os.path.join(self.Path, 'Output',
+                with open(_os.path.join(self.Path,
                                         'state_input.dat'), 'w') as txt:
                     txt.write('initial_state\n')
                     for i in range(0, nAds):
                         txt.write('  seed_on_sites  {:10}'.
-                                  format(self.Species['surf_spec']
+                                  format(self.Conditions.surf_spec
                                          [SpecIden[i]-1], 10))
-                        for j in range(0,len(DentInfo[i])):
-                            for k in range(0,len(DentInfo[i])):
+                        for j in range(0, len(DentInfo[i])):
+                            for k in range(0, len(DentInfo[i])):
                                 if j + 1 == DentInfo[i][k]:
                                     txt.write(str(AdsInfo[i][k]) + '  ')
                         txt.write('\n')
@@ -740,19 +792,247 @@ class IOdata(object):
             print 'Unrecognized state_input type'
             print 'state_input not written'
 
-    def CheckComplete(self):
+    def ReadGeneral(self):
         '''
-        Check to see if a Zacros run has completed successfully
+        Read general_output.txt
         '''
-        Complete = False
-        if _os.path.isfile(_os.path.join(self.Path, 'general_output.txt')):
-            with open(_os.path.join(self.Path,
-                                    'general_output.txt'), 'r') as txt:
-                RawTxt = txt.readlines()
-            for i in RawTxt:
-                if _re.search('Normal termination', i):
-                    Complete = True
-        return Complete
+        with open(_os.path.join(self.Path, 'general_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+
+        self.Performance = PerformanceIn()
+        for i in range(0, len(RawTxt)):
+            if _re.search('Number of elementary steps:', RawTxt[i]):
+                nRxn = _np.int(RawTxt[i].split(':')[1])
+            elif _re.search('Current KMC time:', RawTxt[i]):
+                self.Performance.t_final = _np.float(RawTxt[i].split(':')[1])
+            elif _re.search('Events occurred:', RawTxt[i]):
+                self.Performance.events_occurred =\
+                 _np.float(RawTxt[i].split(':')[1])
+            elif _re.search('Elapsed CPU time:', RawTxt[i]):
+                after_colon = RawTxt[i].split(':')[1]
+                self.Performance.CPU_time =\
+                    _np.float(after_colon.split(' ')[-2])
+            elif _re.search('Reaction network:', RawTxt[i]):
+                RxnStartLine = i + 2
+
+        if RawTxt[RxnStartLine].split()[0] == '1.':
+            NameInd = 1
+        else:
+            NameInd = 0
+
+        RxnNameList = []
+        nuList = []
+        for i in range(RxnStartLine, RxnStartLine + nRxn):
+            RxnName = RawTxt[i].split()[NameInd][:-1]
+            RxnNameList.append(RxnName)
+            RxnStr = RawTxt[i][_re.search('Reaction:', RawTxt[i]).end():]
+            RxnStrList = RxnStr.split()
+            nu = [0] * (self.Conditions.n_surf + self.Conditions.n_gas)
+            for j in range(0, len(RxnStrList)):
+                if RxnStrList[j] == '->':
+                    ArrowInd = j
+            for j in range(0, len(RxnStrList)):
+                if j < ArrowInd:
+                    Sign = -1
+                else:
+                    Sign = 1
+
+                if _re.search('\(', RxnStrList[j]):
+                    SurfIden = _re.sub(r'\([^)]*\)', '', RxnStrList[j])
+                    if SurfIden != '*':
+                        SurfInd = [k for k in
+                                   range(0, len(self.Conditions.surf_spec))
+                                   if SurfIden ==
+                                   self.Conditions.surf_spec[k]][0]
+                        nu[SurfInd] += Sign
+                elif RxnStrList[j] != '->' and RxnStrList[j] != '+':
+                    GasInd = [k for k in
+                              range(0, len(self.Conditions.gas_spec))
+                              if RxnStrList[j] ==
+                              self.Conditions.gas_spec[k]][0]
+                    nu[self.Conditions.n_surf + GasInd] += Sign
+            nuList.append(nu)
+
+        self.Performance.Nu = nuList
+        self.Performance.UniqNu = _ReturnUnique(nuList).tolist()
+
+    def ReadHistory(self):
+        '''
+        Read history_output.txt
+        '''
+        # Check if file exists
+        if not _os.path.isfile(_os.path.join(self.Path, 'history_output.txt')):
+            return
+
+        # Count number of sites
+        with open(_os.path.join(self.Path, 'lattice_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+        nSites = len(RawTxt) - 2
+        self.n_sites = nSites
+        HistPath = _os.path.join(self.Path, 'history_output.txt')
+        nLines = _rawbigcount(HistPath)
+        self.n_snapshots = (nLines-6)/(nSites+2)
+        self.History = []
+        self.snap_times = []
+
+        for snap_ind in range(self.n_snapshots):
+            snap_data = _np.array([[0]*4]*nSites)
+            _linecache.clearcache()
+            snap_header = _linecache.getline(HistPath, 8 + snap_ind *
+                                             (nSites+2)-1).split()
+            self.snap_times.append(snap_header[3])
+            for i in range(0, nSites):
+                snap_data[i, :] = _linecache.getline(HistPath, 8 + snap_ind *
+                                                     (nSites+2)+i).split()
+            self.History.append(snap_data)
+
+    def ReadProcstat(self):
+        '''
+        Read procstat_output.txt
+        '''
+        MaxLen = _np.int(2e4)
+        with open(_os.path.join(self.Path, 'procstat_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+
+        if len(RawTxt) - 1 > MaxLen * 3:  # Procstat uses 3 lines per outputs
+            Spacing = _np.int(_np.floor((len(RawTxt) - 1)/(MaxLen*3)))
+            RawTxt2 = []
+            for i in range(0, MaxLen):
+                RawTxt2.append(RawTxt[i*Spacing*3+1])
+                RawTxt2.append(RawTxt[i*Spacing*3+2])
+                RawTxt2.append(RawTxt[i*Spacing*3+3])
+        else:
+            Spacing = 1
+            RawTxt2 = RawTxt[1:]
+
+        t = []
+        events = []
+        for i in range(0, len(RawTxt2)/3):
+            t.append(_np.float(RawTxt2[i*3].split()[3]))
+            eventsTemp = RawTxt2[i*3+2].split()[1:]
+            for j in range(0, len(eventsTemp)):
+                eventsTemp[j] = _np.int(eventsTemp[j])
+            events.append(eventsTemp)
+
+        self.Procstat = _ClassIn.ProcstatIn()
+        self.Procstat.Spacing = Spacing
+        self.Procstat.t = _np.asarray(t)
+        self.Procstat.events = _np.asarray(events)
+
+    def ReadSpecnum(self):
+        '''
+        Read specnum_output.txt
+        '''
+        MaxLen = _np.int(2e4)
+        with open(_os.path.join(self.Path, 'specnum_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+
+        if len(RawTxt) - 1 > MaxLen:
+            Spacing = _np.int(_np.floor((len(RawTxt)-1)/MaxLen))
+            RawTxt2 = []
+            for i in range(0, MaxLen):
+                RawTxt2.append(RawTxt[i*Spacing+1])
+        else:
+            Spacing = 1
+            RawTxt2 = RawTxt[1:]
+
+        nEvents = []
+        t = []
+        T = []
+        E = []
+        spec = []
+
+        for i in range(0, len(RawTxt2)):
+            LineSplit = RawTxt2[i].split()
+            nEvents.append(_np.int(LineSplit[1]))
+            t.append(_np.float(LineSplit[2]))
+            T.append(_np.float(LineSplit[3]))
+            E.append(_np.float(LineSplit[4]))
+            specTemp = LineSplit[5:]
+            for j in range(0, len(specTemp)):
+                specTemp[j] = _np.int(specTemp[j])
+            spec.append(specTemp)
+        self.Specnum = _ClassIn.SpecnumIn()
+        self.Specnum.Spacing = Spacing
+        self.Specnum.nEvents = _np.asarray(nEvents)
+        self.Specnum.t = _np.asarray(t)
+        self.Specnum.T = _np.asarray(T)
+        self.Specnum.E = _np.asarray(E)
+        self.Specnum.spec = _np.asarray(spec)
+
+    def ReadCluster(self):
+        '''
+        Read clusterocc.bin
+        '''
+        dt = _np.dtype(_np.int32)
+        virtual_arr = _np.memmap(_os.path.join(self.Path, 'clusterocc.bin'),
+                                 dt, "r")
+        nCluster = sum(len(s.variant_name) for s in self.Cluster)
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % nCluster)
+        if not hasattr(self, 'Binary'):
+            self.Binary = _ClassIn.BinaryIn()
+        self.Binary = _ClassIn.BinaryIn()
+        self.Binary.cluster = _np.array(_np.reshape(virtual_arr,
+                                                    [nNum/nCluster, nCluster])
+                                        [::self.Specnum.Spacing])
+        del virtual_arr
+
+    def ReadProp(self, Mode):
+        '''
+        Mode = 0: Read Prop_output.bin
+        Mode = 1: Read PropCounter_output.bin
+        '''
+        dt = _np.dtype(_np.float64)
+        if Mode == 0:     # Instantaneous propensities
+            FileName = 'Prop_output.bin'
+        elif Mode == 1:   # Integral propensities
+            FileName = 'PropCounter_output.bin'
+
+        virtual_arr = _np.memmap(_os.path.join(self.Path,
+                                               FileName), dt, "r")
+        nRxn = len(self.Performance.Nu)
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % nRxn)
+        virtual_arr = virtual_arr[:nNum]
+        if not hasattr(self, 'Binary'):
+            self.Binary = _ClassIn.BinaryIn()
+
+        if Mode == 0:
+            self.Binary.prop = _np.reshape(virtual_arr, [nNum/nRxn, nRxn])
+            self.Binary.prop = _np.array(self.Binary.prop
+                                         [::self.Procstat.Spacing])
+        if Mode == 1:
+            self.Binary.propCounter = _np.reshape(virtual_arr,
+                                                  [nNum/nRxn, nRxn])
+            self.Binary.propCounter = _np.array(self.Binary.propCounter
+                                                [::self.Procstat.Spacing])
+        del virtual_arr
+
+    def ReadSA(self):
+        '''
+        Read SA_output.bin
+        '''
+        dt = _np.dtype(_np.float64)
+        FileName = 'SA_output.bin'
+        if _os.path.isfile(_os.path.join(self.Path, FileName)):
+            virtual_arr = _np.memmap(_os.path.join(self.Path,
+                                                   FileName), dt, "r")
+            nRxn = len(self.Performance.Nu)
+            nNum = virtual_arr.shape[0]
+            nNum = nNum - (nNum % nRxn)
+            virtual_arr = virtual_arr[:nNum]
+            if not hasattr(self, 'Binary'):
+                self.Binary = _ClassIn.BinaryIn()
+
+            self.Binary.W_sen_anal = _np.reshape(virtual_arr,
+                                                 [nNum/nRxn, nRxn])
+            self.Binary.W_sen_anal = _np.array(self.Binary.W_sen_anal
+                                               [::self.Specnum.Spacing])
+
+            del virtual_arr
+        else:
+            print 'No sensitivity analysis output file'
 
 '''
  Class definitions for:
@@ -798,6 +1078,7 @@ class SimIn(IOdata):
         self.gas_molfrac = []
         self.surf_dent = []
         self.Seed = None
+        self.WallTime_Max = ''
         super(SimIn, self).__init__()
 
 
@@ -811,3 +1092,23 @@ class StateIn(IOdata):
     def __init__(self):
         self.Struct = []
         super(StateIn, self).__init__()
+
+
+class PerformanceIn(IOdata):
+    def __init__(self):
+        super(PerformanceIn, self).__init__()
+
+
+class ProcstatIn(IOdata):
+    def __init__(self):
+        super(ProcstatIn, self).__init__()
+
+
+class SpecnumIn(IOdata):
+    def __init__(self):
+        super(SpecnumIn, self).__init__()
+
+
+class BinaryIn(IOdata):
+    def __init__(self):
+        super(BinaryIn, self).__init__()
