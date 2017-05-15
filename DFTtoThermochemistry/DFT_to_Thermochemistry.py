@@ -40,7 +40,7 @@ from constants import constant as c
 
 class Particle(object):
 
-    Tstp = 298.15                # Standard reference temperature [K]
+    Tstp = 650                # Standard reference temperature [K]
     Cp_Range = _np.linspace(100, 1500, 15)
     VibScalingFactor = 1         # Vibrational Scaling Factor
 
@@ -49,19 +49,44 @@ class Particle(object):
         '''
         Fill object with species name and associated thermodynamic data
         '''
-        self.name = str(data[dict['name']])      # Species name [string]
-        self.carbon = int(data[dict['numc']])    # No. of carbon atoms [int]
-        self.hydrogen = int(data[dict['numh']])  # No. of hydrogem atoms [int]
-        self.oxygen = int(data[dict['numo']])    # No. of oxygen atoms [int]
-        self.nitrogen = int(data[dict['numn']])  # Number of nitrogen atoms
-        self.totengpath = os.path.join(*re.split(r'\\|/',
-                                       str(data[dict['totengpath']]).
-                                       strip('.').strip('\\')))
-        self.etotal = float(data[dict['etotal']])  # Total energy
-        self.edisp = float(data[dict['edisp']])  # Dispersion energy
+        self.name = str(data[dict['name']])         # Species name
+        if 'numh' in dict:
+            if data[dict['numc']] != '':
+                self.carbon = int(data[dict['numc']])       # No. of C atoms
+            else:
+                self.carbon = int(0)
+            if data[dict['numh']] != '':
+                self.hydrogen = int(data[dict['numh']])     # No. of H atoms
+            else:
+                self.hydrogen = int(0)
+            if data[dict['numo']] != '':
+                self.oxygen = int(data[dict['numo']])       # No. of O atoms
+            else:
+                self.oxygen = int(0)
+            if data[dict['numn']] != '':
+                self.nitrogen = int(data[dict['numn']])     # No. of N atoms
+            else:
+                self.nitrogen = int(0)
+        if 'mw' in dict:
+            self.MW = float(data[dict['mw']])/c.NA/1000
+        else:
+            self.MW = (self.carbon * c.MW_carbon +
+                       self.hydrogen * c.MW_hydorgen +
+                       self.oxygen * c.MW_oxygen +
+                       self.nitrogen * c.MW_nitrogen)/c.NA/1000
+        if not hasattr(self, 'Inertia'):
+            self.totengpath = os.path.join(*re.split(r'\\|/',
+                                           str(data[dict['totengpath']]).
+                                           strip('.').strip('\\')))
+        self.etotal = float(data[dict['etotal']])   # Total energy
+        if data[dict['edisp']] == '':
+            self.edisp = float(0)
+        else:
+            self.edisp = float(data[dict['edisp']])     # Dispersion energy
         self.numvibfreq = int(data[dict['numvibfreq']])  # No. vib frequencies
-        self.phase = None                        # Phase (G=gas, S=surface)
-        self.vibfreq = []                        # Vibration frequencies
+        if not hasattr(self, 'phase'):
+            self.phase = None                       # Phase (G=gas, S=surface)
+        self.vibfreq = []                           # Vibration frequencies
         for x in range(0, self.numvibfreq):
             self.vibfreq.append(Particle.VibScalingFactor *
                                 float(data[dict['vibfreq'] + x]))
@@ -83,14 +108,17 @@ class Particle(object):
         Atomic Simulation Environment (ASE) libraries for python
         '''
         if self.phase == 'G':
-            filepath = os.path.join(self.Base_path,
-                                    self.Input,
-                                    self.totengpath,
-                                    'CONTCAR')
-            VASP = _ase.read(filepath)
-            self.I3 = VASP.get_moments_of_inertia()*c.A2_to_m2*c.amu_to_kg
+            if hasattr(self, 'Inertia'):
+                self.I3 = self.Inertia
+            else:
+                filepath = os.path.join(self.Base_path,
+                                        self.Input,
+                                        self.totengpath,
+                                        'CONTCAR')
+                VASP = _ase.read(filepath)
+                self.I3 = VASP.get_moments_of_inertia()*c.A2_to_m2*c.amu_to_kg
+                self.MW = sum(VASP.get_masses())/c.NA/1000.
             self.T_I = c.h1**2/(8*pi**2*c.kb1)
-            self.MW = sum(VASP.get_masses())/c.NA/1000.
         '''
         Calulcate common frequency data for vibrational components
         '''
@@ -146,11 +174,13 @@ class Particle(object):
         Calculate vibrational component of entropy for gas and surface species
         '''
         T = self.Tstp
+        A_st = 3.842  # Angstroms^2
         self.S_Tstp_vib = c.R1 * sum((self.theta/T) /
-                                       (_np.exp(self.theta/T)-1) -
-                                       _np.log(1 - _np.exp(-self.theta/T)))
+                                     (_np.exp(self.theta/T)-1) -
+                                     _np.log(1 - _np.exp(-self.theta/T)))
+        self.q_vib = _np.product(1 / (1 - _np.exp(-self.theta/T)))
         '''
-        Calculate rotational and translational components of enthalpy
+        Calculate rotational and translational components of entropy
         '''
         if self.phase == 'G':
             '''
@@ -164,8 +194,7 @@ class Particle(object):
                 self.S_Tstp_rot = c.R1*(3./2. + 1./2. *
                                         _np.log(pi*T**3/self.T_I**3*I) -
                                         _np.log(self.sigma))
-                self.Srotm = c.R1*(1./2.*_np.log(_np.pi*T**3/self.T_I**3*I) -
-                                   _np.log(self.sigma))
+                self.q_rot = (_np.pi*T**3/self.T_I**3*I)**(1./2.) / self.sigma
             else:
                 '''
                 Linear species
@@ -173,21 +202,21 @@ class Particle(object):
                 I = _np.max(self.I3)
                 self.S_Tstp_rot = c.R1*(1. + _np.log(T/self.T_I*I) -
                                         _np.log(self.sigma))
-                self.Srotm = c.R1*(_np.log(T/self.T_I*I) -
-                                   _np.log(self.sigma))
+                self.q_rot = T/self.sigma/self.T_I*I
             p = 100000  # Presure of 1 atm or 100000 Pa
             self.S_Tstp_trans = c.R1*(5./2. + 3./2. *
                                       _np.log(2.*pi*self.MW/c.h1**2) +
                                       5./2.*_np.log(c.kb1*T) -
                                       _np.log(p))
-            self.Stransm = c.R1*(3./2.*_np.log(2.*pi*self.MW/c.h1**2) +
-                                 5./2.*_np.log(c.kb1*T) - _np.log(p))
+            self.q_trans3D = (_np.sqrt(2.*pi*self.MW*c.kb1*T)/c.h1)**3
+            self.q_trans2D = A_st * (2*pi*self.MW*c.kb1*T)/c.h1**2
         else:
             '''
             Surface phase calculation
             '''
             self.S_Tstp_rot = 0.
             self.S_Tstp_trans = 0.
+            self.q_rot = 0.
         '''
         Sum of all contributions to entropy for total entropy
         '''
@@ -244,9 +273,10 @@ class Particle(object):
         '''
         Calculate vibrational component of enthalpy
         '''
-        self.E_Tstp_vib = c.kb2*sum(_np.divide(self.theta*_np.exp(-self.theta/T),
-                                               (1 - _np.exp(-self.theta/T)))) *\
-                                               c.NA/1000
+        self.E_Tstp_vib = c.kb2 *\
+            sum(_np.divide(self.theta*_np.exp(-self.theta/T),
+                           (1 - _np.exp(-self.theta/T)))) *\
+            c.NA/1000
         '''
         Calculate translational and rotational component of enthalpy
         '''
@@ -286,10 +316,22 @@ class Reference(Particle):
     SubClass object to add specific fields for reference species
     '''
     def __init__(self, data, dict, Base_path, Input):
-        self.sigma = int(data[dict['sigma']])            # Sigma
-        self.islinear = int(data[dict['islinear']])      # Is molecule linear?
-        self.hf298nist = float(data[dict['hf298nist']])  # NIST Std enthalpy
-        self.phase = str.upper(data[dict['phase']])     # Phase (G=gas, S=surf)
+        if data[dict['sigma']] != '':
+            self.sigma = int(data[dict['sigma']])            # Sigma
+        else:
+            self.sigma = int(0)
+        if data[dict['islinear']] != '':
+            self.islinear = int(data[dict['islinear']])   # Is molecule linear?
+        else:
+            self.linear = int(-1)
+        if 'hf298nist' in dict:
+            self.hf298nist = float(data[dict['hf298nist']])  # NIST Std enthpy
+        if 'inertia' in dict:
+            if data[dict['inertia']] != '':
+                self.Inertia = float(data[dict['inertia']])
+            else:
+                self.Inertia = float(0)
+        self.phase = str.upper(data[dict['phase']])      # Phase
         super(Reference, self).__init__(data,
                                         dict,
                                         Base_path,
@@ -318,11 +360,11 @@ class Target(Particle):
         self.functional = str(data[dict['functional']])    # Functional
         self.kpoints = str(data[dict['kpoints']])          # k-Points
         self.vibfreqpath = str(data[dict['vibfreqpath']])  # Unused
-        self.phase = None                               # Phase (G=gas, S=surf)
+        self.phase = None                                  # Phase
         super(Target, self).__init__(data,
                                      dict,
                                      Base_path,
-                                     Input)   # Call superclass
+                                     Input)                 # Call superclass
 
     @staticmethod
     def ReferenceDFT(Species, Surface, Basis):
@@ -344,11 +386,13 @@ class Target(Particle):
                 else:
                     Species[x].hf_Tstp = (Species[x].dfth +
                                           _np.dot(Molecule, Basis) -
-                                          Slab.etotal * c.ev_atom_2_kcal_mol)[0]
+                                          Slab.etotal *
+                                          c.ev_atom_2_kcal_mol)[0]
                     if hasattr(Species[x], 'edisp'):
                         Species[x].convedisp = (Species[x].edisp *
                                                 c.ev_atom_2_kcal_mol -
-                                                Slab.edisp * c.ev_atom_2_kcal_mol)
+                                                Slab.edisp *
+                                                c.ev_atom_2_kcal_mol)
         return(Species)
 
     @staticmethod
@@ -498,9 +542,9 @@ class Surface:
     Class object to populate slab energies for surfaces
     '''
     def __init__(self, data, dict):
-        self.name = str(data[dict['name']])          # Surface
-        self.etotal = float(data[dict['etotal']])    # Functional
-        self.edisp = float(data[dict['edisp']])          # k-Points
+        self.name = str(data[dict['name']])          # Surface name
+        self.etotal = float(data[dict['etotal']])    # Total energy-DFT
+        self.edisp = float(data[dict['edisp']])      # Dispersion energy-DFT
 
 
 def DFTFileRead(filepath):

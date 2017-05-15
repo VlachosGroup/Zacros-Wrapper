@@ -13,7 +13,7 @@ if platform.system() == 'Windows':
     Base_path = 'C:\Users\wittregr\Documents\Python Scripts'
 else:
     Base_path = '/home/1729'
-Input = 'Input'
+Input = 'Input2'
 Output = 'Output'
 
 '''
