@@ -496,10 +496,9 @@ class IOdata(object):
                     if SDBool:
                         StiffCorrCounter += 1
                         if self.scaledown_factors[StiffCorrCounter] != 1:
-                            txt.write('    {:25}{:.5e}\n'.format('pre_expon',
+                            txt.write('    {:25}{:.5e}'.format('pre_expon',
                                       pre_exp))
-                            txt.write('    # Pre-exponential has been rescaled\
-                                      by a factor of {0:.5e}\n'.
+                            txt.write('    # Pre-exponential has been rescaled by a factor of {0:.5e}\n'.
                                       format(self.scaledown_factors
                                              [StiffCorrCounter]))
                         else:

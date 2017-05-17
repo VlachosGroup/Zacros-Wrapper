@@ -6,7 +6,7 @@ Created on Sat Apr 22 16:24:26 2017
 '''
 
 
-class constantz:
+class constant:
 
     ''' Gas Constants '''
     R1 = 1.9872036                 # [cal/mol-K]
@@ -27,7 +27,7 @@ class constantz:
     c2 = 299792458                 # [m/s]
 
     ''' Avogadro's number '''
-    NA = 6.022140857E23            # 1/molecules
+    NA = 6.022140857e+23           # 1/molecules
 
     ''' Conversions '''
     ev_atom_2_kcal_mol = 23.06055
@@ -37,5 +37,5 @@ class constantz:
     ''' Molecular Weights'''
     MW_carbon = 12.0107
     MW_hydorgen = 1.00794
-    MW_oxygen = 15.999
+    MW_oxygen = 15.9994
     MW_nitrogen = 14.0067

@@ -35,7 +35,7 @@ import ase.io as _ase
 import re
 import scipy.interpolate as _sp
 import datetime
-from constants import constant as c
+from GRW_constants import constant as c
 
 
 class Particle(object):
@@ -118,7 +118,7 @@ class Particle(object):
                 VASP = _ase.read(filepath)
                 self.I3 = VASP.get_moments_of_inertia()*c.A2_to_m2*c.amu_to_kg
                 self.MW = sum(VASP.get_masses())/c.NA/1000.
-            self.T_I = c.h1**2/(8*pi**2*c.kb1)
+            self.T_I = c.h1**2/(8*_np.pi**2*c.kb1)
         '''
         Calulcate common frequency data for vibrational components
         '''
@@ -174,11 +174,11 @@ class Particle(object):
         Calculate vibrational component of entropy for gas and surface species
         '''
         T = self.Tstp
-        A_st = 3.842  # Angstroms^2
+        A_st = 1.50875e-20  # m^2
         self.S_Tstp_vib = c.R1 * sum((self.theta/T) /
                                      (_np.exp(self.theta/T)-1) -
                                      _np.log(1 - _np.exp(-self.theta/T)))
-        self.q_vib = _np.product(1 / (1 - _np.exp(-self.theta/T)))
+        self.q_vib = _np.product(1. / (1 - _np.exp(-self.theta/T)))
         '''
         Calculate rotational and translational components of entropy
         '''
@@ -194,7 +194,8 @@ class Particle(object):
                 self.S_Tstp_rot = c.R1*(3./2. + 1./2. *
                                         _np.log(pi*T**3/self.T_I**3*I) -
                                         _np.log(self.sigma))
-                self.q_rot = (_np.pi*T**3/self.T_I**3*I)**(1./2.) / self.sigma
+                self.q_rot = _np.sqrt(_np.pi*I)/self.sigma *\
+                             (T/self.T_I)**(3./2.)
             else:
                 '''
                 Linear species
@@ -202,13 +203,12 @@ class Particle(object):
                 I = _np.max(self.I3)
                 self.S_Tstp_rot = c.R1*(1. + _np.log(T/self.T_I*I) -
                                         _np.log(self.sigma))
-                self.q_rot = T/self.sigma/self.T_I*I
+                self.q_rot = (T*I/self.sigma)/self.T_I
             p = 100000  # Presure of 1 atm or 100000 Pa
             self.S_Tstp_trans = c.R1*(5./2. + 3./2. *
                                       _np.log(2.*pi*self.MW/c.h1**2) +
                                       5./2.*_np.log(c.kb1*T) -
                                       _np.log(p))
-            self.q_trans3D = (_np.sqrt(2.*pi*self.MW*c.kb1*T)/c.h1)**3
             self.q_trans2D = A_st * (2*pi*self.MW*c.kb1*T)/c.h1**2
         else:
             '''
