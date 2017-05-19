@@ -35,6 +35,7 @@ Developers
 ----------
 * Marcel Nunez (mpnunez@udel.edu)
 * Taylor Robie
+* Gerhard Wittreich
 
 Related publications
 -----------------------

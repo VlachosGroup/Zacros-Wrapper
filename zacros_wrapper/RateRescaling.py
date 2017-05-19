@@ -66,9 +66,9 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
             cur_batch.runtemplate.Conditions['WallTime']['Max'] = 'inf'
             cur_batch.runtemplate.Conditions['restart'] = False
             
-            cur_batch.runtemplate.Report['procstat'] = ['event', max_events / n_samples]
-            cur_batch.runtemplate.Report['specnum'] = ['event', max_events / n_samples]
-            cur_batch.runtemplate.Report['hist'] = ['event', max_events * (n_samples-1) / n_samples]       # only record the initial and final states
+            cur_batch.runtemplate.Report['procstat'] = ['event', np.max( [max_events / n_samples, 1] ) ]
+            cur_batch.runtemplate.Report['specnum'] = ['event', np.max( [max_events / n_samples, 1] ) ]
+            cur_batch.runtemplate.Report['hist'] = ['event', np.max( [max_events * (n_samples-1) / n_samples, 1] )]       # only record the initial and final states
 
             SDF_vec = np.ones(cur_batch.runtemplate.Reactions['nrxns'])         # Initialize scaledown factors
         
@@ -93,7 +93,7 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         
         # Run jobs and read output
         cur_batch.BuildJobFiles(init_states = initial_states)
-        cur_batch.RunAllJobs_parallel_JobArray(server = platform)
+        cur_batch.RunAllJobs_parallel_JobArray(server = platform, job_name = 'Iteration_' + str(iteration) )
         cur_batch.ReadMultipleRuns()
         
         if iteration == 1:
@@ -206,24 +206,25 @@ def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):        # Change
     return {'delta_sdf': delta_sdf, 'rxn_speeds': rxn_speeds, 'tot': tot_freqs, 'net': net_freqs}
     
     
-def ReadScaledown(RunPath, plot_analysis = False):
+def ReadScaledown(RunPath, plot_analysis = False, fldrs_cut = None, verbose = False, product = None, n_batches = 1000):
     
     '''
     Read a scaledown that has already been run
     '''
 
     # Prepare data to graph
-    t_vec_rates = []
+    batch_lengths = []
     rates_vec = []
     rates_vec_ci = []
-    
-    t_vec_acf = []
     acf_vec = []
     acf_vec_ci = []
     
     
     # Count the iterations
     n_folders = len(os.listdir(RunPath))
+    if not fldrs_cut is None:
+       
+        n_folders = fldrs_cut
 
     print str(n_folders) + ' iterations found'
 
@@ -239,54 +240,31 @@ def ReadScaledown(RunPath, plot_analysis = False):
         else:
             cum_batch = Replicates.time_sandwich(cum_batch, x)
             
-        #cum_batch.gas_product = 'CO2'
-        #cum_batch.gas_product = 'B'
-        #acf_data = cum_batch.Compute_ACF()
-        #print 'Iteration ' + str(ind)
-        #print 'Rate: ' + str(acf_data['Rate']) + ' +- ' + str(acf_data['Rate_ci'])
-        #print 'ACF: ' + str(acf_data['ACF']) + ' +- ' + str(acf_data['ACF_ci'])
-        #print '\n'
-        #
-        #t_vec_rates.append(cum_batch.batch_length)
-        #rates_vec.append(acf_data['Rate'])
-        #rates_vec_ci.append(acf_data['Rate_ci'])
-        #
-        #if not acf_data['ACF'] is None:
-        #    t_vec_acf.append(cum_batch.batch_length)
-        #    acf_vec.append(acf_data['ACF'])
-        #    acf_vec_ci.append(acf_data['ACF_ci'])
+        cum_batch.N_batches = n_batches
+        cum_batch.gas_product = product
+        acf_data = cum_batch.Compute_ACF()
+        print 'Iteration ' + str(ind)
+        print 'Batches per trajectory: ' + str(cum_batch.Nbpt)
+        print 'Batch length ' + str(cum_batch.batch_length)
+        print 'Rate: ' + str(acf_data['Rate'])
+        print 'Rate CI: ' + str(acf_data['Rate_ci'])
+        print 'ACF: ' + str(acf_data['ACF'])
+        print 'ACF CI: ' + str(acf_data['ACF_ci'])
+
+        print '\n'
         
-    return cum_batch
+        batch_lengths.append(cum_batch.batch_length)
+        rates_vec.append(acf_data['Rate'])
+        rates_vec_ci.append(acf_data['Rate_ci'])
+        acf_vec.append(acf_data['ACF'])
+        acf_vec_ci.append(acf_data['ACF_ci'])
             
-            
-    if plot_analysis:
+    print batch_lengths
+    print rates_vec
+    print rates_vec_ci
+    print acf_vec
+    print acf_vec_ci
         
-        PlotOptions()
-        # Plot reaction rates
-        plt.figure()
-        plt.errorbar(t_vec_rates, rates_vec, yerr = rates_vec_ci, marker='o', linestyle = '--')
-        plt.xlabel('Batch length (s)', size=24)
-        plt.ylabel('Rate (1/s)', size=24)
-        plt.xscale('log')
-        plt.ylim([0, None])
-        ax = plt.subplot(111)
-        ax.set_position([0.2, 0.15, 0.7, 0.8])
-        
-        plt.savefig(os.path.join(RunPath, 'Rate_estimations.png'))
-        plt.close()
-        
-        
-        # Plot reaction rates
-        plt.figure()
-        plt.errorbar(t_vec_acf, acf_vec, yerr = acf_vec_ci, marker='o', linestyle = '--')
-        plt.xlabel('Batch length (s)', size=24)
-        plt.ylabel('ACF (1/s)', size=24)
-        plt.xscale('log')
-        ax = plt.subplot(111)
-        ax.set_position([0.2, 0.15, 0.7, 0.8])
-        
-        plt.savefig(os.path.join(RunPath, 'ACF_estimations.png'))
-        plt.close()
             
     return cum_batch
 

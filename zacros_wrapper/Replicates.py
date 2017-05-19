@@ -45,6 +45,7 @@ class Replicates:
         self.rxn_freqs = None
         self.History_final_snaps = None
         #self.props = None            # We do not print out this output file
+        self.propensities = None
         self.Props_integ = None
         self.traj_derivs = None
         self.events_total = None
@@ -113,7 +114,7 @@ class Replicates:
             self.runtemplate.WriteAllInput()
             
         
-    def RunAllJobs_parallel_JobArray(self, max_cores = 100, server = 'Squidward'):
+    def RunAllJobs_parallel_JobArray(self, max_cores = 100, server = 'Squidward', job_name = 'zacros_JA'):
     
         '''
         Runs a job array on Squidward or Farber
@@ -148,7 +149,7 @@ class Replicates:
                 txt.write('#$ -l h_cpu=168:00:00\n')
                 txt.write('#\n')
                 txt.write('\n')
-                txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
+                txt.write('#$ -N ' + job_name + ' 					#This is the name of the job array\n')
                 txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
                 txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
                 txt.write('#$ -pe threads 1 				#Change the last field to the number of processors desired per task\n')
@@ -259,7 +260,7 @@ class Replicates:
         self.species_pops = []
         self.rxn_freqs = []
         self.History_final_snaps = []            # list of the final states
-        #self.props = []
+        self.propensities = []
         self.Props_integ = []
         self.traj_derivs = []
         self.events_total = []
@@ -283,7 +284,7 @@ class Replicates:
             if not dummy_run.History == []:
                 self.History_final_snaps.append(dummy_run.History[-1])
             
-            #self.props.append(dummy_run.Binary['prop'])
+            self.propensities.append(dummy_run.Binary['prop'])
             self.Props_integ.append(dummy_run.Binary['propCounter'])
             self.traj_derivs.append(dummy_run.Binary['W_sen_anal'])
             
@@ -293,7 +294,7 @@ class Replicates:
         # Convert the data from lists to arrays
         self.species_pops = np.array(self.species_pops)
         self.rxn_freqs = np.array(self.rxn_freqs)
-        #self.props = np.array(self.props)
+        self.propensities = np.array(self.propensities)
         self.Props_integ = np.array(self.Props_integ)
         self.traj_derivs = np.array(self.traj_derivs)
         self.events_total = np.array(self.events_total)
@@ -336,6 +337,7 @@ class Replicates:
         
         self.runAvg.Specnum['spec'] = np.mean(self.species_pops, axis = 0)
         self.runAvg.Procstat['events'] = np.mean(self.rxn_freqs, axis = 0)
+        self.runAvg.Binary['prop'] = np.mean(self.propensities, axis = 0)
         
         #self.runAvg.Binary['prop'] = np.mean(self.props, axis = 0)
         if not self.runAvg.Binary['propCounter'] is None:
@@ -371,44 +373,6 @@ class Replicates:
             
             rate_data[:,i] = np.dot ( ( prop_integ_end - prop_integ_start ) / self.batch_length , self.TOF_stoich )
         
-        '''
-        Plot Rates
-        '''
-        
-        PlotOptions()
-        plt.figure()
-        
-        for i in range(self.n_runs):
-            plt.plot(bin_edges[2::], rate_data[i,1::], '.')
-        
-        #plt.xticks(size=20)
-        #plt.yticks(size=20)
-        plt.xlabel('Time (s)', size=24)
-        plt.ylabel('Rate', size=24)
-        
-        ax = plt.subplot(111)
-        ax.set_position([0.2, 0.15, 0.7, 0.8])
-        
-        
-        plt.savefig(os.path.join(self.ParentFolder, 'bin_rates.png'))
-        plt.close()
-        
-        
-        plt.figure()
-        
-        plt.plot(bin_edges[2::], np.mean( rate_data[:,1::], axis=0 ) , '.')
-        
-        #plt.xticks(size=20)
-        #plt.yticks(size=20)
-        plt.xlabel('Time (s)', size=24)
-        plt.ylabel('Rate', size=24)
-        
-        ax = plt.subplot(111)
-        ax.set_position([0.2, 0.15, 0.7, 0.8])
-        
-        
-        plt.savefig(os.path.join(self.ParentFolder, 'mean_bin_rates.png'))
-        plt.close()
         
         '''
         Compute confidence in the rate (assuming IID)
@@ -433,7 +397,7 @@ class Replicates:
         c2 = c2.reshape( np.prod(c2.shape) )
         
         
-        if ( np.var(alldata) == 0 ) or ( np.mean(rate_data[ : , 1 ]) == 0 ):        # Covers the case where we have zero rate
+        if np.var(alldata) == 0:        # Covers the case where we have zero rate
             ACF = None
             ACF_ci = None
         else:
@@ -574,11 +538,16 @@ class Replicates:
                 if not ergodic:
                     idb_start = self.runAvg.time_search_interp( bin_edges[i+dp_per_bin-1] )
                 
-                prop_integ_start = idb_start[1][0] * self.Props_integ[traj_ind, idb_start[0][0], :] + idb_start[1][1] * self.Props_integ[traj_ind, idb_start[0][1], :]
-                prop_integ_end = idb_end[1][0] * self.Props_integ[traj_ind, idb_end[0][0], :] + idb_end[1][1] * self.Props_integ[traj_ind, idb_end[0][1], :]
-                rate_data_erg[data_ind] = np.dot ( ( prop_integ_end - prop_integ_start ) / self.batch_length , self.TOF_stoich )
-                rate_contributions_all = rate_contributions_all + ( ( prop_integ_end - prop_integ_start ) / self.batch_length * self.TOF_stoich )
-            
+                if ergodic:
+                    prop_integ_start = idb_start[1][0] * self.Props_integ[traj_ind, idb_start[0][0], :] + idb_start[1][1] * self.Props_integ[traj_ind, idb_start[0][1], :]
+                    prop_integ_end = idb_end[1][0] * self.Props_integ[traj_ind, idb_end[0][0], :] + idb_end[1][1] * self.Props_integ[traj_ind, idb_end[0][1], :]
+                    rate_data_erg[data_ind] = np.dot ( ( prop_integ_end - prop_integ_start ) / self.batch_length , self.TOF_stoich )
+                    rate_contributions_all = rate_contributions_all + ( ( prop_integ_end - prop_integ_start ) / self.batch_length * self.TOF_stoich )
+                else:
+                    inst_rates = idb_end[1][0] * self.propensities[traj_ind, idb_end[0][0], :] + idb_end[1][1] * self.propensities[traj_ind, idb_end[0][1], :]
+                    rate_data_erg[data_ind] = np.dot ( inst_rates , self.TOF_stoich )
+                    rate_contributions_all = rate_contributions_all + ( inst_rates * self.TOF_stoich )
+                
                 data_ind += 1
         
         # Normalize rate contributions by the number of data points
@@ -617,7 +586,8 @@ class Replicates:
         NSCs = NSCs - W_mean * mean_rate + rate_contributions       # Convert from ELR to CELR
         NSCs = NSCs / mean_rate     # normalize 
         
-        print NSCs
+        print NSCs[5]
+        print NSCs[8]
         
         '''
         Compute error bounds on NSCs
@@ -662,7 +632,8 @@ class Replicates:
             NSC_dist_low = NSC_dist[int(0.05 * N_boot)]
             NSC_ci[rxn_ind] = (NSC_dist_high - NSC_dist_low) / 2
         
-        print NSC_ci
+        print NSC_ci[5]
+        print NSC_ci[8]
         
         
     def PlotSensitivities(self, NSC_cut = 0.05): 
@@ -749,6 +720,7 @@ class Replicates:
         # Combine the data
         sand.species_pops = np.concatenate( [batch1.species_pops, sand.species_pops[:,1::,:]], axis = 1 )
         sand.rxn_freqs = np.concatenate( [batch1.rxn_freqs, sand.rxn_freqs[:,1::,:]], axis = 1 )
+        sand.propensities = np.concatenate( [batch1.propensities, sand.propensities[:,1::,:]], axis = 1 )
         sand.Props_integ = np.concatenate( [batch1.Props_integ, sand.Props_integ[:,1::,:]], axis = 1 )
         sand.traj_derivs = np.concatenate( [batch1.traj_derivs, sand.traj_derivs[:,1::,:]], axis = 1 )
         
