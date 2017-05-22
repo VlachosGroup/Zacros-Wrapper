@@ -46,6 +46,7 @@ from Helper import ReturnUnique as _ReturnUnique
 from Helper import rawbigcount as _rawbigcount
 reload(_thermo)
 
+
 class IOdata(object):
 
     def __init__(self):
@@ -499,7 +500,8 @@ class IOdata(object):
                         if self.scaledown_factors[StiffCorrCounter] != 1:
                             txt.write('    {:25}{:.5e}'.format('pre_expon',
                                       pre_exp))
-                            txt.write('    # Pre-exponential has been rescaled by a factor of {0:.5e}\n'.
+                            txt.write(('    # Pre-exponential has been ' +
+                                      'rescaled by a factor of {0:.5e}\n').
                                       format(self.scaledown_factors
                                              [StiffCorrCounter]))
                         else:
@@ -1042,17 +1044,16 @@ class IOdata(object):
         vibrational frequencies for all species and transition states
         '''
         filepath = _os.path.join(self.Path, 'Zacros_Species_Energy.txt')
-        A_st = 1e-20
         [lines, dict] = _thermo.DFTFileRead(filepath)
         T_species = []
         for s in lines[3:]:
             T_species.append(_thermo.Reference(s.split('\t'), dict,
-                                               filepath, A_st))
+                                               filepath))
         '''
         Create list of transition state species
         '''
         TST = []
-        
+
         for y in range(0, len(T_species)):
             if T_species[y].name.startswith('TST') or T_species[y].name == '*':
                 TST.append([T_species[y].name, y])
@@ -1071,6 +1072,9 @@ class IOdata(object):
                 elif element[0] == '*':
                     TST_Slab = element[1]
 
+            '''
+            Create list of all surface products and reactants
+            '''
             surf_species = []
             for e in self.Reaction[x].initial:
                 surf_species.append(e.split())
@@ -1078,13 +1082,17 @@ class IOdata(object):
             for e in self.Reaction[x].final:
                 surf_prod.append(e.split())
             variant_activ_eng = 0.0
-            variant_fwd_pre = 0.0
+            fwd_pre = 0.0
 
             if TST_index == -1:
-                variant_fwd_pre = A_st/_np.sqrt(2*_np.pi*T_species[x].MW *
-                                                _c.kb1*650)*1e5
+
                 if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
                    int(self.Reaction[x].gas_reacs_prods[1]) == -1:
+                    MW_gas = next(e.MW for e in T_species
+                                  if e.name == self.Reaction[x].gas_reacs_prods[0])
+                    fwd_pre = T_species[x].A_st /\
+                        _np.sqrt(2*_np.pi * MW_gas *
+                                 _c.kb1*650)*1e5 * self.scaledown_factors[x]
                     q_vib_gas = next(e.q_vib for e in T_species
                                      if e.name == self.Reaction[x].
                                      gas_reacs_prods[0])
@@ -1094,16 +1102,17 @@ class IOdata(object):
                     q_trans2D_gas = next(e.q_trans2D for e in T_species
                                          if e.name == self.Reaction[x].
                                          gas_reacs_prods[0])
-
-                    for y in range(0, len(surf_species)):
-                        if surf_species[y][1] != '*' and\
-                              int(surf_species[y][2]) == 1:
-                                q_vib_surf[y] = next(e.q_vib
-                                                     for e in T_species
-                                                     if e.name ==
-                                                     surf_species[y][1].
-                                                     strip('t'))
-                    variant_rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
+                    ttt=2
+                    for y in range(0, len(surf_prod)):
+                        if surf_prod[y][1] != '*' and\
+                              int(surf_prod[y][2]) == 1:
+                                q_vib_surf.append(next(e.q_vib
+                                                       for e in T_species
+                                                       if e.name ==
+                                                       surf_prod[y][1]
+                                                       .strip('t')))
+                    ttt=2
+                    rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
                         _np.product(q_vib_surf) *\
                         _c.kb1 * 650/_c.h1
             else:
@@ -1126,18 +1135,23 @@ class IOdata(object):
                     q_vib_TST = next(e.q_vib for e in T_species
                                      if e.name ==
                                      T_species[TST_index].name)
-                    variant_fwd_pre = q_vib_TST/(q_vib_gas * q_rot_gas *
-                                                 q_trans2D_gas) * A_st /\
-                        _np.sqrt(2 * _np.pi * T_species[x].MW * _c.kb1*650)*1e5
+                    A_st = next(e.A_st for e in T_species
+                                if e.name ==
+                                self.Reaction[x].gas_reacs_prods[0])
+                    MW_gas = next(e.MW for e in T_species
+                                  if e.name ==
+                                  self.Reaction[x].gas_reacs_prods[0])
+                    Q_gas = q_vib_gas * q_rot_gas * q_trans2D_gas
+                    fwd_pre = q_vib_TST/Q_gas * A_st /\
+                        _np.sqrt(2 * _np.pi * MW_gas * _c.kb1*650)*1e5
                     for y in range(0, len(surf_species)):
-                        if surf_species[y][1] != '*' and\
-                              int(surf_species[y][2]) == 1:
-                                q_vib_surf[y].append(next(e.q_vib
-                                                     for e in T_species
-                                                     if e.name ==
-                                                     surf_species[y][1].
-                                                     strip('t')))
-                    variant_rev_pre = q_vib_TST/_np.product(q_vib_surf) *\
+                        if surf_prod[y][1] != '*' and\
+                              int(surf_prod[y][2]) == 1:
+                                q_vib_surf.append(next(e.q_vib
+                                                  for e in T_species
+                                                  if e.name ==
+                                                  surf_prod[y][1].strip('t')))
+                    rev_pre = q_vib_TST/_np.product(q_vib_surf) *\
                         (_c.kb1 * 650/_c.h1)
                 else:
                     q_trans2d_TST = next(e.q_vib for e in T_species
@@ -1155,7 +1169,7 @@ class IOdata(object):
                                          if e.name == surf_species[y][1].
                                          strip('t'))
                             q_vib_surf.append(q_vib)
-                        variant_fwd_pre = q_trans2d_TST /\
+                        fwd_pre = q_trans2d_TST /\
                             _np.product(q_vib_surf)*(_c.kb1*650/_c.h1)
                     q_vib_prod = []
                     for y in range(0, len(surf_prod)):
@@ -1164,12 +1178,11 @@ class IOdata(object):
                             q_vib_prod.append(next(e.q_vib for e in T_species
                                                    if e.name ==
                                                    surf_prod[y][1].strip('t')))
-                    variant_rev_pre = q_trans2d_TST /\
+                    rev_pre = q_trans2d_TST /\
                         _np.product(q_vib_prod)*(_c.kb1*650/_c.h1)
             self.Reaction[x].variant_activ_eng[0] = max(variant_activ_eng, 0.0)
-            self.Reaction[x].variant_pre_expon[0] = variant_fwd_pre
-            self.Reaction[x].variant_pe_ratio[0] = variant_fwd_pre /\
-                variant_rev_pre
+            self.Reaction[x].variant_pre_expon[0] = fwd_pre
+            self.Reaction[x].variant_pe_ratio[0] = fwd_pre/rev_pre
 
 
 '''
