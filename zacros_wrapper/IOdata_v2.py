@@ -36,13 +36,15 @@ import os as _os
 import numpy as _np
 import re as _re
 import random as _random
-import IOdata_v2 as _ClassIn
 import linecache as _linecache
+import DFT_to_Thermochemistry as _thermo
+import IOdata_v2 as _ClassIn
 
+from GRW_constants import constant as _c
 from Helper import ReadWithoutBlankLines as _ReadWithoutBlankLines
 from Helper import ReturnUnique as _ReturnUnique
 from Helper import rawbigcount as _rawbigcount
-
+reload(_thermo)
 
 class IOdata(object):
 
@@ -64,8 +66,7 @@ class IOdata(object):
         self.ReadEngIn()
         self.ReadMechIn()
 
-        if _os.path.isfile(_os.path.join(self.Path,
-                                         'state_input.dat')):
+        if _os.path.isfile(_os.path.join(self.Path, 'state_input.dat')):
             self.ReadStateInput()
         else:
             self.State = None
@@ -486,7 +487,7 @@ class IOdata(object):
                 for j in range(0, nVariant):
                     txt.write('  {} {}\n'.format('variant',
                               self.Reaction[i].variant_name[j]))
-                    txt.write('    {:25}\n'.format('site_types'))
+                    txt.write('    {:25}'.format('site_types'))
                     for k in range(0, len(self.Reaction[i].
                                           variant_site_types[j])):
                         txt.write('{} '.format(
@@ -510,11 +511,11 @@ class IOdata(object):
                     if self.Reaction[i].reversible:
                         txt.write('    {:25}{:.5e}\n'.format('pe_ratio',
                                   self.Reaction[i].variant_pe_ratio[j]))
-                    txt.write('    {:25}{}\n'.format('activ_eng',
-                              str(self.Reaction[i].variant_activ_eng[j])))
+                    txt.write('    {:25}{:4.2f}\n'.format('activ_eng',
+                              (self.Reaction[i].variant_activ_eng[j])))
                     if self.Reaction[i].variant_prox_factor != []:
-                        txt.write('    {:25}{}\n'.format('prox_factor',
-                                  str(self.Reaction[i].
+                        txt.write('    {:25}{:5.3f}\n'.format('prox_factor',
+                                  (self.Reaction[i].
                                       variant_prox_factor[j])))
                     txt.write('  end_variant\n\n')
 
@@ -1032,6 +1033,144 @@ class IOdata(object):
             del virtual_arr
         else:
             print 'No sensitivity analysis output file'
+
+    def CalcThermo(self):
+        '''
+        Calculate the forward activation energy, forward and reverse
+        pre-exponential factors and the PE-ratio for each reaction described
+        in Mechanism_input.dat using an input file with energies and
+        vibrational frequencies for all species and transition states
+        '''
+        filepath = _os.path.join(self.Path, 'Zacros_Species_Energy.txt')
+        A_st = 1e-20
+        [lines, dict] = _thermo.DFTFileRead(filepath)
+        T_species = []
+        for s in lines[3:]:
+            T_species.append(_thermo.Reference(s.split('\t'), dict,
+                                               filepath, A_st))
+        '''
+        Create list of transition state species
+        '''
+        TST = []
+        
+        for y in range(0, len(T_species)):
+            if T_species[y].name.startswith('TST') or T_species[y].name == '*':
+                TST.append([T_species[y].name, y])
+
+        for x in range(0, len(self.Reaction)):
+            q_vib_surf = []
+            Rxn_TST = 'TST' + ('0' + str(x + 1))[-2:]
+            TST_index = -1
+            '''
+            Find the index of the transition state species and the slab
+            energy species for the current reaction
+            '''
+            for element in TST:
+                if element[0] == Rxn_TST:
+                    TST_index = element[1]
+                elif element[0] == '*':
+                    TST_Slab = element[1]
+
+            surf_species = []
+            for e in self.Reaction[x].initial:
+                surf_species.append(e.split())
+            surf_prod = []
+            for e in self.Reaction[x].final:
+                surf_prod.append(e.split())
+            variant_activ_eng = 0.0
+            variant_fwd_pre = 0.0
+
+            if TST_index == -1:
+                variant_fwd_pre = A_st/_np.sqrt(2*_np.pi*T_species[x].MW *
+                                                _c.kb1*650)*1e5
+                if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+                   int(self.Reaction[x].gas_reacs_prods[1]) == -1:
+                    q_vib_gas = next(e.q_vib for e in T_species
+                                     if e.name == self.Reaction[x].
+                                     gas_reacs_prods[0])
+                    q_rot_gas = next(e.q_rot for e in T_species
+                                     if e.name == self.Reaction[x].
+                                     gas_reacs_prods[0])
+                    q_trans2D_gas = next(e.q_trans2D for e in T_species
+                                         if e.name == self.Reaction[x].
+                                         gas_reacs_prods[0])
+
+                    for y in range(0, len(surf_species)):
+                        if surf_species[y][1] != '*' and\
+                              int(surf_species[y][2]) == 1:
+                                q_vib_surf[y] = next(e.q_vib
+                                                     for e in T_species
+                                                     if e.name ==
+                                                     surf_species[y][1].
+                                                     strip('t'))
+                    variant_rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
+                        _np.product(q_vib_surf) *\
+                        _c.kb1 * 650/_c.h1
+            else:
+                variant_activ_eng = T_species[TST_index].etotal -\
+                                             T_species[TST_Slab].etotal
+                if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+                   int(self.Reaction[x].gas_reacs_prods[1]) == -1:
+                    variant_activ_eng -=\
+                        next(e.etotal for e in T_species
+                             if e.name == self.Reaction[x].gas_reacs_prods[0])
+                    q_vib_gas = next(e.q_vib for e in T_species
+                                     if e.name == self.Reaction[x].
+                                     gas_reacs_prods[0])
+                    q_rot_gas = next(e.q_rot for e in T_species
+                                     if e.name == self.Reaction[x].
+                                     gas_reacs_prods[0])
+                    q_trans2D_gas = next(e.q_trans2D for e in T_species
+                                         if e.name == self.Reaction[x].
+                                         gas_reacs_prods[0])
+                    q_vib_TST = next(e.q_vib for e in T_species
+                                     if e.name ==
+                                     T_species[TST_index].name)
+                    variant_fwd_pre = q_vib_TST/(q_vib_gas * q_rot_gas *
+                                                 q_trans2D_gas) * A_st /\
+                        _np.sqrt(2 * _np.pi * T_species[x].MW * _c.kb1*650)*1e5
+                    for y in range(0, len(surf_species)):
+                        if surf_species[y][1] != '*' and\
+                              int(surf_species[y][2]) == 1:
+                                q_vib_surf[y].append(next(e.q_vib
+                                                     for e in T_species
+                                                     if e.name ==
+                                                     surf_species[y][1].
+                                                     strip('t')))
+                    variant_rev_pre = q_vib_TST/_np.product(q_vib_surf) *\
+                        (_c.kb1 * 650/_c.h1)
+                else:
+                    q_trans2d_TST = next(e.q_vib for e in T_species
+                                         if e.name ==
+                                         T_species[TST_index].name)
+                    q_vib_surf = []
+                    for y in range(0, len(surf_species)):
+                        if int(surf_species[y][2]) == 1 and\
+                          surf_species[y][1] != '*':
+                            variant_activ_eng -=\
+                                (next(e.etotal for e in T_species
+                                 if e.name == (surf_species[y][1]).
+                                 strip('t')) - T_species[TST_Slab].etotal)
+                            q_vib = next(e.q_vib for e in T_species
+                                         if e.name == surf_species[y][1].
+                                         strip('t'))
+                            q_vib_surf.append(q_vib)
+                        variant_fwd_pre = q_trans2d_TST /\
+                            _np.product(q_vib_surf)*(_c.kb1*650/_c.h1)
+                    q_vib_prod = []
+                    for y in range(0, len(surf_prod)):
+                        if int(surf_species[y][2]) == 1 and\
+                          surf_species[y][1] != '*':
+                            q_vib_prod.append(next(e.q_vib for e in T_species
+                                                   if e.name ==
+                                                   surf_prod[y][1].strip('t')))
+                    variant_rev_pre = q_trans2d_TST /\
+                        _np.product(q_vib_prod)*(_c.kb1*650/_c.h1)
+            self.Reaction[x].variant_activ_eng[0] = max(variant_activ_eng, 0.0)
+            self.Reaction[x].variant_pre_expon[0] = variant_fwd_pre
+            self.Reaction[x].variant_pe_ratio[0] = variant_fwd_pre /\
+                variant_rev_pre
+
 
 '''
  Class definitions for:
