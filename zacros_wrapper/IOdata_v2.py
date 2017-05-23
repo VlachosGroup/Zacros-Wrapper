@@ -414,7 +414,7 @@ class IOdata(object):
                         self.Reaction[j].variant_pe_ratio.\
                          append(float(RawTxt[i].split()[1]))
                     elif RawTxt[i].split()[0] == 'activ_eng':
-                        self.Reaction[j].variant_activ_eng.\
+                        self.Reaction[j].activ_eng.\
                          append(float(RawTxt[i].split()[1]))
                     elif RawTxt[i].split()[0] == 'prox_factor':
                         self.Reaction[j].variant_prox_factor.\
@@ -514,7 +514,7 @@ class IOdata(object):
                         txt.write('    {:25}{:.5e}\n'.format('pe_ratio',
                                   self.Reaction[i].variant_pe_ratio[j]))
                     txt.write('    {:25}{:4.2f}\n'.format('activ_eng',
-                              (self.Reaction[i].variant_activ_eng[j])))
+                              (self.Reaction[i].activ_eng[j])))
                     if self.Reaction[i].variant_prox_factor != []:
                         txt.write('    {:25}{:5.3f}\n'.format('prox_factor',
                                   (self.Reaction[i].
@@ -1081,7 +1081,7 @@ class IOdata(object):
             surf_prod = []
             for e in self.Reaction[x].final:
                 surf_prod.append(e.split())
-            variant_activ_eng = 0.0
+            activ_eng = 0.0
             fwd_pre = 0.0
 
             if TST_index == -1:
@@ -1089,7 +1089,8 @@ class IOdata(object):
                 if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
                    int(self.Reaction[x].gas_reacs_prods[1]) == -1:
                     MW_gas = next(e.MW for e in T_species
-                                  if e.name == self.Reaction[x].gas_reacs_prods[0])
+                                  if e.name == self.Reaction[x].
+                                  gas_reacs_prods[0])
                     fwd_pre = T_species[x].A_st /\
                         _np.sqrt(2*_np.pi * MW_gas *
                                  _c.kb1*650)*1e5 * self.scaledown_factors[x]
@@ -1102,7 +1103,9 @@ class IOdata(object):
                     q_trans2D_gas = next(e.q_trans2D for e in T_species
                                          if e.name == self.Reaction[x].
                                          gas_reacs_prods[0])
-                    ttt=2
+                    fwd_pre = T_species[x].A_st /\
+                        _np.sqrt(2*_np.pi * MW_gas * _c.kb1*650)\
+                        * 1e5 * self.scaledown_factors[x]
                     for y in range(0, len(surf_prod)):
                         if surf_prod[y][1] != '*' and\
                               int(surf_prod[y][2]) == 1:
@@ -1111,16 +1114,15 @@ class IOdata(object):
                                                        if e.name ==
                                                        surf_prod[y][1]
                                                        .strip('t')))
-                    ttt=2
                     rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
                         _np.product(q_vib_surf) *\
                         _c.kb1 * 650/_c.h1
             else:
-                variant_activ_eng = T_species[TST_index].etotal -\
+                activ_eng = T_species[TST_index].etotal -\
                                              T_species[TST_Slab].etotal
                 if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
                    int(self.Reaction[x].gas_reacs_prods[1]) == -1:
-                    variant_activ_eng -=\
+                    activ_eng -=\
                         next(e.etotal for e in T_species
                              if e.name == self.Reaction[x].gas_reacs_prods[0])
                     q_vib_gas = next(e.q_vib for e in T_species
@@ -1161,26 +1163,25 @@ class IOdata(object):
                     for y in range(0, len(surf_species)):
                         if int(surf_species[y][2]) == 1 and\
                           surf_species[y][1] != '*':
-                            variant_activ_eng -=\
+                            activ_eng -=\
                                 (next(e.etotal for e in T_species
                                  if e.name == (surf_species[y][1]).
                                  strip('t')) - T_species[TST_Slab].etotal)
-                            q_vib = next(e.q_vib for e in T_species
-                                         if e.name == surf_species[y][1].
-                                         strip('t'))
-                            q_vib_surf.append(q_vib)
-                        fwd_pre = q_trans2d_TST /\
-                            _np.product(q_vib_surf)*(_c.kb1*650/_c.h1)
+                            q_vib_surf.append(next(e.q_vib for e in T_species
+                                              if e.name == surf_species[y][1].
+                                              strip('t')))
+                        fwd_pre = q_trans2d_TST/_np.product(q_vib_surf) *\
+                            (_c.kb1*650/_c.h1)
                     q_vib_prod = []
                     for y in range(0, len(surf_prod)):
-                        if int(surf_species[y][2]) == 1 and\
-                          surf_species[y][1] != '*':
+                        if int(surf_prod[y][2]) == 1 and\
+                          surf_prod[y][1] != '*':
                             q_vib_prod.append(next(e.q_vib for e in T_species
                                                    if e.name ==
                                                    surf_prod[y][1].strip('t')))
-                    rev_pre = q_trans2d_TST /\
-                        _np.product(q_vib_prod)*(_c.kb1*650/_c.h1)
-            self.Reaction[x].variant_activ_eng[0] = max(variant_activ_eng, 0.0)
+                    rev_pre = q_trans2d_TST/_np.product(q_vib_prod) *\
+                        (_c.kb1*650/_c.h1)
+            self.Reaction[x].activ_eng[0] = max(activ_eng, 0.0)
             self.Reaction[x].variant_pre_expon[0] = fwd_pre
             self.Reaction[x].variant_pe_ratio[0] = fwd_pre/rev_pre
 
@@ -1216,7 +1217,7 @@ class MechanismIn(IOdata):
         self.variant_site_types = []
         self.variant_pre_expon = []
         self.variant_pe_ratio = []
-        self.variant_activ_eng = []
+        self.activ_eng = []
         self.variant_prox_factor = []
         self.nVariant = 0
         super(MechanismIn, self).__init__()
