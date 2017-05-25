@@ -40,11 +40,10 @@ from GRW_constants import constant as c
 
 class Particle(object):
 
-    Tstp = 650                # Standard reference temperature [K]
     Cp_Range = _np.linspace(100, 1500, 15)
     VibScalingFactor = 1         # Vibrational Scaling Factor
 
-    def __init__(self, data, dict, Base_path, Input):
+    def __init__(self, data, dict, Base_path, Tstp=298.15):
 
         '''
         Fill object with species name and associated thermodynamic data
@@ -92,8 +91,7 @@ class Particle(object):
                                 float(data[dict['vibfreq'] + x]))
         self.vibfreq = _np.array(self.vibfreq)
         self.Base_path = Base_path
-        self.Input = Input
-
+        self.Tstp = Tstp
         self.ThermoProperties()
 
     def ThermoProperties(self):
@@ -112,7 +110,6 @@ class Particle(object):
                 self.I3 = self.Inertia
             else:
                 filepath = os.path.join(self.Base_path,
-                                        self.Input,
                                         self.totengpath,
                                         'CONTCAR')
                 VASP = _ase.read(filepath)
@@ -174,7 +171,6 @@ class Particle(object):
         Calculate vibrational component of entropy for gas and surface species
         '''
         T = self.Tstp
-        A_st = 1.50875e-20  # m^2
         self.S_Tstp_vib = c.R1 * sum((self.theta/T) /
                                      (_np.exp(self.theta/T)-1) -
                                      _np.log(1 - _np.exp(-self.theta/T)))
@@ -195,7 +191,7 @@ class Particle(object):
                                         _np.log(pi*T**3/self.T_I**3*I) -
                                         _np.log(self.sigma))
                 self.q_rot = _np.sqrt(_np.pi*I)/self.sigma *\
-                             (T/self.T_I)**(3./2.)
+                    (T/self.T_I)**(3./2.)
             else:
                 '''
                 Linear species
@@ -209,7 +205,8 @@ class Particle(object):
                                       _np.log(2.*pi*self.MW/c.h1**2) +
                                       5./2.*_np.log(c.kb1*T) -
                                       _np.log(p))
-            self.q_trans2D = A_st * (2*pi*self.MW*c.kb1*T)/c.h1**2
+            if hasattr(self, 'A_st'):
+                self.q_trans2D = self.A_st * (2*pi*self.MW*c.kb1*T)/c.h1**2
         else:
             '''
             Surface phase calculation
@@ -315,7 +312,7 @@ class Reference(Particle):
     '''
     SubClass object to add specific fields for reference species
     '''
-    def __init__(self, data, dict, Base_path, Input):
+    def __init__(self, data, dict, Base_path, Tstp=298.15):
         if data[dict['sigma']] != '':
             self.sigma = int(data[dict['sigma']])            # Sigma
         else:
@@ -332,10 +329,9 @@ class Reference(Particle):
             else:
                 self.Inertia = float(0)
         self.phase = str.upper(data[dict['phase']])      # Phase
-        super(Reference, self).__init__(data,
-                                        dict,
-                                        Base_path,
-                                        Input)           # Call superclass
+        if 'a_st' in dict and data[dict['a_st']] != '':
+            self.A_st = float(data[dict['a_st']])
+        super(Reference, self).__init__(data, dict, Base_path, Tstp=298.15)
 
     @staticmethod
     def BasisSet(RefSpecies):
@@ -355,16 +351,13 @@ class Target(Particle):
     '''
     SubClass object to add specific fields for target surface species
     '''
-    def __init__(self, data, dict, Base_path, Input):
+    def __init__(self, data, dict, Base_path, Tstp=298.15):
         self.surface = str(data[dict['surface']])          # Surface
         self.functional = str(data[dict['functional']])    # Functional
         self.kpoints = str(data[dict['kpoints']])          # k-Points
         self.vibfreqpath = str(data[dict['vibfreqpath']])  # Unused
         self.phase = None                                  # Phase
-        super(Target, self).__init__(data,
-                                     dict,
-                                     Base_path,
-                                     Input)                 # Call superclass
+        super(Target, self).__init__(data, dict, Base_path, Tstp=298.15)
 
     @staticmethod
     def ReferenceDFT(Species, Surface, Basis):
@@ -506,24 +499,28 @@ class Target(Particle):
                                              T_mid))
             fid.write('%6s%1i\n' % ('', 1))
             '''
-            Write first five NASA coefficients for low temperature range on line 2
+            Write first five NASA coefficients for
+            low temperature range on line 2
             '''
             for x in range(0, 5):
                 fid.write('%15E' % (Species[s].a_low[x]))
             fid.write('%4s%1i\n' % ('', 2))
             '''
-            Write final two NASA coefficients for low temperature range on line 2
+            Write final two NASA coefficients for
+            low temperature range on line 2
             '''
             for x in range(0, 2):
                 fid.write('%15E' % (Species[s].a_low[x+4]))
             '''
-            Write first three NASA coeficients for high temperature range on line 3
+            Write first three NASA coeficients for
+            high temperature range on line 3
             '''
             for x in range(0, 3):
                 fid.write('%15E' % (Species[s].a_high[x]))
             fid.write('%4s%1i\n' % ('', 3))
             '''
-            Write final four NASA coefficients for high temperature range on line 4
+            Write final four NASA coefficients for
+            high temperature range on line 4
             '''
             for x in range(0, 4):
                 fid.write('%15E' % (Species[s].a_high[x+3]))

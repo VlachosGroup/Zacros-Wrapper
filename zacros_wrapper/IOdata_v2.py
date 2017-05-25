@@ -1036,7 +1036,7 @@ class IOdata(object):
         else:
             print 'No sensitivity analysis output file'
 
-    def CalcThermo(self):
+    def CalcThermo(self, T):
         '''
         Calculate the forward activation energy, forward and reverse
         pre-exponential factors and the PE-ratio for each reaction described
@@ -1048,7 +1048,7 @@ class IOdata(object):
         T_species = []
         for s in lines[3:]:
             T_species.append(_thermo.Reference(s.split('\t'), dict,
-                                               filepath))
+                                               filepath, T))
         '''
         Create list of transition state species
         '''
@@ -1085,15 +1085,13 @@ class IOdata(object):
             fwd_pre = 0.0
 
             if TST_index == -1:
-
-                if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
-                   int(self.Reaction[x].gas_reacs_prods[1]) == -1:
+                '''
+                Case = No transition state energetics provided
+                '''
+                if hasattr(self.Reaction[x], 'gas_reacs_prods'):
                     MW_gas = next(e.MW for e in T_species
                                   if e.name == self.Reaction[x].
                                   gas_reacs_prods[0])
-                    fwd_pre = T_species[x].A_st /\
-                        _np.sqrt(2*_np.pi * MW_gas *
-                                 _c.kb1*650)*1e5 * self.scaledown_factors[x]
                     q_vib_gas = next(e.q_vib for e in T_species
                                      if e.name == self.Reaction[x].
                                      gas_reacs_prods[0])
@@ -1103,28 +1101,56 @@ class IOdata(object):
                     q_trans2D_gas = next(e.q_trans2D for e in T_species
                                          if e.name == self.Reaction[x].
                                          gas_reacs_prods[0])
-                    fwd_pre = T_species[x].A_st /\
-                        _np.sqrt(2*_np.pi * MW_gas * _c.kb1*650)\
-                        * 1e5 * self.scaledown_factors[x]
                     for y in range(0, len(surf_prod)):
                         if surf_prod[y][1] != '*' and\
-                              int(surf_prod[y][2]) == 1:
-                                q_vib_surf.append(next(e.q_vib
-                                                       for e in T_species
-                                                       if e.name ==
-                                                       surf_prod[y][1]
-                                                       .strip('t')))
-                    rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
-                        _np.product(q_vib_surf) *\
-                        _c.kb1 * 650/_c.h1
-            else:
-                activ_eng = T_species[TST_index].etotal -\
-                                             T_species[TST_Slab].etotal
+                                              int(surf_prod[y][2]) == 1:
+                            q_vib_surf.append(next(e.q_vib for e in T_species
+                                                   if e.name ==
+                                                   surf_prod[y][1]))
+
                 if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
                    int(self.Reaction[x].gas_reacs_prods[1]) == -1:
-                    activ_eng -=\
-                        next(e.etotal for e in T_species
-                             if e.name == self.Reaction[x].gas_reacs_prods[0])
+                    '''
+                    No transition state and a gas reactant
+                    Non-activated adsorbtion
+                    '''
+                    fwd_pre = T_species[x].A_st /\
+                        _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
+                        * 1e5 * self.scaledown_factors[x]
+
+                    rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
+                        _np.product(q_vib_surf) * _c.kb1 * T/_c.h1
+
+                elif hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+                        int(self.Reaction[x].gas_reacs_prods[1]) == 1:
+                    '''
+                    No transition state and a gas product
+                    Non-activated desorbtion
+                    '''
+                    rev_pre = T_species[x].A_st /\
+                        _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
+                        * 1e5 * self.scaledown_factors[x]
+
+                    fwd_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
+                        _np.product(q_vib_surf) *\
+                        _c.kb1 * T/_c.h1
+                else:
+                    '''
+                    Insufficient information to calculate pre-exponential
+                    factors.  Set values to zero
+                    '''
+                    fwd_pre = 0
+                    rev_pre = 1
+            else:
+                '''
+                Case = Transition state energetics provided
+                '''
+                activ_eng = T_species[TST_index].etotal -\
+                    T_species[TST_Slab].etotal
+                q_vib_TST = next(e.q_vib for e in T_species
+                                 if e.name ==
+                                 T_species[TST_index].name)
+                if hasattr(self.Reaction[x], 'gas_reacs_prods'):
                     q_vib_gas = next(e.q_vib for e in T_species
                                      if e.name == self.Reaction[x].
                                      gas_reacs_prods[0])
@@ -1134,53 +1160,79 @@ class IOdata(object):
                     q_trans2D_gas = next(e.q_trans2D for e in T_species
                                          if e.name == self.Reaction[x].
                                          gas_reacs_prods[0])
-                    q_vib_TST = next(e.q_vib for e in T_species
-                                     if e.name ==
-                                     T_species[TST_index].name)
                     A_st = next(e.A_st for e in T_species
                                 if e.name ==
                                 self.Reaction[x].gas_reacs_prods[0])
                     MW_gas = next(e.MW for e in T_species
                                   if e.name ==
                                   self.Reaction[x].gas_reacs_prods[0])
-                    Q_gas = q_vib_gas * q_rot_gas * q_trans2D_gas
-                    fwd_pre = q_vib_TST/Q_gas * A_st /\
-                        _np.sqrt(2 * _np.pi * MW_gas * _c.kb1*650)*1e5
-                    for y in range(0, len(surf_species)):
+                    for y in range(0, len(surf_prod)):
                         if surf_prod[y][1] != '*' and\
                               int(surf_prod[y][2]) == 1:
                                 q_vib_surf.append(next(e.q_vib
                                                   for e in T_species
                                                   if e.name ==
-                                                  surf_prod[y][1].strip('t')))
+                                                  surf_prod[y][1]))
+                    Q_gas = q_vib_gas * q_rot_gas * q_trans2D_gas
+
+                if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+                   int(self.Reaction[x].gas_reacs_prods[1]) == -1:
+                    '''
+                    Transition state and a gas reactant
+                    Activated adsorbtion
+                    '''
+                    activ_eng -=\
+                        next(e.etotal for e in T_species
+                             if e.name == self.Reaction[x].gas_reacs_prods[0])
+                    fwd_pre = q_vib_TST/Q_gas * A_st /\
+                        _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
                     rev_pre = q_vib_TST/_np.product(q_vib_surf) *\
-                        (_c.kb1 * 650/_c.h1)
+                        (_c.kb1*T/_c.h1)
+                elif hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+                        int(self.Reaction[x].gas_reacs_prods[1]) == 1:
+                    '''
+                    Transition state and a gas product
+                    Activated desorbtion
+                    '''
+                    q_vib_surf = []
+                    for y in range(0, len(surf_species)):
+                        if surf_species[y][1] != '*' and\
+                              int(surf_species[y][2]) == 1:
+                                q_vib_surf.append(next(e.q_vib
+                                                  for e in T_species
+                                                  if e.name ==
+                                                  surf_species[y][1]))
+                    rev_pre = q_vib_TST/Q_gas * A_st /\
+                        _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
+                    fwd_pre = q_vib_TST/_np.product(q_vib_surf) *\
+                              (_c.kb1*T/_c.h1)
                 else:
-                    q_trans2d_TST = next(e.q_vib for e in T_species
-                                         if e.name ==
-                                         T_species[TST_index].name)
+                    '''
+                    Transition state and no gas reactant or product
+                    Surface reaction
+                    '''
                     q_vib_surf = []
                     for y in range(0, len(surf_species)):
                         if int(surf_species[y][2]) == 1 and\
                           surf_species[y][1] != '*':
                             activ_eng -=\
                                 (next(e.etotal for e in T_species
-                                 if e.name == (surf_species[y][1]).
-                                 strip('t')) - T_species[TST_Slab].etotal)
+                                 if e.name == surf_species[y][1]) -
+                                 T_species[TST_Slab].etotal)
                             q_vib_surf.append(next(e.q_vib for e in T_species
-                                              if e.name == surf_species[y][1].
-                                              strip('t')))
-                        fwd_pre = q_trans2d_TST/_np.product(q_vib_surf) *\
-                            (_c.kb1*650/_c.h1)
+                                              if e.name == surf_species[y][1]))
+                    q_vib_reactants = _np.product(q_vib_surf)
+                    fwd_pre = q_vib_TST/q_vib_reactants * (_c.kb1*T/_c.h1)
+
                     q_vib_prod = []
                     for y in range(0, len(surf_prod)):
                         if int(surf_prod[y][2]) == 1 and\
                           surf_prod[y][1] != '*':
                             q_vib_prod.append(next(e.q_vib for e in T_species
                                                    if e.name ==
-                                                   surf_prod[y][1].strip('t')))
-                    rev_pre = q_trans2d_TST/_np.product(q_vib_prod) *\
-                        (_c.kb1*650/_c.h1)
+                                                   surf_prod[y][1]))
+                    q_vib_products = _np.product(q_vib_prod)
+                    rev_pre = q_vib_TST/q_vib_products * (_c.kb1*T/_c.h1)
             self.Reaction[x].activ_eng[0] = max(activ_eng, 0.0)
             self.Reaction[x].variant_pre_expon[0] = fwd_pre
             self.Reaction[x].variant_pe_ratio[0] = fwd_pre/rev_pre

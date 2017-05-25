@@ -13,7 +13,7 @@ if platform.system() == 'Windows':
     Base_path = 'C:\Users\wittregr\Documents\Python Scripts'
 else:
     Base_path = '/home/1729'
-Input = 'Input2'
+Input = 'Input'
 Output = 'Output'
 
 '''
@@ -23,8 +23,9 @@ Output = 'Output'
 filepath = os.path.join(Base_path, Input, 'Reference_set_info.txt')
 [lines, dict] = _thermo.DFTFileRead(filepath)
 T_ref = []
+Path = os.path.join(Base_path, Input)
 for s in lines[3:]:
-    T_ref.append(_thermo.Reference(s.split('\t'), dict, Base_path, Input))
+    T_ref.append(_thermo.Reference(s.split('\t'), dict, Path))
 
 '''
  Read target species and calculate all thermodynamic quantities
@@ -34,7 +35,7 @@ filepath = os.path.join(Base_path, 'Input', 'Tobe_Referenced.txt')
 [lines, dict] = _thermo.DFTFileRead(filepath)
 T_target = []
 for s in lines[3:]:
-    T_target.append(_thermo.Target(s.split('\t'), dict, Base_path, Input))
+    T_target.append(_thermo.Target(s.split('\t'), dict, Base_path))
 
 '''
 Create basis set from reference molecules
