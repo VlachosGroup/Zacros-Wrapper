@@ -1058,6 +1058,9 @@ class IOdata(object):
             if T_species[y].name.startswith('TST') or T_species[y].name == '*':
                 TST.append([T_species[y].name, y])
 
+        '''
+        Recalculate all entries in mechanism_input.dat
+        '''
         for x in range(0, len(self.Reaction)):
             q_vib_surf = []
             Rxn_TST = 'TST' + ('0' + str(x + 1))[-2:]
@@ -1071,7 +1074,6 @@ class IOdata(object):
                     TST_index = element[1]
                 elif element[0] == '*':
                     TST_Slab = element[1]
-
             '''
             Create list of all surface products and reactants
             '''
@@ -1146,7 +1148,8 @@ class IOdata(object):
                 Case = Transition state energetics provided
                 '''
                 activ_eng = T_species[TST_index].etotal -\
-                    T_species[TST_Slab].etotal
+                    T_species[TST_Slab].etotal +\
+                    T_species[TST_index].zpe/_c.ev_atom_2_kcal_mol
                 q_vib_TST = next(e.q_vib for e in T_species
                                  if e.name ==
                                  T_species[TST_index].name)
@@ -1182,7 +1185,8 @@ class IOdata(object):
                     Activated adsorbtion
                     '''
                     activ_eng -=\
-                        next(e.etotal for e in T_species
+                        next(e.etotal + e.zpe/_c.ev_atom_2_kcal_mol
+                             for e in T_species
                              if e.name == self.Reaction[x].gas_reacs_prods[0])
                     fwd_pre = q_vib_TST/Q_gas * A_st /\
                         _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
@@ -1198,6 +1202,12 @@ class IOdata(object):
                     for y in range(0, len(surf_species)):
                         if surf_species[y][1] != '*' and\
                               int(surf_species[y][2]) == 1:
+                                activ_eng -=\
+                                    (next(e.etotal + e.zpe /
+                                          _c.ev_atom_2_kcal_mol
+                                          for e in T_species
+                                     if e.name == surf_species[y][1]) -
+                                     T_species[TST_Slab].etotal)
                                 q_vib_surf.append(next(e.q_vib
                                                   for e in T_species
                                                   if e.name ==
@@ -1205,7 +1215,7 @@ class IOdata(object):
                     rev_pre = q_vib_TST/Q_gas * A_st /\
                         _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
                     fwd_pre = q_vib_TST/_np.product(q_vib_surf) *\
-                              (_c.kb1*T/_c.h1)
+                        (_c.kb1*T/_c.h1)
                 else:
                     '''
                     Transition state and no gas reactant or product
@@ -1216,7 +1226,8 @@ class IOdata(object):
                         if int(surf_species[y][2]) == 1 and\
                           surf_species[y][1] != '*':
                             activ_eng -=\
-                                (next(e.etotal for e in T_species
+                                (next(e.etotal + e.zpe/_c.ev_atom_2_kcal_mol
+                                      for e in T_species
                                  if e.name == surf_species[y][1]) -
                                  T_species[TST_Slab].etotal)
                             q_vib_surf.append(next(e.q_vib for e in T_species
