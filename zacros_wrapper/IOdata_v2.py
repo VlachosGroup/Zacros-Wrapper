@@ -1062,7 +1062,7 @@ class IOdata(object):
                     '''
                     fwd_pre = T_species[x].A_st /\
                         _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
-                        * 1e5 * self.scaledown_factors[x]
+                        * 1e5
 
                     rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
                         _np.product(q_vib_surf) * _c.kb1 * T/_c.h1
@@ -1075,7 +1075,7 @@ class IOdata(object):
                     '''
                     rev_pre = T_species[x].A_st /\
                         _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
-                        * 1e5 * self.scaledown_factors[x]
+                        * 1e5
 
                     fwd_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
                         _np.product(q_vib_surf) *\
@@ -1189,7 +1189,8 @@ class IOdata(object):
                     q_vib_products = _np.product(q_vib_prod)
                     rev_pre = q_vib_TST/q_vib_products * (_c.kb1*T/_c.h1)
             self.Reaction[x].activ_eng[0] = max(activ_eng, 0.0)
-            self.Reaction[x].variant_pre_expon[0] = fwd_pre
+            self.Reaction[x].variant_pre_expon[0] = fwd_pre *\
+                self.scaledown_factors[x]
             self.Reaction[x].variant_pe_ratio[0] = fwd_pre/rev_pre
 
     def ReadSpecnum(self):
