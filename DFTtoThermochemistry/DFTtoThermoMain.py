@@ -20,7 +20,8 @@ Output = 'Output'
  Read reference species and calculate all thermodynamic quantities
 '''
 
-filepath = os.path.join(Base_path, Input, 'Reference_set_info.txt')
+#filepath = os.path.join(Base_path, Input, 'Reference_set_info.txt')
+filepath = os.path.join(Base_path, Input, 'Zacros_Species_Energy.txt')
 [lines, dict] = _thermo.DFTFileRead(filepath)
 T_ref = []
 Path = os.path.join(Base_path, Input)

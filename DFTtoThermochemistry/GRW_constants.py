@@ -21,6 +21,7 @@ class constant:
     ''' Boltzmann's constant '''
     kb1 = 1.38064852E-23           # [J/K] or [m2-kg/s2-K]
     kb2 = 3.29982916e-24           # [cal/K]
+    kb3 = 8.6173303e-5             # [eV/K]
 
     ''' Speed of light '''
     c1 = 186000                    # [miles/s]

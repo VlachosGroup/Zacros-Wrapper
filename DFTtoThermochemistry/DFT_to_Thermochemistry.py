@@ -174,7 +174,8 @@ class Particle(object):
         self.S_Tstp_vib = c.R1 * sum((self.theta/T) /
                                      (_np.exp(self.theta/T)-1) -
                                      _np.log(1 - _np.exp(-self.theta/T)))
-        self.q_vib = _np.product(1. / (1 - _np.exp(-self.theta/T)))
+        self.q_vib = _np.product(_np.divide(1, (1 - _np.exp(-self.theta/T))))
+
         '''
         Calculate rotational and translational components of entropy
         '''
@@ -267,6 +268,7 @@ class Particle(object):
         Calculate zero-point energy
         '''
         self.zpe = sum(_np.multiply(c.h2, self.nu)/2)*c.NA/1000
+
         '''
         Calculate vibrational component of enthalpy
         '''
