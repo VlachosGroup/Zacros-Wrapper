@@ -47,6 +47,52 @@ reload(_thermo)
 
 
 '''
+    Method Name   	Description
+    ----------       -----------
+    Zacros Input Files
+    ReadEngIn	       Reads energetics_input.dat file into object named Cluster
+    WriteEnergetics	Writes energetics_input.dat from data in Cluster
+    ReadMechIn    	Reads mechanism_input.dat into object named Reaction
+    WriteMechanism	Writes mechanism_input.dat from data in Reaction
+    ReadSimIn     	Reads simulation_input.dat into object named Conditions
+    WriteSimIn	   Writes simulation_input.dat from data in Conditions
+    ReadLatticeIn	   Reads lattice_input.dat into object named Lattice
+    WriteLattice  	Writes lattice_input.dat from data in Lattice
+    ReadStateInput	Reads state_input.dat into object named State
+    WriteStateIn  	Writes state_input.dat from data in object State
+    ReadAllInput  	Read all the above Zacros input files
+    WriteAllInput 	Write all the above Zacros input file
+
+    Zacros Output Files
+    ReadGeneral   	Read general_output.txt into object named Performance
+    ReadHistory   	Read history_output.txt into object named History
+    ReadProcstat  	Read procstat_output.txt into object named Procstat
+    ReadSpecnum   	Read specnum_output.txt into object named Specnum
+    ReadCluster   	Read clusterocc.bin into object named Binary
+    ReadProp      	Read Prop_output.bin or PropCounter_output.bin into object
+                     named Binary
+    ReadSA        	Read SA_output.bin into object called Binary
+    ReadAllOutput 	Reads all the above Zacros output files
+
+    Special Functions
+    CheckComplete 	Check to see if a Zacros simulation has completed
+                     successfully
+    FindCluster   	Method finds the Cluster and Variant index of the nth
+                     Cluster-Variant where n is specified by Cluster_Num and
+                     the indices are returned as C.index (Cluster) and V.index
+                     (Variant) such that Cluster[C_index].variant_name[V_index]
+                     represents the name of the nth Cluster-Variant
+    FindReaction  	Method finds the Reaction and Variant index of the nth
+                     Reaction-Variant where n is specified by Cluster_Num and
+                     the indices are returned as R.index (Reaction) and V.index
+                     (Variant)such that Reaction[R_index].variant_name[V_index]
+                     represents the name of the nth Reaction-Variant
+    CalcThermo	    Calculate the forward activation energy, forward and
+                     reverse pre-exponential factors and the PE-ratio for each
+                     reaction described in Mechanism_input.dat using an input
+                     file with energies and vibrational frequencies for all
+                     species and transition states
+
  Class definitions for:
 
      Zacros input file      Class object
@@ -56,6 +102,16 @@ reload(_thermo)
      simulation_input.dat   SimIN
      lattice_input.dat      LatticeIn
      state_input.dat        StateIn
+
+     Zacros output file    Class object
+     ------------------    ------------
+     general_output.txt    Performance
+     history_output.txt    History
+     procstat_output.txt   Procstat
+     specnum_output.txt    Specnum
+     clusterocc.bin        Binary
+     Prop_output.bin       Binary
+     SA_output.bin         Binary
 '''
 
 
@@ -689,8 +745,10 @@ class IOdata(object):
             txt.write('#KMC simulation specification\n\n')
             txt.write('{:20}{:15}{}\n\n'.format('random_seed',
                       str(self.Conditions.Seed), SeedTxt))
-            txt.write('{:20}{:5g}\n'.format('temperature', self.Conditions.T))
-            txt.write('{:20}{:5g}\n\n'.format('pressure', self.Conditions.P))
+            txt.write('{:20}{:5.1f}\n'.format('temperature',
+                      self.Conditions.T))
+            txt.write('{:20}{:5.1f}\n\n'.format('pressure',
+                      self.Conditions.P))
             txt.write('{:20}{}\n'.format('n_gas_species',
                       str(self.Conditions.n_gas)))
             txt.write('{:20}'.format('gas_specs_names'))
