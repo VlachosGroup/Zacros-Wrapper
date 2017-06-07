@@ -5,7 +5,7 @@ import matplotlib as mat
 import matplotlib.pyplot as plt
 import copy
 import sys
-import scipy.stats      # causes trouble with newer version of Python
+import scipy.stats
 
 from KMC_Run import kmc_traj
 from Helper import *
