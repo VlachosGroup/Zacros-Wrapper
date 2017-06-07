@@ -6,7 +6,7 @@ import random
 
 from Helper import *
 from Lattice import Lattice     # will fill in this object later when it is used
-
+# GRW Comment
 class IOdata(object):
     
     '''
@@ -21,7 +21,7 @@ class IOdata(object):
         
         super(IOdata, self).__init__()        
         
-        self.Path = ''
+        self.Path = 'C:\Users\wittregr\Documents\Python Scripts'
 
 # -------------------- Input data --------------------
         
@@ -120,18 +120,13 @@ class IOdata(object):
         '''
         Read all input files. state_input.dat will be read only if it is present.
         '''
-        
-        try:
-            self.ReadSimIn()
-            self.ReadLatticeIn()
-            self.ReadEngIn()
-            self.ReadMechIn()
-        
-            if os.path.isfile(os.path.join(self.Path, 'state_input.dat')):
-                self.ReadStateInput()
-                
-        except:
-            raise Exception('Failed to read Zacros input files in ' + self.Path)
+        self.ReadSimIn()
+        self.ReadLatticeIn()
+        self.ReadEngIn()
+        self.ReadMechIn()
+       
+        if os.path.isfile(os.path.join(self.Path, 'Input', 'state_input.dat')):
+            self.ReadStateInput()
     
     def ReadEngIn(self):
 
@@ -139,7 +134,7 @@ class IOdata(object):
         Read energetics_input.dat
         '''
     
-        RawTxt = ReadWithoutBlankLines(os.path.join(self.Path, 'energetics_input.dat'), CommentLines=False)
+        RawTxt = ReadWithoutBlankLines(os.path.join(self.Path, 'Input', 'energetics_input.dat'), CommentLines=False)
         nLines = len(RawTxt)
         
         nCluster = 0
@@ -210,7 +205,7 @@ class IOdata(object):
         '''
     
         self.Lattice['Input'] = []
-        with open(os.path.join(self.Path, 'lattice_input.dat'),'r') as Txt:
+        with open(os.path.join(self.Path, 'Input', 'lattice_input.dat'),'r') as Txt:
             RawTxt = Txt.readlines()   
         for i in RawTxt:
             self.Lattice['Input'].append(i.split('\n')[0])
@@ -222,7 +217,7 @@ class IOdata(object):
         '''
     
         self.StateInput['Struct'] = []
-        with open(os.path.join(self.Path, 'state_input.dat'),'r') as Txt:
+        with open(os.path.join(self.Path, 'Input', 'state_input.dat'),'r') as Txt:
             RawTxt = Txt.readlines()   
         for i in RawTxt:
             self.StateInput['Struct'].append(i.split('\n')[0])
@@ -234,7 +229,7 @@ class IOdata(object):
         Read mechanism_input.dat
         '''
     
-        RawTxt = ReadWithoutBlankLines(os.path.join(self.Path, 'mechanism_input.dat'),CommentLines=True)
+        RawTxt = ReadWithoutBlankLines(os.path.join(self.Path, 'Input', 'mechanism_input.dat'),CommentLines=True)
         nLines = len(RawTxt)
         StiffCorrLine = -1
         
@@ -372,7 +367,7 @@ class IOdata(object):
         Read simulation_input.dat
         '''
     
-        with open(os.path.join(self.Path, 'simulation_input.dat'),'r') as txt:
+        with open(os.path.join(self.Path, 'Input', 'simulation_input.dat'),'r') as txt:
             RawTxt = txt.readlines()
             
         self.Conditions['restart'] = True
@@ -478,7 +473,7 @@ class IOdata(object):
     
         nCluster = self.Cluster['nCluster']
 
-        with open(os.path.join(self.Path, 'energetics_input.dat'), 'w') as txt:
+        with open(os.path.join(self.Path, 'Output', 'energetics_input.dat'), 'w') as txt:
             txt.write('energetics\n\n')
             for i in range(0,nCluster):
                 txt.write('#'*80 + '\n\n')
@@ -510,7 +505,7 @@ class IOdata(object):
                     txt.write('  end_variant\n\n')
 #                
                 txt.write('end_cluster\n\n')
-                txt.write('#'*80 + '\n\n')
+            txt.write('#'*80 + '\n\n')
             txt.write('\n\nend_energetics')
             
     def WriteLattice(self):
@@ -519,7 +514,7 @@ class IOdata(object):
         Write lattice_input.dat
         '''
     
-        with open(os.path.join(self.Path, 'lattice_input.dat'), 'w') as txt:
+        with open(os.path.join(self.Path, 'Output', 'lattice_input.dat'), 'w') as txt:
             for i in self.Lattice['Input']:
                 txt.write(i + '\n')
     
@@ -537,7 +532,7 @@ class IOdata(object):
             SDBool = True
         nMech = len(self.Reactions['Input'])
         StiffCorrCounter = -1
-        with open(os.path.join(self.Path, 'mechanism_input.dat'), 'w') as txt:
+        with open(os.path.join(self.Path, 'Output', 'mechanism_input.dat'), 'w') as txt:
             txt.write('mechanism\n\n')
             if SDBool:
                 txt.write('# Automated stiffness reconditioning employed\n')
@@ -610,7 +605,7 @@ class IOdata(object):
                 else:
                     txt.write('end_step\n\n')
                     
-                txt.write('#'*80 + '\n\n')
+            txt.write('#'*80 + '\n\n')
             txt.write('\n\nend_mechanism')
     
     def WriteSimIn(self):
@@ -619,7 +614,7 @@ class IOdata(object):
         Write simulation_input.dat
         '''
     
-        with open(os.path.join(self.Path, 'simulation_input.dat'), 'w') as txt:
+        with open(os.path.join(self.Path, 'Output', 'simulation_input.dat'), 'w') as txt:
             SeedTxt = ''
             if self.Conditions['Seed'] == '':
                 self.Conditions['Seed'] = random.randint(10000, 99999)
@@ -698,12 +693,12 @@ class IOdata(object):
         '''
         Write state_input.dat
         '''
-    
+
         if self.StateInput['Type'] == 'none':
             return
-            
+        print "next"
         if self.StateInput['Type'] == 'StateInput':   #Copy from prior state_input file
-            with open(os.path.join(self.Path, 'state_input.dat'), 'w') as txt:
+            with open(os.path.join(self.Path, 'Output', 'state_input.dat'), 'w') as txt:
                 for i in self.StateInput['Struct']:
                     txt.write(i + '\n')
                     
@@ -723,7 +718,7 @@ class IOdata(object):
                         SpecIden[i] = Lattice[j,2]
             
             if nAds > 0:
-                with open(os.path.join(self.Path, 'state_input.dat'),'w') as txt:
+                with open(os.path.join(self.Path, 'Output', 'state_input.dat'),'w') as txt:
                     txt.write('initial_state\n')
                     for i in range(0,nAds):
                         txt.write('  seed_on_sites  ' + PadStr(self.Species['surf_spec'][SpecIden[i]-1],10))
