@@ -11,7 +11,6 @@ import subprocess
 import copy
 
 from Helper import *
-import scipy
 
 class kmc_traj(IOdata):
     
@@ -32,7 +31,7 @@ class kmc_traj(IOdata):
         self.rate_traj = None
         self.int_rate_traj = None
         self.gas_prod = None
-        self.gas_stoich = None        # stoichiometry of gas-phase reaction
+        
         
     def Run_sim(self):
         
@@ -70,7 +69,7 @@ class kmc_traj(IOdata):
     def time_search(self, t):
         
         '''
-        Given a time, look up the index of the time vector nearest to that time
+        Given a time, look up the index of the smallest time greater than or equal to that time
         '''
         
         if t > self.Specnum['t'][-1] or t < 0:
@@ -81,6 +80,35 @@ class kmc_traj(IOdata):
             ind += 1
             
         return ind
+        
+        
+    def time_search_interp(self, t):
+        
+        '''
+        Get the information necessary to linearly interpolate data between time points
+        '''
+        
+        if t > self.Specnum['t'][-1] or t < 0:
+            raise Exception('Time is out of range.')
+        
+        ind_geq = 0
+        while self.Specnum['t'][ind_geq] < t:
+            ind_geq += 1
+            
+        ind_leq = len(self.Specnum['t']) - 1        # set it initially equal to the last index
+        while self.Specnum['t'][ind_leq] > t:
+            ind_leq -= 1
+        
+        if ind_geq - ind_leq < 0 or ind_geq - ind_leq > 1:
+            raise Exception('Time indices are wrong')
+        
+        low_frac = 1.0
+        if not (ind_geq == ind_leq):
+            low_frac = (self.Specnum['t'][ind_geq] - t) / (self.Specnum['t'][ind_geq] - self.Specnum['t'][ind_leq])
+            
+        high_frac = 1.0 - low_frac
+        
+        return [[ind_leq, ind_geq], [low_frac, high_frac]]
     
         
     @staticmethod
@@ -100,6 +128,7 @@ class kmc_traj(IOdata):
         n_surf_specs = len(run2.Species['surf_spec'])
         run2.Specnum['spec'][1::, n_surf_specs : ] = run2.Specnum['spec'][1::, n_surf_specs : ] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Specnum['spec'][-1, n_surf_specs : ]] )        
         sandwich.Specnum['spec'] = np.vstack([run1.Specnum['spec'], run2.Specnum['spec'][1::,:] ])
+        sandwich.Binary['prop'] = np.vstack([run1.Binary['prop'], run2.Binary['prop'][1::,:] ])
         sandwich.Procstat['events'] = np.vstack( [run1.Procstat['events'], run2.Procstat['events'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Procstat['events'][-1,:]] ) ] )
         sandwich.Binary['propCounter'] = np.vstack( [run1.Binary['propCounter'], run2.Binary['propCounter'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['propCounter'][-1,:]]  ) ] )
         sandwich.Binary['W_sen_anal']  = np.vstack( [run1.Binary['W_sen_anal'], run2.Binary['W_sen_anal'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['W_sen_anal'][-1,:]]  ) ] )      
@@ -207,8 +236,8 @@ class kmc_traj(IOdata):
         Plot a bar graph of elementary step frequencies versus time
         '''
         
-        start_ind = self.fraction_search(window[0])
-        end_ind = self.fraction_search(window[1])
+        start_ind = self.time_search(window[0] * self.Specnum['t'][-1])
+        end_ind = self.time_search(window[1] * self.Specnum['t'][-1])
         event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / float(site_norm)
         if time_norm:
             event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
@@ -314,7 +343,7 @@ class kmc_traj(IOdata):
         plt.close()
         
         
-    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need to complete this function by plotting adsorbates from the history file data
+    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need make marker type consistent with the site type
 
         '''
         Create a .png file with a picture of a lattice for every snapshot in history_output.txt

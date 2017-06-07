@@ -101,7 +101,7 @@ class IOdata(object):
         
         self.Binary                           = {}
         self.Binary['cluster']                = ''
-        self.Binary['prop']                   = ''
+        self.Binary['prop']                   = None
         self.Binary['propCounter']            = ''
         self.Binary['W_sen_anal']             = ''  
         
@@ -120,7 +120,6 @@ class IOdata(object):
         '''
         Read all input files. state_input.dat will be read only if it is present.
         '''
-    
         self.ReadSimIn()
         self.ReadLatticeIn()
         self.ReadEngIn()
@@ -756,6 +755,8 @@ class IOdata(object):
             self.ReadHistory()
             
             # Extra binary files
+            if os.path.isfile(os.path.join(self.Path, 'Prop_output.bin')):            
+                self.ReadProp(0)
             if os.path.isfile(os.path.join(self.Path, 'PropCounter_output.bin')):            
                 self.ReadProp(1)            
             if os.path.isfile(os.path.join(self.Path, 'SA_output.bin')):
