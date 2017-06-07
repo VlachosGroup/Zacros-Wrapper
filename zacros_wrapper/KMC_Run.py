@@ -12,19 +12,17 @@ import copy
 
 from Helper import *
 
-class kmc_traj(IOdata):
+class kmc_traj():
     
     '''
-    Handles a single Zacros trajectory. Inherits from IOdata.
+    Handles a single Zacros trajectory.
     '''
     
     def __init__(self):
         
         '''
-        Initializes additional class variables
+        Initializes class variables
         '''
-        
-        super(kmc_traj, self).__init__()
 
         self.exe_file = None
         self.props_avg = None
@@ -32,7 +30,151 @@ class kmc_traj(IOdata):
         self.int_rate_traj = None
         self.gas_prod = None
         
+    '''
+    ======================================= File input/output methods =======================================
+    '''
+    
+    def ReadAllInput(self):
+        '''
+        Read all input files. state_input.dat will be read only
+        if it is present.
+        '''
+        self.ReadSimIn()
+        self.ReadLatticeIn()
+        self.ReadEngIn()
+        self.ReadMechIn()
+
+        if _os.path.isfile(_os.path.join(self.Path, 'state_input.dat')):
+            self.ReadStateInput()
+        else:
+            self.State = None
+
+            
+    def WriteAllInput(self):
+        '''
+        Write all Zacros input files
+        '''
+        self.WriteSimIn()
+        self.WriteMechanism()
+        self.WriteEnergetics()
+        self.WriteStateIn()
+        self.WriteLattice()
+
         
+    def ReadAllOutput(self, build_lattice=False):
+        '''
+        Read all Zacros output files
+        Set build_lattice = True if you want to build the lattice object file.
+        This will make it take a lot longer to read
+        '''
+        self.ReadAllInput()
+
+        if self.CheckComplete():
+
+            # Standard output files
+            self.ReadGeneral()
+            self.ReadProcstat()
+            self.ReadSpecnum()
+            if build_lattice:
+                self.KMC_lat.Read_lattice_output(_os.path.join
+                                                 (self.Path,
+                                                  'lattice_output.txt'))
+            self.ReadHistory()
+
+            # Extra binary files
+            if _os.path.isfile(_os.path.join(self.Path,
+                                             'Prop_output.bin')):
+                self.ReadProp(0)
+            if _os.path.isfile(_os.path.join(self.Path,
+                                             'PropCounter_output.bin')):
+                self.ReadProp(1)
+            if _os.path.isfile(_os.path.join(self.Path,
+                                             'SA_output.bin')):
+                self.ReadSA()
+
+        else:
+            print 'general_output.txt not found in ' + self.Path
+    
+    
+    def ReadProp(self, Mode):
+        '''
+        Mode = 0: Read Prop_output.bin
+        Mode = 1: Read PropCounter_output.bin
+        '''
+        dt = _np.dtype(_np.float64)
+        if Mode == 0:     # Instantaneous propensities
+            FileName = 'Prop_output.bin'
+        elif Mode == 1:   # Integral propensities
+            FileName = 'PropCounter_output.bin'
+
+        virtual_arr = _np.memmap(_os.path.join(self.Path,
+                                               FileName), dt, "r")
+        nRxn = len(self.Performance.Nu)
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % nRxn)
+        virtual_arr = virtual_arr[:nNum]
+        if not hasattr(self, 'Binary'):
+            self.Binary = BinaryIn()
+
+        if Mode == 0:
+            self.Binary.prop = _np.reshape(virtual_arr, [nNum/nRxn, nRxn])
+            self.Binary.prop = _np.array(self.Binary.prop
+                                         [::self.Procstat.Spacing])
+        if Mode == 1:
+            self.Binary.propCounter = _np.reshape(virtual_arr,
+                                                  [nNum/nRxn, nRxn])
+            self.Binary.propCounter = _np.array(self.Binary.propCounter
+                                                [::self.Procstat.Spacing])
+        del virtual_arr
+
+    def ReadSA(self):
+        '''
+        Read SA_output.bin
+        '''
+        dt = _np.dtype(_np.float64)
+        FileName = 'SA_output.bin'
+        if _os.path.isfile(_os.path.join(self.Path, FileName)):
+            virtual_arr = _np.memmap(_os.path.join(self.Path,
+                                                   FileName), dt, "r")
+            nRxn = len(self.Performance.Nu)
+            nNum = virtual_arr.shape[0]
+            nNum = nNum - (nNum % nRxn)
+            virtual_arr = virtual_arr[:nNum]
+            if not hasattr(self, 'Binary'):
+                self.Binary = BinaryIn()
+
+            self.Binary.W_sen_anal = _np.reshape(virtual_arr,
+                                                 [nNum/nRxn, nRxn])
+            self.Binary.W_sen_anal = _np.array(self.Binary.W_sen_anal
+                                               [::self.Specnum.Spacing])
+
+            del virtual_arr
+        else:
+            print 'No sensitivity analysis output file'
+            
+            
+    def ReadCluster(self):
+        '''
+        Read clusterocc.bin
+        '''
+        dt = _np.dtype(_np.int32)
+        virtual_arr = _np.memmap(_os.path.join(self.Path, 'clusterocc.bin'),
+                                 dt, "r")
+        nCluster = sum(len(s.variant_name) for s in self.Cluster)
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % nCluster)
+        if not hasattr(self, 'Binary'):
+            self.Binary = BinaryIn()
+        self.Binary = BinaryIn()
+        self.Binary.cluster = _np.array(_np.reshape(virtual_arr,
+                                                    [nNum/nCluster, nCluster])
+                                        [::self.Specnum.Spacing])
+        del virtual_arr
+    
+    '''
+    ======================================= Calculation methods =======================================
+    '''
+    
     def Run_sim(self):
         
         '''
@@ -51,6 +193,23 @@ class kmc_traj(IOdata):
         except:
             raise Exception('Zacros run failed.')
        
+    
+    def CheckComplete(self):        # Copy/pasted from IOdata, needs to be made compatible
+        '''
+        Check to see if a Zacros run has completed successfully
+        '''
+        Complete = False
+        if _os.path.isfile(_os.path.join(self.Path,
+                                         'general_output.txt')):
+            with open(_os.path.join(self.Path,
+                                    'general_output.txt'),
+                      'r') as txt:
+                RawTxt = txt.readlines()
+            for i in RawTxt:
+                if _re.search('Normal termination', i):
+                    Complete = True
+        return Complete
+        
     
     def AdjustPreExponentials(self, delta_sdf):
         

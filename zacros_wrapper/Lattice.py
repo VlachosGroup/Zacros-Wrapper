@@ -16,12 +16,16 @@ class Lattice:
     Class which handles the KMC lattice
     '''
     
+    fname_in = 'lattice_input.dat'
+    fname_out = 'lattice_output.txt'
+    
     def __init__(self):
         
         '''
         Initialize class variables
         '''
         
+        text_only = True                    # If true, only store the text from the input file, if false, store all the complex information
         self.workingdir = '.'
         self.lattice_matrix = None         # each row is a lattice vector
         self.repeat = [1,1]
@@ -33,6 +37,31 @@ class Lattice:
         self.cell_list = []     # self, north, northeast, east, or southeast
 
         
+    def ReadLatticeIn_text(self):
+        '''
+        Read lattice_input.dat and only store the text
+        '''
+        self.Lattice = LatticeIn()
+        with open(_os.path.join(self.Path,
+                                'lattice_input.dat'), 'r') as Txt:
+            RawTxt = Txt.readlines()
+        for i in RawTxt:
+            self.Lattice.input.append(i.split('\n')[0])
+
+    
+    def WriteLattice_text(self):
+        '''
+        Write lattice_input.dat
+        '''
+        if not hasattr(self, 'Lattice'):
+            self.ReadLatticeIn()
+
+        with open(_os.path.join(self.Path,
+                                'lattice_input.dat'), 'w') as txt:
+            for i in self.Lattice.input:
+                txt.write(i + '\n')
+            
+    
     def set_frac_coords(self, fc):
         
         '''
