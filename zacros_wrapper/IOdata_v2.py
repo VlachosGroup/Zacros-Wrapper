@@ -47,52 +47,6 @@ reload(_thermo)
 
 
 '''
-    Method Name   	Description
-    ----------       -----------
-    Zacros Input Files
-    ReadEngIn	       Reads energetics_input.dat file into object named Cluster
-    WriteEnergetics	Writes energetics_input.dat from data in Cluster
-    ReadMechIn    	Reads mechanism_input.dat into object named Reaction
-    WriteMechanism	Writes mechanism_input.dat from data in Reaction
-    ReadSimIn     	Reads simulation_input.dat into object named Conditions
-    WriteSimIn	   Writes simulation_input.dat from data in Conditions
-    ReadLatticeIn	   Reads lattice_input.dat into object named Lattice
-    WriteLattice  	Writes lattice_input.dat from data in Lattice
-    ReadStateInput	Reads state_input.dat into object named State
-    WriteStateIn  	Writes state_input.dat from data in object State
-    ReadAllInput  	Read all the above Zacros input files
-    WriteAllInput 	Write all the above Zacros input file
-
-    Zacros Output Files
-    
-    ReadHistory   	Read history_output.txt into object named History
-    ReadProcstat  	Read procstat_output.txt into object named Procstat
-    ReadSpecnum   	Read specnum_output.txt into object named Specnum
-    ReadCluster   	Read clusterocc.bin into object named Binary
-    ReadProp      	Read Prop_output.bin or PropCounter_output.bin into object
-                     named Binary
-    ReadSA        	Read SA_output.bin into object called Binary
-    ReadAllOutput 	Reads all the above Zacros output files
-
-    Special Functions
-    CheckComplete 	Check to see if a Zacros simulation has completed
-                     successfully
-    FindCluster   	Method finds the Cluster and Variant index of the nth
-                     Cluster-Variant where n is specified by Cluster_Num and
-                     the indices are returned as C.index (Cluster) and V.index
-                     (Variant) such that Cluster[C_index].variant_name[V_index]
-                     represents the name of the nth Cluster-Variant
-    FindReaction  	Method finds the Reaction and Variant index of the nth
-                     Reaction-Variant where n is specified by Cluster_Num and
-                     the indices are returned as R.index (Reaction) and V.index
-                     (Variant)such that Reaction[R_index].variant_name[V_index]
-                     represents the name of the nth Reaction-Variant
-    CalcThermo	    Calculate the forward activation energy, forward and
-                     reverse pre-exponential factors and the PE-ratio for each
-                     reaction described in Mechanism_input.dat using an input
-                     file with energies and vibrational frequencies for all
-                     species and transition states
-
  Class definitions for:
 
      Zacros input file      Class object
@@ -115,6 +69,31 @@ reload(_thermo)
 '''
 
 
+'''
+============ Classes to handle input files ============
+'''
+
+class Cluster():
+
+    def __init__(self):
+    
+        self.name = None
+        self.variant_list = []
+        self.sites = None
+        self.neighboring = None
+        self.latstate = None
+        
+    
+class cluster_variant():
+
+    def __init__(self):
+    
+        self.name = None
+        self.site_types = None
+        self.graph_multiplicity = 1
+        self.cluster_eng = 0.0
+    
+
 class ClusterIn(object):
 
     '''
@@ -123,14 +102,14 @@ class ClusterIn(object):
 
     fname = 'energetics_input.dat'
 
+    
     def __init__(self):
-        self.variant_name = []
-        self.variant_site_types = []
-        self.variant_graph_multiplicity = []
-        self.variant_eng = []
-        self.nVariant = 0
+    
+        self.cluster_list = []
+        
 
-    def FindCluster(self, Cluster_Num):
+    def FindCluster(self, Cluster_Num):     # FIX THIS METHOD
+    
         '''
         Method finds the Cluster and Variant index of the nth
         Cluster-Variant where n is specified by Cluster_Num and
@@ -138,11 +117,12 @@ class ClusterIn(object):
         and V.index (Variant) such that Cluster[C_index].variant_name[V_index]
         represents the name of the nth Cluster-Variant
         '''
+        
         Cluster_Num = int(Cluster_Num)
-        Tvariants = sum(s.nVariant for s in self.Cluster)
+        Tvariants = sum(s.nVariant for s in self.cluster_list)
         if Tvariants >= Cluster_Num and Cluster_Num >= 1:
             var = []
-            for s in self.Cluster:
+            for s in self.cluster_list:
                 var.append(s.nVariant)
             var = _np.array(var)
             C_index = _np.argmin(var.cumsum() < Cluster_Num)
@@ -152,22 +132,21 @@ class ClusterIn(object):
         return(C_index, V_index)
         
         
-    def ReadEngIn(self):
+    def ReadIn(self, fldr):
     
         '''
         Read energetics_input.dat
         '''
-        RawTxt = _ReadWithoutBlankLines(_os.path.join(self.Path,
-                                                    'energetics_input.dat'),
-                                        CommentLines=False)
+        
+        RawTxt = _ReadWithoutBlankLines(_os.path.join(fldr, self.fname), CommentLines=False)
         nLines = len(RawTxt)
     
-        nCluster = 0
+        nClusters = 0
         for i in range(0, nLines):
             if RawTxt[i].split()[0] == 'cluster':
-                nCluster += 1
+                nClusters += 1
     
-        ClusterInd = _np.array([[0, 0]]*nCluster)
+        ClusterInd = _np.array([ [0, 0] ] * nClusters)
         Count = 0
         for i in range(0, nLines):
             if RawTxt[i].split()[0] == 'cluster':
@@ -177,28 +156,32 @@ class ClusterIn(object):
                 Count += 1
     
         nClusterTotal = 0
-        self.Cluster = []
-        for j in range(0, nCluster):
-            self.Cluster.append(ClusterIn())
-            self.Cluster[j].name = RawTxt[ClusterInd[j, 0]].split()[1]
-            Count = 0
+        self.cluster_list = [Cluster() for j in range(nClusters)]
+        
+        # Loop through all clusters
+        for j in range(nClusters):
+        
+            self.cluster_list[j].name = RawTxt[ClusterInd[j, 0]].split()[1]
+            n_variants = 0
+            
             for i in range(ClusterInd[j, 0] + 1, ClusterInd[j, 1]):
                 if RawTxt[i].split()[0] == 'variant':
-                    Count += 1
+                    n_variants += 1
                 elif RawTxt[i].split()[0] == 'sites':
-                    self.Cluster[j].sites = int(RawTxt[i].split()[1])
+                    self.cluster_list[j].sites = int(RawTxt[i].split()[1])
                 elif RawTxt[i].split()[0] == 'neighboring':
-                    self.Cluster[j].neighboring = RawTxt[i].split()[1:]
+                    self.cluster_list[j].neighboring = RawTxt[i].split()[1:]
                 elif RawTxt[i].split()[0] == 'lattice_state':
-                    self.Cluster[j].latstate = RawTxt[i + 1:i + 1 +
-                                                    self.Cluster[j].sites]
-                    for k in range(0, len(self.Cluster[j].latstate)):
-                        self.Cluster[j].latstate[k] =\
-                        self.Cluster[j].latstate[k].split('\n')[0]
+                    self.cluster_list[j].latstate = RawTxt[i + 1:i + 1 +
+                                                    self.cluster_list[j].sites]
+                    for k in range(0, len(self.cluster_list[j].latstate)):
+                        self.cluster_list[j].latstate[k] =\
+                        self.cluster_list[j].latstate[k].split('\n')[0]
     
-            self.Cluster[j].nVariant = Count
-            nClusterTotal += self.Cluster[j].nVariant
-            variantInd = _np.array([[0, 0]]*self.Cluster[j].nVariant)
+            nClusterTotal += n_variants
+            
+            # Find beginning and ending lines for each variant
+            variantInd = _np.array([[0, 0]]*n_variants)
             Count = 0
             for i in range(ClusterInd[j, 0]+1, ClusterInd[j, 1]):
                 if RawTxt[i].split()[0] == 'variant':
@@ -206,74 +189,100 @@ class ClusterIn(object):
                 if RawTxt[i].split()[0] == 'end_variant':
                     variantInd[Count, 1] = i
                     Count += 1
-    
-            for k in range(0, self.Cluster[j].nVariant):
+                    
+            self.cluster_list[j].variant_list = [cluster_variant() for k in range(n_variants)]
+
+            # Loop through all variants for this cluster
+            for k in range(n_variants):
+            
                 for i in range(variantInd[k, 0], variantInd[k, 1]):
+                
                     if RawTxt[i].split()[0] == 'variant':
-                        self.Cluster[j].variant_name.\
-                        append(RawTxt[i].split()[1])
+                        self.cluster_list[j].variant_list[k].name = RawTxt[i].split()[1]
                     elif RawTxt[i].split()[0] == 'site_types':
-                        self.Cluster[j].variant_site_types.\
-                        append(RawTxt[i].split()[1:])
+                        self.cluster_list[j].variant_list[k].site_types = RawTxt[i].split()[1:]
                     elif RawTxt[i].split()[0] == 'graph_multiplicity':
-                        self.Cluster[j].variant_graph_multiplicity.\
-                        append(RawTxt[i].split()[1])
+                        self.cluster_list[j].variant_list[k].graph_multiplicity = int(RawTxt[i].split()[1])
                     elif RawTxt[i].split()[0] == 'cluster_eng':
-                        self.Cluster[j].variant_eng.\
-                        append(float(RawTxt[i].split()[1]))
+                        self.cluster_list[j].variant_list[k].cluster_eng = float(RawTxt[i].split()[1])
+     
                         
-                        
-    def WriteEnergetics(self):
+    def WriteIn(self, fldr):
+    
         '''
         Write energetics_input.dat
         '''
-        if not hasattr(self, 'Cluster'):
-            self.ReadEngIn()
     
-        nCluster = len(self.Cluster)
-    
-        with open(_os.path.join(self.Path,
-                                'energetics_input.dat'), 'w') as txt:
+        with open(_os.path.join(fldr, self.fname), 'w') as txt:
+        
             txt.write('energetics\n\n')
-            for i in range(0, nCluster):
+            
+            for clustr in self.cluster_list:
+
                 txt.write('#'*80 + '\n\n')
-                txt.write('cluster ' + self.Cluster[i].name + '\n\n')
-                txt.write('  sites ' + str(self.Cluster[i].sites) + '\n')
+                txt.write('cluster ' + clustr.name + '\n\n')
+                txt.write('  sites ' + str(clustr.sites) + '\n')
     
-                if hasattr(self.Cluster[i], 'neighboring'):
+                if not clustr.neighboring is None:    # None when there is a point cluster
                     txt.write('  neighboring')
-                    for j in range(0, len(self.Cluster[i].neighboring)):
-                        txt.write(' ' + self.Cluster[i].neighboring[j])
+                    for j in range(0, len(clustr.neighboring)):
+                        txt.write(' ' + clustr.neighboring[j])
                     txt.write('\n')
     
                 txt.write('  lattice_state\n')
-                for j in range(0, int(self.Cluster[i].sites)):
-                    txt.write(self.Cluster[i].latstate[j] + '\n')
+                for j in range(0, int(clustr.sites)):
+                    txt.write(clustr.latstate[j] + '\n')
     
-                nVariant = len(self.Cluster[i].variant_name)
                 txt.write('\n')
-                for j in range(0, nVariant):
+                
+                for varnt in clustr.variant_list:
+                
                     txt.write('  {} {}\n'.format('variant',
-                            self.Cluster[i].variant_name[j]))
+                            varnt.name ))
                     txt.write('    {:25}'.format('site_types'))
-                    for k in range(0,
-                                len(self.Cluster[i].variant_site_types[j])):
+                    for k in range( len(varnt.site_types )):
                         txt.write('{} '.format
-                                (self.Cluster[i].variant_site_types[j][k]))
+                                (varnt.site_types[k]))
                     txt.write('\n')
-                    if int(self.Cluster[i].variant_graph_multiplicity[j]) > 0:
+                    if int(varnt.graph_multiplicity ) > 0:
                         txt.write('    {:25}{}\n'.format('graph_multiplicity',
-                                str(self.Cluster[i].
-                                    variant_graph_multiplicity[j])))
+                                str(varnt.graph_multiplicity )))
                     txt.write('    {:25}{}\n'.format('cluster_eng',
-                            str(self.Cluster[i].variant_eng[j])))
+                            str(varnt.cluster_eng)))
                     txt.write('  end_variant\n\n')
     
                 txt.write('end_cluster\n\n')
+                
             txt.write('#'*80 + '\n\n')
             txt.write('\n\nend_energetics')
             
 
+class Reaction():
+
+    def __init__(self):
+    
+        self.is_reversible = True
+        self.gas_reacs_prods = None
+        self.sites = None
+        self.neighboring = None
+        self.initial = None
+        self.final = None
+        self.variant_list = []
+
+class rxn_variant():
+
+    def __init__(self):
+    
+        self.name = None
+        self.site_types = None              # site types
+        self.pre_expon = None               # pre-exponential factor
+        self.pe_ratio = None                # partial equilibrium ratio
+        self.activ_eng = 0.0               # activation energy
+        self.prox_factor = 0.5
+        
+        self.scaledown_factor = 1.0
+        
+            
 class MechanismIn(object):
 
     '''
@@ -283,17 +292,12 @@ class MechanismIn(object):
     fname = 'mechanism_input.dat'
 
     def __init__(self):
-        self.initial = []
-        self.final = []
-        self.variant_name = []
-        self.variant_site_types = []
-        self.variant_pre_expon = []
-        self.variant_pe_ratio = []
-        self.activ_eng = []
-        self.variant_prox_factor = []
-        self.nVariant = 0
+    
+        self.rxn_list = []
+        self.include_scaledown = False
+        
 
-    def FindReaction(self, Reaction_Num):
+    def FindReaction(self, Reaction_Num):       # FIX THIS METHOD
     
         '''
         Method finds the Reaction and Variant index of the nth
@@ -302,6 +306,7 @@ class MechanismIn(object):
         and V.index (Variant) such that Reaction[R_index].variant_name[V_index]
         represents the name of the nth Reaction-Variant
         '''
+        
         Reaction_Num = int(Reaction_Num)
         Tvariants = sum(s.nVariant for s in self.Reaction)
         if Tvariants >= Reaction_Num and Reaction_Num >= 1:
@@ -316,44 +321,41 @@ class MechanismIn(object):
         return(R_index, V_index)
         
         
-    def ReadMechIn(self):
+    def ReadIn(self, fldr):
+    
         '''
         Read mechanism_input.dat
         '''
-        RawTxt = _ReadWithoutBlankLines(_os.path.join(self.Path,
-                                                    'mechanism_input.dat'),
-                                        CommentLines=True)
+        
+        RawTxt = _ReadWithoutBlankLines(_os.path.join(fldr, self.fname), CommentLines=True)
         nLines = len(RawTxt)
         StiffCorrLine = -1
     
-        nMech = 0
-        for i in range(0, nLines):
-            if RawTxt[i].split()[0] == 'reversible_step' or\
-                                    RawTxt[i].split()[0] == 'step':
-                nMech += 1
+        self.rxn_list = []
+        n_rxns = 0
+        for i in range(nLines):
+            if RawTxt[i].split()[0] == 'reversible_step':
+                self.rxn_list.append( Reaction() )
+                n_rxns += 1
+            elif RawTxt[i].split()[0] == 'step':
+                self.rxn_list.append( Reaction() )
+                self.rxn_list[-1].is_reversible = False
+                n_rxns += 1
             elif _re.search('# Automated stiffness reconditioning employed',
                             RawTxt[i]):
                 StiffCorrLine = i
+                self.include_scaledown = True
     
         if StiffCorrLine != -1:
-            self.scaledown_factors = [_np.float(i)
-                                    for i in RawTxt[StiffCorrLine+2].
-                                    split(':')[1].split()]
+            scaledown_factor_list = [_np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
     
-        # Initialize varibles
-        Rxn = []
-    
-        MechInd = _np.array([[0, 0]]*nMech)
+        # Identify which lines of text are for each reaction
+        MechInd = _np.array([[0, 0]]*n_rxns)
         Count = 0
-        for i in range(0, nLines):
+        for i in range(nLines):
     
-            if RawTxt[i].split()[0] == 'reversible_step':
+            if RawTxt[i].split()[0] == 'reversible_step' or RawTxt[i].split()[0] == 'step':
                 MechInd[Count, 0] = i
-                Rxn.append(True)
-    
-            elif RawTxt[i].split()[0] == 'step':
-                MechInd[Count, 0] = i
-                Rxn.append(False)
     
             elif RawTxt[i].split()[0] == 'end_reversible_step':
                 MechInd[Count, 1] = i
@@ -362,190 +364,162 @@ class MechanismIn(object):
             elif RawTxt[i].split()[0] == 'end_step':
                 MechInd[Count, 1] = i
                 Count += 1
-    
-        self.Reaction = []
-        for j in range(0, nMech):
-    
-            self.Reaction.append(MechanismIn())
-            self.Reaction[j].reversible = Rxn[j]
+        
+        all_rxn_ind = 0     # Use this index to assign scaledown factors
+        
+        # Loop over list of recations
+        for j in range(n_rxns):
     
             # Count the variants
     
-            self.Reaction[j].name = RawTxt[MechInd[j, 0]].split()[1]
-            Count = 0
+            self.rxn_list[j].name = RawTxt[MechInd[j, 0]].split()[1]
+            n_variants = 0
             InVariant = False
             StateLine = []
             for i in range(MechInd[j, 0] + 1, MechInd[j, 1]):
                 if RawTxt[i].split()[0] == 'variant':
-                    Count += 1
+                    n_variants += 1
                     InVariant = True
                 elif RawTxt[i].split()[0] == 'end_variant':
                     InVariant = False
                 elif RawTxt[i].split()[0] == 'gas_reacs_prods':
-                    self.Reaction[j].gas_reacs_prods = RawTxt[i].split()[1:]
+                    self.rxn_list[j].gas_reacs_prods = RawTxt[i].split()[1:]
                 elif RawTxt[i].split()[0] == 'sites':
                     nSites = int(RawTxt[i].split()[1])
-                    self.Reaction[j].sites = nSites
+                    self.rxn_list[j].sites = nSites
                 elif RawTxt[i].split()[0] == 'neighboring':
-                    neighbor = RawTxt[i].split()[1:]
-                    self.Reaction[j].neighboring = neighbor
+                    self.rxn_list[j].neighboring = RawTxt[i].split()[1:]
                 elif RawTxt[i].split()[0] == 'initial':
+                    self.rxn_list[j].initial = []
                     LatState = RawTxt[i+1:i+1+nSites]
                     for k in range(0, len(LatState)):
-                            self.Reaction[j].initial.\
+                            self.rxn_list[j].initial.\
                             append(LatState[k].split('\n')[0])
                     for k in range(0, nSites):
                         StateLine.append(i+1+k)
                 elif RawTxt[i].split()[0] == 'final':
+                    self.rxn_list[j].final = []
                     LatState = RawTxt[i + 1:i + 1 + nSites]
                     for k in range(0, len(LatState)):
-                            self.Reaction[j].final.\
+                            self.rxn_list[j].final.\
                             append(LatState[k].split('\n')[0])
                     for k in range(0, nSites):
                         StateLine.append(i+1+k)
                 elif not InVariant and i not in StateLine:
                     print 'Unparsed line in mechanism input:'
                     print RawTxt[i]
-            self.Reaction[j].nVariant = Count
-            variantInd = _np.array([[0, 0]]*self.Reaction[j].nVariant)
-            Count = 0
+
+            # Find beginning and ending lines for each variant
+            variantInd = _np.array([[0, 0]]*n_variants)
+            Count  = 0
             for i in range(MechInd[j, 0] + 1, MechInd[j, 1]):
                 if RawTxt[i].split()[0] == 'variant':
                     variantInd[Count, 0] = i
                 if RawTxt[i].split()[0] == 'end_variant':
                     variantInd[Count, 1] = i
                     Count += 1
-    
-            # Enumerate reversibilities
-    
-    #        if reversible:
-    #            Reactions['nrxns_total'] += 2 * nVariant
-    #        else:
-    #            Reactions['nrxns_total'] += nVariant
-    
-            for k in range(0, self.Reaction[j].nVariant):
+
+            self.rxn_list[j].variant_list = [ rxn_variant() for i in range(n_variants) ]
+                    
+            # Loop over list of recation variants        
+            for k in range( n_variants ):
+            
                 for i in range(variantInd[k, 0], variantInd[k, 1]):
                     if RawTxt[i].split()[0] == 'variant':
-                        self.Reaction[j].variant_name.\
-                        append(RawTxt[i].split()[1])
+                        self.rxn_list[j].variant_list[k].name = RawTxt[i].split()[1]
                     elif RawTxt[i].split()[0] == 'site_types':
-                        self.Reaction[j].variant_site_types.\
-                        append(RawTxt[i].split()[1:])
+                        self.rxn_list[j].variant_list[k].site_types = RawTxt[i].split()[1:]
                     elif RawTxt[i].split()[0] == 'pre_expon':
-                        self.Reaction[j].variant_pre_expon.\
-                        append(float(RawTxt[i].split()[1]))
+                        self.rxn_list[j].variant_list[k].pre_expon = float(RawTxt[i].split()[1])
                     elif RawTxt[i].split()[0] == 'pe_ratio':
-                        self.Reaction[j].variant_pe_ratio.\
-                        append(float(RawTxt[i].split()[1]))
+                        self.rxn_list[j].variant_list[k].pe_ratio = float(RawTxt[i].split()[1])
                     elif RawTxt[i].split()[0] == 'activ_eng':
-                        self.Reaction[j].activ_eng.\
-                        append(float(RawTxt[i].split()[1]))
+                        self.rxn_list[j].variant_list[k].activ_eng = float(RawTxt[i].split()[1])
                     elif RawTxt[i].split()[0] == 'prox_factor':
-                        self.Reaction[j].variant_prox_factor.\
-                        append(float(RawTxt[i].split()[1]))
+                        self.rxn_list[j].variant_list[k].prox_factor = float(RawTxt[i].split()[1])
                     elif RawTxt[i].split()[0] == '#':
                         pass
-    #                    else:
-    #                        print 'Unparsed line in mechanism variant:'
-    #                        print RawTxt[i]
-        pass
-        if StiffCorrLine == -1:
-            self.scaledown_factors = _np.ones(sum(len(s.variant_name)
-                                            for s in self.Reaction))
+                
+                # Assign scaledown factor if it is present
+                if StiffCorrLine != -1:
+                    self.rxn_list[j].variant_list[k].scaledown_factor = scaledown_factor_list[all_rxn_ind]
+                all_rxn_ind += 1
 
-    def WriteMechanism(self):
+
+    def WriteIn(self, fldr):
+    
         '''
         Write mechanism_input.dat
         '''
-        if not hasattr(self, 'Reaction') or\
-           not hasattr(self, 'scaledown_factors'):
-            self.ReadMechIn()
 
-        if self.scaledown_factors is None:
-            SDBool = False
-        else:
-            SDBool = True
-        nMech = len(self.Reaction)
-        StiffCorrCounter = -1
-        with open(_os.path.join(self.Path,
-                                'mechanism_input.dat'), 'w') as txt:
+        with open(_os.path.join(fldr, self.fname), 'w') as txt:
+        
             txt.write('mechanism\n\n')
-            if SDBool:
+            
+            if self.include_scaledown:
                 txt.write('# Automated stiffness reconditioning employed\n')
                 txt.write('# \n')
                 txt.write('# SDF: ')
                 for i in self.scaledown_factors:
                     txt.write('{0:.5e} \t'.format(i))
                 txt.write('\n\n')
-            for i in range(0, nMech):
+            
+            # Loop through reactions            
+            for rxn in self.rxn_list :
 
                 txt.write('#'*80 + '\n\n')
 
-                if self.Reaction[i].reversible:
-                    txt.write('reversible_step ' +
-                              self.Reaction[i].name + '\n')
+                if rxn.is_reversible:
+                    txt.write('reversible_step ' + rxn.name + '\n')
                 else:
-                    txt.write('step ' + self.Reaction[i].name + '\n')
+                    txt.write('step ' + rxn.name + '\n')
 
-                txt.write('  sites ' + str(self.Reaction[i].sites) + '\n')
-                if hasattr(self.Reaction[i], 'neighboring'):
+                txt.write('  sites ' + str(rxn.sites) + '\n')
+                if not rxn.neighboring is None:
                     txt.write('  neighboring')
-                    for j in range(0, len(self.Reaction[i].neighboring)):
-                        txt.write(' ' + self.Reaction[i].neighboring[j])
+                    for j in range(0, len(rxn.neighboring)):
+                        txt.write(' ' + rxn.neighboring[j])
                     txt.write('\n')
 
-                if hasattr(self.Reaction[i], 'gas_reacs_prods'):
+                if not rxn.gas_reacs_prods is None:
                     txt.write('  {} {} {}\n'.format('gas_reacs_prods',
-                              str(self.Reaction[i].gas_reacs_prods[0]),
-                              str(self.Reaction[i].gas_reacs_prods[1])))
+                              str(rxn.gas_reacs_prods[0]),
+                              str(rxn.gas_reacs_prods[1])))
 
                 txt.write('  initial\n')
-                for j in range(0, int(self.Reaction[i].sites)):
-                    txt.write(self.Reaction[i].initial[j] + '\n')
+                for j in range( rxn.sites ):
+                    txt.write(rxn.initial[j] + '\n')
 
                 txt.write('  final\n')
-                for j in range(0, int(self.Reaction[i].sites)):
-                    txt.write(self.Reaction[i].final[j] + '\n')
+                for j in range( rxn.sites ):
+                    txt.write(rxn.final[j] + '\n')
 
-                nVariant = len(self.Reaction[i].variant_name)
                 txt.write('\n')
-                for j in range(0, nVariant):
-                    txt.write('  {} {}\n'.format('variant',
-                              self.Reaction[i].variant_name[j]))
+                
+                # Loop through variants
+                for rxn_var in  rxn.variant_list :
+                    txt.write('  {} {}\n'.format('variant', rxn_var.name))
                     txt.write('    {:25}'.format('site_types'))
-                    for k in range(0, len(self.Reaction[i].
-                                          variant_site_types[j])):
-                        txt.write('{} '.format(
-                                self.Reaction[i].variant_site_types[j][k]))
+                    for k in range( len( rxn_var.site_types )):
+                        txt.write('{} '.format( rxn_var.site_types[k]) )
                     txt.write('\n')
-                    pre_exp = self.Reaction[i].variant_pre_expon[j]
-                    if SDBool:
-                        StiffCorrCounter += 1
-                        if self.scaledown_factors[StiffCorrCounter] != 1:
-                            txt.write('    {:25}{:.5e}'.format('pre_expon',
-                                      pre_exp))
-                            txt.write(('    # Pre-exponential has been ' +
-                                      'rescaled by a factor of {0:.5e}\n').
-                                      format(self.scaledown_factors
-                                             [StiffCorrCounter]))
-                        else:
-                            txt.write('    {:25}{:.5e}\n'.format('pre_expon',
-                                      pre_exp))
-                    else:
-                        txt.write('    {:25}{:.5e}\n'.format('pre_expon',
-                                                             pre_exp))
-                    if self.Reaction[i].reversible:
-                        txt.write('    {:25}{:.5e}\n'.format('pe_ratio',
-                                  self.Reaction[i].variant_pe_ratio[j]))
-                    txt.write('    {:25}{:4.2f}\n'.format('activ_eng',
-                              (self.Reaction[i].activ_eng[j])))
-                    if self.Reaction[i].variant_prox_factor != []:
-                        txt.write('    {:25}{:5.3f}\n'.format('prox_factor',
-                                  (self.Reaction[i].
-                                      variant_prox_factor[j])))
+                    
+                    # Write pre-exponential factor. Add comment if it has been rescaled
+                    if rxn_var.scaledown_factor == 1.0:             # reaction has not been rescaled
+                        txt.write('    {:25}{:.5e}\n'.format('pre_expon', rxn_var.pre_expon))
+                    else:                                   # reaction has been rescaled
+                        txt.write('    {:25}{:.5e}'.format('pre_expon', rxn_var.pre_expon))
+                        txt.write( ('    # Pre-exponential has been ' + 'rescaled by a factor of {0:.5e}\n').format(rxn_var.scaledown_factor) )
+
+                    if rxn.is_reversible:
+                        txt.write('    {:25}{:.5e}\n'.format('pe_ratio', rxn_var.pe_ratio))
+                        txt.write('    {:25}{:5.3f}\n'.format('prox_factor', (rxn_var.prox_factor) ) )
+                        
+                    txt.write('    {:25}{:4.2f}\n'.format('activ_eng', (rxn_var.activ_eng )) )
+                        
                     txt.write('  end_variant\n\n')
 
-                if self.Reaction[i].reversible:
+                if rxn.is_reversible:
                     txt.write('end_reversible_step\n\n')
                 else:
                     txt.write('end_step\n\n')
@@ -554,7 +528,7 @@ class MechanismIn(object):
             txt.write('\n\nend_mechanism')
         
 
-class SimIn(object):
+class SimIn():
 
     '''
     Handles input from simulation_input.dat
@@ -567,24 +541,30 @@ class SimIn(object):
         self.TPD = False            # flag for temperature programmed desorption (TPD) mode
         self.TPD_start = None
         self.TPD_ramp = None
-        
         self.T = None
+        self.P = None
+        
+        self.gas_spec = []
+        self.n_gas = 0
         self.gas_eng = []
         self.gas_MW = []
         self.gas_molfrac = []
+        self.surf_spec = []
         self.surf_dent = []
+        
         self.Seed = None
+        self.restart = True
         self.WallTime_Max = ''
 
-    def ReadSimIn(self, fldr):
+    def ReadIn(self, fldr):
+    
         '''
         Read simulation_input.dat
         '''
+        
         with open(_os.path.join(fldr, self.fname), 'r') as txt:
             RawTxt = txt.readlines()
 
-        self = SimIn()
-        self.restart = True
         for i in RawTxt:
             if len(i.split()) > 0:
                 if i[0] != '#':
@@ -645,13 +625,13 @@ class SimIn(object):
                                          i.split()[0] == 'n_gas_species' or\
                                          i.split()[0] == 'n_surf_species':
                         pass
+                        
 
-    def WriteSimIn(self, fldr):
+    def WriteIn(self, fldr):
+    
         '''
         Write simulation_input.dat
         '''
-        if not hasattr(self, 'Conditions'):
-            self.ReadSimIn()
 
         with open(_os.path.join(fldr, self.fname), 'w') as txt:
             SeedTxt = ''
@@ -663,8 +643,13 @@ class SimIn(object):
             txt.write('#KMC simulation specification\n\n')
             txt.write('{:20}{:15}{}\n\n'.format('random_seed',
                       str(self.Seed), SeedTxt))
-            txt.write('{:20}{:5.1f}\n'.format('temperature',
-                      self.T))
+            
+            # Write out temperature, which depends on TPD or constant temperature mode
+            if self.TPD:
+                txt.write('{:20}{:5.1f}{:5.1f}\n'.format('temperature\t ramp', self.TPD_start, self.TPD_ramp))
+            else:
+                txt.write('{:20}{:5.1f}\n'.format('temperature', self.T))
+                
             txt.write('{:20}{:5.1f}\n\n'.format('pressure',
                       self.P))
             txt.write('{:20}{}\n'.format('n_gas_species',
@@ -761,22 +746,31 @@ class StateIn(object):
 
     def __init__(self):
     
-        self.Type = None    # By default, does not write state_input.dat
-        self.Struct = []
+        self.Type = None    # None: No state_input.dat, StateInput: has read state_input.dat, history: read from history file previously
+        self.Struct = None
         
-    def ReadStateInput(self):
+    def ReadIn(self, fldr):
+    
         '''
         Read state_input.dat
         '''
-        self.State = StateIn()
-        with open(_os.path.join(self.Path,
-                                'state_input.dat'), 'r') as Txt:
-            RawTxt = Txt.readlines()
-        for i in RawTxt:
-            self.State.Struct.append(i.split('\n')[0])
-        self.State.Type = 'StateInput'
 
-    def WriteStateIn(self, fldr):
+        if _os.path.isfile(_os.path.join(fldr, 'state_input.dat')):
+        
+            with open(_os.path.join(fldr, 'state_input.dat'), 'r') as Txt:
+                RawTxt = Txt.readlines()
+                
+            self.Struct = []
+            for i in RawTxt:
+                self.Struct.append(i.split('\n')[0])
+                
+            self.Type = 'StateInput'
+            
+        else:
+            self.Type = None
+        
+
+    def WriteIn(self, fldr):
     
         '''
         Write state_input.dat
@@ -787,24 +781,24 @@ class StateIn(object):
 
         elif self.Type == 'StateInput':
             with open(_os.path.join(fldr, self.fname), 'w') as txt:
-                for i in self.State.Struct:
+                for i in self.Struct:
                     txt.write(i + '\n')
 
         elif self.Type == 'history':
 
-            self.Lattice = self.State.Struct
-            UniqSpec = _np.unique(self.Lattice[_np.not_equal(
-                    self.Lattice[:, 2], 0), 1])
+            Lattice = self.Struct
+            UniqSpec = _np.unique(Lattice[_np.not_equal(
+                    Lattice[:, 2], 0), 1])
             nAds = len(UniqSpec)
             SpecIden = [0] * nAds
             AdsInfo = [[] for i in range(0, nAds)]
             DentInfo = [[] for i in range(0, nAds)]
             for i in range(0, nAds):
-                for j in range(0, self.Lattice.shape[0]):
-                    if UniqSpec[i] == self.Lattice[j, 1]:
+                for j in range(0, Lattice.shape[0]):
+                    if UniqSpec[i] == Lattice[j, 1]:
                         AdsInfo[i].append(j + 1)
-                        DentInfo[i].append(self.Lattice[j, 3])
-                        SpecIden[i] = self.Lattice[j, 2]
+                        DentInfo[i].append(Lattice[j, 3])
+                        SpecIden[i] = Lattice[j, 2]
 
             if nAds > 0:
                 with open(_os.path.join(fldr, self.fname), 'w') as txt:
@@ -824,7 +818,11 @@ class StateIn(object):
             print 'state_input not written'
 
 
-class PerformanceIn(object):
+'''
+============ Classes to handle output files ============
+'''
+            
+class PerformanceOut(object):
 
     '''
     Handles data from general_output.txt
@@ -900,7 +898,7 @@ class PerformanceIn(object):
         self.Performance.UniqNu = _ReturnUnique(nuList).tolist()
 
 
-class ProcstatIn(object):
+class ProcstatOut(object):
     
     '''
     Handles data from procstat_output.txt
@@ -947,7 +945,7 @@ class ProcstatIn(object):
         self.events = _np.asarray(events)
 
 
-class SpecnumIn(object):
+class SpecnumOut(object):
     
     '''
     Handles data from specnum_output.txt
@@ -1012,7 +1010,7 @@ class SpecnumIn(object):
         self.spec = _np.asarray(spec)
     
 
-class History():
+class HistoryOut():
 
     '''
     Handles data from history_output.txt
@@ -1069,217 +1067,3 @@ def StateInc(i):
         state = 'event'
         inc = _np.int(i.split()[3])
     return (state, inc)
-
-
-def CalcThermo(self, T):
-    '''
-    Calculate the forward activation energy, forward and reverse
-    pre-exponential factors and the PE-ratio for each reaction described
-    in Mechanism_input.dat using an input file with energies and
-    vibrational frequencies for all species and transition states
-    '''
-    filepath = _os.path.join(self.Path, 'Zacros_Species_Energy.txt')
-    [lines, dict] = _thermo.DFTFileRead(filepath)
-    T_species = []
-    for s in lines[3:]:
-        T_species.append(_thermo.Reference(s.split('\t'), dict,
-                                           filepath, T))
-    '''
-    Create list of transition state species
-    '''
-    TST = []
-
-    for y in range(0, len(T_species)):
-        if T_species[y].name.startswith('TST') or T_species[y].name == '*':
-            TST.append([T_species[y].name, y])
-
-    '''
-    Recalculate all entries in mechanism_input.dat
-    '''
-    for x in range(0, len(self.Reaction)):
-        q_vib_surf = []
-        Rxn_TST = 'TST' + ('0' + str(x + 1))[-2:]
-        TST_index = -1
-        '''
-        Find the index of the transition state species and the slab
-        energy species for the current reaction
-        '''
-        for element in TST:
-            if element[0] == Rxn_TST:
-                TST_index = element[1]
-            elif element[0] == '*':
-                TST_Slab = element[1]
-        '''
-        Create list of all surface products and reactants
-        '''
-        surf_species = []
-        for e in self.Reaction[x].initial:
-            surf_species.append(e.split())
-        surf_prod = []
-        for e in self.Reaction[x].final:
-            surf_prod.append(e.split())
-        activ_eng = 0.0
-        fwd_pre = 0.0
-
-        if TST_index == -1:
-            '''
-            Case = No transition state energetics provided
-            '''
-            if hasattr(self.Reaction[x], 'gas_reacs_prods'):
-                MW_gas = next(e.MW for e in T_species
-                              if e.name == self.Reaction[x].
-                              gas_reacs_prods[0])
-                q_vib_gas = next(e.q_vib for e in T_species
-                                 if e.name == self.Reaction[x].
-                                 gas_reacs_prods[0])
-                q_rot_gas = next(e.q_rot for e in T_species
-                                 if e.name == self.Reaction[x].
-                                 gas_reacs_prods[0])
-                q_trans2D_gas = next(e.q_trans2D for e in T_species
-                                     if e.name == self.Reaction[x].
-                                     gas_reacs_prods[0])
-                for y in range(0, len(surf_prod)):
-                    if surf_prod[y][1] != '*' and\
-                                          int(surf_prod[y][2]) == 1:
-                        q_vib_surf.append(next(e.q_vib for e in T_species
-                                               if e.name ==
-                                               surf_prod[y][1]))
-
-            if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
-               int(self.Reaction[x].gas_reacs_prods[1]) == -1:
-                '''
-                No transition state and a gas reactant
-                Non-activated adsorbtion
-                '''
-                fwd_pre = T_species[x].A_st /\
-                    _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
-                    * 1e5
-
-                rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
-                    _np.product(q_vib_surf) * _c.kb1 * T/_c.h1
-
-            elif hasattr(self.Reaction[x], 'gas_reacs_prods') and\
-                    int(self.Reaction[x].gas_reacs_prods[1]) == 1:
-                '''
-                No transition state and a gas product
-                Non-activated desorbtion
-                '''
-                rev_pre = T_species[x].A_st /\
-                    _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
-                    * 1e5
-
-                fwd_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
-                    _np.product(q_vib_surf) *\
-                    _c.kb1 * T/_c.h1
-            else:
-                '''
-                Insufficient information to calculate pre-exponential
-                factors.  Set values to zero
-                '''
-                fwd_pre = 0
-                rev_pre = 1
-        else:
-            '''
-            Case = Transition state energetics provided
-            '''
-            activ_eng = T_species[TST_index].etotal -\
-                T_species[TST_Slab].etotal +\
-                T_species[TST_index].zpe/_c.ev_atom_2_kcal_mol
-            q_vib_TST = next(e.q_vib for e in T_species
-                             if e.name ==
-                             T_species[TST_index].name)
-            if hasattr(self.Reaction[x], 'gas_reacs_prods'):
-                q_vib_gas = next(e.q_vib for e in T_species
-                                 if e.name == self.Reaction[x].
-                                 gas_reacs_prods[0])
-                q_rot_gas = next(e.q_rot for e in T_species
-                                 if e.name == self.Reaction[x].
-                                 gas_reacs_prods[0])
-                q_trans2D_gas = next(e.q_trans2D for e in T_species
-                                     if e.name == self.Reaction[x].
-                                     gas_reacs_prods[0])
-                A_st = next(e.A_st for e in T_species
-                            if e.name ==
-                            self.Reaction[x].gas_reacs_prods[0])
-                MW_gas = next(e.MW for e in T_species
-                              if e.name ==
-                              self.Reaction[x].gas_reacs_prods[0])
-                for y in range(0, len(surf_prod)):
-                    if surf_prod[y][1] != '*' and\
-                          int(surf_prod[y][2]) == 1:
-                            q_vib_surf.append(next(e.q_vib
-                                              for e in T_species
-                                              if e.name ==
-                                              surf_prod[y][1]))
-                Q_gas = q_vib_gas * q_rot_gas * q_trans2D_gas
-
-            if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
-               int(self.Reaction[x].gas_reacs_prods[1]) == -1:
-                '''
-                Transition state and a gas reactant
-                Activated adsorbtion
-                '''
-                activ_eng -=\
-                    next(e.etotal + e.zpe/_c.ev_atom_2_kcal_mol
-                         for e in T_species
-                         if e.name == self.Reaction[x].gas_reacs_prods[0])
-                fwd_pre = q_vib_TST/Q_gas * A_st /\
-                    _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
-                rev_pre = q_vib_TST/_np.product(q_vib_surf) *\
-                    (_c.kb1*T/_c.h1)
-            elif hasattr(self.Reaction[x], 'gas_reacs_prods') and\
-                    int(self.Reaction[x].gas_reacs_prods[1]) == 1:
-                '''
-                Transition state and a gas product
-                Activated desorbtion
-                '''
-                q_vib_surf = []
-                for y in range(0, len(surf_species)):
-                    if surf_species[y][1] != '*' and\
-                          int(surf_species[y][2]) == 1:
-                            activ_eng -=\
-                                (next(e.etotal + e.zpe /
-                                      _c.ev_atom_2_kcal_mol
-                                      for e in T_species
-                                 if e.name == surf_species[y][1]) -
-                                 T_species[TST_Slab].etotal)
-                            q_vib_surf.append(next(e.q_vib
-                                              for e in T_species
-                                              if e.name ==
-                                              surf_species[y][1]))
-                rev_pre = q_vib_TST/Q_gas * A_st /\
-                    _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
-                fwd_pre = q_vib_TST/_np.product(q_vib_surf) *\
-                    (_c.kb1*T/_c.h1)
-            else:
-                '''
-                Transition state and no gas reactant or product
-                Surface reaction
-                '''
-                q_vib_surf = []
-                for y in range(0, len(surf_species)):
-                    if int(surf_species[y][2]) == 1 and\
-                      surf_species[y][1] != '*':
-                        activ_eng -=\
-                            (next(e.etotal + e.zpe/_c.ev_atom_2_kcal_mol
-                                  for e in T_species
-                             if e.name == surf_species[y][1]) -
-                             T_species[TST_Slab].etotal)
-                        q_vib_surf.append(next(e.q_vib for e in T_species
-                                          if e.name == surf_species[y][1]))
-                q_vib_reactants = _np.product(q_vib_surf)
-                fwd_pre = q_vib_TST/q_vib_reactants * (_c.kb1*T/_c.h1)
-
-                q_vib_prod = []
-                for y in range(0, len(surf_prod)):
-                    if int(surf_prod[y][2]) == 1 and\
-                      surf_prod[y][1] != '*':
-                        q_vib_prod.append(next(e.q_vib for e in T_species
-                                               if e.name ==
-                                               surf_prod[y][1]))
-                q_vib_products = _np.product(q_vib_prod)
-                rev_pre = q_vib_TST/q_vib_products * (_c.kb1*T/_c.h1)
-        self.Reaction[x].activ_eng[0] = max(activ_eng, 0.0)
-        self.Reaction[x].variant_pre_expon[0] = fwd_pre *\
-            self.scaledown_factors[x]
-        self.Reaction[x].variant_pe_ratio[0] = fwd_pre/rev_pre

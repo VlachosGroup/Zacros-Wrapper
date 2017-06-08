@@ -18,13 +18,29 @@ class kmc_traj():
     Handles a single Zacros trajectory.
     '''
     
-    def __init__(self):
+    def __init__(self, path_in = None):
         
         '''
         Initializes class variables
         '''
 
+        self.Path = path_in
         self.exe_file = None
+        
+        # Input variables
+        self.simin = SimIn()
+        self.mechin = MechanismIn()
+        self.clusterin = ClusterIn()
+        self.lat = Lattice()
+        self.statein = StateIn()
+        
+        # Output variables
+        self.genout = PerformanceOut()
+        self.specnumout = SpecnumOut()
+        self.procstatout = ProcstatOut()
+        self.histout = HistoryOut()
+        
+        # Extra analysis variables
         self.props_avg = None
         self.rate_traj = None
         self.int_rate_traj = None
@@ -35,30 +51,29 @@ class kmc_traj():
     '''
     
     def ReadAllInput(self):
+    
         '''
-        Read all input files. state_input.dat will be read only
-        if it is present.
+        Read all Zacros input files
         '''
-        self.ReadSimIn()
-        self.ReadLatticeIn()
-        self.ReadEngIn()
-        self.ReadMechIn()
-
-        if _os.path.isfile(_os.path.join(self.Path, 'state_input.dat')):
-            self.ReadStateInput()
-        else:
-            self.State = None
+        
+        self.simin.ReadIn(self.Path)
+        self.mechin.ReadIn(self.Path)
+        self.clusterin.ReadIn(self.Path)
+        self.lat.ReadIn(self.Path)
+        self.statein.ReadIn(self.Path)
 
             
     def WriteAllInput(self):
+    
         '''
         Write all Zacros input files
         '''
-        self.WriteSimIn()
-        self.WriteMechanism()
-        self.WriteEnergetics()
-        self.WriteStateIn()
-        self.WriteLattice()
+        
+        self.simin.WriteIn(self.Path)
+        self.mechin.WriteIn(self.Path)
+        self.clusterin.WriteIn(self.Path)
+        self.lat.WriteIn(self.Path)
+        self.statein.WriteIn(self.Path)
 
         
     def ReadAllOutput(self, build_lattice=False):
@@ -175,6 +190,220 @@ class kmc_traj():
     ======================================= Calculation methods =======================================
     '''
     
+    def CalcThermo(self, T):
+    '''
+    Calculate the forward activation energy, forward and reverse
+    pre-exponential factors and the PE-ratio for each reaction described
+    in Mechanism_input.dat using an input file with energies and
+    vibrational frequencies for all species and transition states
+    '''
+    filepath = _os.path.join(self.Path, 'Zacros_Species_Energy.txt')
+    [lines, dict] = _thermo.DFTFileRead(filepath)
+    T_species = []
+    for s in lines[3:]:
+        T_species.append(_thermo.Reference(s.split('\t'), dict,
+                                           filepath, T))
+    '''
+    Create list of transition state species
+    '''
+    TST = []
+
+    for y in range(0, len(T_species)):
+        if T_species[y].name.startswith('TST') or T_species[y].name == '*':
+            TST.append([T_species[y].name, y])
+
+    '''
+    Recalculate all entries in mechanism_input.dat
+    '''
+    for x in range(0, len(self.Reaction)):
+        q_vib_surf = []
+        Rxn_TST = 'TST' + ('0' + str(x + 1))[-2:]
+        TST_index = -1
+        '''
+        Find the index of the transition state species and the slab
+        energy species for the current reaction
+        '''
+        for element in TST:
+            if element[0] == Rxn_TST:
+                TST_index = element[1]
+            elif element[0] == '*':
+                TST_Slab = element[1]
+        '''
+        Create list of all surface products and reactants
+        '''
+        surf_species = []
+        for e in self.Reaction[x].initial:
+            surf_species.append(e.split())
+        surf_prod = []
+        for e in self.Reaction[x].final:
+            surf_prod.append(e.split())
+        activ_eng = 0.0
+        fwd_pre = 0.0
+
+        if TST_index == -1:
+            '''
+            Case = No transition state energetics provided
+            '''
+            if hasattr(self.Reaction[x], 'gas_reacs_prods'):
+                MW_gas = next(e.MW for e in T_species
+                              if e.name == self.Reaction[x].
+                              gas_reacs_prods[0])
+                q_vib_gas = next(e.q_vib for e in T_species
+                                 if e.name == self.Reaction[x].
+                                 gas_reacs_prods[0])
+                q_rot_gas = next(e.q_rot for e in T_species
+                                 if e.name == self.Reaction[x].
+                                 gas_reacs_prods[0])
+                q_trans2D_gas = next(e.q_trans2D for e in T_species
+                                     if e.name == self.Reaction[x].
+                                     gas_reacs_prods[0])
+                for y in range(0, len(surf_prod)):
+                    if surf_prod[y][1] != '*' and\
+                                          int(surf_prod[y][2]) == 1:
+                        q_vib_surf.append(next(e.q_vib for e in T_species
+                                               if e.name ==
+                                               surf_prod[y][1]))
+
+            if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+               int(self.Reaction[x].gas_reacs_prods[1]) == -1:
+                '''
+                No transition state and a gas reactant
+                Non-activated adsorbtion
+                '''
+                fwd_pre = T_species[x].A_st /\
+                    _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
+                    * 1e5
+
+                rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
+                    _np.product(q_vib_surf) * _c.kb1 * T/_c.h1
+
+            elif hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+                    int(self.Reaction[x].gas_reacs_prods[1]) == 1:
+                '''
+                No transition state and a gas product
+                Non-activated desorbtion
+                '''
+                rev_pre = T_species[x].A_st /\
+                    _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
+                    * 1e5
+
+                fwd_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
+                    _np.product(q_vib_surf) *\
+                    _c.kb1 * T/_c.h1
+            else:
+                '''
+                Insufficient information to calculate pre-exponential
+                factors.  Set values to zero
+                '''
+                fwd_pre = 0
+                rev_pre = 1
+        else:
+            '''
+            Case = Transition state energetics provided
+            '''
+            activ_eng = T_species[TST_index].etotal -\
+                T_species[TST_Slab].etotal +\
+                T_species[TST_index].zpe/_c.ev_atom_2_kcal_mol
+            q_vib_TST = next(e.q_vib for e in T_species
+                             if e.name ==
+                             T_species[TST_index].name)
+            if hasattr(self.Reaction[x], 'gas_reacs_prods'):
+                q_vib_gas = next(e.q_vib for e in T_species
+                                 if e.name == self.Reaction[x].
+                                 gas_reacs_prods[0])
+                q_rot_gas = next(e.q_rot for e in T_species
+                                 if e.name == self.Reaction[x].
+                                 gas_reacs_prods[0])
+                q_trans2D_gas = next(e.q_trans2D for e in T_species
+                                     if e.name == self.Reaction[x].
+                                     gas_reacs_prods[0])
+                A_st = next(e.A_st for e in T_species
+                            if e.name ==
+                            self.Reaction[x].gas_reacs_prods[0])
+                MW_gas = next(e.MW for e in T_species
+                              if e.name ==
+                              self.Reaction[x].gas_reacs_prods[0])
+                for y in range(0, len(surf_prod)):
+                    if surf_prod[y][1] != '*' and\
+                          int(surf_prod[y][2]) == 1:
+                            q_vib_surf.append(next(e.q_vib
+                                              for e in T_species
+                                              if e.name ==
+                                              surf_prod[y][1]))
+                Q_gas = q_vib_gas * q_rot_gas * q_trans2D_gas
+
+            if hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+               int(self.Reaction[x].gas_reacs_prods[1]) == -1:
+                '''
+                Transition state and a gas reactant
+                Activated adsorbtion
+                '''
+                activ_eng -=\
+                    next(e.etotal + e.zpe/_c.ev_atom_2_kcal_mol
+                         for e in T_species
+                         if e.name == self.Reaction[x].gas_reacs_prods[0])
+                fwd_pre = q_vib_TST/Q_gas * A_st /\
+                    _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
+                rev_pre = q_vib_TST/_np.product(q_vib_surf) *\
+                    (_c.kb1*T/_c.h1)
+            elif hasattr(self.Reaction[x], 'gas_reacs_prods') and\
+                    int(self.Reaction[x].gas_reacs_prods[1]) == 1:
+                '''
+                Transition state and a gas product
+                Activated desorbtion
+                '''
+                q_vib_surf = []
+                for y in range(0, len(surf_species)):
+                    if surf_species[y][1] != '*' and\
+                          int(surf_species[y][2]) == 1:
+                            activ_eng -=\
+                                (next(e.etotal + e.zpe /
+                                      _c.ev_atom_2_kcal_mol
+                                      for e in T_species
+                                 if e.name == surf_species[y][1]) -
+                                 T_species[TST_Slab].etotal)
+                            q_vib_surf.append(next(e.q_vib
+                                              for e in T_species
+                                              if e.name ==
+                                              surf_species[y][1]))
+                rev_pre = q_vib_TST/Q_gas * A_st /\
+                    _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
+                fwd_pre = q_vib_TST/_np.product(q_vib_surf) *\
+                    (_c.kb1*T/_c.h1)
+            else:
+                '''
+                Transition state and no gas reactant or product
+                Surface reaction
+                '''
+                q_vib_surf = []
+                for y in range(0, len(surf_species)):
+                    if int(surf_species[y][2]) == 1 and\
+                      surf_species[y][1] != '*':
+                        activ_eng -=\
+                            (next(e.etotal + e.zpe/_c.ev_atom_2_kcal_mol
+                                  for e in T_species
+                             if e.name == surf_species[y][1]) -
+                             T_species[TST_Slab].etotal)
+                        q_vib_surf.append(next(e.q_vib for e in T_species
+                                          if e.name == surf_species[y][1]))
+                q_vib_reactants = _np.product(q_vib_surf)
+                fwd_pre = q_vib_TST/q_vib_reactants * (_c.kb1*T/_c.h1)
+
+                q_vib_prod = []
+                for y in range(0, len(surf_prod)):
+                    if int(surf_prod[y][2]) == 1 and\
+                      surf_prod[y][1] != '*':
+                        q_vib_prod.append(next(e.q_vib for e in T_species
+                                               if e.name ==
+                                               surf_prod[y][1]))
+                q_vib_products = _np.product(q_vib_prod)
+                rev_pre = q_vib_TST/q_vib_products * (_c.kb1*T/_c.h1)
+        self.Reaction[x].activ_eng[0] = max(activ_eng, 0.0)
+        self.Reaction[x].variant_pre_expon[0] = fwd_pre *\
+            self.scaledown_factors[x]
+        self.Reaction[x].variant_pe_ratio[0] = fwd_pre/rev_pre
+    
+    
     def Run_sim(self):
         
         '''
@@ -194,16 +423,15 @@ class kmc_traj():
             raise Exception('Zacros run failed.')
        
     
-    def CheckComplete(self):        # Copy/pasted from IOdata, needs to be made compatible
+    def CheckComplete(self):
+    
         '''
         Check to see if a Zacros run has completed successfully
         '''
+        
         Complete = False
-        if _os.path.isfile(_os.path.join(self.Path,
-                                         'general_output.txt')):
-            with open(_os.path.join(self.Path,
-                                    'general_output.txt'),
-                      'r') as txt:
+        if _os.path.isfile(_os.path.join(self.Path, 'general_output.txt')):
+            with open(_os.path.join(self.Path, 'general_output.txt'), 'r') as txt:
                 RawTxt = txt.readlines()
             for i in RawTxt:
                 if _re.search('Normal termination', i):
@@ -496,10 +724,16 @@ class kmc_traj():
         '''
         Plot the lattice
         '''
-    
-        plt = self.KMC_lat.PlotLattice()
-        plt.savefig(os.path.join(self.Path, 'lattice.png'))
-        plt.close()
+        
+        if self.lat.text_only:
+        
+            print 'Cannot plot lattice. Only text input exists'
+            
+        else:
+        
+            plt = self.KMC_lat.PlotLattice()
+            plt.savefig(os.path.join(self.Path, 'lattice.png'))
+            plt.close()
         
         
     def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need make marker type consistent with the site type
