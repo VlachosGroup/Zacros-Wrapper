@@ -460,8 +460,9 @@ class MechanismIn(object):
                 txt.write('# Automated stiffness reconditioning employed\n')
                 txt.write('# \n')
                 txt.write('# SDF: ')
-                for i in self.scaledown_factors:
-                    txt.write('{0:.5e} \t'.format(i))
+                for i in self.rxn_list:
+                    for j in i.variant_list:
+                        txt.write('{0:.5e} \t'.format( j.scaledown_factor ))
                 txt.write('\n\n')
             
             # Loop through reactions            
@@ -554,6 +555,7 @@ class MechanismIn(object):
         Recalculate all entries in mechanism_input.dat
         '''
         for x in range(0, len(self.rxn_list)):
+        
             q_vib_surf = []
             Rxn_TST = 'TST' + ('0' + str(x + 1))[-2:]
             TST_index = -1
@@ -582,7 +584,7 @@ class MechanismIn(object):
                 '''
                 Case = No transition state energetics provided
                 '''
-                if hasattr(self.rxn_list[x], 'gas_reacs_prods'):
+                if not self.rxn_list[x].gas_reacs_prods is None:
                     MW_gas = next(e.MW for e in T_species
                                   if e.name == self.rxn_list[x].
                                   gas_reacs_prods[0])
@@ -602,7 +604,7 @@ class MechanismIn(object):
                                                    if e.name ==
                                                    surf_prod[y][1]))
 
-                if hasattr(self.rxn_list[x], 'gas_reacs_prods') and\
+                if not self.rxn_list[x].gas_reacs_prods is None and\
                    int(self.rxn_list[x].gas_reacs_prods[1]) == -1:
                     '''
                     No transition state and a gas reactant
@@ -615,7 +617,7 @@ class MechanismIn(object):
                     rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
                         _np.product(q_vib_surf) * _c.kb1 * T/_c.h1
 
-                elif hasattr(self.rxn_list[x], 'gas_reacs_prods') and\
+                elif not self.rxn_list[x].gas_reacs_prods is None and\
                         int(self.rxn_list[x].gas_reacs_prods[1]) == 1:
                     '''
                     No transition state and a gas product
@@ -645,7 +647,7 @@ class MechanismIn(object):
                 q_vib_TST = next(e.q_vib for e in T_species
                                  if e.name ==
                                  T_species[TST_index].name)
-                if hasattr(self.rxn_list[x], 'gas_reacs_prods'):
+                if not self.rxn_list[x].gas_reacs_prods is None:
                     q_vib_gas = next(e.q_vib for e in T_species
                                      if e.name == self.rxn_list[x].
                                      gas_reacs_prods[0])
@@ -670,7 +672,7 @@ class MechanismIn(object):
                                                   surf_prod[y][1]))
                     Q_gas = q_vib_gas * q_rot_gas * q_trans2D_gas
 
-                if hasattr(self.rxn_list[x], 'gas_reacs_prods') and\
+                if not self.rxn_list[x].gas_reacs_prods is None and\
                    int(self.rxn_list[x].gas_reacs_prods[1]) == -1:
                     '''
                     Transition state and a gas reactant
@@ -684,7 +686,7 @@ class MechanismIn(object):
                         _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
                     rev_pre = q_vib_TST/_np.product(q_vib_surf) *\
                         (_c.kb1*T/_c.h1)
-                elif hasattr(self.rxn_list[x], 'gas_reacs_prods') and\
+                elif not self.rxn_list[x].gas_reacs_prods is None and\
                         int(self.rxn_list[x].gas_reacs_prods[1]) == 1:
                     '''
                     Transition state and a gas product
@@ -738,10 +740,11 @@ class MechanismIn(object):
                     rev_pre = q_vib_TST/q_vib_products * (_c.kb1*T/_c.h1)
                     
             # Modify reaction data
-            self.rxn_list[x].activ_eng[0] = max(activ_eng, 0.0)
-            self.rxn_list[x].variant_pre_expon[0] = fwd_pre *\
-                self.scaledown_factors[x]
-            self.rxn_list[x].variant_pe_ratio[0] = fwd_pre/rev_pre
+            # assumes that each reaction has only one variant
+            self.rxn_list[x].variant_list[0].activ_eng = max(activ_eng, 0.0)
+            self.rxn_list[x].variant_list[0].pre_expon = fwd_pre *\
+                self.rxn_list[x].variant_list[0].scaledown_factor
+            self.rxn_list[x].variant_list[0].pe_ratio = fwd_pre/rev_pre
         
 
 class SimIn():
