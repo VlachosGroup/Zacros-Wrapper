@@ -131,7 +131,16 @@ class ClusterIn(object):
             C_index = V_index = -1
         return(C_index, V_index)
         
-        
+    
+    def get_num_clusters(self):
+    
+        n_clusters = 0
+        for clustr in self.cluster_list:
+            for varnt in clustr.variant_list:
+                n_clusters += 1
+                
+        return n_clusters
+    
     def ReadIn(self, fldr):
     
         '''
@@ -535,6 +544,8 @@ class MechanismIn(object):
         pre-exponential factors and the PE-ratio for each reaction described
         in Mechanism_input.dat using an input file with energies and
         vibrational frequencies for all species and transition states
+        
+        Assumes that each reaction has only 1 variant (MPN)
         '''
         filepath = _os.path.join(fldr, 'Zacros_Species_Energy.txt')
         [lines, dict] = _thermo.DFTFileRead(filepath)
@@ -740,7 +751,7 @@ class MechanismIn(object):
                     rev_pre = q_vib_TST/q_vib_products * (_c.kb1*T/_c.h1)
                     
             # Modify reaction data
-            # assumes that each reaction has only one variant
+            # assumes that each reaction has only one variant - i.e. variant_list[0]
             self.rxn_list[x].variant_list[0].activ_eng = max(activ_eng, 0.0)
             self.rxn_list[x].variant_list[0].pre_expon = fwd_pre *\
                 self.rxn_list[x].variant_list[0].scaledown_factor
@@ -1050,27 +1061,38 @@ class PerformanceOut(object):
     fname = 'general_output.txt'
 
     def __init__(self):
-        pass
+        
+        self.nRxn = None
+        self.t_final = None
+        self.events_occurred = None
+        self.CPU_time = None
+        self.RxnNameList = []
+        self.Nu = None
+        self.UniqNu = None
+        
     
-    def ReadGeneral(self, fldr):
+    def ReadOut(self, fldr, surf_spec_names, gas_spec_names):
         '''
         Read general_output.txt
         '''
+        
+        n_surf = len(surf_spec_names)
+        n_gas = len(gas_spec_names)
+        
         with open(_os.path.join(fldr, self.fname), 'r') as txt:
             RawTxt = txt.readlines()
     
-        self.Performance = PerformanceIn()
         for i in range(0, len(RawTxt)):
             if _re.search('Number of elementary steps:', RawTxt[i]):
-                nRxn = _np.int(RawTxt[i].split(':')[1])
+                self.nRxn = _np.int(RawTxt[i].split(':')[1])
             elif _re.search('Current KMC time:', RawTxt[i]):
-                self.Performance.t_final = _np.float(RawTxt[i].split(':')[1])
+                self.t_final = _np.float(RawTxt[i].split(':')[1])
             elif _re.search('Events occurred:', RawTxt[i]):
-                self.Performance.events_occurred =\
+                self.events_occurred =\
                 _np.float(RawTxt[i].split(':')[1])
             elif _re.search('Elapsed CPU time:', RawTxt[i]):
                 after_colon = RawTxt[i].split(':')[1]
-                self.Performance.CPU_time =\
+                self.CPU_time =\
                     _np.float(after_colon.split(' ')[-2])
             elif _re.search('Reaction network:', RawTxt[i]):
                 RxnStartLine = i + 2
@@ -1080,14 +1102,14 @@ class PerformanceOut(object):
         else:
             NameInd = 0
     
-        RxnNameList = []
+        self.RxnNameList = []
         nuList = []
-        for i in range(RxnStartLine, RxnStartLine + nRxn):
+        for i in range(RxnStartLine, RxnStartLine + self.nRxn):
             RxnName = RawTxt[i].split()[NameInd][:-1]
-            RxnNameList.append(RxnName)
+            self.RxnNameList.append(RxnName)
             RxnStr = RawTxt[i][_re.search('Reaction:', RawTxt[i]).end():]
             RxnStrList = RxnStr.split()
-            nu = [0] * (self.n_surf + self.n_gas)
+            nu = [0] * (n_surf + n_gas)
             for j in range(0, len(RxnStrList)):
                 if RxnStrList[j] == '->':
                     ArrowInd = j
@@ -1101,20 +1123,20 @@ class PerformanceOut(object):
                     SurfIden = _re.sub(r'\([^)]*\)', '', RxnStrList[j])
                     if SurfIden != '*':
                         SurfInd = [k for k in
-                                range(0, len(self.surf_spec))
+                                range( n_surf )
                                 if SurfIden ==
-                                self.surf_spec[k]][0]
+                                surf_spec_names[k]][0]
                         nu[SurfInd] += Sign
                 elif RxnStrList[j] != '->' and RxnStrList[j] != '+':
                     GasInd = [k for k in
-                            range(0, len(self.gas_spec))
+                            range( n_gas )
                             if RxnStrList[j] ==
-                            self.gas_spec[k]][0]
-                    nu[self.n_surf + GasInd] += Sign
+                            gas_spec_names[k]][0]
+                    nu[ n_surf + GasInd] += Sign
             nuList.append(nu)
     
-        self.Performance.Nu = nuList
-        self.Performance.UniqNu = _ReturnUnique(nuList).tolist()
+        self.Nu = nuList
+        self.UniqNu = _ReturnUnique(nuList).tolist()
 
 
 class ProcstatOut(object):
@@ -1131,7 +1153,7 @@ class ProcstatOut(object):
         self.t = None
         self.events = None
     
-    def ReadProcstat(self, fldr):
+    def ReadOut(self, fldr):
         '''
         Read procstat_output.txt
         '''
@@ -1186,7 +1208,7 @@ class SpecnumOut(object):
         self.spec = None
         
     
-    def ReadSpecnum(self, fldr):
+    def ReadOut(self, fldr):
         '''
         Read specnum_output.txt
         '''
@@ -1243,7 +1265,7 @@ class HistoryOut():
         snapshots = None
         snap_times = None
         
-    def ReadHistory(self, fldr, nSites):
+    def ReadOut(self, fldr, nSites):
     
         '''
         Read history_output.txt

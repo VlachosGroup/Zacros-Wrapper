@@ -1,4 +1,3 @@
-from IOdata import IOdata
 import numpy as np
 import matplotlib as mat
 import matplotlib.pyplot as plt
@@ -9,8 +8,11 @@ import os
 import sys
 import subprocess
 import copy
+import re as _re
 
 from Helper import *
+from IO_data import *
+from Lattice import Lattice
 
 class kmc_traj():
     
@@ -18,13 +20,13 @@ class kmc_traj():
     Handles a single Zacros trajectory.
     '''
     
-    def __init__(self, path_in = None):
+    def __init__(self, path = None):
         
         '''
         Initializes class variables
         '''
 
-        self.Path = path_in
+        self.Path = path
         self.exe_file = None
         
         # Input variables
@@ -87,24 +89,26 @@ class kmc_traj():
         if self.CheckComplete():
 
             # Standard output files
-            self.ReadGeneral()
-            self.ReadProcstat()
-            self.ReadSpecnum()
+            self.genout.ReadOut(self.Path, self.simin.surf_spec, self.simin.gas_spec )
+            self.specnumout.ReadOut(self.Path)
+            self.procstatout.ReadOut(self.Path)
+            
             if build_lattice:
-                self.KMC_lat.Read_lattice_output(_os.path.join
-                                                 (self.Path,
-                                                  'lattice_output.txt'))
-            self.ReadHistory()
-
+                self.lat.Read_lattice_output(self.Path)
+                
+            # Count the number of sites
+            with open( os.path.join(self.Path, 'lattice_output.txt'), 'r') as txt:
+                RawTxt = txt.readlines()
+            nSites = len(RawTxt) - 2
+            
+            self.histout.ReadOut(self.Path, nSites)
+            
             # Extra binary files
-            if _os.path.isfile(_os.path.join(self.Path,
-                                             'Prop_output.bin')):
+            if os.path.isfile(os.path.join(self.Path, 'Prop_output.bin')):
                 self.ReadProp(0)
-            if _os.path.isfile(_os.path.join(self.Path,
-                                             'PropCounter_output.bin')):
+            if os.path.isfile(os.path.join(self.Path, 'PropCounter_output.bin')):
                 self.ReadProp(1)
-            if _os.path.isfile(_os.path.join(self.Path,
-                                             'SA_output.bin')):
+            if os.path.isfile(os.path.join(self.Path, 'SA_output.bin')):
                 self.ReadSA()
 
         else:
@@ -116,52 +120,43 @@ class kmc_traj():
         Mode = 0: Read Prop_output.bin
         Mode = 1: Read PropCounter_output.bin
         '''
-        dt = _np.dtype(_np.float64)
+        dt = np.dtype(np.float64)
         if Mode == 0:     # Instantaneous propensities
             FileName = 'Prop_output.bin'
         elif Mode == 1:   # Integral propensities
             FileName = 'PropCounter_output.bin'
 
-        virtual_arr = _np.memmap(_os.path.join(self.Path,
-                                               FileName), dt, "r")
-        nRxn = len(self.Performance.Nu)
+        virtual_arr = np.memmap(os.path.join(self.Path, FileName), dt, "r")
+        nRxn = len( self.genout.RxnNameList )
         nNum = virtual_arr.shape[0]
         nNum = nNum - (nNum % nRxn)
         virtual_arr = virtual_arr[:nNum]
-        if not hasattr(self, 'Binary'):
-            self.Binary = BinaryIn()
 
         if Mode == 0:
-            self.Binary.prop = _np.reshape(virtual_arr, [nNum/nRxn, nRxn])
-            self.Binary.prop = _np.array(self.Binary.prop
-                                         [::self.Procstat.Spacing])
+            self.prop = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
+            self.prop = np.array(self.prop[::self.procstatout.Spacing])
+            
         if Mode == 1:
-            self.Binary.propCounter = _np.reshape(virtual_arr,
-                                                  [nNum/nRxn, nRxn])
-            self.Binary.propCounter = _np.array(self.Binary.propCounter
-                                                [::self.Procstat.Spacing])
+            self.propCounter = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
+            self.propCounter = np.array(self.propCounter[::self.procstatout.Spacing])
         del virtual_arr
 
     def ReadSA(self):
         '''
         Read SA_output.bin
         '''
-        dt = _np.dtype(_np.float64)
+        dt = np.dtype(np.float64)
         FileName = 'SA_output.bin'
-        if _os.path.isfile(_os.path.join(self.Path, FileName)):
-            virtual_arr = _np.memmap(_os.path.join(self.Path,
+        if os.path.isfile(os.path.join(self.Path, FileName)):
+            virtual_arr = np.memmap(os.path.join(self.Path,
                                                    FileName), dt, "r")
-            nRxn = len(self.Performance.Nu)
+            nRxn = len(self.genout.Nu)
             nNum = virtual_arr.shape[0]
             nNum = nNum - (nNum % nRxn)
             virtual_arr = virtual_arr[:nNum]
-            if not hasattr(self, 'Binary'):
-                self.Binary = BinaryIn()
 
-            self.Binary.W_sen_anal = _np.reshape(virtual_arr,
-                                                 [nNum/nRxn, nRxn])
-            self.Binary.W_sen_anal = _np.array(self.Binary.W_sen_anal
-                                               [::self.Specnum.Spacing])
+            self.W_sen_anal = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
+            self.W_sen_anal = np.array(self.W_sen_anal[::self.specnumout.Spacing])
 
             del virtual_arr
         else:
@@ -172,18 +167,14 @@ class kmc_traj():
         '''
         Read clusterocc.bin
         '''
-        dt = _np.dtype(_np.int32)
-        virtual_arr = _np.memmap(_os.path.join(self.Path, 'clusterocc.bin'),
-                                 dt, "r")
-        nCluster = sum(len(s.variant_name) for s in self.Cluster)
+        dt = np.dtype(np.int32)
+        virtual_arr = np.memmap(os.path.join(self.Path, 'clusterocc.bin'), dt, "r")
+        nCluster = self.clusterin.get_num_clusters()
         nNum = virtual_arr.shape[0]
         nNum = nNum - (nNum % nCluster)
-        if not hasattr(self, 'Binary'):
-            self.Binary = BinaryIn()
-        self.Binary = BinaryIn()
-        self.Binary.cluster = _np.array(_np.reshape(virtual_arr,
+        self.cluster = np.array(np.reshape(virtual_arr,
                                                     [nNum/nCluster, nCluster])
-                                        [::self.Specnum.Spacing])
+                                        [::self.specnumout.Spacing])
         del virtual_arr
     
     '''
@@ -217,8 +208,8 @@ class kmc_traj():
         '''
         
         Complete = False
-        if _os.path.isfile(_os.path.join(self.Path, 'general_output.txt')):
-            with open(_os.path.join(self.Path, 'general_output.txt'), 'r') as txt:
+        if os.path.isfile(os.path.join(self.Path, 'general_output.txt')):
+            with open(os.path.join(self.Path, 'general_output.txt'), 'r') as txt:
                 RawTxt = txt.readlines()
             for i in RawTxt:
                 if _re.search('Normal termination', i):

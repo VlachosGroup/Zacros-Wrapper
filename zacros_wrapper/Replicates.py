@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import matplotlib as mat
-#mat.use('Agg')
 import matplotlib.pyplot as plt
 import copy
 import sys
@@ -277,19 +276,19 @@ class Replicates:
             # so you will not have to store separate kmc_traj objects
             # The large arrays of data will be easier to process
             
-            self.t_vec = np.array(dummy_run.Specnum['t'])
-            self.species_pops.append(dummy_run.Specnum['spec'])
-            self.rxn_freqs.append(dummy_run.Procstat['events'])
+            self.t_vec = np.array(dummy_run.specnumout.t )
+            self.species_pops.append(dummy_run.specnumout.spec )
+            self.rxn_freqs.append(dummy_run.procstatout.events )
             
             if not dummy_run.History == []:
                 self.History_final_snaps.append(dummy_run.History[-1])
             
-            self.propensities.append(dummy_run.Binary['prop'])
-            self.Props_integ.append(dummy_run.Binary['propCounter'])
-            self.traj_derivs.append(dummy_run.Binary['W_sen_anal'])
+            self.propensities.append(dummy_run.prop)
+            self.Props_integ.append(dummy_run.propCounter)
+            self.traj_derivs.append(dummy_run.W_sen_anal)
             
-            self.events_total.append(dummy_run.Performance['events_occurred'])
-            self.CPU_total.append(dummy_run.Performance['CPU_time'])
+            self.events_total.append( dummy_run.genout.events_occurred )
+            self.CPU_total.append( dummy_run.genout.CPU_time )
         
         # Convert the data from lists to arrays
         self.species_pops = np.array(self.species_pops)
