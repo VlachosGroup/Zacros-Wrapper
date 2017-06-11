@@ -73,6 +73,216 @@ reload(_thermo)
 ============ Classes to handle input files ============
 '''
 
+
+class SimIn():
+
+    '''
+    Handles input from simulation_input.dat
+    '''
+
+    fname = 'simulation_input.dat'
+    
+    def __init__(self):
+    
+        self.TPD = False            # flag for temperature programmed desorption (TPD) mode
+        self.TPD_start = None
+        self.TPD_ramp = None
+        self.T = None
+        self.P = None
+        
+        self.gas_spec = []
+        self.n_gas = 0
+        self.gas_eng = []
+        self.gas_MW = []
+        self.gas_molfrac = []
+        self.surf_spec = []
+        self.surf_dent = []
+        
+        self.Seed = None
+        self.restart = True
+        self.WallTime_Max = ''
+
+    def ReadIn(self, fldr):
+    
+        '''
+        Read simulation_input.dat
+        '''
+        
+        with open(_os.path.join(fldr, self.fname), 'r') as txt:
+            RawTxt = txt.readlines()
+
+        for i in RawTxt:
+            if len(i.split()) > 0:
+                if i[0] != '#':
+                    i = i.split('#')[0]  # Don't parse comments
+                    if i.split()[0] == 'temperature':
+                        if i.split()[1] == 'ramp':
+                            self.TPD = True
+                            self.TPD_start = _np.float(i.split()[2])
+                            self.TPD_ramp = _np.float(i.split()[3])
+                        else:
+                            self.T = _np.float(i.split()[1])
+                    elif i.split()[0] == 'pressure':
+                        self.P = _np.float(i.split()[1])
+                    elif i.split()[0] == 'random_seed':
+                        self.Seed = _np.int(i.split()[1])
+                    elif i.split()[0] == 'no_restart':
+                        self.restart = False
+                    elif i.split()[0] == 'gas_specs_names':
+                        self.gas_spec = i.split()[1:]
+                        self.n_gas = len(self.gas_spec)
+                    elif i.split()[0] == 'gas_energies':
+                        for j in i.split()[1:]:
+                            self.gas_eng.append(_np.float(j))
+                    elif i.split()[0] == 'gas_molec_weights':
+                        for j in i.split()[1:]:
+                            self.gas_MW.append(_np.float(j))
+                    elif i.split()[0] == 'gas_molar_fracs':
+                        for j in i.split()[1:]:
+                            self.gas_molfrac.append(_np.float(j))
+                    elif i.split()[0] == 'surf_specs_names':
+                        self.surf_spec = i.split()[1:]
+                        self.n_surf = len(self.surf_spec)
+                    elif i.split()[0] == 'surf_specs_dent':
+                        for j in i.split()[1:]:
+                            self.surf_dent.append(_np.int(j))
+                    elif i.split()[0] == 'event_report':
+                        self.event = i.split()[1]
+                    elif i.split()[0] == 'snapshots':
+                        self.hist = StateInc(i)
+                    elif i.split()[0] == 'process_statistics':
+                        self.procstat = StateInc(i)
+                    elif i.split()[0] == 'species_numbers':
+                        self.specnum = StateInc(i)
+                    elif i.split()[0] == 'max_time':
+                        if i.split()[1] == 'infinity':
+                            self.SimTime_Max = 'inf'
+                        else:
+                            self.SimTime_Max =\
+                             _np.float(i.split()[1])
+                    elif i.split()[0] == 'max_steps':
+                        if i.split()[1] == 'infinity':
+                            self.MaxStep = 'inf'
+                        else:
+                            self.MaxStep = int(i.split()[1])
+                    elif i.split()[0] == 'wall_time':
+                        self.WallTime_Max = _np.int(i.split()[1])
+                    elif i.split()[0] == 'finish' or\
+                                         i.split()[0] == 'n_gas_species' or\
+                                         i.split()[0] == 'n_surf_species':
+                        pass
+                        
+
+    def WriteIn(self, fldr):
+    
+        '''
+        Write simulation_input.dat
+        '''
+
+        with open(_os.path.join(fldr, self.fname), 'w') as txt:
+            SeedTxt = ''
+            if self.Seed is None:
+                _random.seed()
+                self.Seed = _random.randint(10000, 99999)
+                SeedTxt = '# Random seed from Python wrapper'
+
+            txt.write('#KMC simulation specification\n\n')
+            txt.write('{:20}{:15}{}\n\n'.format('random_seed',
+                      str(self.Seed), SeedTxt))
+            
+            # Write out temperature, which depends on TPD or constant temperature mode
+            if self.TPD:
+                txt.write('{:20}{:5.1f}{:5.1f}\n'.format('temperature\t ramp', self.TPD_start, self.TPD_ramp))
+            else:
+                txt.write('{:20}{:5.1f}\n'.format('temperature', self.T))
+                
+            txt.write('{:20}{:5.1f}\n\n'.format('pressure',
+                      self.P))
+            txt.write('{:20}{}\n'.format('n_gas_species',
+                      str(self.n_gas)))
+            txt.write('{:20}'.format('gas_specs_names'))
+            for i in range(0, self.n_gas):
+                txt.write('{:15}'.format(self.gas_spec[i]))
+
+            GasList = ['gas_energies', 'gas_molec_weights', 'gas_molar_fracs']
+            GasList2 = ['gas_eng', 'gas_MW', 'gas_molfrac']
+            for j in range(0, len(GasList)):
+                txt.write('\n{:20}'.format(GasList[j]))
+                for i in range(0, self.n_gas):
+                    txt.write('{:15}'.format(str(getattr(self,
+                              GasList2[j])[i])))
+
+            txt.write('\n\n{:20}{}\n'.format('n_surf_species',
+                      str(self.n_surf)))
+            txt.write('{:20}'.format('surf_specs_names'))
+            for i in range(0, self.n_surf):
+                txt.write('{:15}'.format(self.surf_spec[i]))
+            txt.write('\n{:20}'.format('surf_specs_dent'))
+
+            for i in range(0, self.n_surf):
+                txt.write('{:15}'.format(str(self.surf_dent[i])))
+            txt.write('\n\n')
+
+            if self.hist[0] == 'off':
+                txt.write('{:20}{}\n'.format('snapshots', 'off'))
+            elif self.hist[0] == 'event':
+                txt.write('{:20}{} {} {}\n'.format('snapshots', 'on',
+                          self.hist[0],
+                          str(int(self.hist[1]))))
+            elif self.hist[0] == 'time':
+                txt.write('{:20}{} {} {}\n'.format('snapshots', 'on',
+                          self.hist[0],
+                          str(_np.float(self.hist[1]))))
+            if self.procstat[0] == 'off':
+                txt.write('process_statistics  off\n')
+            elif self.procstat[0] == 'event':
+                txt.write('{:20}{} {} {}\n'.format('process_statistics', 'on',
+                          self.procstat[0],
+                          str(int(self.procstat[1]))))
+            elif self.procstat[0] == 'time':
+                txt.write('{:20}{} {} {}\n'.format('process_statistics', 'on',
+                          self.procstat[0],
+                          str(_np.float(self.procstat[1]))))
+
+            if self.specnum[0] == 'off':
+                txt.write('species_numbers     off\n')
+            elif self.specnum[0] == 'event':
+                txt.write('{:20}{} {} {}\n'.format('species_numbers', 'on',
+                          self.specnum[0],
+                          str(int(self.specnum[1]))))
+            elif self.specnum[0] == 'time':
+                txt.write('{:20}{} {} {}\n'.format('species_numbers', 'on',
+                          self.specnum[0],
+                          str(_np.float(self.specnum[1]))))
+            txt.write('{:20}{}\n\n'.format('event_report',
+                      self.event))
+
+            if self.MaxStep == '' or\
+               _re.search('inf', str(self.MaxStep)):
+                txt.write('{:20}{}\n'.format('max_steps', 'infinity'))
+            else:
+                txt.write('{:20}{}\n'.format('max_steps',
+                          str(self.MaxStep)))
+
+            if self.SimTime_Max == '' or\
+               _re.search('inf', str(self.SimTime_Max)):
+                txt.write('{:20}{}\n'.format('max_time', 'infinity\n'))
+            else:
+                txt.write('{:20}{}\n'.format('max_time',
+                          str(self.SimTime_Max)))
+            if self.WallTime_Max == '' or\
+               _re.search('inf', str(self.WallTime_Max)):
+                txt.write('\n')
+            else:
+                txt.write('\n{:20}{}\n\n'.format('wall_time',
+                          str(self.WallTime_Max)))
+
+            if not self.restart:
+                txt.write('no_restart\n')
+            txt.write('finish\n')
+            
+
+
 class Cluster():
 
     def __init__(self):
@@ -270,6 +480,7 @@ class Reaction():
 
     def __init__(self):
     
+        self.name = None
         self.is_reversible = True
         self.gas_reacs_prods = None
         self.sites = None
@@ -305,7 +516,26 @@ class MechanismIn(object):
         self.rxn_list = []
         self.include_scaledown = False
         
-
+    
+    def get_num_rxns(self):
+        
+        n_rxns = 0
+        for i in self.rxn_list:
+            n_rxns += len( i.variant_list )
+                
+        return n_rxns
+        
+    
+    def get_rxn_var_inds(self, rxn_ind):
+    
+        ind = 0
+        for i in range(len(self.rxn_list)):
+            for j in range(len( self.rxn_list[i].variant_list )):
+                if ind == rxn_ind:
+                    return [i,j]
+                ind +=1
+                
+    
     def FindReaction(self, Reaction_Num):       # FIX THIS METHOD
     
         '''
@@ -758,212 +988,7 @@ class MechanismIn(object):
             self.rxn_list[x].variant_list[0].pe_ratio = fwd_pre/rev_pre
         
 
-class SimIn():
 
-    '''
-    Handles input from simulation_input.dat
-    '''
-
-    fname = 'simulation_input.dat'
-    
-    def __init__(self):
-    
-        self.TPD = False            # flag for temperature programmed desorption (TPD) mode
-        self.TPD_start = None
-        self.TPD_ramp = None
-        self.T = None
-        self.P = None
-        
-        self.gas_spec = []
-        self.n_gas = 0
-        self.gas_eng = []
-        self.gas_MW = []
-        self.gas_molfrac = []
-        self.surf_spec = []
-        self.surf_dent = []
-        
-        self.Seed = None
-        self.restart = True
-        self.WallTime_Max = ''
-
-    def ReadIn(self, fldr):
-    
-        '''
-        Read simulation_input.dat
-        '''
-        
-        with open(_os.path.join(fldr, self.fname), 'r') as txt:
-            RawTxt = txt.readlines()
-
-        for i in RawTxt:
-            if len(i.split()) > 0:
-                if i[0] != '#':
-                    i = i.split('#')[0]  # Don't parse comments
-                    if i.split()[0] == 'temperature':
-                        if i.split()[1] == 'ramp':
-                            self.TPD = True
-                            self.TPD_start = _np.float(i.split()[2])
-                            self.TPD_ramp = _np.float(i.split()[3])
-                        else:
-                            self.T = _np.float(i.split()[1])
-                    elif i.split()[0] == 'pressure':
-                        self.P = _np.float(i.split()[1])
-                    elif i.split()[0] == 'random_seed':
-                        self.Seed = _np.int(i.split()[1])
-                    elif i.split()[0] == 'no_restart':
-                        self.restart = False
-                    elif i.split()[0] == 'gas_specs_names':
-                        self.gas_spec = i.split()[1:]
-                        self.n_gas = len(self.gas_spec)
-                    elif i.split()[0] == 'gas_energies':
-                        for j in i.split()[1:]:
-                            self.gas_eng.append(_np.float(j))
-                    elif i.split()[0] == 'gas_molec_weights':
-                        for j in i.split()[1:]:
-                            self.gas_MW.append(_np.float(j))
-                    elif i.split()[0] == 'gas_molar_fracs':
-                        for j in i.split()[1:]:
-                            self.gas_molfrac.append(_np.float(j))
-                    elif i.split()[0] == 'surf_specs_names':
-                        self.surf_spec = i.split()[1:]
-                        self.n_surf = len(self.surf_spec)
-                    elif i.split()[0] == 'surf_specs_dent':
-                        for j in i.split()[1:]:
-                            self.surf_dent.append(_np.int(j))
-                    elif i.split()[0] == 'event_report':
-                        self.event = i.split()[1]
-                    elif i.split()[0] == 'snapshots':
-                        self.hist = StateInc(i)
-                    elif i.split()[0] == 'process_statistics':
-                        self.procstat = StateInc(i)
-                    elif i.split()[0] == 'species_numbers':
-                        self.specnum = StateInc(i)
-                    elif i.split()[0] == 'max_time':
-                        if i.split()[1] == 'infinity':
-                            self.SimTime_Max = 'inf'
-                        else:
-                            self.SimTime_Max =\
-                             _np.float(i.split()[1])
-                    elif i.split()[0] == 'max_steps':
-                        if i.split()[1] == 'infinity':
-                            self.MaxStep = 'inf'
-                        else:
-                            self.MaxStep = int(i.split()[1])
-                    elif i.split()[0] == 'wall_time':
-                        self.WallTime_Max = _np.int(i.split()[1])
-                    elif i.split()[0] == 'finish' or\
-                                         i.split()[0] == 'n_gas_species' or\
-                                         i.split()[0] == 'n_surf_species':
-                        pass
-                        
-
-    def WriteIn(self, fldr):
-    
-        '''
-        Write simulation_input.dat
-        '''
-
-        with open(_os.path.join(fldr, self.fname), 'w') as txt:
-            SeedTxt = ''
-            if self.Seed is None:
-                _random.seed()
-                self.Seed = _random.randint(10000, 99999)
-                SeedTxt = '# Random seed from Python wrapper'
-
-            txt.write('#KMC simulation specification\n\n')
-            txt.write('{:20}{:15}{}\n\n'.format('random_seed',
-                      str(self.Seed), SeedTxt))
-            
-            # Write out temperature, which depends on TPD or constant temperature mode
-            if self.TPD:
-                txt.write('{:20}{:5.1f}{:5.1f}\n'.format('temperature\t ramp', self.TPD_start, self.TPD_ramp))
-            else:
-                txt.write('{:20}{:5.1f}\n'.format('temperature', self.T))
-                
-            txt.write('{:20}{:5.1f}\n\n'.format('pressure',
-                      self.P))
-            txt.write('{:20}{}\n'.format('n_gas_species',
-                      str(self.n_gas)))
-            txt.write('{:20}'.format('gas_specs_names'))
-            for i in range(0, self.n_gas):
-                txt.write('{:15}'.format(self.gas_spec[i]))
-
-            GasList = ['gas_energies', 'gas_molec_weights', 'gas_molar_fracs']
-            GasList2 = ['gas_eng', 'gas_MW', 'gas_molfrac']
-            for j in range(0, len(GasList)):
-                txt.write('\n{:20}'.format(GasList[j]))
-                for i in range(0, self.n_gas):
-                    txt.write('{:15}'.format(str(getattr(self,
-                              GasList2[j])[i])))
-
-            txt.write('\n\n{:20}{}\n'.format('n_surf_species',
-                      str(self.n_surf)))
-            txt.write('{:20}'.format('surf_specs_names'))
-            for i in range(0, self.n_surf):
-                txt.write('{:15}'.format(self.surf_spec[i]))
-            txt.write('\n{:20}'.format('surf_specs_dent'))
-
-            for i in range(0, self.n_surf):
-                txt.write('{:15}'.format(str(self.surf_dent[i])))
-            txt.write('\n\n')
-
-            if self.hist[0] == 'off':
-                txt.write('{:20}{}\n'.format('snapshots', 'off'))
-            elif self.hist[0] == 'event':
-                txt.write('{:20}{} {} {}\n'.format('snapshots', 'on',
-                          self.hist[0],
-                          str(int(self.hist[1]))))
-            elif self.hist[0] == 'time':
-                txt.write('{:20}{} {} {}\n'.format('snapshots', 'on',
-                          self.hist[0],
-                          str(_np.float(self.hist[1]))))
-            if self.procstat[0] == 'off':
-                txt.write('process_statistics  off\n')
-            elif self.procstat[0] == 'event':
-                txt.write('{:20}{} {} {}\n'.format('process_statistics', 'on',
-                          self.procstat[0],
-                          str(int(self.procstat[1]))))
-            elif self.procstat[0] == 'time':
-                txt.write('{:20}{} {} {}\n'.format('process_statistics', 'on',
-                          self.procstat[0],
-                          str(_np.float(self.procstat[1]))))
-
-            if self.specnum[0] == 'off':
-                txt.write('species_numbers     off\n')
-            elif self.specnum[0] == 'event':
-                txt.write('{:20}{} {} {}\n'.format('species_numbers', 'on',
-                          self.specnum[0],
-                          str(int(self.specnum[1]))))
-            elif self.specnum[0] == 'time':
-                txt.write('{:20}{} {} {}\n'.format('species_numbers', 'on',
-                          self.specnum[0],
-                          str(_np.float(self.specnum[1]))))
-            txt.write('{:20}{}\n\n'.format('event_report',
-                      self.event))
-
-            if self.MaxStep == '' or\
-               _re.search('inf', str(self.MaxStep)):
-                txt.write('{:20}{}\n'.format('max_steps', 'infinity'))
-            else:
-                txt.write('{:20}{}\n'.format('max_steps',
-                          str(self.MaxStep)))
-
-            if self.SimTime_Max == '' or\
-               _re.search('inf', str(self.SimTime_Max)):
-                txt.write('{:20}{}\n'.format('max_time', 'infinity\n'))
-            else:
-                txt.write('{:20}{}\n'.format('max_time',
-                          str(self.SimTime_Max)))
-            if self.WallTime_Max == '' or\
-               _re.search('inf', str(self.WallTime_Max)):
-                txt.write('\n')
-            else:
-                txt.write('\n{:20}{}\n\n'.format('wall_time',
-                          str(self.WallTime_Max)))
-
-            if not self.restart:
-                txt.write('no_restart\n')
-            txt.write('finish\n')
 
 
 class StateIn(object):
@@ -1000,7 +1025,7 @@ class StateIn(object):
             self.Type = None
         
 
-    def WriteIn(self, fldr):
+    def WriteIn(self, fldr, surf_spec):
     
         '''
         Write state_input.dat
@@ -1035,7 +1060,7 @@ class StateIn(object):
                     txt.write('initial_state\n')
                     for i in range(0, nAds):
                         txt.write('  seed_on_sites  {:10}'.
-                                  format(self.surf_spec
+                                  format(surf_spec
                                          [SpecIden[i]-1], 10))
                         for j in range(0, len(DentInfo[i])):
                             for k in range(0, len(DentInfo[i])):

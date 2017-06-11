@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
   
 def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_batches = 1000, 
                                 acf_cut = 0.05, include_stiff_reduc = True, max_events = int(1e3), 
-                                max_iterations = 30, stiff_cutoff = 1, ss_inc = 2.0, n_samples = 100, platform = 'Squidward'):
+                                max_iterations = 30, ss_inc = 2.0, n_samples = 100, platform = 'Squidward'):
 
     '''
     Handles rate rescaling and continuation of KMC runs
@@ -21,7 +21,6 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
     include_stiff_reduc    :     True to allow for scaledown, False to turn this feature off
     max_events             :     Maximum number of events for the first iteration
     max_iterations         :     Maximum number of iterations to use
-    stiff_cutoff           :     Do not scale fast reactions within this amount of the slow reactions...
     ss_inc                 :     Factor to scale the final time by if you have not yet reached steady state
     n_samples              :     Number of time points to sample for each trajectory
     platform               :     Squidward or Farber
@@ -38,13 +37,11 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
     
     # Convergence variables
     is_steady_state = False
-    unstiff = False
-    converged = unstiff and is_steady_state
     iteration = 1              
     
     scale_final_time = ss_inc
 
-    while not converged and iteration <= max_iterations:
+    while not is_steady_state and iteration <= max_iterations:
         
         # Make folder for iteration
         iter_fldr = os.path.join(scale_parent_fldr, 'Iteration_' + str(iteration))
@@ -61,28 +58,28 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         if iteration == 1:              # Sample on events, because we do not know the time scales
         
             # Set sampling parameters
-            cur_batch.runtemplate.Conditions['MaxStep'] = max_events
-            cur_batch.runtemplate.Conditions['SimTime']['Max'] = 'inf'
-            cur_batch.runtemplate.Conditions['WallTime']['Max'] = 'inf'
-            cur_batch.runtemplate.Conditions['restart'] = False
+            cur_batch.runtemplate.simin.MaxStep = max_events
+            cur_batch.runtemplate.simin.SimTime_Max = 'inf'
+            cur_batch.runtemplate.simin.WallTime_Max = 'inf'
+            cur_batch.runtemplate.simin.restart = False
             
-            cur_batch.runtemplate.Report['procstat'] = ['event', np.max( [max_events / n_samples, 1] ) ]
-            cur_batch.runtemplate.Report['specnum'] = ['event', np.max( [max_events / n_samples, 1] ) ]
-            cur_batch.runtemplate.Report['hist'] = ['event', np.max( [max_events * (n_samples-1) / n_samples, 1] )]       # only record the initial and final states
+            cur_batch.runtemplate.simin.procstat = ['event', np.max( [max_events / n_samples, 1] ) ]
+            cur_batch.runtemplate.simin.specnum = ['event', np.max( [max_events / n_samples, 1] ) ]
+            cur_batch.runtemplate.simin.hist = ['event', np.max( [max_events * (n_samples-1) / n_samples, 1] )]       # only record the initial and final states
 
-            SDF_vec = np.ones(cur_batch.runtemplate.Reactions['nrxns'])         # Initialize scaledown factors
+            SDF_vec = np.ones( cur_batch.runtemplate.mechin.get_num_rxns() )         # Initialize scaledown factors
         
         elif iteration > 1:             # Time sampling
 
             # Change sampling
-            cur_batch.runtemplate.Conditions['MaxStep'] = 'inf'
-            cur_batch.runtemplate.Conditions['WallTime']['Max'] = 'inf'
-            cur_batch.runtemplate.Conditions['restart'] = False
-            cur_batch.runtemplate.Conditions['SimTime']['Max'] = prev_batch.t_vec[-1] * scale_final_time
-            cur_batch.runtemplate.Conditions['SimTime']['Max'] = float('{0:.3E} \t'.format(cur_batch.runtemplate.Conditions['SimTime']['Max']))     # round to 4 significant figures
-            cur_batch.runtemplate.Report['procstat'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
-            cur_batch.runtemplate.Report['specnum'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max'] / n_samples]
-            cur_batch.runtemplate.Report['hist'] = ['time', cur_batch.runtemplate.Conditions['SimTime']['Max']]
+            cur_batch.runtemplate.simin.MaxStep = 'inf'
+            cur_batch.runtemplate.simin.WallTime_Max = 'inf'
+            cur_batch.runtemplate.simin.restart = False
+            cur_batch.runtemplate.simin.SimTime_Max = prev_batch.t_vec[-1] * scale_final_time
+            cur_batch.runtemplate.simin.SimTime_Max = float('{0:.3E} \t'.format( cur_batch.runtemplate.simin.SimTime_Max ))     # round to 4 significant figures
+            cur_batch.runtemplate.simin.procstat = ['time', cur_batch.runtemplate.simin.SimTime_Max / n_samples]
+            cur_batch.runtemplate.simin.specnum = ['time', cur_batch.runtemplate.simin.SimTime_Max / n_samples]
+            cur_batch.runtemplate.simin.hist = ['time', cur_batch.runtemplate.simin.SimTime_Max ]
             
             # Adjust pre-exponential factors based on the stiffness assessment of the previous iteration
             if include_stiff_reduc:
@@ -106,43 +103,44 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         acf_data = cum_batch.Compute_ACF()
         is_steady_state = False
         if not acf_data['ACF'] is None:
-            if acf_data['ACF'] + acf_data['ACF_ci'] < 0.05 and acf_data['ACF'] - acf_data['ACF_ci'] > -0.05:
+            if acf_data['ACF'] + acf_data['ACF_ci'] < 0.08:
                 is_steady_state = True
+        
+        # Make sure the error in the rate is less than 5% of the rate
+        if acf_data['Rate'] == 0:
+            is_steady_state = False
+        else:
+            if acf_data['Rate_ci'] / acf_data['Rate'] > 0.05:
+                is_steady_state = False
         
         # Record information about the iteration
         cum_batch.runAvg.PlotGasSpecVsTime()
         cum_batch.runAvg.PlotSurfSpecVsTime()
         
-        # Test stiffness
-        unstiff = True
-        if include_stiff_reduc:
-            cur_batch.AverageRuns()
-            cur_batch.runAvg.PlotElemStepFreqs()
-            scaledown_data = ProcessStepFreqs(cur_batch.runAvg)         # compute change in scaledown factors based on simulation result
-            delta_sdf = scaledown_data['delta_sdf']
-            unstiff = np.max(np.abs(np.log10(delta_sdf))) < stiff_cutoff
-            
+        cur_batch.AverageRuns()
+        cur_batch.runAvg.PlotElemStepFreqs()
+        scaledown_data = ProcessStepFreqs(cur_batch.runAvg)         # compute change in scaledown factors based on simulation result
+        delta_sdf = scaledown_data['delta_sdf']
 
-        # Record iteartion data in output file
-        with open(os.path.join(iter_fldr, 'Iteration_' + str(iteration) + '_summary.txt'), 'w') as txt:  
-            
-            txt.write('----- Iteration #' + str(iteration) + ' -----\n')
-            txt.write('t_final: {0:.3E} \n'.format(cum_batch.runAvg.Specnum['t'][-1]))
-            txt.write('stiff: ' + str(not unstiff) + '\n')
-            txt.write('steady-state: ' + str(is_steady_state) + '\n')
-            
-            txt.write('Reaction name \t')
-            txt.write('Scaledown factor \t')
-            txt.write('Reaction speed \t')
-            txt.write('Total firings \t')
-            txt.write('Net firings \n')
-
-            for rxn_ind in range(len(cum_batch.runAvg.Reactions['names'])):
-                txt.write(cum_batch.runAvg.Reactions['names'][rxn_ind] + '\t')
-                txt.write('{0:.3E} \t'.format(delta_sdf[rxn_ind]))
-                txt.write(scaledown_data['rxn_speeds'][rxn_ind] + '\t')
-                txt.write('{0:.3E} \t'.format(scaledown_data['tot'][rxn_ind]))
-                txt.write('{0:.3E} \n'.format(scaledown_data['net'][rxn_ind]))
+        ## Record iteartion data in output file
+        #with open(os.path.join(iter_fldr, 'Iteration_' + str(iteration) + '_summary.txt'), 'w') as txt:  
+        #    
+        #    txt.write('----- Iteration #' + str(iteration) + ' -----\n')
+        #    txt.write('t_final: {0:.3E} \n'.format(cum_batch.runAvg.Specnum['t'][-1]))
+        #    txt.write('steady-state: ' + str(is_steady_state) + '\n')
+        #    
+        #    txt.write('Reaction name \t')
+        #    txt.write('Scaledown factor \t')
+        #    txt.write('Reaction speed \t')
+        #    txt.write('Total firings \t')
+        #    txt.write('Net firings \n')
+        #
+        #    for rxn_ind in range(len(cum_batch.runAvg.Reactions['names'])):
+        #        txt.write(cum_batch.runAvg.Reactions['names'][rxn_ind] + '\t')
+        #        txt.write('{0:.3E} \t'.format(delta_sdf[rxn_ind]))
+        #        txt.write(scaledown_data['rxn_speeds'][rxn_ind] + '\t')
+        #        txt.write('{0:.3E} \t'.format(scaledown_data['tot'][rxn_ind]))
+        #        txt.write('{0:.3E} \n'.format(scaledown_data['net'][rxn_ind]))
         
         # Update scaledown factors
         for ind in range(len(SDF_vec)):
@@ -151,8 +149,6 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         scale_final_time = np.max( [1.0/np.min(delta_sdf), ss_inc] )
         
         prev_batch = copy.deepcopy(cum_batch)
-        #converged = unstiff and is_steady_state
-        converged = is_steady_state
         iteration += 1
        
     return cum_batch
@@ -166,11 +162,11 @@ def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):        # Change
     Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic Monte Carlo simulations through the modification of rate constants, J. Chem. Phys. 132 (2010) 194101.
     '''
     
-    delta_sdf = np.ones(run.Reactions['nrxns'])    # initialize the marginal scaledown factors
+    delta_sdf = np.ones( run.mechin.get_num_rxns() )    # initialize the marginal scaledown factors
     rxn_speeds = []
     
     # data analysis
-    freqs = run.Procstat['events'][-1,:]
+    freqs = run.procstatout.events[-1,:]
     fwd_freqs = freqs[0::2]
     bwd_freqs = freqs[1::2]
     net_freqs = fwd_freqs - bwd_freqs

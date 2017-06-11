@@ -43,7 +43,6 @@ class Replicates:
         self.species_pops = None
         self.rxn_freqs = None
         self.History_final_snaps = None
-        #self.props = None            # We do not print out this output file
         self.propensities = None
         self.Props_integ = None
         self.traj_derivs = None
@@ -92,7 +91,7 @@ class Replicates:
         for i in range(self.n_runs):
             
             # Set the random seed
-            self.runtemplate.Conditions['Seed'] = seed
+            self.runtemplate.simin.Seed = seed
             self.rand_seeds.append(seed)
             seed = seed + 1
             
@@ -103,8 +102,8 @@ class Replicates:
             
             # Set initial state
             if not init_states == []:
-                self.runtemplate.StateInput['Type'] = 'history'
-                self.runtemplate.StateInput['Struct'] = init_states[i]
+                self.runtemplate.statein.Type = 'history'
+                self.runtemplate.statein.Struct = init_states[i]
                 
             # Write input files in that folder
             if not os.path.exists(fldr):
@@ -280,8 +279,8 @@ class Replicates:
             self.species_pops.append(dummy_run.specnumout.spec )
             self.rxn_freqs.append(dummy_run.procstatout.events )
             
-            if not dummy_run.History == []:
-                self.History_final_snaps.append(dummy_run.History[-1])
+            if not dummy_run.histout.snapshots == []:
+                self.History_final_snaps.append( dummy_run.histout.snapshots[-1] )
             
             self.propensities.append(dummy_run.prop)
             self.Props_integ.append(dummy_run.propCounter)
@@ -311,14 +310,14 @@ class Replicates:
     
         # Find index of product molecule
         try:
-            self.gas_prod_ind = self.runAvg.Species['n_surf'] + self.runAvg.Species['gas_spec'].index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
+            self.gas_prod_ind = len( self.runAvg.simin.surf_spec ) + self.runAvg.simin.gas_spec.index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
         except:
             raise Exception('Product species ' + self.gas_product + ' not found.')
-        
+
         # Find the stochiometry of the product molecule for each reaction         
-        nRxns = len(self.runAvg.Reactions['Nu'])
+        nRxns = len(self.runAvg.genout.RxnNameList)
         self.TOF_stoich = np.zeros(nRxns)
-        for i, elem_stoich in enumerate(self.runAvg.Reactions['Nu']):
+        for i, elem_stoich in enumerate(self.runAvg.genout.Nu):
             self.TOF_stoich[i] = elem_stoich[self.gas_prod_ind]
             
         self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 2 ] )            # Set the number of batches per trajectory
@@ -332,18 +331,17 @@ class Replicates:
         '''
         
         self.runAvg.Path = self.ParentFolder
-        self.runAvg.Specnum['t'] = self.t_vec
+        self.runAvg.specnumout.t = self.t_vec
         
-        self.runAvg.Specnum['spec'] = np.mean(self.species_pops, axis = 0)
-        self.runAvg.Procstat['events'] = np.mean(self.rxn_freqs, axis = 0)
-        self.runAvg.Binary['prop'] = np.mean(self.propensities, axis = 0)
+        self.runAvg.specnumout.spec = np.mean(self.species_pops, axis = 0)
+        self.runAvg.procstatout.events = np.mean(self.rxn_freqs, axis = 0)
+        self.runAvg.prop = np.mean(self.propensities, axis = 0)
         
-        #self.runAvg.Binary['prop'] = np.mean(self.props, axis = 0)
-        if not self.runAvg.Binary['propCounter'] is None:
-            self.runAvg.Binary['propCounter'] = np.mean(self.Props_integ, axis = 0)
+        if not self.runAvg.propCounter is None:
+            self.runAvg.propCounter = np.mean(self.Props_integ, axis = 0)
         
-        self.runAvg.Performance['events_occurred'] = np.mean(self.events_total)
-        self.runAvg.Performance['CPU_time'] = np.mean(self.CPU_total)
+        self.runAvg.genout.events_occurred = np.mean(self.events_total)
+        self.runAvg.genout.CPU_time = np.mean(self.CPU_total)
         
         self.avg_updated = True
         
@@ -553,12 +551,14 @@ class Replicates:
         rate_contributions_all = rate_contributions_all / ( self.n_runs * dp_per_traj )
         
         # Combine forward and reverse reactions
-        W_data = np.zeros([self.runAvg.Reactions['nrxns'], self.n_runs * dp_per_traj])
+        W_data = np.zeros([self.runAvg.mechin.get_num_rxns(), self.n_runs * dp_per_traj])
         rate_contributions = np.zeros(self.runAvg.Reactions['nrxns'])
         ind = 0
-        for i in range(self.runAvg.Reactions['nrxns']):
+        for i in range(self.runAvg.mechin.get_num_rxns()):
             
-            if self.runAvg.Reactions['is_reversible'][i]:
+            rxn_and_var = self.runAvg.mechin.get_rxn_var_inds(i)
+            
+            if self.runAvg.rxn_list[rxn_and_var[0]].is_reversible:
                 W_data[i, :] = W_data_all[ind, :] + W_data_all[ind+1, :]
                 rate_contributions[i] = rate_contributions_all[ind] + rate_contributions_all[ind+1]
                 ind += 2
@@ -584,9 +584,7 @@ class Replicates:
         
         NSCs = NSCs - W_mean * mean_rate + rate_contributions       # Convert from ELR to CELR
         NSCs = NSCs / mean_rate     # normalize 
-        
-        print NSCs[5]
-        print NSCs[8]
+
         
         '''
         Compute error bounds on NSCs
@@ -605,8 +603,8 @@ class Replicates:
             
             # Calculate NSCs
             mean_rate = 0
-            W_mean = np.zeros(self.runAvg.Reactions['nrxns'])
-            NSCsub = np.zeros(self.runAvg.Reactions['nrxns'])
+            W_mean = np.zeros(self.runAvg.mechin.get_num_rxns())
+            NSCsub = np.zeros(self.runAvg.mechin.get_num_rxns())
             
             for dp in range( self.n_runs * dp_per_traj ):
                 mean_rate = mean_rate + rate_data_erg_sub[dp]
@@ -631,9 +629,6 @@ class Replicates:
             NSC_dist_low = NSC_dist[int(0.05 * N_boot)]
             NSC_ci[rxn_ind] = (NSC_dist_high - NSC_dist_low) / 2
         
-        print NSC_ci[5]
-        print NSC_ci[8]
-        
         
     def PlotSensitivities(self, NSC_cut = 0.05): 
         
@@ -648,11 +643,13 @@ class Replicates:
         yvals = []
         ylabels = []
         
-        for i in range (self.runAvg.Reactions['nrxns']):
+        for i in range (self.runAvg.mechin.get_num_rxns()):
             
             if self.NSC[i] + self.NSC_ci[i] > NSC_cut or self.NSC[i] - self.NSC_ci[i] < -NSC_cut:     
-                plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k')               
-                ylabels.append(self.runAvg.Reactions['names'][i])              
+                plt.barh(ind-0.9, self.NSC[i], width, color='r', xerr = self.NSC_ci[i], ecolor='k') 
+
+                indices = get_rxn_var_inds(i)
+                ylabels.append(self.runAvg.rxn_list[indices[0]].name + '_' + self.runAvg.rxn_list[indices[1]].name )              
                 yvals.append(ind-0.6)
                 ind = ind - 1
 
@@ -681,8 +678,11 @@ class Replicates:
             #txt.write('Turnover frequency: \t' + '{0:.3E} \t'.format(self.TOF) + '+- {0:.3E} \t'.format(self.TOF_error) + '\n\n')               
             txt.write('Reaction name \t NSC \t NSC confidence \n')
 
-            for rxn_ind in range(self.runAvg.Reactions['nrxns']):
-                txt.write(self.runAvg.Reactions['names'][rxn_ind] + '\t' + '{0:.3f} +- \t'.format(self.NSC[rxn_ind]) + '\n')
+            ind = 0
+            for rxn in self.runAvg.mechin.rxn_list:
+                for vrnt in rxn.variant_list:
+                    txt.write(rxn.name + '_' + vrnt.name + '\t' + '{0:.3f} +- \t'.format(self.NSC[ind]) + '\n')
+                
             
             
     @staticmethod
@@ -706,14 +706,14 @@ class Replicates:
         for traj_ind in range(batch2.n_runs):
             for time_ind in range(len(batch2.t_vec)):
             
-                for rxn_ind in range(len(batch2.runAvg.Reactions['Nu'])):
+                for rxn_ind in range( sand.rxn_freqs.shape[2] ):
             
                     sand.rxn_freqs[traj_ind, time_ind, rxn_ind] += batch1.rxn_freqs[traj_ind, -1, rxn_ind]
                     sand.Props_integ[traj_ind, time_ind, rxn_ind] += batch1.Props_integ[traj_ind, -1, rxn_ind]
                     sand.traj_derivs[traj_ind, time_ind, rxn_ind] += batch1.traj_derivs[traj_ind, -1, rxn_ind]
                 
                 # Add to the end for gas phase populations
-                for spec_ind in range( batch2.runAvg.Species['n_surf'] , batch2.runAvg.Species['n_surf'] + batch2.runAvg.Species['n_gas'] ):
+                for spec_ind in range( len( batch2.runAvg.simin.surf_spec ) , len( batch2.runAvg.simin.surf_spec ) + len( batch2.runAvg.simin.gas_spec ) ):
                     sand.species_pops[traj_ind, time_ind, spec_ind] += batch1.species_pops[traj_ind, -1, spec_ind]
         
         # Combine the data

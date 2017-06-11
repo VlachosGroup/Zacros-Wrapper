@@ -211,7 +211,7 @@ class Lattice:
         # Convert to fractional coordinates
         self.frac_coords = np.dot(self.cart_coords, np.linalg.inv(self.lattice_matrix))
     
-    
+        self.text_only = False
 
     
     

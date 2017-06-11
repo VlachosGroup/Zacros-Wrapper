@@ -43,9 +43,6 @@ class kmc_traj():
         self.histout = HistoryOut()
         
         # Extra analysis variables
-        self.props_avg = None
-        self.rate_traj = None
-        self.int_rate_traj = None
         self.gas_prod = None
         
     '''
@@ -75,7 +72,7 @@ class kmc_traj():
         self.mechin.WriteIn(self.Path)
         self.clusterin.WriteIn(self.Path)
         self.lat.WriteIn(self.Path)
-        self.statein.WriteIn(self.Path)
+        self.statein.WriteIn(self.Path, self.simin.surf_spec)
 
         
     def ReadAllOutput(self, build_lattice=False):
@@ -224,11 +221,11 @@ class kmc_traj():
         '''
         
         rxn_ind = 0
-        for rxn_type in self.Reactions['Input']:
-            for variant in rxn_type['variant']:
-                variant['pre_expon'] = variant['pre_expon'] * delta_sdf[rxn_ind]
-                self.scaledown_factors[rxn_ind] = self.scaledown_factors[rxn_ind] * delta_sdf[rxn_ind]
-                rxn_ind += 1    
+        for i in self.mechin.rxn_list:
+            for j in i.variant_list:
+                j.pre_expon = j.pre_expon * delta_sdf[rxn_ind]
+                j.scaledown_factor = j.scaledown_factor * delta_sdf[rxn_ind]
+                rxn_ind += 1 
     
     
     def time_search(self, t):
@@ -237,11 +234,11 @@ class kmc_traj():
         Given a time, look up the index of the smallest time greater than or equal to that time
         '''
         
-        if t > self.Specnum['t'][-1] or t < 0:
+        if t > self.specnumout.t[-1] or t < 0:
             raise Exception('Time is out of range.')
         
         ind = 0
-        while self.Specnum['t'][ind] < t:
+        while self.specnumout.t[ind] < t:
             ind += 1
             
         return ind
@@ -253,15 +250,15 @@ class kmc_traj():
         Get the information necessary to linearly interpolate data between time points
         '''
         
-        if t > self.Specnum['t'][-1] or t < 0:
+        if t > self.specnumout.t[-1] or t < 0:
             raise Exception('Time is out of range.')
         
         ind_geq = 0
-        while self.Specnum['t'][ind_geq] < t:
+        while self.specnumout.t[ind_geq] < t:
             ind_geq += 1
             
-        ind_leq = len(self.Specnum['t']) - 1        # set it initially equal to the last index
-        while self.Specnum['t'][ind_leq] > t:
+        ind_leq = len( self.specnumout.t ) - 1        # set it initially equal to the last index
+        while self.specnumout.t[ind_leq] > t:
             ind_leq -= 1
         
         if ind_geq - ind_leq < 0 or ind_geq - ind_leq > 1:
@@ -269,7 +266,7 @@ class kmc_traj():
         
         low_frac = 1.0
         if not (ind_geq == ind_leq):
-            low_frac = (self.Specnum['t'][ind_geq] - t) / (self.Specnum['t'][ind_geq] - self.Specnum['t'][ind_leq])
+            low_frac = (self.specnumout.t[ind_geq] - t) / (self.specnumout.t[ind_geq] - self.specnumout.t[ind_leq])
             
         high_frac = 1.0 - low_frac
         
@@ -284,21 +281,21 @@ class kmc_traj():
         '''
         
         sandwich = copy.deepcopy(run1)
-        sandwich.Performance['t_final'] = run1.Performance['t_final'] + run2.Performance['t_final']
-        sandwich.Performance['events_occurred'] = run1.Performance['events_occurred'] + run2.Performance['events_occurred']
-        sandwich.Performance['CPU_time'] = run1.Performance['CPU_time'] + run2.Performance['CPU_time']
+        sandwich.genout.t_final = run1.genout.t_final + run2.genout.t_final
+        sandwich.genout.events_occurred = run1.genout.events_occurred + run2.genout.events_occurred
+        sandwich.genout.CPU_time = run1.genout.CPU_time + run2.genout.CPU_time
         
-        sandwich.Specnum['t'] = np.concatenate([run1.Specnum['t'], run2.Specnum['t'][1::] + run1.Specnum['t'][-1] * np.ones( len(run2.Specnum['t'])-1 )])
+        sandwich.specnumout.t = np.concatenate([run1.specnumout.t, run2.specnumout.t[1::] + run1.specnumout.t[-1] * np.ones( len(run2.specnumout.t)-1 )])
         
-        n_surf_specs = len(run2.Species['surf_spec'])
-        run2.Specnum['spec'][1::, n_surf_specs : ] = run2.Specnum['spec'][1::, n_surf_specs : ] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Specnum['spec'][-1, n_surf_specs : ]] )        
-        sandwich.Specnum['spec'] = np.vstack([run1.Specnum['spec'], run2.Specnum['spec'][1::,:] ])
-        sandwich.Binary['prop'] = np.vstack([run1.Binary['prop'], run2.Binary['prop'][1::,:] ])
-        sandwich.Procstat['events'] = np.vstack( [run1.Procstat['events'], run2.Procstat['events'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Procstat['events'][-1,:]] ) ] )
-        sandwich.Binary['propCounter'] = np.vstack( [run1.Binary['propCounter'], run2.Binary['propCounter'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['propCounter'][-1,:]]  ) ] )
-        sandwich.Binary['W_sen_anal']  = np.vstack( [run1.Binary['W_sen_anal'], run2.Binary['W_sen_anal'][1::,:] + np.dot(np.ones([len(run2.Specnum['t'])-1 ,1]), [run1.Binary['W_sen_anal'][-1,:]]  ) ] )      
+        n_surf_specs = len( self.simin.surf_spec )
+        run2.specnumout.spec[1::, n_surf_specs : ] = run2.specnumout.spec[1::, n_surf_specs : ] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.specnumout.spec[-1, n_surf_specs : ]] )        
+        sandwich.specnumout.spec = np.vstack([run1.specnumout.spec, run2.specnumout.spec[1::,:] ])
+        sandwich.prop = np.vstack([run1.prop, run2.prop[1::,:] ])
+        sandwich.procstatout.events = np.vstack( [run1.procstatout.events, run2.procstatout.events[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.procstatout.events[-1,:]] ) ] )
+        sandwich.propCounter = np.vstack( [run1.propCounter, run2.propCounter[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.propCounter[-1,:]]  ) ] )
+        sandwich.W_sen_anal  = np.vstack( [run1.W_sen_anal, run2.W_sen_anal[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.W_sen_anal[-1,:]]  ) ] )      
         
-        sandwich.History = [ run1.History[0], run2.History[-1] ]     
+        sandwich.History = [ run1.History[0], run2.History[-1] ]
         
         return sandwich
     
@@ -320,11 +317,12 @@ class kmc_traj():
         
         time_vecs = []
         surf_spec_vecs = []
-        for i in range (len(self.Species['surf_spec'])):
-            time_vecs.append(self.Specnum['t'])
-            surf_spec_vecs.append(self.Specnum['spec'][:,i] / float(site_norm))
+        for i in range (len( self.simin.surf_spec )):
+            time_vecs.append(self.specnumout.t)
+            surf_spec_vecs.append(self.specnumout.spec[:,i] / float(site_norm))
         
-        PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = self.Species['surf_spec'], fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
+        PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = self.simin.surf_spec, fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
+    
     
     def PlotGasSpecVsTime(self):
         
@@ -334,66 +332,13 @@ class kmc_traj():
         
         time_vecs = []
         gas_spec_vecs = []
-        for i in range (len(self.Species['gas_spec'])):
-            time_vecs.append(self.Specnum['t'])
-            gas_spec_vecs.append(self.Specnum['spec'][:,i + len(self.Species['surf_spec']) ])
+        for i in range(len( self.simin.gas_spec )):
+            time_vecs.append(self.specnumout.t)
+            gas_spec_vecs.append(self.specnumout.spec[:, i + len( self.simin.surf_spec ) ])
         
-        PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'spec. pop.', series_labels = self.Species['gas_spec'], fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
+        PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'Spec. pop.', series_labels = self.simin.gas_spec, fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
         
         
-    def PlotPropsVsTime(self):
-        
-        '''
-        Plot elementary step propensities versus time
-        '''
-        
-        self.time_avg_props()
-        time_vecs = []
-        gas_spec_vecs = []
-        labels = []
-        for i in range (self.props_avg.shape[1]):
-            time_vecs.append(self.Specnum['t'][1::])
-            gas_spec_vecs.append(self.props_avg[:,i])
-            labels.append(self.Reactions['names'][i/2])
-        
-        PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'props (1/s)', series_labels = labels, fname = os.path.join(self.Path, 'props_vs_time.png'))
-        
-    def PlotIntPropsVsTime(self, save = True):      # Helps analyze the sensitivty analysis
-        
-        '''
-        Plot integral propensities versus time
-        '''
-        
-        self.time_avg_props()
-        time_vecs = []
-        gas_spec_vecs = []
-        labels = []
-        for i in range (self.props_avg.shape[1]):
-            time_vecs.append(self.Specnum['t'])
-            gas_spec_vecs.append(self.Binary['propCounter'][:,i])
-            labels.append(self.Reactions['names'][i/2])
-        
-        PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'int props', series_labels = labels, fname = os.path.join(self.Path + 'int_props_vs_time.png'))
-        
-        PlotOptions
-        plt.figure()
-    
-    def PlotWVsTime(self):      # Helps analyze the sensitivty analysis
-    
-        '''
-        Plot trajectory derivatives versus time
-        '''
-    
-        time_vecs = []
-        W_vecs = []
-        labels = []
-        for i in range (len(self.Reactions['names'])):
-            if np.max(np.abs(self.Binary['W_sen_anal'][:,i])) > 0:
-                time_vecs.append(self.Specnum['t'])
-                W_vecs.append( self.Binary['W_sen_anal'][:,i])
-                labels.append(self.Reactions['names'][i])
-        
-        PlotTimeSeries(time_vecs, W_vecs, xlab = 'Time (s)', ylab = 'traj. deriv.', series_labels = labels, fname = os.path.join(self.Path + 'traj_deriv_vs_time.png'))
     
     def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1):
         
@@ -401,13 +346,13 @@ class kmc_traj():
         Plot a bar graph of elementary step frequencies versus time
         '''
         
-        start_ind = self.time_search(window[0] * self.Specnum['t'][-1])
-        end_ind = self.time_search(window[1] * self.Specnum['t'][-1])
-        event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / float(site_norm)
+        start_ind = self.time_search(window[0] * self.specnumout.t[-1])
+        end_ind = self.time_search(window[1] * self.specnumout.t[-1])
+        event_freqs = ( self.procstatout.events[end_ind,:] - self.procstatout.events[start_ind,:] ) / float(site_norm)
         if time_norm:
-            event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
+            event_freqs = event_freqs / ( self.specnumout.t[end_ind] - self.specnumout.t[start_ind] )
         
-        PlotOptions
+        PlotOptions()
         plt.figure()
         
         width = 0.2
@@ -417,32 +362,34 @@ class kmc_traj():
         bar_vals = []
         
         store_ind = 0       # index of where the data is stored
-        for i in range (self.Reactions['nrxns']):
         
-            fwd_rate = event_freqs[store_ind]
-            store_ind += 1
-            bwd_rate = 0
-            
-            if self.Reactions['is_reversible'][i]:
-                bwd_rate = event_freqs[store_ind]
+        for rxn in self.mechin.rxn_list:
+            for varnt in rxn.variant_list:
+        
+                fwd_rate = event_freqs[store_ind]
                 store_ind += 1
-        
-            if fwd_rate + bwd_rate > 0:
-            
-                net_freq = abs(fwd_rate - bwd_rate)
+                bwd_rate = 0
                 
-                if fwd_rate > 0:              
-                    plt.barh(ind-0.4, fwd_rate, width, color='r', log = True)
-                    bar_vals.append(fwd_rate)
-                if bwd_rate > 0:
-                    plt.barh(ind-0.6, bwd_rate, width, color='b', log = True)
-                    bar_vals.append(bwd_rate)
-                if net_freq > 0:
-                    plt.barh(ind-0.8, net_freq, width, color='g', log = True)
-                    bar_vals.append(net_freq)
-                ylabels.append(self.Reactions['names'][i])
-                yvals.append(ind-0.6)
-                ind = ind - 1
+                if rxn.is_reversible:
+                    bwd_rate = event_freqs[store_ind]
+                    store_ind += 1
+            
+                if fwd_rate + bwd_rate > 0:
+                
+                    net_freq = abs(fwd_rate - bwd_rate)
+                    
+                    if fwd_rate > 0:              
+                        plt.barh(ind-0.4, fwd_rate, width, color='r', log = True)
+                        bar_vals.append(fwd_rate)
+                    if bwd_rate > 0:
+                        plt.barh(ind-0.6, bwd_rate, width, color='b', log = True)
+                        bar_vals.append(bwd_rate)
+                    if net_freq > 0:
+                        plt.barh(ind-0.8, net_freq, width, color='g', log = True)
+                        bar_vals.append(net_freq)
+                    ylabels.append( rxn.name + varnt.name )
+                    yvals.append(ind-0.6)
+                    ind = ind - 1
 
         bar_vals = np.array(bar_vals)
         log_bar_vals = np.log10(bar_vals)
@@ -454,48 +401,12 @@ class kmc_traj():
         plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
         plt.legend(['fwd','bwd','net'],loc=4,prop={'size':20},frameon=False)
-        plt.xlim([xmin, xmax])
-        ax = plt.subplot(111)        
-        pos = [0.30, 0.15, 0.65, 0.8]
-        ax.set_position(pos)
+        plt.xlim([xmin, xmax])        
+        plt.tight_layout()
         
         plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'))
         plt.close()
-
-
-    def PrintElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1.0):      # into an output file
         
-        '''
-        Write elementary step frequencies into an output file
-        '''
-        
-        start_ind = self.fraction_search(window[0])
-        end_ind = self.fraction_search(window[1])
-        event_freqs = ( self.Procstat['events'][end_ind,:] - self.Procstat['events'][start_ind,:] ) / site_norm
-        if time_norm:
-            event_freqs = event_freqs / ( self.Specnum['t'][end_ind] - self.Specnum['t'][start_ind] )
-                
-            
-        with open(os.path.join(self.Path, 'rxn_freqs.txt'), 'w') as txt:   
-            txt.write('----- Elementary reaction frequencies -----\n')
-            txt.write('Reaction Name \t Forward \t Reverse \t Net \n')
-            for i in range (self.Reactions['nrxns']):
-                net_freq = abs(event_freqs[2*i] - event_freqs[2*i+1])
-                txt.write(self.Reactions['names'][i] + '\t')
-                txt.write('{0:.3E} \t'.format(event_freqs[2*i]))
-                txt.write('{0:.3E} \t'.format(event_freqs[2*i+1]))
-                txt.write('{0:.3E} \n'.format(net_freq))
-
-
-    def PlotRateVsTime(self):
-    
-        '''
-        Plot instantaneous rate versus time
-        '''
-    
-        PlotTimeSeries([self.Specnum['t'][1::]], [self.rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_vs_time.png'))
-        PlotTimeSeries([self.Specnum['t'][1::]], [self.int_rate_traj], xlab = 'Time (s)', ylab = 'rate (1/s)', fname = os.path.join(self.Path + 'rate_erg_vs_time.png'))
-
         
     def PlotLattice(self):
     
@@ -505,11 +416,11 @@ class kmc_traj():
         
         if self.lat.text_only:
         
-            print 'Cannot plot lattice. Only text input exists'
+            print 'Cannot plot lattice. Only text input exists.'
             
         else:
         
-            plt = self.KMC_lat.PlotLattice()
+            plt = self.lat.PlotLattice()
             plt.savefig(os.path.join(self.Path, 'lattice.png'))
             plt.close()
         
@@ -521,23 +432,23 @@ class kmc_traj():
         '''
     
         cart_coords = self.KMC_lat.cart_coords
-        spec_label_list = self.Species['surf_spec']
+        spec_label_list = self.simin.surf_spec
         
         frame_fldr = os.path.join(self.Path, 'lattice_frames')
         if not os.path.exists( frame_fldr ):
                 os.makedirs( frame_fldr )
                 
-        print str(self.n_snapshots) + ' total snapshots'
+        print str(self.histout.n_snapshots) + ' total snapshots'
         
-        for frame_num in range(self.n_snapshots):
+        for frame_num in range(self.histout.n_snapshots):
             
             print 'Draw frame number ' + str(frame_num+1)
-            snap = self.History[frame_num]        
+            snap = self.histout.snapshots[frame_num]
         
             plt = self.KMC_lat.PlotLattice()            # plot the lattice in this frame
         
             
-            for ind in range(self.Species['n_surf']):
+            for ind in range( len( self.simin.surf_spec ) ):
                 
                 # Find all coordinates with species ind occupying it
                 x_list = []

@@ -117,8 +117,7 @@ def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labe
     
     if not series_labels == []:
         plt.legend(series_labels, loc=4, prop={'size':20}, frameon=False)
-    ax = plt.subplot(111)
-    ax.set_position([0.2, 0.15, 0.7, 0.8])
+    plt.tight_layout()
     
     if logscale:
         plt.yscale('log')
