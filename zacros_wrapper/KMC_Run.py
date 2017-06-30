@@ -453,7 +453,7 @@ class kmc_traj():
                 # Find all coordinates with species ind occupying it
                 x_list = []
                 y_list = []
-                for site_ind in range(self.n_sites):      # include empty sites
+                for site_ind in range(cart_coords.shape[0]):      # include empty sites
                     if snap[site_ind,2] == ind+1:
                         x_list.append(cart_coords[site_ind,0])
                         y_list.append(cart_coords[site_ind,1])
