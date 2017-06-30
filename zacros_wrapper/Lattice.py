@@ -122,6 +122,9 @@ class Lattice:
         Return a pyplot object with the lattice graphed on it
         '''
         
+        if self.text_only = True:
+            raise NameError('Lattice must be built before plotting. Use ReadAllOutput(build_lattice=True)')
+        
         if self.cart_coords == []:
             self.cart_coords = np.dot(self.frac_coords, self.lattice_matrix)
         

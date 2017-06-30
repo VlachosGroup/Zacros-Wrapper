@@ -463,7 +463,7 @@ class kmc_traj():
                 
                 plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 3, label=spec_label_list[ind])
             
-            plt.title('Time: ' + str(self.snap_times[frame_num]) + ' sec')
+            plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
             plt.legend(frameon=False, loc=4)
                 
             plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)))
