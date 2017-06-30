@@ -302,7 +302,7 @@ class cluster_variant():
 
     def __init__(self):
     
-        self.name = None
+        self.name = ''
         self.site_types = None
         self.graph_multiplicity = 1
         self.cluster_eng = 0.0
@@ -404,14 +404,24 @@ class ClusterIn(object):
             nClusterTotal += n_variants
             
             # Find beginning and ending lines for each variant
-            variantInd = _np.array([[0, 0]]*n_variants)
-            Count = 0
-            for i in range(ClusterInd[j, 0]+1, ClusterInd[j, 1]):
-                if RawTxt[i].split()[0] == 'variant':
-                    variantInd[Count, 0] = i
-                if RawTxt[i].split()[0] == 'end_variant':
-                    variantInd[Count, 1] = i
-                    Count += 1
+            
+            if n_variants == 0:
+            
+                n_variants = 1
+                variantInd = _np.array([[0, 0]]*n_variants)
+                variantInd[0, 0] = ClusterInd[j, 0] + 1
+                variantInd[0, 1] = ClusterInd[j, 1]
+                
+            else:
+            
+                variantInd = _np.array([[0, 0]]*n_variants)
+                Count = 0
+                for i in range(ClusterInd[j, 0]+1, ClusterInd[j, 1]):
+                    if RawTxt[i].split()[0] == 'variant':
+                        variantInd[Count, 0] = i
+                    if RawTxt[i].split()[0] == 'end_variant':
+                        variantInd[Count, 1] = i
+                        Count += 1
                     
             self.cluster_list[j].variant_list = [cluster_variant() for k in range(n_variants)]
 
@@ -497,7 +507,7 @@ class rxn_variant():
 
     def __init__(self):
     
-        self.name = None
+        self.name = ''
         self.site_types = None              # site types
         self.pre_expon = None               # pre-exponential factor
         self.pe_ratio = None                # partial equilibrium ratio
@@ -648,19 +658,28 @@ class MechanismIn(object):
                             append(LatState[k].split('\n')[0])
                     for k in range(0, nSites):
                         StateLine.append(i+1+k)
-                elif not InVariant and i not in StateLine:
-                    print 'Unparsed line in mechanism input:'
-                    print RawTxt[i]
 
-            # Find beginning and ending lines for each variant
-            variantInd = _np.array([[0, 0]]*n_variants)
-            Count  = 0
-            for i in range(MechInd[j, 0] + 1, MechInd[j, 1]):
-                if RawTxt[i].split()[0] == 'variant':
-                    variantInd[Count, 0] = i
-                if RawTxt[i].split()[0] == 'end_variant':
-                    variantInd[Count, 1] = i
-                    Count += 1
+            if n_variants == 0:     # There are no variants, just one version of the reaction
+            
+                #raise NameError('No variants for reaction: ' + self.rxn_list[j].name)
+                n_variants = 1
+                
+                # Find the beginning and end of the reaction information
+                variantInd = _np.array([[0, 0]]*n_variants)
+                variantInd[0, 0] = MechInd[j, 0] + 1 
+                variantInd[0, 1] = MechInd[j, 1]
+                
+            else:
+                    
+                # Find beginning and ending lines for each variant
+                variantInd = _np.array([[0, 0]]*n_variants)
+                Count  = 0
+                for i in range(MechInd[j, 0] + 1, MechInd[j, 1]):
+                    if RawTxt[i].split()[0] == 'variant':
+                        variantInd[Count, 0] = i
+                    if RawTxt[i].split()[0] == 'end_variant':
+                        variantInd[Count, 1] = i
+                        Count += 1
 
             self.rxn_list[j].variant_list = [ rxn_variant() for i in range(n_variants) ]
                     
@@ -682,6 +701,10 @@ class MechanismIn(object):
                         self.rxn_list[j].variant_list[k].prox_factor = float(RawTxt[i].split()[1])
                     elif RawTxt[i].split()[0] == '#':
                         pass
+                
+                # If there is no variant, it does not have an extra name
+                if self.rxn_list[j].variant_list[k].name is None:
+                    self.rxn_list[j].variant_list[k].name = ''
                 
                 # Assign scaledown factor if it is present
                 if StiffCorrLine != -1:
