@@ -120,7 +120,7 @@ class Replicates:
         Then, it submits it to the gridengine and waits for them to finish
         '''
     
-        sys.stdout.write('Running parallel jobs')
+        sys.stdout.write('Running parallel jobs\n')
         sys.stdout.flush()
     
         with open(os.path.join(self.ParentFolder, 'dir_list.txt'), 'w') as txt:
@@ -150,7 +150,7 @@ class Replicates:
                 txt.write('#$ -N ' + job_name + ' 					#This is the name of the job array\n')
                 txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
                 txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
-                txt.write('#$ -pe threads 1 				#Change the last field to the number of processors desired per task\n')
+                txt.write('#$ -pe threads 1 -l mem_free=2G              #Change the last field to the number of processors desired per task\n')
                 txt.write('#\n')
                 txt.write('# Change the following to #$ and set the amount of memory you need\n')
                 txt.write('# per-slot if you are getting out-of-memory errors using the\n')
@@ -187,7 +187,7 @@ class Replicates:
                 txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
                 txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
                 txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
-                txt.write('#$ -pe openmpi-smp 1 				#Change the last field to the number of processors desired per task\n')
+                txt.write('#$ -pe openmpi-smp 2 -l mem_free=1G			#Change the last field to the number of processors desired per task\n')
                 txt.write('\n')
                 txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
                 txt.write('#Change to the job directory\n')
@@ -202,8 +202,12 @@ class Replicates:
     
         # Wait for jobs to be done
         all_jobs_done = False
+        check_num = 1
         while not all_jobs_done:
             time.sleep(60)
+            #sys.stdout.write('Checking to see if jobs are complete: ' + str(check_num) + '\n')
+            #sys.stdout.flush()
+            check_num += 1
             all_jobs_done = True
             for fldr in self.run_dirs:
                 self.runtemplate.Path = fldr
@@ -265,7 +269,7 @@ class Replicates:
         self.CPU_total = []
         
         for i in range(self.n_runs):
-        
+            print self.run_dirs[i]
             # Switch to folder and read output files
             dummy_run.Path = self.run_dirs[i]
             dummy_run.ReadAllOutput()
@@ -279,8 +283,9 @@ class Replicates:
             self.species_pops.append(dummy_run.specnumout.spec )
             self.rxn_freqs.append(dummy_run.procstatout.events )
             
-            if not dummy_run.histout.snapshots == []:
-                self.History_final_snaps.append( dummy_run.histout.snapshots[-1] )
+            if hasattr(dummy_run.histout, 'snapshots'):         # For some reason dummy_run.histout was not initializing properly...
+                if not dummy_run.histout.snapshots == []:
+                    self.History_final_snaps.append( dummy_run.histout.snapshots[-1] )
             
             self.propensities.append(dummy_run.prop)
             self.Props_integ.append(dummy_run.propCounter)

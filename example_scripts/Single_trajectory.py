@@ -8,29 +8,29 @@ Created on Thu Jul 28 13:48:34 2016
 import os
 import sys
 
-sys.path.append('/home/vlachos/mpnunez/Github/Zacros-Wrapper/PythonCode')
-import Core as zw
+sys.path.append('/home/vlachos/mpnunez/Github/Zacros-Wrapper')
+import zacros_wrapper as zw
 
 ''' ------------ User input section ------------ '''
-RunPath = '/home/vlachos/wangyf/CO_oxidation/23'
+RunPath = '/home/vlachos/wangyf/Alumina/mechanismI/5'
 #RunPath = '/home/vlachos/mpnunez/ZW_data/KMC_data/WGS/SteadyState/Iteration_7/63'
 ''' -------------------------------------------- '''
 
 ''' Set up data '''
-y = zw.KMC_Run()
+y = zw.kmc_traj()
 y.Path = RunPath
 #y.ReadAllInput()
 #y.exe_file = exe_file
 
 #y.Run_sim()
 y.ReadAllOutput()
-y.Path = '/home/vlachos/mpnunez/test'
+y.Path = '/home/vlachos/mpnunez/Github/Zacros-Wrapper/example_scripts'
 
 ''' Analyze '''
 #n_Pd = 48 * 48
 n_Pd = 920
-y.PlotSurfSpecVsTime(site_norm = n_Pd)
-y.PlotGasSpecVsTime()
+#y.PlotSurfSpecVsTime(site_norm = n_Pd)
+#y.PlotGasSpecVsTime()
 y.PlotElemStepFreqs(site_norm = n_Pd, time_norm = True)
 y.PlotLattice()
 y.LatticeMovie()

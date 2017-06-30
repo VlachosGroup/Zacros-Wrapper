@@ -37,13 +37,13 @@ import numpy as _np
 import re as _re
 import random as _random
 import linecache as _linecache
-import DFT_to_Thermochemistry as _thermo
+#import DFT_to_Thermochemistry as _thermo
 
 from GRW_constants import constant as _c
 from Helper import ReadWithoutBlankLines as _ReadWithoutBlankLines
 from Helper import ReturnUnique as _ReturnUnique
 from Helper import rawbigcount as _rawbigcount
-reload(_thermo)
+#reload(_thermo)
 
 
 '''
@@ -100,8 +100,12 @@ class SimIn():
         
         self.Seed = None
         self.restart = True
-        self.WallTime_Max = ''
-
+        self.WallTime_Max = None
+        self.MaxStep = None
+        self.SimTime_Max = None
+        self.hist = None
+        
+        
     def ReadIn(self, fldr):
     
         '''
@@ -195,9 +199,8 @@ class SimIn():
                 txt.write('{:20}{:5.1f}{:5.1f}\n'.format('temperature\t ramp', self.TPD_start, self.TPD_ramp))
             else:
                 txt.write('{:20}{:5.1f}\n'.format('temperature', self.T))
-                
-            txt.write('{:20}{:5.1f}\n\n'.format('pressure',
-                      self.P))
+
+            txt.write('{:20}{:5.5e}\n\n'.format('pressure', self.P))
             txt.write('{:20}{}\n'.format('n_gas_species',
                       str(self.n_gas)))
             txt.write('{:20}'.format('gas_specs_names'))
@@ -223,7 +226,7 @@ class SimIn():
                 txt.write('{:15}'.format(str(self.surf_dent[i])))
             txt.write('\n\n')
 
-            if self.hist[0] == 'off':
+            if self.hist is None:
                 txt.write('{:20}{}\n'.format('snapshots', 'off'))
             elif self.hist[0] == 'event':
                 txt.write('{:20}{} {} {}\n'.format('snapshots', 'on',
@@ -233,6 +236,7 @@ class SimIn():
                 txt.write('{:20}{} {} {}\n'.format('snapshots', 'on',
                           self.hist[0],
                           str(_np.float(self.hist[1]))))
+                          
             if self.procstat[0] == 'off':
                 txt.write('process_statistics  off\n')
             elif self.procstat[0] == 'event':
@@ -257,20 +261,20 @@ class SimIn():
             txt.write('{:20}{}\n\n'.format('event_report',
                       self.event))
 
-            if self.MaxStep == '' or\
+            if self.MaxStep is None or\
                _re.search('inf', str(self.MaxStep)):
                 txt.write('{:20}{}\n'.format('max_steps', 'infinity'))
             else:
                 txt.write('{:20}{}\n'.format('max_steps',
                           str(self.MaxStep)))
 
-            if self.SimTime_Max == '' or\
+            if self.SimTime_Max is None or\
                _re.search('inf', str(self.SimTime_Max)):
                 txt.write('{:20}{}\n'.format('max_time', 'infinity\n'))
             else:
                 txt.write('{:20}{}\n'.format('max_time',
                           str(self.SimTime_Max)))
-            if self.WallTime_Max == '' or\
+            if self.WallTime_Max is None or\
                _re.search('inf', str(self.WallTime_Max)):
                 txt.write('\n')
             else:
@@ -1287,7 +1291,7 @@ class HistoryOut():
     def __init__(self):
     
         n_snapshots = 0
-        snapshots = None
+        snapshots = []
         snap_times = None
         
     def ReadOut(self, fldr, nSites):

@@ -431,7 +431,7 @@ class kmc_traj():
         Create a .png file with a picture of a lattice for every snapshot in history_output.txt
         '''
     
-        cart_coords = self.KMC_lat.cart_coords
+        cart_coords = self.lat.cart_coords
         spec_label_list = self.simin.surf_spec
         
         frame_fldr = os.path.join(self.Path, 'lattice_frames')
@@ -445,7 +445,7 @@ class kmc_traj():
             print 'Draw frame number ' + str(frame_num+1)
             snap = self.histout.snapshots[frame_num]
         
-            plt = self.KMC_lat.PlotLattice()            # plot the lattice in this frame
+            plt = self.lat.PlotLattice()            # plot the lattice in this frame
         
             
             for ind in range( len( self.simin.surf_spec ) ):

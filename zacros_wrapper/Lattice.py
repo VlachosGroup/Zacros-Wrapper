@@ -172,6 +172,7 @@ class Lattice:
         plt.xlabel('x-coord (ang)',size=24)
         plt.ylabel('y-coord (ang)',size=24)
         plt.axis('equal')
+        plt.tight_layout()
         
         return plt
         
