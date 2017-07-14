@@ -150,7 +150,7 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         
         prev_batch = copy.deepcopy(cum_batch)
         iteration += 1
-       
+        #is_steady_state = False
     return cum_batch
     
 

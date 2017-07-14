@@ -40,10 +40,10 @@ class Replicates:
         # Output data taken accross all trajectories
         # Put here various multidimensional numpy arrays which will make it easier to do statistics
         self.t_vec = None                    # times at which data is recorded
-        self.species_pops = None
-        self.rxn_freqs = None
+        self.species_pops = None            # species populations
+        self.rxn_freqs = None               # reaction frequencies
         self.History_final_snaps = None
-        self.propensities = None
+        self.propensities = None            # total propensity for each reaction
         self.Props_integ = None
         self.traj_derivs = None
         self.events_total = None
@@ -187,7 +187,7 @@ class Replicates:
                 txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
                 txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
                 txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
-                txt.write('#$ -pe openmpi-smp 2 -l mem_free=1G			#Change the last field to the number of processors desired per task\n')
+                txt.write('#$ -pe openmpi-smp 1 -l mem_free=1G			#Change the last field to the number of processors desired per task\n')
                 txt.write('\n')
                 txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
                 txt.write('#Change to the job directory\n')
@@ -430,13 +430,12 @@ class Replicates:
         #return [ACF, ACF_high, ACF_low]
         
 
-    def Compute_rate(self, delta_t = None):          # Need implement time point interpolation
+    def Compute_rate(self):          # Need implement time point interpolation
         
         '''
         Perform sensitivity analysis with a combination of
         time and trajectory averaging
         
-        delta_t             size of the time window
         ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval 
         
         The time-averaging could be improved in here. Right now it is a little weird...
@@ -446,17 +445,10 @@ class Replicates:
         
         self.Set_analysis_varaibles()
         
-        # Use entire trajectory length as the default time window
-        if delta_t is None:
-            delta_t = self.batch_length
         
         if not self.avg_updated:
             self.AverageRuns()
             
-        if delta_t > self.t_vec[-1] or delta_t < 0:
-            print 'Time window: ' + str(delta_t)
-            print 'Final time: ' + str(self.t_vec[-1])
-            raise Exception('Time window is too large. Insufficient sampling.')
         
         bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt + 1)
         
