@@ -187,7 +187,7 @@ class Replicates:
                 txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
                 txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
                 txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
-                txt.write('#$ -pe openmpi-smp 1 -l mem_free=1G			#Change the last field to the number of processors desired per task\n')
+                txt.write('#$ -pe openmpi-smp 2 -l mem_free=1G			#Change the last field to the number of processors desired per task\n')
                 txt.write('\n')
                 txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
                 txt.write('#Change to the job directory\n')
