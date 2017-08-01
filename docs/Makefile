@@ -6,7 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = ZacrosWrapper
 SOURCEDIR     = source
-BUILDDIR      = .
+BUILDDIR      = ../../Zacros-Wrapper-docs
 
 # Put it first so that "make" without argument is like "make help".
 help:
