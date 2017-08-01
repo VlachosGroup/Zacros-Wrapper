@@ -1,0 +1,5 @@
+Description of the rate constant rescaling functionality
+=========================================================
+
+.. automodule:: RateRescaling
+    :members:

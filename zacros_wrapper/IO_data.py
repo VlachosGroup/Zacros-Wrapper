@@ -1,36 +1,3 @@
-# -*- coding: utf-8 -*-
-'''
-         -----------------------------------------------------
-               Read all Zacros input and output files.
-            Calculate cluster energies, pre-exponential
-             factors and activation energeies using the
-           DFT_to_Thermochemistry.py code.  Replace those
-           values in the Zacros energetics_input.dat and
-            mechanism_input.dat files and write the new
-                         file versions.
-
-                     Vlachos Research Group
-                Chemical and Biomolecular Egineering
-                      University of Delaware
-
-                     Gerhard R Wittreich, P.E.
-          -----------------------------------------------------
-
-Created on Fri Apr 28 10:49:53 2017
-
-@author: wittregr
-
-Adopted from Matlab code written and modified by:
-
-                        Marcel Nunez
-                            and
-                        Taylor Robie
-
- This program contains the class objects used to read energy, vibration and
- molecular configuration data and determine the standard entropy and enthalpy
- and heat capacities at various temperatures.
-
-'''
 
 import os as _os
 import numpy as _np
@@ -49,23 +16,21 @@ from Helper import rawbigcount as _rawbigcount
 '''
  Class definitions for:
 
-     Zacros input file      Class object
+     Zacros input file      Class name
      -----------------      ------------
+     simulation_input.dat   SimIn
      energetics_input.dat   ClusterIn
      mechanism_input.dat    MechanismIn
-     simulation_input.dat   SimIN
+     
      lattice_input.dat      LatticeIn
      state_input.dat        StateIn
 
-     Zacros output file    Class object
+     Zacros output file    Class name
      ------------------    ------------
      general_output.txt    Performance
      history_output.txt    History
      procstat_output.txt   Procstat
-     specnum_output.txt    Specnum
-     clusterocc.bin        Binary
-     Prop_output.bin       Binary
-     SA_output.bin         Binary
+     specnum_output.txt    SpecnumOut
 '''
 
 
@@ -289,6 +254,10 @@ class SimIn():
 
 class Cluster():
 
+    '''
+    Cluster in energetics_input.dat
+    '''
+
     def __init__(self):
     
         self.name = None
@@ -299,6 +268,10 @@ class Cluster():
         
     
 class cluster_variant():
+
+    '''
+    Variant of a cluster in energetics_input.dat
+    '''
 
     def __init__(self):
     
@@ -492,6 +465,10 @@ class ClusterIn(object):
 
 class Reaction():
 
+    '''
+    Reaction in mechanism_input.dat
+    '''
+
     def __init__(self):
     
         self.name = None
@@ -504,6 +481,10 @@ class Reaction():
         self.variant_list = []
 
 class rxn_variant():
+
+    '''
+    Variant of a reaction in mechanism_input.dat
+    '''
 
     def __init__(self):
     

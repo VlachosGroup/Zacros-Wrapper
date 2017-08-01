@@ -1,4 +1,4 @@
-Description of the KMC_Run class
+The KMC_Run class
 ==========================================
 
 .. automodule:: KMC_Run

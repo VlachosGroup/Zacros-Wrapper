@@ -7,29 +7,16 @@ For users familiar with the Zacros software, our package offers ease-of-use
 as well as additional analysis functionality. Modified source files for 
 Zacros are included which produce additional output files that are used by the wrapper.
 
+Documentation and Source code
+-------------
+* Documentation available at `<http://vlachosgroup.github.io/Zacros-Wrapper/>`_
+* Download or clone source code from the  `Github repository <https://github.com/VlachosGroup/Zacros-Wrapper/>`_
 
 Key features
 ------------
 * Run KMC simulations with parallel processing (uses GridEngine job arrays)
 * Rescale rate constants of fast, equilibrated reactions to accelerate simulation
 * Perform parameteric sensitivity analysis using finite-difference or likelihood ratio methods
-
-
-Adding it to your python path
-------------------------------
-Add the Zacros-Wrapper respository to your python path, and then import using ``import zacros_wrapper``
-
-Getting Started
----------------
-Step 1: Obtain Zacros executable
-
-If you are not doing sensitivity analysis, you don't need to use the new one. If you are doing LRSA, you need modified Zacros files. See the modified zacros page for instructions on how to compile that.
-
-Step 2: Configure input in demo file and run
-
-Go to the Demo files in ZacrosWrapper/Demos
-Change variables in the user input section at the top of the desired script. Typically, Path to Zacros executable file, working directory names, and number of processors available must be configured. Inputs vary depending on the script. Descriptions of what each script does are given in the comments.
-Run the demo file.
 
 Developers
 ----------
@@ -39,11 +26,4 @@ Developers
 
 Related publications
 -----------------------
-* M. Núñez, T.A. Robie, and D.G Vlachos, “Rapid identification of the rate determining step in complex kinetic systems” (in preparation)
-
-Known issues
-------------
-
-* In energetics_input.dat, all clusters must be specified as a variant.
-* In mechanism_input.dat, all reactions must be specified as a variant
-* Trajectory derivatives do not include the truncation term. They report data since the last event.
+* M. Nunez, T.A. Robie, and D.G Vlachos, “Acceleration and Sensitivity Analysis of Lattice Kinetic Monte Carlo Simulations Using Parallel Processing and Rate Constant Rescaling” (in preparation)

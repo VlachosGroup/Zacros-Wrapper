@@ -1,4 +1,4 @@
-Description of the Lattice class
+The Lattice class
 ==========================================
 
 
