@@ -3,22 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. include:: ../../README.rst
+.. include:: ../README.rst
 
-Contents:
-
-Code descriptions
+Documentation
 -----------------
 
 .. toctree::
    :maxdepth: 2
 
+   Example
    compile_zacros
-   Replicates
-   Lattice
    IOdata
+   Lattice
    KMC_Run
-
+   Replicates
+   Rescaling
 
 
 Indices and tables

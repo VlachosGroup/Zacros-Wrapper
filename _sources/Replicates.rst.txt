@@ -1,4 +1,4 @@
-Description of the Replicates class
+The Replicates class
 ==========================================
 
 .. automodule:: Replicates

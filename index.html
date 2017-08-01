@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Installation instructions" href="compile_zacros.html" /> 
+    <link rel="next" title="Examples" href="Example.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -39,7 +39,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="compile_zacros.html" title="Installation instructions"
+          <a href="Example.html" title="Examples"
              accesskey="N">next</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>
@@ -57,6 +57,13 @@ kinetic Monte Carlo (KMC) code, which can be found at <a class="reference extern
 For users familiar with the Zacros software, our package offers ease-of-use
 as well as additional analysis functionality. Modified source files for
 Zacros are included which produce additional output files that are used by the wrapper.</p>
+<div class="section" id="documentation-and-source-code">
+<h2>Documentation and Source code<a class="headerlink" href="#documentation-and-source-code" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Documentation available at <a class="reference external" href="http://vlachosgroup.github.io/Zacros-Wrapper/">http://vlachosgroup.github.io/Zacros-Wrapper/</a></li>
+<li>Download or clone source code from the  <a class="reference external" href="https://github.com/VlachosGroup/Zacros-Wrapper/">Github repository</a></li>
+</ul>
+</div>
 <div class="section" id="key-features">
 <h2>Key features<a class="headerlink" href="#key-features" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -64,19 +71,6 @@ Zacros are included which produce additional output files that are used by the w
 <li>Rescale rate constants of fast, equilibrated reactions to accelerate simulation</li>
 <li>Perform parameteric sensitivity analysis using finite-difference or likelihood ratio methods</li>
 </ul>
-</div>
-<div class="section" id="adding-it-to-your-python-path">
-<h2>Adding it to your python path<a class="headerlink" href="#adding-it-to-your-python-path" title="Permalink to this headline">¶</a></h2>
-<p>Add the Zacros-Wrapper respository to your python path, and then import using <code class="docutils literal"><span class="pre">import</span> <span class="pre">zacros_wrapper</span></code></p>
-</div>
-<div class="section" id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<p>Step 1: Obtain Zacros executable</p>
-<p>If you are not doing sensitivity analysis, you don&#8217;t need to use the new one. If you are doing LRSA, you need modified Zacros files. See the modified zacros page for instructions on how to compile that.</p>
-<p>Step 2: Configure input in demo file and run</p>
-<p>Go to the Demo files in ZacrosWrapper/Demos
-Change variables in the user input section at the top of the desired script. Typically, Path to Zacros executable file, working directory names, and number of processors available must be configured. Inputs vary depending on the script. Descriptions of what each script does are given in the comments.
-Run the demo file.</p>
 </div>
 <div class="section" id="developers">
 <h2>Developers<a class="headerlink" href="#developers" title="Permalink to this headline">¶</a></h2>
@@ -90,31 +84,32 @@ Run the demo file.</p>
 <h2>Related publications<a class="headerlink" href="#related-publications" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><ol class="first upperalpha" start="13">
-<li>Núñez, T.A. Robie, and D.G Vlachos, “Rapid identification of the rate determining step in complex kinetic systems” (in preparation)</li>
+<li>Nunez, T.A. Robie, and D.G Vlachos, “Acceleration and Sensitivity Analysis of Lattice Kinetic Monte Carlo Simulations Using Parallel Processing and Rate Constant Rescaling” (in preparation)</li>
 </ol>
 </li>
 </ul>
 </div>
-<div class="section" id="known-issues">
-<h2>Known issues<a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li>In energetics_input.dat, all clusters must be specified as a variant.</li>
-<li>In mechanism_input.dat, all reactions must be specified as a variant</li>
-<li>Trajectory derivatives do not include the truncation term. They report data since the last event.</li>
-</ul>
-<p>Contents:</p>
-</div>
-<div class="section" id="code-descriptions">
-<h2>Code descriptions<a class="headerlink" href="#code-descriptions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="compile_zacros.html">Installation instructions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="compile_zacros.html#additional-output-files">Additional output files</a></li>
-<li class="toctree-l1"><a class="reference internal" href="compile_zacros.html#compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster">Compiling on [Farber](http://farber.hpc.udel.edu/) (University of Delaware computing cluster)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Replicates.html">Description of the Replicates class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Lattice.html">Description of the Lattice class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="IOdata.html">Description of the IOdata class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="KMC_Run.html">Description of the KMC_Run class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Example.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Example.html#here-is-single-trajectory-py">Here is Single_trajectory.py</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="compile_zacros.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="compile_zacros.html#adding-it-to-your-python-path">Adding it to your python path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile_zacros.html#id1">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile_zacros.html#installation-instructions">Installation instructions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile_zacros.html#additional-output-files">Additional output files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="compile_zacros.html#compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster">Compiling on [Farber](http://farber.hpc.udel.edu/) (University of Delaware computing cluster)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="IOdata.html">File input/output functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Lattice.html">The Lattice class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KMC_Run.html">The KMC_Run class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Replicates.html">The Replicates class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Rescaling.html">Description of the rate constant rescaling functionality</a></li>
 </ul>
 </div>
 </div>
@@ -137,21 +132,19 @@ Run the demo file.</p>
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Python wrapper for the Zacros kinetic Monte Carlo (KMC) code</a><ul>
+<li><a class="reference internal" href="#documentation-and-source-code">Documentation and Source code</a></li>
 <li><a class="reference internal" href="#key-features">Key features</a></li>
-<li><a class="reference internal" href="#adding-it-to-your-python-path">Adding it to your python path</a></li>
-<li><a class="reference internal" href="#getting-started">Getting Started</a></li>
 <li><a class="reference internal" href="#developers">Developers</a></li>
 <li><a class="reference internal" href="#related-publications">Related publications</a></li>
-<li><a class="reference internal" href="#known-issues">Known issues</a></li>
-<li><a class="reference internal" href="#code-descriptions">Code descriptions</a></li>
+<li><a class="reference internal" href="#documentation">Documentation</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 
   <h4>Next topic</h4>
-  <p class="topless"><a href="compile_zacros.html"
-                        title="next chapter">Installation instructions</a></p>
+  <p class="topless"><a href="Example.html"
+                        title="next chapter">Examples</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -183,7 +176,7 @@ Run the demo file.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="compile_zacros.html" title="Installation instructions"
+          <a href="Example.html" title="Examples"
              >next</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>

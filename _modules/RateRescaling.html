@@ -1,0 +1,357 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="Python">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>RateRescaling &#8212; Zacros Wrapper 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for RateRescaling</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">from</span> <span class="nn">Replicates</span> <span class="k">import</span> <span class="n">Replicates</span>
+<span class="kn">from</span> <span class="nn">Helper</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mat</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+  
+<div class="viewcode-block" id="ReachSteadyStateAndRescale"><a class="viewcode-back" href="../Rescaling.html#RateRescaling.ReachSteadyStateAndRescale">[docs]</a><span class="k">def</span> <span class="nf">ReachSteadyStateAndRescale</span><span class="p">(</span><span class="n">kmc_template</span><span class="p">,</span> <span class="n">scale_parent_fldr</span><span class="p">,</span> <span class="n">n_runs</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span> <span class="n">n_batches</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> 
+                                <span class="n">acf_cut</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">include_stiff_reduc</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">max_events</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1e3</span><span class="p">),</span> 
+                                <span class="n">max_iterations</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">ss_inc</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">platform</span> <span class="o">=</span> <span class="s1">&#39;Squidward&#39;</span><span class="p">):</span>
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Handles rate rescaling and continuation of KMC runs</span>
+<span class="sd">    </span>
+<span class="sd">    kmc_template           :     kmc_traj object with information about the physical system</span>
+<span class="sd">    scale_parent_fldr      :     Working directory</span>
+<span class="sd">    n_runs                 :     Number of trajectories to run, also the number of processors</span>
+<span class="sd">    include_stiff_reduc    :     True to allow for scaledown, False to turn this feature off</span>
+<span class="sd">    max_events             :     Maximum number of events for the first iteration</span>
+<span class="sd">    max_iterations         :     Maximum number of iterations to use</span>
+<span class="sd">    ss_inc                 :     Factor to scale the final time by if you have not yet reached steady state</span>
+<span class="sd">    n_samples              :     Number of time points to sample for each trajectory</span>
+<span class="sd">    platform               :     Squidward or Farber</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">prev_batch</span> <span class="o">=</span> <span class="n">Replicates</span><span class="p">()</span>       <span class="c1"># Set this if the starting iteration is not 1</span>
+    <span class="n">initial_states</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># Placeholder variables</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">scale_parent_fldr</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">scale_parent_fldr</span><span class="p">)</span>
+    <span class="n">ClearFolderContents</span><span class="p">(</span><span class="n">scale_parent_fldr</span><span class="p">)</span>
+    <span class="n">SDF_vec</span> <span class="o">=</span> <span class="kc">None</span>        <span class="c1"># scaledown factors for each iteration</span>
+    
+    <span class="c1"># Convergence variables</span>
+    <span class="n">is_steady_state</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">iteration</span> <span class="o">=</span> <span class="mi">1</span>              
+    
+    <span class="n">scale_final_time</span> <span class="o">=</span> <span class="n">ss_inc</span>
+
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">is_steady_state</span> <span class="ow">and</span> <span class="n">iteration</span> <span class="o">&lt;=</span> <span class="n">max_iterations</span><span class="p">:</span>
+        
+        <span class="c1"># Make folder for iteration</span>
+        <span class="n">iter_fldr</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">scale_parent_fldr</span><span class="p">,</span> <span class="s1">&#39;Iteration_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">iteration</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">iter_fldr</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">iter_fldr</span><span class="p">)</span>
+            
+        <span class="c1"># Create object for batch</span>
+        <span class="n">cur_batch</span> <span class="o">=</span> <span class="n">Replicates</span><span class="p">()</span>
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">ParentFolder</span> <span class="o">=</span> <span class="n">iter_fldr</span>
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">=</span> <span class="n">n_runs</span>
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">N_batches</span> <span class="o">=</span> <span class="n">n_batches</span>
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">Set_kmc_template</span><span class="p">(</span><span class="n">kmc_template</span><span class="p">)</span>        <span class="c1"># Set template KMC trajectory</span>
+        
+        <span class="k">if</span> <span class="n">iteration</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>              <span class="c1"># Sample on events, because we do not know the time scales</span>
+        
+            <span class="c1"># Set sampling parameters</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">MaxStep</span> <span class="o">=</span> <span class="n">max_events</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">SimTime_Max</span> <span class="o">=</span> <span class="s1">&#39;inf&#39;</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">WallTime_Max</span> <span class="o">=</span> <span class="s1">&#39;inf&#39;</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">restart</span> <span class="o">=</span> <span class="kc">False</span>
+            
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">procstat</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;event&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span> <span class="p">[</span><span class="n">max_events</span> <span class="o">/</span> <span class="n">n_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="p">)</span> <span class="p">]</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">specnum</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;event&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span> <span class="p">[</span><span class="n">max_events</span> <span class="o">/</span> <span class="n">n_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="p">)</span> <span class="p">]</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">hist</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;event&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span> <span class="p">[</span><span class="n">max_events</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_samples</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="p">)]</span>       <span class="c1"># only record the initial and final states</span>
+
+            <span class="n">SDF_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span> <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">()</span> <span class="p">)</span>         <span class="c1"># Initialize scaledown factors</span>
+        
+        <span class="k">elif</span> <span class="n">iteration</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>             <span class="c1"># Time sampling</span>
+
+            <span class="c1"># Change sampling</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">MaxStep</span> <span class="o">=</span> <span class="s1">&#39;inf&#39;</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">WallTime_Max</span> <span class="o">=</span> <span class="s1">&#39;inf&#39;</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">restart</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">SimTime_Max</span> <span class="o">=</span> <span class="n">prev_batch</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">scale_final_time</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">SimTime_Max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0:.3E}</span><span class="s1"> </span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span> <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">SimTime_Max</span> <span class="p">))</span>     <span class="c1"># round to 4 significant figures</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">procstat</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">SimTime_Max</span> <span class="o">/</span> <span class="n">n_samples</span><span class="p">]</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">specnum</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">SimTime_Max</span> <span class="o">/</span> <span class="n">n_samples</span><span class="p">]</span>
+            <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">hist</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">SimTime_Max</span> <span class="p">]</span>
+            
+            <span class="c1"># Adjust pre-exponential factors based on the stiffness assessment of the previous iteration</span>
+            <span class="k">if</span> <span class="n">include_stiff_reduc</span><span class="p">:</span>
+                <span class="n">cur_batch</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">AdjustPreExponentials</span><span class="p">(</span><span class="n">SDF_vec</span><span class="p">)</span>
+            
+            <span class="c1"># Use continuation</span>
+            <span class="n">initial_states</span> <span class="o">=</span> <span class="n">prev_batch</span><span class="o">.</span><span class="n">History_final_snaps</span>
+        
+        <span class="c1"># Run jobs and read output</span>
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">BuildJobFiles</span><span class="p">(</span><span class="n">init_states</span> <span class="o">=</span> <span class="n">initial_states</span><span class="p">)</span>
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">RunAllJobs_parallel_JobArray</span><span class="p">(</span><span class="n">server</span> <span class="o">=</span> <span class="n">platform</span><span class="p">,</span> <span class="n">job_name</span> <span class="o">=</span> <span class="s1">&#39;Iteration_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">iteration</span><span class="p">)</span> <span class="p">)</span>
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">ReadMultipleRuns</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">iteration</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cum_batch</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">cur_batch</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cum_batch</span> <span class="o">=</span> <span class="n">Replicates</span><span class="o">.</span><span class="n">time_sandwich</span><span class="p">(</span><span class="n">prev_batch</span><span class="p">,</span> <span class="n">cur_batch</span><span class="p">)</span>         <span class="c1"># combine with previous data          </span>
+        
+        <span class="c1"># Test steady-state</span>
+        <span class="n">cum_batch</span><span class="o">.</span><span class="n">AverageRuns</span><span class="p">()</span>
+        <span class="n">acf_data</span> <span class="o">=</span> <span class="n">cum_batch</span><span class="o">.</span><span class="n">Compute_ACF</span><span class="p">()</span>
+        <span class="n">is_steady_state</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;ACF&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;ACF&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;ACF_ci&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.08</span><span class="p">:</span>
+                <span class="n">is_steady_state</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="c1"># Make sure the error in the rate is less than 5% of the rate</span>
+        <span class="k">if</span> <span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;Rate&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">is_steady_state</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;Rate_ci&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;Rate&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.05</span><span class="p">:</span>
+                <span class="n">is_steady_state</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="c1"># Record information about the iteration</span>
+        <span class="n">cum_batch</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotGasSpecVsTime</span><span class="p">()</span>
+        <span class="n">cum_batch</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotSurfSpecVsTime</span><span class="p">()</span>
+        
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">AverageRuns</span><span class="p">()</span>
+        <span class="n">cur_batch</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotElemStepFreqs</span><span class="p">()</span>
+        <span class="n">scaledown_data</span> <span class="o">=</span> <span class="n">ProcessStepFreqs</span><span class="p">(</span><span class="n">cur_batch</span><span class="o">.</span><span class="n">runAvg</span><span class="p">)</span>         <span class="c1"># compute change in scaledown factors based on simulation result</span>
+        <span class="n">delta_sdf</span> <span class="o">=</span> <span class="n">scaledown_data</span><span class="p">[</span><span class="s1">&#39;delta_sdf&#39;</span><span class="p">]</span>
+
+        <span class="c1">## Record iteartion data in output file</span>
+        <span class="c1">#with open(os.path.join(iter_fldr, &#39;Iteration_&#39; + str(iteration) + &#39;_summary.txt&#39;), &#39;w&#39;) as txt:  </span>
+        <span class="c1">#    </span>
+        <span class="c1">#    txt.write(&#39;----- Iteration #&#39; + str(iteration) + &#39; -----\n&#39;)</span>
+        <span class="c1">#    txt.write(&#39;t_final: {0:.3E} \n&#39;.format(cum_batch.runAvg.Specnum[&#39;t&#39;][-1]))</span>
+        <span class="c1">#    txt.write(&#39;steady-state: &#39; + str(is_steady_state) + &#39;\n&#39;)</span>
+        <span class="c1">#    </span>
+        <span class="c1">#    txt.write(&#39;Reaction name \t&#39;)</span>
+        <span class="c1">#    txt.write(&#39;Scaledown factor \t&#39;)</span>
+        <span class="c1">#    txt.write(&#39;Reaction speed \t&#39;)</span>
+        <span class="c1">#    txt.write(&#39;Total firings \t&#39;)</span>
+        <span class="c1">#    txt.write(&#39;Net firings \n&#39;)</span>
+        <span class="c1">#</span>
+        <span class="c1">#    for rxn_ind in range(len(cum_batch.runAvg.Reactions[&#39;names&#39;])):</span>
+        <span class="c1">#        txt.write(cum_batch.runAvg.Reactions[&#39;names&#39;][rxn_ind] + &#39;\t&#39;)</span>
+        <span class="c1">#        txt.write(&#39;{0:.3E} \t&#39;.format(delta_sdf[rxn_ind]))</span>
+        <span class="c1">#        txt.write(scaledown_data[&#39;rxn_speeds&#39;][rxn_ind] + &#39;\t&#39;)</span>
+        <span class="c1">#        txt.write(&#39;{0:.3E} \t&#39;.format(scaledown_data[&#39;tot&#39;][rxn_ind]))</span>
+        <span class="c1">#        txt.write(&#39;{0:.3E} \n&#39;.format(scaledown_data[&#39;net&#39;][rxn_ind]))</span>
+        
+        <span class="c1"># Update scaledown factors</span>
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">SDF_vec</span><span class="p">)):</span>
+            <span class="n">SDF_vec</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">SDF_vec</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">*</span> <span class="n">delta_sdf</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+            
+        <span class="n">scale_final_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span> <span class="p">[</span><span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">delta_sdf</span><span class="p">),</span> <span class="n">ss_inc</span><span class="p">]</span> <span class="p">)</span>
+        
+        <span class="n">prev_batch</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">cum_batch</span><span class="p">)</span>
+        <span class="n">iteration</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="c1">#is_steady_state = False</span>
+    <span class="k">return</span> <span class="n">cum_batch</span></div>
+    
+
+<div class="viewcode-block" id="ProcessStepFreqs"><a class="viewcode-back" href="../Rescaling.html#RateRescaling.ProcessStepFreqs">[docs]</a><span class="k">def</span> <span class="nf">ProcessStepFreqs</span><span class="p">(</span><span class="n">run</span><span class="p">,</span> <span class="n">stiff_cut</span> <span class="o">=</span> <span class="mf">40.0</span><span class="p">,</span> <span class="n">equilib_cut</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>        <span class="c1"># Change to allow for irreversible reactions</span>
+    
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Takes an average KMC trajectory and assesses the reaction frequencies to identify fast reactions</span>
+<span class="sd">    Process KMC output and determine how to further scale down reactions</span>
+<span class="sd">    Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic Monte Carlo simulations through the modification of rate constants, J. Chem. Phys. 132 (2010) 194101.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">delta_sdf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span> <span class="n">run</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">()</span> <span class="p">)</span>    <span class="c1"># initialize the marginal scaledown factors</span>
+    <span class="n">rxn_speeds</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># data analysis</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">procstatout</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span>
+    <span class="n">fwd_freqs</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">bwd_freqs</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">net_freqs</span> <span class="o">=</span> <span class="n">fwd_freqs</span> <span class="o">-</span> <span class="n">bwd_freqs</span>
+    <span class="n">tot_freqs</span> <span class="o">=</span> <span class="n">fwd_freqs</span> <span class="o">+</span> <span class="n">bwd_freqs</span>
+    
+    <span class="n">fast_rxns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">slow_rxns</span> <span class="o">=</span> <span class="p">[]</span>        
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tot_freqs</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">tot_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">slow_rxns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">rxn_speeds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;slow&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">PE</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">net_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="n">tot_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">PE</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">equilib_cut</span><span class="p">:</span>
+                <span class="n">fast_rxns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">rxn_speeds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;fast&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">slow_rxns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">rxn_speeds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;slow&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Find slow scale rate</span>
+    <span class="n">slow_freqs</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span>      <span class="c1"># put an extra 1 in case no slow reactions occur</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">slow_rxns</span><span class="p">:</span>
+        <span class="n">slow_freqs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tot_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">slow_scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">slow_freqs</span><span class="p">)</span>
+    
+    <span class="c1"># Adjust fast reactions closer to the slow scale</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">fast_rxns</span><span class="p">:</span>
+        <span class="n">N_f</span> <span class="o">=</span> <span class="n">tot_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">slow_scale</span><span class="p">)</span>              <span class="c1"># number of fast events per rare event</span>
+        <span class="c1">#alpha_UB = N_f .* delta ./ log(1 ./ delta) + 1             # Chatterjee formula</span>
+        <span class="n">delta_sdf</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">stiff_cut</span> <span class="o">/</span> <span class="n">N_f</span><span class="p">])</span>
+        
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;delta_sdf&#39;</span><span class="p">:</span> <span class="n">delta_sdf</span><span class="p">,</span> <span class="s1">&#39;rxn_speeds&#39;</span><span class="p">:</span> <span class="n">rxn_speeds</span><span class="p">,</span> <span class="s1">&#39;tot&#39;</span><span class="p">:</span> <span class="n">tot_freqs</span><span class="p">,</span> <span class="s1">&#39;net&#39;</span><span class="p">:</span> <span class="n">net_freqs</span><span class="p">}</span></div>
+    
+    
+<div class="viewcode-block" id="ReadScaledown"><a class="viewcode-back" href="../Rescaling.html#RateRescaling.ReadScaledown">[docs]</a><span class="k">def</span> <span class="nf">ReadScaledown</span><span class="p">(</span><span class="n">RunPath</span><span class="p">,</span> <span class="n">plot_analysis</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">fldrs_cut</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">product</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">n_batches</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
+    
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Read a scaledown that has already been run</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># Prepare data to graph</span>
+    <span class="n">batch_lengths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rates_vec</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rates_vec_ci</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">acf_vec</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">acf_vec_ci</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    
+    <span class="c1"># Count the iterations</span>
+    <span class="n">n_folders</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">RunPath</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">fldrs_cut</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+       
+        <span class="n">n_folders</span> <span class="o">=</span> <span class="n">fldrs_cut</span>
+
+    <span class="nb">print</span> <span class="nb">str</span><span class="p">(</span><span class="n">n_folders</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; iterations found&#39;</span>
+
+    <span class="n">cum_batch</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">n_folders</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Replicates</span><span class="p">()</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">ParentFolder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">RunPath</span><span class="p">,</span> <span class="s1">&#39;Iteration_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">))</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">ReadMultipleRuns</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">ind</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cum_batch</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cum_batch</span> <span class="o">=</span> <span class="n">Replicates</span><span class="o">.</span><span class="n">time_sandwich</span><span class="p">(</span><span class="n">cum_batch</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            
+        <span class="n">cum_batch</span><span class="o">.</span><span class="n">N_batches</span> <span class="o">=</span> <span class="n">n_batches</span>
+        <span class="n">cum_batch</span><span class="o">.</span><span class="n">gas_product</span> <span class="o">=</span> <span class="n">product</span>
+        <span class="n">acf_data</span> <span class="o">=</span> <span class="n">cum_batch</span><span class="o">.</span><span class="n">Compute_ACF</span><span class="p">()</span>
+        <span class="nb">print</span> <span class="s1">&#39;Iteration &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+        <span class="nb">print</span> <span class="s1">&#39;Batches per trajectory: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">cum_batch</span><span class="o">.</span><span class="n">Nbpt</span><span class="p">)</span>
+        <span class="nb">print</span> <span class="s1">&#39;Batch length &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">cum_batch</span><span class="o">.</span><span class="n">batch_length</span><span class="p">)</span>
+        <span class="nb">print</span> <span class="s1">&#39;Rate: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;Rate&#39;</span><span class="p">])</span>
+        <span class="nb">print</span> <span class="s1">&#39;Rate CI: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;Rate_ci&#39;</span><span class="p">])</span>
+        <span class="nb">print</span> <span class="s1">&#39;ACF: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;ACF&#39;</span><span class="p">])</span>
+        <span class="nb">print</span> <span class="s1">&#39;ACF CI: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;ACF_ci&#39;</span><span class="p">])</span>
+
+        <span class="nb">print</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        
+        <span class="n">batch_lengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cum_batch</span><span class="o">.</span><span class="n">batch_length</span><span class="p">)</span>
+        <span class="n">rates_vec</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;Rate&#39;</span><span class="p">])</span>
+        <span class="n">rates_vec_ci</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;Rate_ci&#39;</span><span class="p">])</span>
+        <span class="n">acf_vec</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;ACF&#39;</span><span class="p">])</span>
+        <span class="n">acf_vec_ci</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acf_data</span><span class="p">[</span><span class="s1">&#39;ACF_ci&#39;</span><span class="p">])</span>
+            
+    <span class="nb">print</span> <span class="n">batch_lengths</span>
+    <span class="nb">print</span> <span class="n">rates_vec</span>
+    <span class="nb">print</span> <span class="n">rates_vec_ci</span>
+    <span class="nb">print</span> <span class="n">acf_vec</span>
+    <span class="nb">print</span> <span class="n">acf_vec_ci</span>
+        
+            
+    <span class="k">return</span> <span class="n">cum_batch</span></div>
+
+    
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Marcel Nunez.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

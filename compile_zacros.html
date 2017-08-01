@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installation instructions &#8212; Zacros Wrapper 1.0 documentation</title>
+    <title>Getting Started &#8212; Zacros Wrapper 1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Description of the Replicates class" href="Replicates.html" />
+    <link rel="next" title="Description of the IOdata class" href="IOdata.html" />
     <link rel="prev" title="Python wrapper for the Zacros kinetic Monte Carlo (KMC) code" href="index.html" /> 
   </head>
   <body role="document">
@@ -40,7 +40,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Replicates.html" title="Description of the Replicates class"
+          <a href="IOdata.html" title="Description of the IOdata class"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Python wrapper for the Zacros kinetic Monte Carlo (KMC) code"
@@ -54,8 +54,23 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="installation-instructions">
-<h1>Installation instructions<a class="headerlink" href="#installation-instructions" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="adding-it-to-your-python-path">
+<h2>Adding it to your python path<a class="headerlink" href="#adding-it-to-your-python-path" title="Permalink to this headline">¶</a></h2>
+<p>Add the Zacros-Wrapper respository to your python path, and then import using <code class="docutils literal"><span class="pre">import</span> <span class="pre">zacros_wrapper</span></code></p>
+</div>
+<div class="section" id="id1">
+<h2>Getting Started<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Step 1: Obtain Zacros executable</p>
+<p>If you are not doing sensitivity analysis, you don&#8217;t need to use the new one. If you are doing LRSA, you need modified Zacros files. See the modified zacros page for instructions on how to compile that.</p>
+<p>Step 2: Configure input in demo file and run</p>
+<p>Go to the Demo files in ZacrosWrapper/Demos
+Change variables in the user input section at the top of the desired script. Typically, Path to Zacros executable file, working directory names, and number of processors available must be configured. Inputs vary depending on the script. Descriptions of what each script does are given in the comments.
+Run the demo file.</p>
+</div>
+<div class="section" id="installation-instructions">
+<h2>Installation instructions<a class="headerlink" href="#installation-instructions" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Download the Zacros files from the [Zacros website](<a class="reference external" href="http://www.e-lucid.com/i/software/Zacros.html">http://www.e-lucid.com/i/software/Zacros.html</a>).</li>
 <li>Replace the .f90 files in main folder with the ones in the Zacros_mod folder from the ZacrosWrapper repository.</li>
@@ -64,7 +79,7 @@
 </ul>
 </div>
 <div class="section" id="additional-output-files">
-<h1>Additional output files<a class="headerlink" href="#additional-output-files" title="Permalink to this headline">¶</a></h1>
+<h2>Additional output files<a class="headerlink" href="#additional-output-files" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="32%" />
@@ -101,7 +116,7 @@
 </table>
 </div>
 <div class="section" id="compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster">
-<h1>Compiling on [Farber](<a class="reference external" href="http://farber.hpc.udel.edu/">http://farber.hpc.udel.edu/</a>) (University of Delaware computing cluster)<a class="headerlink" href="#compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster" title="Permalink to this headline">¶</a></h1>
+<h2>Compiling on [Farber](<a class="reference external" href="http://farber.hpc.udel.edu/">http://farber.hpc.udel.edu/</a>) (University of Delaware computing cluster)<a class="headerlink" href="#compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster" title="Permalink to this headline">¶</a></h2>
 <p>If you wish to compile Zacros on Farber you will need to make some configurational changes as the default compile settings are very inefficient.</p>
 <ul class="simple">
 <li>Import the intel compiler: <code class="docutils literal"><span class="pre">vpkg_require</span> <span class="pre">intel/2016</span></code></li>
@@ -128,6 +143,7 @@ CMAKE_BUILD_TYPE=Release</p>
 <li>Press <code class="docutils literal"><span class="pre">c</span></code> to configure, and then <code class="docutils literal"><span class="pre">g</span></code> to generate and exit. Finally: <code class="docutils literal"><span class="pre">make</span></code></li>
 </ul>
 </div>
+</div>
 
 
           </div>
@@ -137,17 +153,22 @@ CMAKE_BUILD_TYPE=Release</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Installation instructions</a></li>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#adding-it-to-your-python-path">Adding it to your python path</a></li>
+<li><a class="reference internal" href="#id1">Getting Started</a></li>
+<li><a class="reference internal" href="#installation-instructions">Installation instructions</a></li>
 <li><a class="reference internal" href="#additional-output-files">Additional output files</a></li>
 <li><a class="reference internal" href="#compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster">Compiling on [Farber](http://farber.hpc.udel.edu/) (University of Delaware computing cluster)</a></li>
+</ul>
+</li>
 </ul>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="index.html"
                         title="previous chapter">Python wrapper for the Zacros kinetic Monte Carlo (KMC) code</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="Replicates.html"
-                        title="next chapter">Description of the Replicates class</a></p>
+  <p class="topless"><a href="IOdata.html"
+                        title="next chapter">Description of the IOdata class</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -179,7 +200,7 @@ CMAKE_BUILD_TYPE=Release</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Replicates.html" title="Description of the Replicates class"
+          <a href="IOdata.html" title="Description of the IOdata class"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Python wrapper for the Zacros kinetic Monte Carlo (KMC) code"

@@ -1,5 +1,5 @@
-Description of the IOdata class
-==========================================
+File input/output functions
+===========================================
 
 .. automodule:: IO_data
 
