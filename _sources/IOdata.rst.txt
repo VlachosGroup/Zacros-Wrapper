@@ -1,2 +1,7 @@
 Description of the IOdata class
 ==========================================
+
+.. automodule:: IO_data
+
+.. autoclass:: IO_data
+    :members:
