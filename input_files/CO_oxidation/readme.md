@@ -1,1 +1,0 @@
-CO oxidation model from S. Piccinin and M. Stamatakis, ACS Catal. 4, 2143 (2014).
