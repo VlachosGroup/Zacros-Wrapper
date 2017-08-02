@@ -63,7 +63,8 @@
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.AdjustPreExponentials">
 <code class="descname">AdjustPreExponentials</code><span class="sig-paren">(</span><em>delta_sdf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.AdjustPreExponentials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.AdjustPreExponentials" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adjust the pre-exponential ratios of all elementary reactions</p>
+<dd><p>Adjust the pre-exponential ratios of all elementary reactions
+delta_sdf: list or vector of ratios to apply</p>
 </dd></dl>
 
 <dl class="method">
@@ -75,31 +76,34 @@
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.LatticeMovie">
 <code class="descname">LatticeMovie</code><span class="sig-paren">(</span><em>include_neighbor_lines=False, spec_color_list=['b', 'g', 'r', 'c', 'm', 'y', 'k']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.LatticeMovie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.LatticeMovie" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a .png file with a picture of a lattice for every snapshot in history_output.txt</p>
+<dd><p>Create a subfolder called lattice_frames
+Create a .png file with a picture of a lattice for every snapshot in history_output.txt</p>
+<p>include_neighbor_lines :    If true, will draw lines between neighboring lattice sites (takes more time)
+spec_color_list :           List of colors to use for different species, will cycle through if there are more species than colors</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.PlotElemStepFreqs">
 <code class="descname">PlotElemStepFreqs</code><span class="sig-paren">(</span><em>window=[0.0, 1.0], time_norm=False, site_norm=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.PlotElemStepFreqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.PlotElemStepFreqs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot a bar graph of elementary step frequencies versus time</p>
+<dd><p>Plot a bar graph of elementary step frequencies versus time - output in elem_step_freqs.png in the directory with the Zacros run</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.PlotGasSpecVsTime">
 <code class="descname">PlotGasSpecVsTime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.PlotGasSpecVsTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.PlotGasSpecVsTime" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot gas phase species profiles versus time</p>
+<dd><p>Plot gas phase species profiles versus time - output in gas_spec_vs_time.png in the directory with the Zacros run</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.PlotLattice">
 <code class="descname">PlotLattice</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.PlotLattice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.PlotLattice" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot the lattice</p>
+<dd><p>Plot the lattice - output in lattice.png in the run directory</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.PlotSurfSpecVsTime">
 <code class="descname">PlotSurfSpecVsTime</code><span class="sig-paren">(</span><em>site_norm=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.PlotSurfSpecVsTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.PlotSurfSpecVsTime" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot surface species profiles versus time</p>
+<dd><p>Plot surface species profiles versus time - output in surf_spec_vs_time.png in the directory with the Zacros run</p>
 </dd></dl>
 
 <dl class="method">
@@ -112,8 +116,9 @@
 <dt id="KMC_Run.kmc_traj.ReadAllOutput">
 <code class="descname">ReadAllOutput</code><span class="sig-paren">(</span><em>build_lattice=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadAllOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadAllOutput" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read all Zacros output files
-Set build_lattice = True if you want to build the lattice object file.
-This will make it take a lot longer to read</p>
+build_lattice :     True - builds a Lattice object from lattice_output.txt</p>
+<blockquote>
+<div>This allows you to plot the lattice, but takes time to construct</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -125,14 +130,14 @@ This will make it take a lot longer to read</p>
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.ReadProp">
 <code class="descname">ReadProp</code><span class="sig-paren">(</span><em>Mode</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadProp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadProp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mode = 0: Read Prop_output.bin
-Mode = 1: Read PropCounter_output.bin</p>
+<dd><p>Mode = 0: Read Prop_output.bin, instantaneous propensities
+Mode = 1: Read PropCounter_output.bin, time integrated propensities used for accurate time averages</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.ReadSA">
 <code class="descname">ReadSA</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadSA" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read SA_output.bin</p>
+<dd><p>Read SA_output.bin - get trajectory derivatives for use in likelihood ratio sensitivity analysis</p>
 </dd></dl>
 
 <dl class="method">
@@ -156,7 +161,8 @@ Mode = 1: Read PropCounter_output.bin</p>
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.time_search">
 <code class="descname">time_search</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.time_search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.time_search" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a time, look up the index of the smallest time greater than or equal to that time</p>
+<dd><p>Given a time, look up the index of the smallest time greater than or equal to that time
+t :     time to search for</p>
 </dd></dl>
 
 <dl class="method">

@@ -57,8 +57,9 @@
   <div class="section" id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
 <p>We look at the examples in the example_scripts folder of the Github repository.</p>
-<div class="section" id="here-is-single-trajectory-py">
-<h2>Here is Single_trajectory.py<a class="headerlink" href="#here-is-single-trajectory-py" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="analyzing-a-single-trajectory-single-trajectory-py">
+<h2>Analyzing a single trajectory (Single_trajectory.py)<a class="headerlink" href="#analyzing-a-single-trajectory-single-trajectory-py" title="Permalink to this headline">¶</a></h2>
+<p>This script analyzes a single Zacros trajectory and plots some data.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Created on Thu Jul 28 13:48:34 2016</span>
@@ -100,6 +101,86 @@
 </div>
 <p>This produces ...</p>
 </div>
+<div class="section" id="analyzing-multiple-trajectories-multiple-trajectories-py">
+<h2>Analyzing multiple trajectories (Multiple_trajectories.py)<a class="headerlink" href="#analyzing-multiple-trajectories-multiple-trajectories-py" title="Permalink to this headline">¶</a></h2>
+<p>This script analyzes multiple trajectories, averages them, computes the rate, and performs sensitivity analysis.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Thu Jul 28 13:48:34 2016</span>
+
+<span class="sd">@author: mpnun</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/vlachos/mpnunez/Github/Zacros-Wrapper-expt/Zacros-Wrapper/PythonCode&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">Core</span> <span class="kn">as</span> <span class="nn">zw</span>
+
+<span class="c1">################## User input ##################################</span>
+
+<span class="n">zacros_exe</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/bin/zacros_ZW.x&#39;</span>
+<span class="n">KMC_source</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/KMC_data/AtoB/NonStiff/&#39;</span>
+<span class="n">BatchPath</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/KMC_data/AtoB/test&#39;</span>
+<span class="c1">#Product = &#39;B&#39;</span>
+<span class="n">n_runs</span> <span class="o">=</span> <span class="mi">16</span>
+
+<span class="c1">################################################################</span>
+
+<span class="c1"># Prepare template</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">Replicates</span><span class="p">()</span>
+<span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">KMC_source</span>
+<span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">exe_file</span> <span class="o">=</span> <span class="n">zacros_exe</span>
+<span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">ReadAllInput</span><span class="p">()</span>
+<span class="n">x</span><span class="o">.</span><span class="n">ParentFolder</span> <span class="o">=</span> <span class="n">BatchPath</span>
+
+<span class="c1"># Build files and run</span>
+<span class="n">x</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">=</span> <span class="n">n_runs</span>
+<span class="n">x</span><span class="o">.</span><span class="n">BuildJobFiles</span><span class="p">()</span>
+<span class="n">x</span><span class="o">.</span><span class="n">RunAllJobs_parallel_JobArray</span><span class="p">()</span>
+
+<span class="c1"># Read results</span>
+<span class="n">x</span><span class="o">.</span><span class="n">ReadMultipleRuns</span><span class="p">()</span>
+
+<span class="c1"># Perform analysis</span>
+</pre></div>
+</div>
+<p>This produces ...</p>
+</div>
+<div class="section" id="rate-constant-rescaling-and-steady-state-detection-scale-ss-main-py">
+<h2>Rate constant rescaling and steady state detection (Scale_SS_Main.py)<a class="headerlink" href="#rate-constant-rescaling-and-steady-state-detection-scale-ss-main-py" title="Permalink to this headline">¶</a></h2>
+<p>This script takes Zacros input files and runs the statistical procedure described in our publication.
+Parallelization is used to run multiple trajectories simultaneously.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Fri Oct 07 19:12:15 2016</span>
+
+<span class="sd">@author: mpnun</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper&#39;</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">KMCsim</span> <span class="kn">as</span> <span class="nn">zw</span>
+
+<span class="sd">&#39;&#39;&#39; ------------ User input section ------------ &#39;&#39;&#39;</span>
+<span class="n">exe_file</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/bin/zacros_ZW.x&#39;</span>
+<span class="n">KMC_source</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/stiff_input&#39;</span>
+<span class="n">RunPath</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/ScaledownV3&#39;</span>
+<span class="n">product_spec</span> <span class="o">=</span> <span class="s1">&#39;B&#39;</span>                                  <span class="c1"># product species</span>
+<span class="n">number_of_runs</span> <span class="o">=</span> <span class="mi">96</span>
+<span class="n">gas_stoich</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="sd">&#39;&#39;&#39; -------------------------------------------- &#39;&#39;&#39;</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>                 <span class="c1"># Need this line to make parallelization work</span>
+	
+    <span class="n">z</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">RateRescaling</span><span class="p">()</span>
+    <span class="n">z</span><span class="o">.</span><span class="n">scale_parent_fldr</span> <span class="o">=</span> <span class="n">RunPath</span>
+    <span class="n">z</span><span class="o">.</span><span class="n">ReachSteadyStateAndRescale</span><span class="p">(</span><span class="n">product_spec</span><span class="p">,</span> <span class="n">gas_stoich</span><span class="p">,</span> <span class="n">KMC_source</span><span class="p">,</span> <span class="n">exe_file</span><span class="p">,</span> <span class="n">n_runs</span> <span class="o">=</span> <span class="n">number_of_runs</span><span class="p">,</span> <span class="n">platform</span> <span class="o">=</span> <span class="s1">&#39;Squidward&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This produces ...</p>
+</div>
 </div>
 
 
@@ -111,7 +192,9 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Examples</a><ul>
-<li><a class="reference internal" href="#here-is-single-trajectory-py">Here is Single_trajectory.py</a></li>
+<li><a class="reference internal" href="#analyzing-a-single-trajectory-single-trajectory-py">Analyzing a single trajectory (Single_trajectory.py)</a></li>
+<li><a class="reference internal" href="#analyzing-multiple-trajectories-multiple-trajectories-py">Analyzing multiple trajectories (Multiple_trajectories.py)</a></li>
+<li><a class="reference internal" href="#rate-constant-rescaling-and-steady-state-detection-scale-ss-main-py">Rate constant rescaling and steady state detection (Scale_SS_Main.py)</a></li>
 </ul>
 </li>
 </ul>

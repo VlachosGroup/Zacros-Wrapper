@@ -401,10 +401,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">avg_updated</span> <span class="o">=</span> <span class="kc">True</span></div>
         
     
-<div class="viewcode-block" id="Replicates.Compute_ACF"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.Compute_ACF">[docs]</a>    <span class="k">def</span> <span class="nf">Compute_ACF</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Replicates.Compute_ACF"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.Compute_ACF">[docs]</a>    <span class="k">def</span> <span class="nf">Compute_ACF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_ACF</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
     
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Check steady state on the basis of batch means</span>
+<span class="sd">        Compute reaction rate and autocorrelation function (ACF) using batch means</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg_updated</span><span class="p">:</span>
@@ -455,93 +455,41 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ACF</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1</span> <span class="o">*</span> <span class="n">c2</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">alldata</span><span class="p">)</span>
 
-
-            <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">            Compute error bounds on ACF</span>
-<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">include_ACF</span><span class="p">:</span>
             
-            <span class="n">N_boot</span> <span class="o">=</span> <span class="mi">100</span>
-            
-            <span class="n">ACF_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N_boot</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_boot</span><span class="p">):</span>
-                <span class="n">subpop_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">))</span>
-                <span class="n">c1_new</span> <span class="o">=</span> <span class="n">c1</span><span class="p">[</span><span class="n">subpop_inds</span><span class="p">]</span>
-                <span class="n">c2_new</span> <span class="o">=</span> <span class="n">c2</span><span class="p">[</span><span class="n">subpop_inds</span><span class="p">]</span>
-                <span class="n">ACF_dist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1_new</span> <span class="o">*</span> <span class="n">c2_new</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1_new</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c2_new</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">alldata</span><span class="p">)</span>
-                <span class="c1">#ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(alldata) ** 2 ) / np.var(alldata)</span>
-                <span class="c1">#ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Compute error bounds on ACF</span>
+<span class="sd">                &#39;&#39;&#39;</span>
                 
-            <span class="n">ACF_dist</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ACF_dist</span><span class="p">)</span>
-            <span class="n">ACF_high</span> <span class="o">=</span> <span class="n">ACF_dist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.95</span> <span class="o">*</span> <span class="n">N_boot</span><span class="p">)]</span>
-            <span class="n">ACF_low</span> <span class="o">=</span> <span class="n">ACF_dist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.05</span> <span class="o">*</span> <span class="n">N_boot</span><span class="p">)]</span>
-            <span class="n">ACF_ci</span> <span class="o">=</span> <span class="p">(</span><span class="n">ACF_high</span> <span class="o">-</span> <span class="n">ACF_low</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+                <span class="n">N_boot</span> <span class="o">=</span> <span class="mi">100</span>
+                
+                <span class="n">ACF_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N_boot</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_boot</span><span class="p">):</span>
+                    <span class="n">subpop_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">))</span>
+                    <span class="n">c1_new</span> <span class="o">=</span> <span class="n">c1</span><span class="p">[</span><span class="n">subpop_inds</span><span class="p">]</span>
+                    <span class="n">c2_new</span> <span class="o">=</span> <span class="n">c2</span><span class="p">[</span><span class="n">subpop_inds</span><span class="p">]</span>
+                    <span class="n">ACF_dist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1_new</span> <span class="o">*</span> <span class="n">c2_new</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1_new</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c2_new</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">alldata</span><span class="p">)</span>
+                    <span class="c1">#ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(alldata) ** 2 ) / np.var(alldata)</span>
+                    <span class="c1">#ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate</span>
+                    
+                <span class="n">ACF_dist</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ACF_dist</span><span class="p">)</span>
+                <span class="n">ACF_high</span> <span class="o">=</span> <span class="n">ACF_dist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.95</span> <span class="o">*</span> <span class="n">N_boot</span><span class="p">)]</span>
+                <span class="n">ACF_low</span> <span class="o">=</span> <span class="n">ACF_dist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.05</span> <span class="o">*</span> <span class="n">N_boot</span><span class="p">)]</span>
+                <span class="n">ACF_ci</span> <span class="o">=</span> <span class="p">(</span><span class="n">ACF_high</span> <span class="o">-</span> <span class="n">ACF_low</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
         
         <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;Rate&#39;</span><span class="p">:</span> <span class="n">mean_rate</span><span class="p">,</span> <span class="s1">&#39;Rate_ci&#39;</span><span class="p">:</span> <span class="n">rate_ci</span><span class="p">,</span> <span class="s1">&#39;ACF&#39;</span><span class="p">:</span> <span class="n">ACF</span><span class="p">,</span> <span class="s1">&#39;ACF_ci&#39;</span><span class="p">:</span> <span class="n">ACF_ci</span><span class="p">}</span></div>
-        <span class="c1">#return [ACF, ACF_high, ACF_low]</span>
         
-
-<div class="viewcode-block" id="Replicates.Compute_rate"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.Compute_rate">[docs]</a>    <span class="k">def</span> <span class="nf">Compute_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>          <span class="c1"># Need implement time point interpolation</span>
-        
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Perform sensitivity analysis with a combination of</span>
-<span class="sd">        time and trajectory averaging</span>
-<span class="sd">        </span>
-<span class="sd">        ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval </span>
-<span class="sd">        </span>
-<span class="sd">        The time-averaging could be improved in here. Right now it is a little weird...</span>
-<span class="sd">        You can use linear interpolation to get data between time points</span>
-<span class="sd">        Can also make it so that the statistics make sense for non-evenly spaced time points</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">Set_analysis_varaibles</span><span class="p">()</span>
-        
-        
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg_updated</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">AverageRuns</span><span class="p">()</span>
-            
-        
-        <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-        
-        <span class="n">rate_data_erg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="p">)</span>
-        <span class="n">rate_contributions_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traj_derivs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-         
-        
-        <span class="n">data_ind</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">traj_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">):</span>
-            
-            <span class="n">idb_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">time_search_interp</span><span class="p">(</span> <span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>
-            <span class="n">idb_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">time_search_interp</span><span class="p">(</span> <span class="n">bin_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>
-            
-            <span class="n">prop_integ_start</span> <span class="o">=</span> <span class="n">idb_start</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">idb_start</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">idb_start</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">idb_start</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span>
-            <span class="n">prop_integ_end</span> <span class="o">=</span> <span class="n">idb_end</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">idb_end</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">idb_end</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">idb_end</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span>
-            <span class="n">rate_data_erg</span><span class="p">[</span><span class="n">data_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span> <span class="p">(</span> <span class="p">(</span> <span class="n">prop_integ_end</span> <span class="o">-</span> <span class="n">prop_integ_start</span> <span class="p">)</span> <span class="o">/</span> <span class="p">(</span> <span class="n">bin_edges</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">bin_edges</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span> <span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">TOF_stoich</span> <span class="p">)</span>
-          
-            <span class="n">data_ind</span> <span class="o">+=</span> <span class="mi">1</span>
-        
-        <span class="c1"># Calculate NSCs</span>
-        <span class="n">mean_rate</span> <span class="o">=</span> <span class="mi">0</span>
-        
-        <span class="k">for</span> <span class="n">dp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">):</span>
-            <span class="n">mean_rate</span> <span class="o">=</span> <span class="n">mean_rate</span> <span class="o">+</span> <span class="n">rate_data_erg</span><span class="p">[</span><span class="n">dp</span><span class="p">]</span>
-            
-        <span class="c1"># Normalize means</span>
-        <span class="n">mean_rate</span> <span class="o">=</span> <span class="n">mean_rate</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span>
-        
-        <span class="k">return</span> <span class="n">mean_rate</span></div>
-
         
 <div class="viewcode-block" id="Replicates.PerformSA"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.PerformSA">[docs]</a>    <span class="k">def</span> <span class="nf">PerformSA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta_t</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ergodic</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>          <span class="c1"># Need implement time point interpolation</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Perform sensitivity analysis with a combination of</span>
-<span class="sd">        time and trajectory averaging</span>
+<span class="sd">        Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging</span>
 <span class="sd">        </span>
-<span class="sd">        delta_t             size of the time window</span>
-<span class="sd">        ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval </span>
+<span class="sd">        delta_t :   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.</span>
+<span class="sd">        ergodic :   True: average the rate over the entire time interval (centered ergodic likelihood ratio)</span>
+<span class="sd">                    False: use the rate at the end of the time interval (centered likelihood ratio)</span>
 <span class="sd">        </span>
-<span class="sd">        The time-averaging could be improved in here. Right now it is a little weird...</span>
-<span class="sd">        You can use linear interpolation to get data between time points</span>
-<span class="sd">        Can also make it so that the statistics make sense for non-evenly spaced time points</span>
+<span class="sd">        Data between sample points is estimated with linear interpolation</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">Set_analysis_varaibles</span><span class="p">()</span>
@@ -681,6 +629,8 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Plot the results of sensitivity analysis</span>
+<span class="sd">        </span>
+<span class="sd">        NSC_cut : Reactions with normalized sensitivity coefficients (NSC) below this limit will not be plotted</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">PlotOptions</span><span class="p">()</span>
@@ -717,7 +667,7 @@
 <div class="viewcode-block" id="Replicates.WriteSA_output"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.WriteSA_output">[docs]</a>    <span class="k">def</span> <span class="nf">WriteSA_output</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Write the results of sensitivity analysis into an SA_output.txt</span>
+<span class="sd">        Write the results of sensitivity analysis into a SA_output.txt</span>
 <span class="sd">        &#39;&#39;&#39;</span>
     
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ParentFolder</span><span class="p">,</span> <span class="s1">&#39;SA_output.txt&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">txt</span><span class="p">:</span>

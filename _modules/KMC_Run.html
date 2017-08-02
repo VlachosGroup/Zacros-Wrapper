@@ -73,7 +73,7 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Initializes class variables</span>
+<span class="sd">        Initialize class variables</span>
 <span class="sd">        &#39;&#39;&#39;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">path</span>
@@ -128,8 +128,8 @@
 <div class="viewcode-block" id="kmc_traj.ReadAllOutput"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadAllOutput">[docs]</a>    <span class="k">def</span> <span class="nf">ReadAllOutput</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">build_lattice</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Read all Zacros output files</span>
-<span class="sd">        Set build_lattice = True if you want to build the lattice object file.</span>
-<span class="sd">        This will make it take a lot longer to read</span>
+<span class="sd">        build_lattice :     True - builds a Lattice object from lattice_output.txt</span>
+<span class="sd">                            This allows you to plot the lattice, but takes time to construct</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ReadAllInput</span><span class="p">()</span>
 
@@ -164,8 +164,8 @@
     
 <div class="viewcode-block" id="kmc_traj.ReadProp"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadProp">[docs]</a>    <span class="k">def</span> <span class="nf">ReadProp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Mode</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Mode = 0: Read Prop_output.bin</span>
-<span class="sd">        Mode = 1: Read PropCounter_output.bin</span>
+<span class="sd">        Mode = 0: Read Prop_output.bin, instantaneous propensities</span>
+<span class="sd">        Mode = 1: Read PropCounter_output.bin, time integrated propensities used for accurate time averages</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">Mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>     <span class="c1"># Instantaneous propensities</span>
@@ -190,7 +190,7 @@
 
 <div class="viewcode-block" id="kmc_traj.ReadSA"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadSA">[docs]</a>    <span class="k">def</span> <span class="nf">ReadSA</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Read SA_output.bin</span>
+<span class="sd">        Read SA_output.bin - get trajectory derivatives for use in likelihood ratio sensitivity analysis</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">FileName</span> <span class="o">=</span> <span class="s1">&#39;SA_output.bin&#39;</span>
@@ -268,6 +268,7 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Adjust the pre-exponential ratios of all elementary reactions</span>
+<span class="sd">        delta_sdf: list or vector of ratios to apply</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">rxn_ind</span> <span class="o">=</span> <span class="mi">0</span>
@@ -282,6 +283,7 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Given a time, look up the index of the smallest time greater than or equal to that time</span>
+<span class="sd">        t :     time to search for</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -357,7 +359,7 @@
 <div class="viewcode-block" id="kmc_traj.PlotSurfSpecVsTime"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.PlotSurfSpecVsTime">[docs]</a>    <span class="k">def</span> <span class="nf">PlotSurfSpecVsTime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">site_norm</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Plot surface species profiles versus time</span>
+<span class="sd">        Plot surface species profiles versus time - output in surf_spec_vs_time.png in the directory with the Zacros run</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">site_norm</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -377,7 +379,7 @@
 <div class="viewcode-block" id="kmc_traj.PlotGasSpecVsTime"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.PlotGasSpecVsTime">[docs]</a>    <span class="k">def</span> <span class="nf">PlotGasSpecVsTime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Plot gas phase species profiles versus time</span>
+<span class="sd">        Plot gas phase species profiles versus time - output in gas_spec_vs_time.png in the directory with the Zacros run</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">time_vecs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -393,7 +395,7 @@
 <div class="viewcode-block" id="kmc_traj.PlotElemStepFreqs"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.PlotElemStepFreqs">[docs]</a>    <span class="k">def</span> <span class="nf">PlotElemStepFreqs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">time_norm</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">site_norm</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Plot a bar graph of elementary step frequencies versus time</span>
+<span class="sd">        Plot a bar graph of elementary step frequencies versus time - output in elem_step_freqs.png in the directory with the Zacros run</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">start_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_search</span><span class="p">(</span><span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
@@ -461,7 +463,7 @@
 <div class="viewcode-block" id="kmc_traj.PlotLattice"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.PlotLattice">[docs]</a>    <span class="k">def</span> <span class="nf">PlotLattice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Plot the lattice</span>
+<span class="sd">        Plot the lattice - output in lattice.png in the run directory</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">text_only</span><span class="p">:</span>
@@ -478,7 +480,11 @@
 <div class="viewcode-block" id="kmc_traj.LatticeMovie"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.LatticeMovie">[docs]</a>    <span class="k">def</span> <span class="nf">LatticeMovie</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_neighbor_lines</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">spec_color_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">,</span><span class="s1">&#39;c&#39;</span><span class="p">,</span><span class="s1">&#39;m&#39;</span><span class="p">,</span><span class="s1">&#39;y&#39;</span><span class="p">,</span><span class="s1">&#39;k&#39;</span><span class="p">]):</span>       <span class="c1"># Need make marker type consistent with the site type</span>
 
         <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Create a subfolder called lattice_frames</span>
 <span class="sd">        Create a .png file with a picture of a lattice for every snapshot in history_output.txt</span>
+<span class="sd">        </span>
+<span class="sd">        include_neighbor_lines :    If true, will draw lines between neighboring lattice sites (takes more time)</span>
+<span class="sd">        spec_color_list :           List of colors to use for different species, will cycle through if there are more species than colors</span>
 <span class="sd">        &#39;&#39;&#39;</span>
     
         <span class="n">cart_coords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">cart_coords</span>

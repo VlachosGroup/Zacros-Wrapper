@@ -76,37 +76,26 @@ This class handles all of the statistics</p>
 
 <dl class="method">
 <dt id="Replicates.Replicates.Compute_ACF">
-<code class="descname">Compute_ACF</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.Compute_ACF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.Compute_ACF" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check steady state on the basis of batch means</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="Replicates.Replicates.Compute_rate">
-<code class="descname">Compute_rate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.Compute_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.Compute_rate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform sensitivity analysis with a combination of
-time and trajectory averaging</p>
-<p>ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval</p>
-<p>The time-averaging could be improved in here. Right now it is a little weird...
-You can use linear interpolation to get data between time points
-Can also make it so that the statistics make sense for non-evenly spaced time points</p>
+<code class="descname">Compute_ACF</code><span class="sig-paren">(</span><em>include_ACF=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.Compute_ACF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.Compute_ACF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute reaction rate and autocorrelation function (ACF) using batch means</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="Replicates.Replicates.PerformSA">
 <code class="descname">PerformSA</code><span class="sig-paren">(</span><em>delta_t=None</em>, <em>ergodic=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.PerformSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.PerformSA" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform sensitivity analysis with a combination of
-time and trajectory averaging</p>
-<p>delta_t             size of the time window
-ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval</p>
-<p>The time-averaging could be improved in here. Right now it is a little weird...
-You can use linear interpolation to get data between time points
-Can also make it so that the statistics make sense for non-evenly spaced time points</p>
+<dd><p>Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging</p>
+<p>delta_t :   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.
+ergodic :   True: average the rate over the entire time interval (centered ergodic likelihood ratio)</p>
+<blockquote>
+<div>False: use the rate at the end of the time interval (centered likelihood ratio)</div></blockquote>
+<p>Data between sample points is estimated with linear interpolation</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="Replicates.Replicates.PlotSensitivities">
 <code class="descname">PlotSensitivities</code><span class="sig-paren">(</span><em>NSC_cut=0.05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.PlotSensitivities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.PlotSensitivities" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the results of sensitivity analysis</p>
+<p>NSC_cut : Reactions with normalized sensitivity coefficients (NSC) below this limit will not be plotted</p>
 </dd></dl>
 
 <dl class="method">
@@ -144,7 +133,7 @@ Then, it submits it to the gridengine and waits for them to finish</p>
 <dl class="method">
 <dt id="Replicates.Replicates.WriteSA_output">
 <code class="descname">WriteSA_output</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.WriteSA_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.WriteSA_output" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write the results of sensitivity analysis into an SA_output.txt</p>
+<dd><p>Write the results of sensitivity analysis into a SA_output.txt</p>
 </dd></dl>
 
 <dl class="staticmethod">
