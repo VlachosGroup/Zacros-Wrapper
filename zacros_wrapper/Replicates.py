@@ -351,10 +351,10 @@ class Replicates:
         self.avg_updated = True
         
     
-    def Compute_ACF(self):
+    def Compute_ACF(self, include_ACF = True):
     
         '''
-        Check steady state on the basis of batch means
+        Compute reaction rate and autocorrelation function (ACF) using batch means
         '''
         
         if not self.avg_updated:
@@ -405,93 +405,41 @@ class Replicates:
         else:
             ACF = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.var(alldata)
 
-
-            '''
-            Compute error bounds on ACF
-            '''
+            if include_ACF:
             
-            N_boot = 100
-            
-            ACF_dist = np.zeros(N_boot)
-            for i in range(N_boot):
-                subpop_inds = np.random.randint(len(c1), size=len(c1))
-                c1_new = c1[subpop_inds]
-                c2_new = c2[subpop_inds]
-                ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new) ) / np.var(alldata)
-                #ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(alldata) ** 2 ) / np.var(alldata)
-                #ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate
+                '''
+                Compute error bounds on ACF
+                '''
                 
-            ACF_dist = sorted(ACF_dist)
-            ACF_high = ACF_dist[int(0.95 * N_boot)]
-            ACF_low = ACF_dist[int(0.05 * N_boot)]
-            ACF_ci = (ACF_high - ACF_low) / 2
+                N_boot = 100
+                
+                ACF_dist = np.zeros(N_boot)
+                for i in range(N_boot):
+                    subpop_inds = np.random.randint(len(c1), size=len(c1))
+                    c1_new = c1[subpop_inds]
+                    c2_new = c2[subpop_inds]
+                    ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new) ) / np.var(alldata)
+                    #ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(alldata) ** 2 ) / np.var(alldata)
+                    #ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate
+                    
+                ACF_dist = sorted(ACF_dist)
+                ACF_high = ACF_dist[int(0.95 * N_boot)]
+                ACF_low = ACF_dist[int(0.05 * N_boot)]
+                ACF_ci = (ACF_high - ACF_low) / 2
         
         return {'Rate': mean_rate, 'Rate_ci': rate_ci, 'ACF': ACF, 'ACF_ci': ACF_ci}
-        #return [ACF, ACF_high, ACF_low]
         
-
-    def Compute_rate(self):          # Need implement time point interpolation
-        
-        '''
-        Perform sensitivity analysis with a combination of
-        time and trajectory averaging
-        
-        ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval 
-        
-        The time-averaging could be improved in here. Right now it is a little weird...
-        You can use linear interpolation to get data between time points
-        Can also make it so that the statistics make sense for non-evenly spaced time points
-        '''
-        
-        self.Set_analysis_varaibles()
-        
-        
-        if not self.avg_updated:
-            self.AverageRuns()
-            
-        
-        bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt + 1)
-        
-        rate_data_erg = np.zeros( self.n_runs )
-        rate_contributions_all = np.zeros(self.traj_derivs.shape[2])
-         
-        
-        data_ind = 0
-        for traj_ind in range(self.n_runs):
-            
-            idb_start = self.runAvg.time_search_interp( bin_edges[1] )
-            idb_end = self.runAvg.time_search_interp( bin_edges[-1] )
-            
-            prop_integ_start = idb_start[1][0] * self.Props_integ[traj_ind, idb_start[0][0], :] + idb_start[1][1] * self.Props_integ[traj_ind, idb_start[0][1], :]
-            prop_integ_end = idb_end[1][0] * self.Props_integ[traj_ind, idb_end[0][0], :] + idb_end[1][1] * self.Props_integ[traj_ind, idb_end[0][1], :]
-            rate_data_erg[data_ind] = np.dot ( ( prop_integ_end - prop_integ_start ) / ( bin_edges[-1] - bin_edges[1] ) , self.TOF_stoich )
-          
-            data_ind += 1
-        
-        # Calculate NSCs
-        mean_rate = 0
-        
-        for dp in range( self.n_runs):
-            mean_rate = mean_rate + rate_data_erg[dp]
-            
-        # Normalize means
-        mean_rate = mean_rate / self.n_runs
-        
-        return mean_rate
-
         
     def PerformSA(self, delta_t = None, ergodic = True):          # Need implement time point interpolation
         
         '''
-        Perform sensitivity analysis with a combination of
-        time and trajectory averaging
+        Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging
         
-        delta_t             size of the time window
-        ergodic             True: use the rate at the end of the time interval, False: average the rate over the entire time interval 
+        delta_t :   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.
+        ergodic :   True: average the rate over the entire time interval (centered ergodic likelihood ratio)
+                    False: use the rate at the end of the time interval (centered likelihood ratio)
         
-        The time-averaging could be improved in here. Right now it is a little weird...
-        You can use linear interpolation to get data between time points
-        Can also make it so that the statistics make sense for non-evenly spaced time points
+        Data between sample points is estimated with linear interpolation
         '''
         
         self.Set_analysis_varaibles()
@@ -631,6 +579,8 @@ class Replicates:
         
         '''
         Plot the results of sensitivity analysis
+        
+        NSC_cut : Reactions with normalized sensitivity coefficients (NSC) below this limit will not be plotted
         '''
         
         PlotOptions()
@@ -667,7 +617,7 @@ class Replicates:
     def WriteSA_output(self):
     
         '''
-        Write the results of sensitivity analysis into an SA_output.txt
+        Write the results of sensitivity analysis into a SA_output.txt
         '''
     
         with open(os.path.join(self.ParentFolder, 'SA_output.txt'), 'w') as txt:

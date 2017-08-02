@@ -23,7 +23,7 @@ class kmc_traj():
     def __init__(self, path = None):
         
         '''
-        Initializes class variables
+        Initialize class variables
         '''
 
         self.Path = path
@@ -78,8 +78,8 @@ class kmc_traj():
     def ReadAllOutput(self, build_lattice=False):
         '''
         Read all Zacros output files
-        Set build_lattice = True if you want to build the lattice object file.
-        This will make it take a lot longer to read
+        build_lattice :     True - builds a Lattice object from lattice_output.txt
+                            This allows you to plot the lattice, but takes time to construct
         '''
         self.ReadAllInput()
 
@@ -114,8 +114,8 @@ class kmc_traj():
     
     def ReadProp(self, Mode):
         '''
-        Mode = 0: Read Prop_output.bin
-        Mode = 1: Read PropCounter_output.bin
+        Mode = 0: Read Prop_output.bin, instantaneous propensities
+        Mode = 1: Read PropCounter_output.bin, time integrated propensities used for accurate time averages
         '''
         dt = np.dtype(np.float64)
         if Mode == 0:     # Instantaneous propensities
@@ -140,7 +140,7 @@ class kmc_traj():
 
     def ReadSA(self):
         '''
-        Read SA_output.bin
+        Read SA_output.bin - get trajectory derivatives for use in likelihood ratio sensitivity analysis
         '''
         dt = np.dtype(np.float64)
         FileName = 'SA_output.bin'
@@ -218,6 +218,7 @@ class kmc_traj():
         
         '''
         Adjust the pre-exponential ratios of all elementary reactions
+        delta_sdf: list or vector of ratios to apply
         '''
         
         rxn_ind = 0
@@ -232,6 +233,7 @@ class kmc_traj():
         
         '''
         Given a time, look up the index of the smallest time greater than or equal to that time
+        t :     time to search for
         '''
         
         if t > self.specnumout.t[-1] or t < 0:
@@ -307,7 +309,7 @@ class kmc_traj():
     def PlotSurfSpecVsTime(self, site_norm = 1):
         
         '''
-        Plot surface species profiles versus time
+        Plot surface species profiles versus time - output in surf_spec_vs_time.png in the directory with the Zacros run
         '''
         
         if site_norm == 1:
@@ -327,7 +329,7 @@ class kmc_traj():
     def PlotGasSpecVsTime(self):
         
         '''
-        Plot gas phase species profiles versus time
+        Plot gas phase species profiles versus time - output in gas_spec_vs_time.png in the directory with the Zacros run
         '''
         
         time_vecs = []
@@ -343,7 +345,7 @@ class kmc_traj():
     def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1):
         
         '''
-        Plot a bar graph of elementary step frequencies versus time
+        Plot a bar graph of elementary step frequencies versus time - output in elem_step_freqs.png in the directory with the Zacros run
         '''
         
         start_ind = self.time_search(window[0] * self.specnumout.t[-1])
@@ -411,7 +413,7 @@ class kmc_traj():
     def PlotLattice(self):
     
         '''
-        Plot the lattice
+        Plot the lattice - output in lattice.png in the run directory
         '''
         
         if self.lat.text_only:
@@ -428,7 +430,11 @@ class kmc_traj():
     def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need make marker type consistent with the site type
 
         '''
+        Create a subfolder called lattice_frames
         Create a .png file with a picture of a lattice for every snapshot in history_output.txt
+        
+        include_neighbor_lines :    If true, will draw lines between neighboring lattice sites (takes more time)
+        spec_color_list :           List of colors to use for different species, will cycle through if there are more species than colors
         '''
     
         cart_coords = self.lat.cart_coords

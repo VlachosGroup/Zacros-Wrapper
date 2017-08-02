@@ -8,7 +8,7 @@ as well as additional analysis functionality. Modified source files for
 Zacros are included which produce additional output files that are used by the wrapper.
 
 Documentation and Source code
--------------
+------------------------------
 * Documentation available at `<http://vlachosgroup.github.io/Zacros-Wrapper/>`_
 * Download or clone source code from the  `Github repository <https://github.com/VlachosGroup/Zacros-Wrapper/>`_
 
@@ -22,7 +22,7 @@ Developers
 ----------
 * Marcel Nunez (mpnunez@udel.edu)
 * Taylor Robie
-* Gerhard Wittreich
+* Gerhard Wittreich, P.E.
 
 Related publications
 -----------------------
