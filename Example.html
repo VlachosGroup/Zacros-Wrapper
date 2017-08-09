@@ -56,47 +56,139 @@
             
   <div class="section" id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
-<p>We look at the examples in the example_scripts folder of the Github repository.</p>
-<div class="section" id="analyzing-a-single-trajectory-single-trajectory-py">
-<h2>Analyzing a single trajectory (Single_trajectory.py)<a class="headerlink" href="#analyzing-a-single-trajectory-single-trajectory-py" title="Permalink to this headline">¶</a></h2>
+<p>We look at the examples in the &#8216;examples&#8217; folder of the Github repository.</p>
+<div class="section" id="converting-dft-data-to-zacros-input-files">
+<h2>Converting DFT data to Zacros input files<a class="headerlink" href="#converting-dft-data-to-zacros-input-files" title="Permalink to this headline">¶</a></h2>
 <p>This script analyzes a single Zacros trajectory and plots some data.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Created on Thu Jul 28 13:48:34 2016</span>
+<span class="sd">Created on Fri Apr 07 09:39:17 2017</span>
 
-<span class="sd">@author: mpnun</span>
+<span class="sd">@author: wittregr</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">DFT_to_Thermochemistry</span> <span class="kn">as</span> <span class="nn">_thermo</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">platform</span>
 
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/vlachos/mpnunez/Github/Zacros-Wrapper&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Windows&#39;</span><span class="p">:</span>
+    <span class="n">Base_path</span> <span class="o">=</span> <span class="s1">&#39;C:\Users\wittregr\Documents\Python Scripts&#39;</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">Base_path</span> <span class="o">=</span> <span class="s1">&#39;/home/1729&#39;</span>
+<span class="n">Input</span> <span class="o">=</span> <span class="s1">&#39;Input&#39;</span>
+<span class="n">Output</span> <span class="o">=</span> <span class="s1">&#39;Output&#39;</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd"> Read reference species and calculate all thermodynamic quantities</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="c1">#filepath = os.path.join(Base_path, Input, &#39;Reference_set_info.txt&#39;)</span>
+<span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Base_path</span><span class="p">,</span> <span class="n">Input</span><span class="p">,</span> <span class="s1">&#39;Zacros_Species_Energy.txt&#39;</span><span class="p">)</span>
+<span class="p">[</span><span class="n">lines</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">_thermo</span><span class="o">.</span><span class="n">DFTFileRead</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+<span class="n">T_ref</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">Path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Base_path</span><span class="p">,</span> <span class="n">Input</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="mi">3</span><span class="p">:]:</span>
+    <span class="n">T_ref</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_thermo</span><span class="o">.</span><span class="n">Reference</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">Path</span><span class="p">))</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd"> Read target species and calculate all thermodynamic quantities</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Base_path</span><span class="p">,</span> <span class="s1">&#39;Input&#39;</span><span class="p">,</span> <span class="s1">&#39;Tobe_Referenced.txt&#39;</span><span class="p">)</span>
+<span class="p">[</span><span class="n">lines</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">_thermo</span><span class="o">.</span><span class="n">DFTFileRead</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+<span class="n">T_target</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="mi">3</span><span class="p">:]:</span>
+    <span class="n">T_target</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_thermo</span><span class="o">.</span><span class="n">Target</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">Base_path</span><span class="p">))</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Create basis set from reference molecules</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">Basis</span> <span class="o">=</span> <span class="n">_thermo</span><span class="o">.</span><span class="n">Reference</span><span class="o">.</span><span class="n">BasisSet</span><span class="p">(</span><span class="n">T_ref</span><span class="p">)</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Read surface slab energy from input file</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Base_path</span><span class="p">,</span> <span class="n">Input</span><span class="p">,</span> <span class="s1">&#39;Surface_energy_data.txt&#39;</span><span class="p">)</span>
+<span class="p">[</span><span class="n">lines</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="n">_thermo</span><span class="o">.</span><span class="n">DFTFileRead</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+<span class="n">T_surface</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[</span><span class="mi">3</span><span class="p">:]:</span>
+    <span class="n">T_surface</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_thermo</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">),</span> <span class="nb">dict</span><span class="p">))</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Apply reference molecule correct to thermodynamic data</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">T_target</span> <span class="o">=</span> <span class="n">_thermo</span><span class="o">.</span><span class="n">Target</span><span class="o">.</span><span class="n">ReferenceDFT</span><span class="p">(</span><span class="n">T_target</span><span class="p">,</span> <span class="n">T_surface</span><span class="p">,</span> <span class="n">Basis</span><span class="p">)</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Output thermat file from calculated thermodynamic data</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">T_target</span> <span class="o">=</span> <span class="n">_thermo</span><span class="o">.</span><span class="n">Target</span><span class="o">.</span><span class="n">CreateThermdat</span><span class="p">(</span><span class="n">T_target</span><span class="p">,</span> <span class="n">Base_path</span><span class="p">,</span> <span class="n">Output</span><span class="p">)</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Output Zacros input file from thermodynamic data</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="k">pass</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<span class="sd">Test output (To be removed in final version)</span>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="k">print</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">Heat Capacities [kcal/mol K] over a range of Temperatures [k]&#39;</span>
+<span class="k">print</span> <span class="s1">&#39;-------------------------------------------------------------</span><span class="se">\n</span><span class="s1">&#39;</span>
+<span class="k">print</span> <span class="s1">&#39;Name             &#39;</span><span class="p">,</span>
+<span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">T_target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">)):</span>
+    <span class="k">print</span> <span class="s1">&#39; </span><span class="si">%4d</span><span class="s1"> &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">T_target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">[</span><span class="n">y</span><span class="p">]),</span>
+<span class="k">print</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+<span class="k">print</span> <span class="s1">&#39;---------------- &#39;</span><span class="p">,</span>
+<span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">T_target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">)):</span>
+    <span class="k">print</span> <span class="s1">&#39; </span><span class="si">%s</span><span class="s1"> &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;----&#39;</span><span class="p">),</span>
+<span class="k">print</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">T_target</span><span class="p">)):</span>
+    <span class="k">print</span> <span class="s1">&#39;</span><span class="si">%16s</span><span class="s1"> &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">T_target</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+    <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">T_target</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">Cp</span><span class="p">)):</span>
+        <span class="k">print</span> <span class="s1">&#39; </span><span class="si">%5.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">T_target</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">Cp</span><span class="p">[</span><span class="n">y</span><span class="p">]),</span>
+    <span class="k">print</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+
+<span class="k">print</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">Standard Heats of Formation and Dispersion&#39;</span>
+<span class="k">print</span> <span class="s1">&#39;------------------------------------------</span><span class="se">\n</span><span class="s1">&#39;</span>
+<span class="k">print</span> <span class="s1">&#39;Name               hf(</span><span class="si">%6.2f</span><span class="s1">)    edisp   S(</span><span class="si">%6.2f</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">T_target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Tstp</span><span class="p">,</span>
+                                                            <span class="n">T_target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Tstp</span><span class="p">)</span>
+<span class="k">print</span> <span class="s1">&#39;----------------   ----------   -------  ---------&#39;</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">T_target</span><span class="p">)):</span>
+    <span class="k">print</span> <span class="s1">&#39;</span><span class="si">%-16s</span><span class="s1">     </span><span class="si">%7.3f</span><span class="s1">    </span><span class="si">%6.3f</span><span class="s1">    </span><span class="si">%6.3f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">T_target</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                                 <span class="n">T_target</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">hf_Tstp</span><span class="p">,</span>
+                                                 <span class="n">T_target</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">convedisp</span><span class="p">,</span>
+                                                 <span class="n">T_target</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">S_Tstp</span><span class="p">)</span>
+<span class="k">print</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+</pre></div>
+</div>
+<p>This produces ...</p>
+</div>
+<div class="section" id="analyzing-a-single-trajectory-single-trajectory-py">
+<h2>Analyzing a single trajectory (Single_trajectory.py)<a class="headerlink" href="#analyzing-a-single-trajectory-single-trajectory-py" title="Permalink to this headline">¶</a></h2>
+<p>This script analyzes a single Zacros trajectory and plots some data.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read the output for a Zacros trajectory and plot data</span>
+
 <span class="kn">import</span> <span class="nn">zacros_wrapper</span> <span class="kn">as</span> <span class="nn">zw</span>
 
 <span class="sd">&#39;&#39;&#39; ------------ User input section ------------ &#39;&#39;&#39;</span>
 <span class="n">RunPath</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/wangyf/Alumina/mechanismI/5&#39;</span>
-<span class="c1">#RunPath = &#39;.&#39;</span>
-<span class="c1">#RunPath = &#39;/home/vlachos/mpnunez/ZW_data/KMC_data/WGS/SteadyState/Iteration_7/63&#39;</span>
 <span class="sd">&#39;&#39;&#39; -------------------------------------------- &#39;&#39;&#39;</span>
 
-<span class="sd">&#39;&#39;&#39; Set up data &#39;&#39;&#39;</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">kmc_traj</span><span class="p">()</span>
-<span class="n">y</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">RunPath</span>
-<span class="c1">#y.ReadAllInput()</span>
-<span class="c1">#y.exe_file = exe_file</span>
+<span class="sd">&#39;&#39;&#39; Read simulation results &#39;&#39;&#39;</span>
+<span class="n">my_trajectory</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">kmc_traj</span><span class="p">()</span>                           <span class="c1"># Create single trajectory object</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">RunPath</span>                            <span class="c1"># Set directory for files</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">ReadAllOutput</span><span class="p">(</span><span class="n">build_lattice</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>         <span class="c1"># Read input and output files</span>
 
-<span class="c1">#y.Run_sim()</span>
-<span class="n">y</span><span class="o">.</span><span class="n">ReadAllOutput</span><span class="p">(</span><span class="n">build_lattice</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">y</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/Github/Zacros-Wrapper/example_scripts&#39;</span>
-
-<span class="sd">&#39;&#39;&#39; Analyze &#39;&#39;&#39;</span>
-<span class="c1">#n_Pd = 48 * 48</span>
-<span class="n">n_Pd</span> <span class="o">=</span> <span class="mi">920</span>
-<span class="n">y</span><span class="o">.</span><span class="n">PlotSurfSpecVsTime</span><span class="p">(</span><span class="n">site_norm</span> <span class="o">=</span> <span class="n">n_Pd</span><span class="p">)</span>
-<span class="n">y</span><span class="o">.</span><span class="n">PlotGasSpecVsTime</span><span class="p">()</span>
-<span class="n">y</span><span class="o">.</span><span class="n">PlotElemStepFreqs</span><span class="p">(</span><span class="n">site_norm</span> <span class="o">=</span> <span class="n">n_Pd</span><span class="p">,</span> <span class="n">time_norm</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
-<span class="n">y</span><span class="o">.</span><span class="n">PlotLattice</span><span class="p">()</span>
-<span class="n">y</span><span class="o">.</span><span class="n">LatticeMovie</span><span class="p">()</span>
+<span class="sd">&#39;&#39;&#39; Plot data &#39;&#39;&#39;</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotSurfSpecVsTime</span><span class="p">()</span>                                      <span class="c1"># Plot surface species populations versus time</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotGasSpecVsTime</span><span class="p">()</span>                                       <span class="c1"># Plot gas species populations versus time</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotElemStepFreqs</span><span class="p">(</span><span class="n">site_norm</span> <span class="o">=</span> <span class="n">n_Pd</span><span class="p">,</span> <span class="n">time_norm</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>     <span class="c1"># Plot elementary step frequencies</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotLattice</span><span class="p">()</span>                                             <span class="c1"># Plot the lattice</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">LatticeMovie</span><span class="p">()</span>                                            <span class="c1"># Plot the lattice snapshots</span>
 </pre></div>
 </div>
 <p>This produces ...</p>
@@ -104,26 +196,17 @@
 <div class="section" id="analyzing-multiple-trajectories-multiple-trajectories-py">
 <h2>Analyzing multiple trajectories (Multiple_trajectories.py)<a class="headerlink" href="#analyzing-multiple-trajectories-multiple-trajectories-py" title="Permalink to this headline">¶</a></h2>
 <p>This script analyzes multiple trajectories, averages them, computes the rate, and performs sensitivity analysis.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Created on Thu Jul 28 13:48:34 2016</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read multiple trajectories and perform statistical analysis</span>
 
-<span class="sd">@author: mpnun</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">zacros_wrapper</span> <span class="kn">as</span> <span class="nn">zw</span>
 
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/vlachos/mpnunez/Github/Zacros-Wrapper-expt/Zacros-Wrapper/PythonCode&#39;</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">Core</span> <span class="kn">as</span> <span class="nn">zw</span>
-
-<span class="c1">################## User input ##################################</span>
-
+<span class="sd">&#39;&#39;&#39; ------------ User input section ------------ &#39;&#39;&#39;</span>
 <span class="n">zacros_exe</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/bin/zacros_ZW.x&#39;</span>
 <span class="n">KMC_source</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/KMC_data/AtoB/NonStiff/&#39;</span>
 <span class="n">BatchPath</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/KMC_data/AtoB/test&#39;</span>
 <span class="c1">#Product = &#39;B&#39;</span>
 <span class="n">n_runs</span> <span class="o">=</span> <span class="mi">16</span>
-
-<span class="c1">################################################################</span>
+<span class="sd">&#39;&#39;&#39; -------------------------------------------- &#39;&#39;&#39;</span>
 
 <span class="c1"># Prepare template</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">Replicates</span><span class="p">()</span>
@@ -140,7 +223,8 @@
 <span class="c1"># Read results</span>
 <span class="n">x</span><span class="o">.</span><span class="n">ReadMultipleRuns</span><span class="p">()</span>
 
-<span class="c1"># Perform analysis</span>
+<span class="c1"># Perform sensitivity analysis</span>
+<span class="c1"># ...</span>
 </pre></div>
 </div>
 <p>This produces ...</p>
@@ -149,19 +233,9 @@
 <h2>Rate constant rescaling and steady state detection (Scale_SS_Main.py)<a class="headerlink" href="#rate-constant-rescaling-and-steady-state-detection-scale-ss-main-py" title="Permalink to this headline">¶</a></h2>
 <p>This script takes Zacros input files and runs the statistical procedure described in our publication.
 Parallelization is used to run multiple trajectories simultaneously.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Created on Fri Oct 07 19:12:15 2016</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read Zacros input files from a folder and then perform rate constant rescaling in a different folder</span>
 
-<span class="sd">@author: mpnun</span>
-<span class="sd">&quot;&quot;&quot;</span>
-
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper&#39;</span><span class="p">)</span>
-<span class="kn">import</span> <span class="nn">KMCsim</span> <span class="kn">as</span> <span class="nn">zw</span>
+<span class="kn">import</span> <span class="nn">zacros_wrapper</span> <span class="kn">as</span> <span class="nn">zw</span>
 
 <span class="sd">&#39;&#39;&#39; ------------ User input section ------------ &#39;&#39;&#39;</span>
 <span class="n">exe_file</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/bin/zacros_ZW.x&#39;</span>
@@ -169,14 +243,13 @@ Parallelization is used to run multiple trajectories simultaneously.</p>
 <span class="n">RunPath</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/ScaledownV3&#39;</span>
 <span class="n">product_spec</span> <span class="o">=</span> <span class="s1">&#39;B&#39;</span>                                  <span class="c1"># product species</span>
 <span class="n">number_of_runs</span> <span class="o">=</span> <span class="mi">96</span>
-<span class="n">gas_stoich</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
 <span class="sd">&#39;&#39;&#39; -------------------------------------------- &#39;&#39;&#39;</span>
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>                 <span class="c1"># Need this line to make parallelization work</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>                 <span class="c1"># Make commands safe for MPI parallelization</span>
 	
     <span class="n">z</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">RateRescaling</span><span class="p">()</span>
     <span class="n">z</span><span class="o">.</span><span class="n">scale_parent_fldr</span> <span class="o">=</span> <span class="n">RunPath</span>
-    <span class="n">z</span><span class="o">.</span><span class="n">ReachSteadyStateAndRescale</span><span class="p">(</span><span class="n">product_spec</span><span class="p">,</span> <span class="n">gas_stoich</span><span class="p">,</span> <span class="n">KMC_source</span><span class="p">,</span> <span class="n">exe_file</span><span class="p">,</span> <span class="n">n_runs</span> <span class="o">=</span> <span class="n">number_of_runs</span><span class="p">,</span> <span class="n">platform</span> <span class="o">=</span> <span class="s1">&#39;Squidward&#39;</span><span class="p">)</span>
+    <span class="n">z</span><span class="o">.</span><span class="n">ReachSteadyStateAndRescale</span><span class="p">(</span><span class="n">product_spec</span><span class="p">,</span> <span class="n">KMC_source</span><span class="p">,</span> <span class="n">exe_file</span><span class="p">,</span> <span class="n">n_runs</span> <span class="o">=</span> <span class="n">number_of_runs</span><span class="p">,</span> <span class="n">platform</span> <span class="o">=</span> <span class="s1">&#39;Squidward&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This produces ...</p>
@@ -192,6 +265,7 @@ Parallelization is used to run multiple trajectories simultaneously.</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Examples</a><ul>
+<li><a class="reference internal" href="#converting-dft-data-to-zacros-input-files">Converting DFT data to Zacros input files</a></li>
 <li><a class="reference internal" href="#analyzing-a-single-trajectory-single-trajectory-py">Analyzing a single trajectory (Single_trajectory.py)</a></li>
 <li><a class="reference internal" href="#analyzing-multiple-trajectories-multiple-trajectories-py">Analyzing multiple trajectories (Multiple_trajectories.py)</a></li>
 <li><a class="reference internal" href="#rate-constant-rescaling-and-steady-state-detection-scale-ss-main-py">Rate constant rescaling and steady state detection (Scale_SS_Main.py)</a></li>

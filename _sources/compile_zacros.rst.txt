@@ -1,15 +1,14 @@
 Getting Started
 ================
 
-Adding it to your python path
-------------------------------
-Add the Zacros-Wrapper respository to your python path, and then import using ``import zacros_wrapper``
 
 Getting Started
 ---------------
 Step 1: Obtain Zacros executable
 
 If you are not doing sensitivity analysis, you don't need to use the new one. If you are doing LRSA, you need modified Zacros files. See the modified zacros page for instructions on how to compile that.
+
+Step 3: Add the Zacros-Wrapper repository to your Python path
 
 Step 2: Configure input in demo file and run
 
