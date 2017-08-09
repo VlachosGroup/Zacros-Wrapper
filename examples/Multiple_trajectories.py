@@ -1,23 +1,14 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jul 28 13:48:34 2016
+# Read multiple trajectories and perform statistical analysis
 
-@author: mpnun
-"""
+import zacros_wrapper as zw
 
-import sys
-sys.path.append('/home/vlachos/mpnunez/Github/Zacros-Wrapper-expt/Zacros-Wrapper/PythonCode')
-import Core as zw
-
-################## User input ##################################
-
+''' ------------ User input section ------------ '''
 zacros_exe = '/home/vlachos/mpnunez/bin/zacros_ZW.x'
 KMC_source = '/home/vlachos/mpnunez/ZacrosWrapper/KMC_data/AtoB/NonStiff/'
 BatchPath = '/home/vlachos/mpnunez/ZacrosWrapper/KMC_data/AtoB/test'
 #Product = 'B'
 n_runs = 16
-
-################################################################
+''' -------------------------------------------- '''
 
 # Prepare template
 x = zw.Replicates()
@@ -34,4 +25,5 @@ x.RunAllJobs_parallel_JobArray()
 # Read results
 x.ReadMultipleRuns()
 
-# Perform analysis
+# Perform sensitivity analysis
+# ...

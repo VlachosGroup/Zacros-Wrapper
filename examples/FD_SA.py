@@ -9,7 +9,7 @@ import os
 import sys
 import numpy as np
 
-sys.path.insert(0, '../KMCsim')
+
 from Replicates import Replicates
 from KMC_Run import KMC_Run
 

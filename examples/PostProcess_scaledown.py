@@ -8,9 +8,7 @@ Created on Fri Oct 07 19:12:15 2016
 import os
 import sys
 import numpy as np
-
-sys.path.append('/home/vlachos/mpnunez/ZacrosWrapper')
-import KMCsim as zw
+import zacros_wrapper as zw
 
 ''' ------------ User input section ------------ '''
 exe_file = '/home/vlachos/mpnunez/bin/zacros_ZW.x'

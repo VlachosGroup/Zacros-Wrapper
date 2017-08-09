@@ -10,7 +10,6 @@ import random
 from shutil import copyfile
 import pickle
 
-#sys.path.append('/home/vlachos/mpnunez/ase')
 from ase.build import fcc111
 from ase.io import read
 from ase.visualize import view
