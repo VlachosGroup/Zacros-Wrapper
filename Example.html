@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Getting Started" href="compile_zacros.html" />
+    <link rel="next" title="Compiling modified Zacros executable" href="compile_zacros.html" />
     <link rel="prev" title="Python wrapper for the Zacros kinetic Monte Carlo (KMC) code" href="index.html" /> 
   </head>
   <body role="document">
@@ -40,7 +40,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="compile_zacros.html" title="Getting Started"
+          <a href="compile_zacros.html" title="Compiling modified Zacros executable"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Python wrapper for the Zacros kinetic Monte Carlo (KMC) code"
@@ -56,10 +56,11 @@
             
   <div class="section" id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
-<p>We look at the examples in the &#8216;examples&#8217; folder of the Github repository.</p>
+<p>We look at the examples in the &#8216;examples&#8217; folder of the Github repository. For all scripts, the user must configure
+the parameters (mostly directories) at the top of the script under the &#8220;User input&#8221; section.</p>
 <div class="section" id="converting-dft-data-to-zacros-input-files">
 <h2>Converting DFT data to Zacros input files<a class="headerlink" href="#converting-dft-data-to-zacros-input-files" title="Permalink to this headline">¶</a></h2>
-<p>This script analyzes a single Zacros trajectory and plots some data.</p>
+<p>This script reads VASP data and computes parameters for the input files.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Created on Fri Apr 07 09:39:17 2017</span>
@@ -167,9 +168,9 @@
 </div>
 <p>This produces ...</p>
 </div>
-<div class="section" id="analyzing-a-single-trajectory-single-trajectory-py">
-<h2>Analyzing a single trajectory (Single_trajectory.py)<a class="headerlink" href="#analyzing-a-single-trajectory-single-trajectory-py" title="Permalink to this headline">¶</a></h2>
-<p>This script analyzes a single Zacros trajectory and plots some data.</p>
+<div class="section" id="analyzing-a-single-trajectory">
+<h2>Analyzing a single trajectory<a class="headerlink" href="#analyzing-a-single-trajectory" title="Permalink to this headline">¶</a></h2>
+<p>Single_trajectory.py analyzes a single Zacros trajectory and plots some data.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read the output for a Zacros trajectory and plot data</span>
 
 <span class="kn">import</span> <span class="nn">zacros_wrapper</span> <span class="kn">as</span> <span class="nn">zw</span>
@@ -184,32 +185,100 @@
 <span class="n">my_trajectory</span><span class="o">.</span><span class="n">ReadAllOutput</span><span class="p">(</span><span class="n">build_lattice</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>         <span class="c1"># Read input and output files</span>
 
 <span class="sd">&#39;&#39;&#39; Plot data &#39;&#39;&#39;</span>
-<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotSurfSpecVsTime</span><span class="p">()</span>                                      <span class="c1"># Plot surface species populations versus time</span>
-<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotGasSpecVsTime</span><span class="p">()</span>                                       <span class="c1"># Plot gas species populations versus time</span>
-<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotElemStepFreqs</span><span class="p">(</span><span class="n">site_norm</span> <span class="o">=</span> <span class="n">n_Pd</span><span class="p">,</span> <span class="n">time_norm</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>     <span class="c1"># Plot elementary step frequencies</span>
-<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotLattice</span><span class="p">()</span>                                             <span class="c1"># Plot the lattice</span>
-<span class="n">my_trajectory</span><span class="o">.</span><span class="n">LatticeMovie</span><span class="p">()</span>                                            <span class="c1"># Plot the lattice snapshots</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotSurfSpecVsTime</span><span class="p">()</span>                      <span class="c1"># Plot surface species populations versus time</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotGasSpecVsTime</span><span class="p">()</span>                       <span class="c1"># Plot gas species populations versus time</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotElemStepFreqs</span><span class="p">(</span><span class="n">time_norm</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>       <span class="c1"># Plot elementary step frequencies</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">PlotLattice</span><span class="p">()</span>                             <span class="c1"># Plot the lattice</span>
+<span class="n">my_trajectory</span><span class="o">.</span><span class="n">LatticeMovie</span><span class="p">()</span>                            <span class="c1"># Plot the lattice snapshots</span>
 </pre></div>
 </div>
-<p>This produces ...</p>
+<p>This produces several .png with data within the folder with the Zacros files.</p>
 </div>
-<div class="section" id="analyzing-multiple-trajectories-multiple-trajectories-py">
-<h2>Analyzing multiple trajectories (Multiple_trajectories.py)<a class="headerlink" href="#analyzing-multiple-trajectories-multiple-trajectories-py" title="Permalink to this headline">¶</a></h2>
-<p>This script analyzes multiple trajectories, averages them, computes the rate, and performs sensitivity analysis.</p>
+<div class="section" id="running-and-analyzing-multiple-trajectories">
+<h2>Running and analyzing multiple trajectories<a class="headerlink" href="#running-and-analyzing-multiple-trajectories" title="Permalink to this headline">¶</a></h2>
+<p>Multiple_trajectories_MPI.py analyzes multiple trajectories, averages them, computes the rate, and performs sensitivity analysis. MPI is used to parallelize
+running the trajectories. Therefore it must be launced with the <code class="docutils literal"><span class="pre">mpiexec</span></code> command.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read multiple trajectories and perform statistical analysis</span>
+
+<span class="kn">import</span> <span class="nn">zacros_wrapper</span> <span class="kn">as</span> <span class="nn">zw</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+
+<span class="sd">&#39;&#39;&#39; ------------ User input section ------------ &#39;&#39;&#39;</span>
+<span class="n">zacros_exe</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/bin/zacros_ZW.x&#39;</span>
+<span class="n">KMC_source</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/Github/Zacros-Wrapper/input_files/AtoB/&#39;</span>
+<span class="n">BatchPath</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/test&#39;</span>
+<span class="n">Product</span> <span class="o">=</span> <span class="s1">&#39;B&#39;</span>
+<span class="n">n_runs</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="sd">&#39;&#39;&#39; -------------------------------------------- &#39;&#39;&#39;</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="n">COMM</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+    <span class="n">COMM</span><span class="o">.</span><span class="n">Barrier</span><span class="p">()</span>
+
+    <span class="c1"># Prepare template</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">Replicates</span><span class="p">()</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">kmc_traj</span><span class="p">()</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">KMC_source</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">exe_file</span> <span class="o">=</span> <span class="n">zacros_exe</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">ReadAllInput</span><span class="p">()</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">ParentFolder</span> <span class="o">=</span> <span class="n">BatchPath</span>
+    
+    <span class="c1"># Build files and run</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">=</span> <span class="n">n_runs</span>
+    <span class="k">if</span> <span class="n">COMM</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">BuildJobFiles</span><span class="p">()</span>
+    
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Run all trajectories using MPI parallelization</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1"># Collect whatever has to be done in a list. Here we&#39;ll just collect a list of</span>
+    <span class="c1"># numbers. Only the first rank has to do this.</span>
+    <span class="k">if</span> <span class="n">COMM</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">jobs</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">run_dirs</span>
+        <span class="n">jobs</span> <span class="o">=</span> <span class="p">[</span><span class="n">jobs</span><span class="p">[</span><span class="n">_i</span><span class="p">::</span><span class="n">COMM</span><span class="o">.</span><span class="n">size</span><span class="p">]</span> <span class="k">for</span> <span class="n">_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">COMM</span><span class="o">.</span><span class="n">size</span><span class="p">)]</span>             <span class="c1"># Split into however many cores are available.</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">jobs</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="n">jobs</span> <span class="o">=</span> <span class="n">COMM</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jobs</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>           <span class="c1"># Scatter jobs across cores.</span>
+    
+    <span class="c1"># Now each rank just does its jobs and collects everything in a results list.</span>
+    <span class="c1"># Make sure to not use super big objects in there as they will be pickled to be</span>
+    <span class="c1"># exchanged over MPI.</span>
+    <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">jobs</span><span class="p">:</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">job</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">Run_sim</span><span class="p">()</span> 
+    
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Read and analyze results</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">COMM</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">ReadMultipleRuns</span><span class="p">()</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">AverageRuns</span><span class="p">()</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotSurfSpecVsTime</span><span class="p">()</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotGasSpecVsTime</span><span class="p">()</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotElemStepFreqs</span><span class="p">(</span><span class="n">time_norm</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This produces several .png files with statistics from the average of the trajectories.</p>
+<p>Multiple_trajectories.py is usable on squidward.che.udel.edu and uses multiple job submissions to parallelize the jobs, as MPI does not allow for
+jobs spread over multiple nodes (i.e. &gt; 16 cores).</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read multiple trajectories and perform statistical analysis</span>
 
 <span class="kn">import</span> <span class="nn">zacros_wrapper</span> <span class="kn">as</span> <span class="nn">zw</span>
 
 <span class="sd">&#39;&#39;&#39; ------------ User input section ------------ &#39;&#39;&#39;</span>
 <span class="n">zacros_exe</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/bin/zacros_ZW.x&#39;</span>
-<span class="n">KMC_source</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/KMC_data/AtoB/NonStiff/&#39;</span>
-<span class="n">BatchPath</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/ZacrosWrapper/KMC_data/AtoB/test&#39;</span>
-<span class="c1">#Product = &#39;B&#39;</span>
+<span class="n">KMC_source</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/Github/Zacros-Wrapper/input_files/AtoB/&#39;</span>
+<span class="n">BatchPath</span> <span class="o">=</span> <span class="s1">&#39;/home/vlachos/mpnunez/test&#39;</span>
+<span class="n">Product</span> <span class="o">=</span> <span class="s1">&#39;B&#39;</span>
 <span class="n">n_runs</span> <span class="o">=</span> <span class="mi">16</span>
 <span class="sd">&#39;&#39;&#39; -------------------------------------------- &#39;&#39;&#39;</span>
 
 <span class="c1"># Prepare template</span>
 <span class="n">x</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">Replicates</span><span class="p">()</span>
+<span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">kmc_traj</span><span class="p">()</span>
 <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">KMC_source</span>
 <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">exe_file</span> <span class="o">=</span> <span class="n">zacros_exe</span>
 <span class="n">x</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">ReadAllInput</span><span class="p">()</span>
@@ -224,14 +293,16 @@
 <span class="n">x</span><span class="o">.</span><span class="n">ReadMultipleRuns</span><span class="p">()</span>
 
 <span class="c1"># Perform sensitivity analysis</span>
-<span class="c1"># ...</span>
+<span class="n">x</span><span class="o">.</span><span class="n">AverageRuns</span><span class="p">()</span>
+<span class="n">x</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotSurfSpecVsTime</span><span class="p">()</span>
+<span class="n">x</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotGasSpecVsTime</span><span class="p">()</span>
+<span class="n">x</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">PlotElemStepFreqs</span><span class="p">(</span><span class="n">time_norm</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This produces ...</p>
 </div>
-<div class="section" id="rate-constant-rescaling-and-steady-state-detection-scale-ss-main-py">
-<h2>Rate constant rescaling and steady state detection (Scale_SS_Main.py)<a class="headerlink" href="#rate-constant-rescaling-and-steady-state-detection-scale-ss-main-py" title="Permalink to this headline">¶</a></h2>
-<p>This script takes Zacros input files and runs the statistical procedure described in our publication.
+<div class="section" id="rate-constant-rescaling-and-steady-state-detection">
+<h2>Rate constant rescaling and steady state detection<a class="headerlink" href="#rate-constant-rescaling-and-steady-state-detection" title="Permalink to this headline">¶</a></h2>
+<p>Scale_SS_Main.py takes Zacros input files and runs the statistical procedure described in our publication.
 Parallelization is used to run multiple trajectories simultaneously.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read Zacros input files from a folder and then perform rate constant rescaling in a different folder</span>
 
@@ -266,9 +337,9 @@ Parallelization is used to run multiple trajectories simultaneously.</p>
   <ul>
 <li><a class="reference internal" href="#">Examples</a><ul>
 <li><a class="reference internal" href="#converting-dft-data-to-zacros-input-files">Converting DFT data to Zacros input files</a></li>
-<li><a class="reference internal" href="#analyzing-a-single-trajectory-single-trajectory-py">Analyzing a single trajectory (Single_trajectory.py)</a></li>
-<li><a class="reference internal" href="#analyzing-multiple-trajectories-multiple-trajectories-py">Analyzing multiple trajectories (Multiple_trajectories.py)</a></li>
-<li><a class="reference internal" href="#rate-constant-rescaling-and-steady-state-detection-scale-ss-main-py">Rate constant rescaling and steady state detection (Scale_SS_Main.py)</a></li>
+<li><a class="reference internal" href="#analyzing-a-single-trajectory">Analyzing a single trajectory</a></li>
+<li><a class="reference internal" href="#running-and-analyzing-multiple-trajectories">Running and analyzing multiple trajectories</a></li>
+<li><a class="reference internal" href="#rate-constant-rescaling-and-steady-state-detection">Rate constant rescaling and steady state detection</a></li>
 </ul>
 </li>
 </ul>
@@ -278,7 +349,7 @@ Parallelization is used to run multiple trajectories simultaneously.</p>
                         title="previous chapter">Python wrapper for the Zacros kinetic Monte Carlo (KMC) code</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="compile_zacros.html"
-                        title="next chapter">Getting Started</a></p>
+                        title="next chapter">Compiling modified Zacros executable</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -310,7 +381,7 @@ Parallelization is used to run multiple trajectories simultaneously.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="compile_zacros.html" title="Getting Started"
+          <a href="compile_zacros.html" title="Compiling modified Zacros executable"
              >next</a> |</li>
         <li class="right" >
           <a href="index.html" title="Python wrapper for the Zacros kinetic Monte Carlo (KMC) code"

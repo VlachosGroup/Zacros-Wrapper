@@ -5,6 +5,13 @@
 
 .. include:: ../README.rst
 
+Getting Started
+----------------
+1. Obtain modified Zacros executable. See Separate page.
+2: Add the Zacros-Wrapper repository to your Python path.
+3: Configure input in demo file and run.
+
+
 Documentation
 -----------------
 
