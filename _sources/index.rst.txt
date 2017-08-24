@@ -5,13 +5,6 @@
 
 .. include:: ../README.rst
 
-Getting Started
-----------------
-1. Obtain modified Zacros executable. See Separate page.
-2: Add the Zacros-Wrapper repository to your Python path.
-3: Configure input in demo file and run.
-
-
 Documentation
 -----------------
 
@@ -20,11 +13,18 @@ Documentation
 
    Example
    compile_zacros
-   IOdata
-   Lattice
+
+Code
+-----
+   
+.. toctree::
+   :maxdepth: 2
+   
    KMC_Run
    Replicates
    Rescaling
+   Lattice
+   IOdata
 
 
 Indices and tables

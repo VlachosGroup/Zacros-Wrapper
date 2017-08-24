@@ -64,9 +64,9 @@ Zacros are included which produce additional output files that are used by the w
 <div class="section" id="key-features">
 <h2>Key features<a class="headerlink" href="#key-features" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Run KMC simulations with parallel processing (uses GridEngine job arrays)</li>
+<li>Run KMC simulations with parallel processing (uses <a class="reference external" href="http://pythonhosted.org/mpi4py/">mpi4py</a> or job submission scripts for University of Delaware clusters)</li>
 <li>Rescale rate constants of fast, equilibrated reactions to accelerate simulation</li>
-<li>Perform parameteric sensitivity analysis using finite-difference or likelihood ratio methods</li>
+<li>Perform parameteric sensitivity analysis using the likelihood ratio method</li>
 </ul>
 </div>
 <div class="section" id="developers">
@@ -109,11 +109,18 @@ Zacros are included which produce additional output files that are used by the w
 <li class="toctree-l2"><a class="reference internal" href="compile_zacros.html#compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster">Compiling on [Farber](http://farber.hpc.udel.edu/) (University of Delaware computing cluster)</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="IOdata.html">File input/output functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Lattice.html">The Lattice class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="KMC_Run.html">The KMC_Run class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Replicates.html">The Replicates class</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Rescaling.html">Description of the rate constant rescaling functionality</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="code">
+<h2>Code<a class="headerlink" href="#code" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="KMC_Run.html">Single trajectory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Replicates.html">Multiple trajectories</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Rescaling.html">Rate Constant Rescaling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Lattice.html">KMC lattice</a></li>
+<li class="toctree-l1"><a class="reference internal" href="IOdata.html">Reading/writing Zacros input/output</a></li>
 </ul>
 </div>
 </div>
@@ -141,6 +148,7 @@ Zacros are included which produce additional output files that are used by the w
 <li><a class="reference internal" href="#related-publications">Related publications</a></li>
 <li><a class="reference internal" href="#getting-started">Getting Started</a></li>
 <li><a class="reference internal" href="#documentation">Documentation</a></li>
+<li><a class="reference internal" href="#code">Code</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>

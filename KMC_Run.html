@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>The KMC_Run class &#8212; Zacros Wrapper 1.0 documentation</title>
+    <title>Single trajectory &#8212; Zacros Wrapper 1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -26,8 +26,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="The Replicates class" href="Replicates.html" />
-    <link rel="prev" title="The Lattice class" href="Lattice.html" /> 
+    <link rel="next" title="Multiple trajectories" href="Replicates.html" />
+    <link rel="prev" title="Compiling modified Zacros executable" href="compile_zacros.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -40,10 +40,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Replicates.html" title="The Replicates class"
+          <a href="Replicates.html" title="Multiple trajectories"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="Lattice.html" title="The Lattice class"
+          <a href="compile_zacros.html" title="Compiling modified Zacros executable"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>
@@ -55,7 +55,7 @@
           <div class="body" role="main">
             
   <div class="section" id="module-KMC_Run">
-<span id="the-kmc-run-class"></span><h1>The KMC_Run class<a class="headerlink" href="#module-KMC_Run" title="Permalink to this headline">¶</a></h1>
+<span id="single-trajectory"></span><h1>Single trajectory<a class="headerlink" href="#module-KMC_Run" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="KMC_Run.kmc_traj">
 <em class="property">class </em><code class="descclassname">KMC_Run.</code><code class="descname">kmc_traj</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj" title="Permalink to this definition">¶</a></dt>
@@ -63,8 +63,15 @@
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.AdjustPreExponentials">
 <code class="descname">AdjustPreExponentials</code><span class="sig-paren">(</span><em>delta_sdf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.AdjustPreExponentials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.AdjustPreExponentials" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adjust the pre-exponential ratios of all elementary reactions
-delta_sdf: list or vector of ratios to apply</p>
+<dd><p>Adjust the pre-exponential ratios of all elementary reactions</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>delta_sdf</strong> &#8211; list or vector of ratios to apply</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -86,6 +93,19 @@ spec_color_list :           List of colors to use for different species, will cy
 <dt id="KMC_Run.kmc_traj.PlotElemStepFreqs">
 <code class="descname">PlotElemStepFreqs</code><span class="sig-paren">(</span><em>window=[0.0, 1.0], time_norm=False, site_norm=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.PlotElemStepFreqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.PlotElemStepFreqs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a bar graph of elementary step frequencies versus time - output in elem_step_freqs.png in the directory with the Zacros run</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>window</strong> &#8211; Beginning and ending fraction of the trajectory over which to count steps.</li>
+<li><strong>time_norm</strong> &#8211; True - normalizes event frequencies by time. False - Plots total event firings.</li>
+<li><strong>site_norm</strong> &#8211; Normalization factor for event frequencies.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -104,6 +124,14 @@ spec_color_list :           List of colors to use for different species, will cy
 <dt id="KMC_Run.kmc_traj.PlotSurfSpecVsTime">
 <code class="descname">PlotSurfSpecVsTime</code><span class="sig-paren">(</span><em>site_norm=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.PlotSurfSpecVsTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.PlotSurfSpecVsTime" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot surface species profiles versus time - output in surf_spec_vs_time.png in the directory with the Zacros run</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>site_norm</strong> &#8211; Normalizing factor for the coverages (e.g. nubmer of top sites). Default value if 1.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -115,10 +143,11 @@ spec_color_list :           List of colors to use for different species, will cy
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.ReadAllOutput">
 <code class="descname">ReadAllOutput</code><span class="sig-paren">(</span><em>build_lattice=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadAllOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadAllOutput" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read all Zacros output files
-build_lattice :     True - builds a Lattice object from lattice_output.txt</p>
-<blockquote>
-<div>This allows you to plot the lattice, but takes time to construct</div></blockquote>
+<dd><p>Read all Zacros output files</p>
+<dl class="docutils">
+<dt>:param build_lattice <span class="classifier-delimiter">:</span> <span class="classifier">True - builds a Lattice object</span></dt>
+<dd>False - reads lattice_output.txt as text only</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -130,8 +159,15 @@ build_lattice :     True - builds a Lattice object from lattice_output.txt</p>
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.ReadProp">
 <code class="descname">ReadProp</code><span class="sig-paren">(</span><em>Mode</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadProp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadProp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mode = 0: Read Prop_output.bin, instantaneous propensities
-Mode = 1: Read PropCounter_output.bin, time integrated propensities used for accurate time averages</p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Mode</strong> &#8211; 0 - Read Prop_output.bin, instantaneous propensities
+1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -156,19 +192,49 @@ Mode = 1: Read PropCounter_output.bin, time integrated propensities used for acc
 <dt id="KMC_Run.kmc_traj.time_sandwich">
 <em class="property">static </em><code class="descname">time_sandwich</code><span class="sig-paren">(</span><em>run1</em>, <em>run2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.time_sandwich"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.time_sandwich" title="Permalink to this definition">¶</a></dt>
 <dd><p>Take two trajectories and append them</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>run1</strong> &#8211; First trajectory - a kmc_traj object</li>
+<li><strong>run2</strong> &#8211; Second trajectory - a kmc_traj object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A kmc_traj object that has the trajectories appended</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.time_search">
 <code class="descname">time_search</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.time_search"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.time_search" title="Permalink to this definition">¶</a></dt>
-<dd><p>Given a time, look up the index of the smallest time greater than or equal to that time
-t :     time to search for</p>
+<dd><p>Given a time, look up the index of the smallest time greater than or equal to that time</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>t</strong> &#8211; time to search for</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.time_search_interp">
 <code class="descname">time_search_interp</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.time_search_interp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.time_search_interp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the information necessary to linearly interpolate data between time points</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>t</strong> &#8211; </td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -182,11 +248,11 @@ t :     time to search for</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="Lattice.html"
-                        title="previous chapter">The Lattice class</a></p>
+  <p class="topless"><a href="compile_zacros.html"
+                        title="previous chapter">Compiling modified Zacros executable</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="Replicates.html"
-                        title="next chapter">The Replicates class</a></p>
+                        title="next chapter">Multiple trajectories</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -218,10 +284,10 @@ t :     time to search for</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Replicates.html" title="The Replicates class"
+          <a href="Replicates.html" title="Multiple trajectories"
              >next</a> |</li>
         <li class="right" >
-          <a href="Lattice.html" title="The Lattice class"
+          <a href="compile_zacros.html" title="Compiling modified Zacros executable"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>

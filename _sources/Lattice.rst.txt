@@ -1,8 +1,5 @@
-The Lattice class
+KMC lattice
 ==========================================
 
-
 .. automodule:: Lattice
-
-.. autoclass:: Lattice
     :members:

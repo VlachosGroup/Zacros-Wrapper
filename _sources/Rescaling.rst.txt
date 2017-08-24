@@ -1,4 +1,4 @@
-Description of the rate constant rescaling functionality
+Rate Constant Rescaling
 =========================================================
 
 .. automodule:: RateRescaling

@@ -1,12 +1,15 @@
 Compiling modified Zacros executable
 =====================================
 
+Some of the Zacros Wrapper functionality depends on additional output files which are not included in Zacros 1.02. Therefore, Zacros 
+must be recompiled with modifications to the input files.
+
 Installation instructions
 -------------------------
 * Download the Zacros files from the [Zacros website](http://www.e-lucid.com/i/software/Zacros.html).
-* Replace the .f90 files in main folder with the ones in the Zacros_mod folder from the ZacrosWrapper repository.
+* Replace the .f90 files in main folder with the ones in the Fortran_src folder from the Zacros-Wrapper repository.
 * Compile with cmake following the compiling instructions provided with Zacros. Using cmake ensures that the executable will run on the platform on which it is compiled.
-* Rename the executable file (.x in Unix, .exe in Windows) and put it in a directory that the Wrapper can access.
+* Rename the executable file (.x in Unix, .exe in Windows) and put it in a directory that the Wrapper can access. You will need to provide a path to the executable when using the Zacros Wrapper.
 
 
 Additional output files

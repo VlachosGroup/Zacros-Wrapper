@@ -484,11 +484,12 @@
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging</span>
 <span class="sd">        </span>
-<span class="sd">        delta_t :   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.</span>
-<span class="sd">        ergodic :   True: average the rate over the entire time interval (centered ergodic likelihood ratio)</span>
-<span class="sd">                    False: use the rate at the end of the time interval (centered likelihood ratio)</span>
+<span class="sd">        :param delta_t:   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.</span>
 <span class="sd">        </span>
-<span class="sd">        Data between sample points is estimated with linear interpolation</span>
+<span class="sd">        :param ergodic:   True - average the rate over the entire time interval (centered ergodic likelihood ratio)</span>
+<span class="sd">                    False - use the rate at the end of the time interval (centered likelihood ratio)</span>
+<span class="sd">        </span>
+<span class="sd">         Data between sample points is estimated with linear interpolation</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">Set_analysis_varaibles</span><span class="p">()</span>

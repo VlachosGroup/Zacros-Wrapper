@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>File input/output functions &#8212; Zacros Wrapper 1.0 documentation</title>
+    <title>Reading/writing Zacros input/output &#8212; Zacros Wrapper 1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -26,8 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="The Lattice class" href="Lattice.html" />
-    <link rel="prev" title="Getting Started" href="compile_zacros.html" /> 
+    <link rel="prev" title="KMC lattice" href="Lattice.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -40,10 +39,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Lattice.html" title="The Lattice class"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="compile_zacros.html" title="Getting Started"
+          <a href="Lattice.html" title="KMC lattice"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>
@@ -55,7 +51,183 @@
           <div class="body" role="main">
             
   <div class="section" id="module-IO_data">
-<span id="file-input-output-functions"></span><h1>File input/output functions<a class="headerlink" href="#module-IO_data" title="Permalink to this headline">¶</a></h1>
+<span id="reading-writing-zacros-input-output"></span><h1>Reading/writing Zacros input/output<a class="headerlink" href="#module-IO_data" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="IO_data.Cluster">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">Cluster</code><a class="reference internal" href="_modules/IO_data.html#Cluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.Cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cluster in energetics_input.dat</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.ClusterIn">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">ClusterIn</code><a class="reference internal" href="_modules/IO_data.html#ClusterIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.ClusterIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles data from energetics_input.dat</p>
+<dl class="method">
+<dt id="IO_data.ClusterIn.FindCluster">
+<code class="descname">FindCluster</code><span class="sig-paren">(</span><em>Cluster_Num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#ClusterIn.FindCluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.ClusterIn.FindCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method finds the Cluster and Variant index of the nth
+Cluster-Variant where n is specified by Cluster_Num and
+the indices are returned as C.index (Cluster)
+and V.index (Variant) such that Cluster[C_index].variant_name[V_index]
+represents the name of the nth Cluster-Variant</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="IO_data.ClusterIn.ReadIn">
+<code class="descname">ReadIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#ClusterIn.ReadIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.ClusterIn.ReadIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read energetics_input.dat</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="IO_data.ClusterIn.WriteIn">
+<code class="descname">WriteIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#ClusterIn.WriteIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.ClusterIn.WriteIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write energetics_input.dat</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.HistoryOut">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">HistoryOut</code><a class="reference internal" href="_modules/IO_data.html#HistoryOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.HistoryOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles data from history_output.txt</p>
+<dl class="method">
+<dt id="IO_data.HistoryOut.ReadOut">
+<code class="descname">ReadOut</code><span class="sig-paren">(</span><em>fldr</em>, <em>nSites</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#HistoryOut.ReadOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.HistoryOut.ReadOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read history_output.txt
+fldr: name of the folder containting the file
+nSites: number of lattice sites, obtained from lattice_output.txt</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.MechanismIn">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">MechanismIn</code><a class="reference internal" href="_modules/IO_data.html#MechanismIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.MechanismIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles input from mechanism_input.dat</p>
+<dl class="method">
+<dt id="IO_data.MechanismIn.CalcThermo">
+<code class="descname">CalcThermo</code><span class="sig-paren">(</span><em>fldr</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#MechanismIn.CalcThermo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.MechanismIn.CalcThermo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the forward activation energy, forward and reverse
+pre-exponential factors and the PE-ratio for each reaction described
+in Mechanism_input.dat using an input file with energies and
+vibrational frequencies for all species and transition states</p>
+<p>Assumes that each reaction has only 1 variant (MPN)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="IO_data.MechanismIn.FindReaction">
+<code class="descname">FindReaction</code><span class="sig-paren">(</span><em>Reaction_Num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#MechanismIn.FindReaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.MechanismIn.FindReaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method finds the Reaction and Variant index of the nth
+Reaction-Variant where n is specified by Cluster_Num and
+the indices are returned as R.index (Reaction)
+and V.index (Variant) such that Reaction[R_index].variant_name[V_index]
+represents the name of the nth Reaction-Variant</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="IO_data.MechanismIn.ReadIn">
+<code class="descname">ReadIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#MechanismIn.ReadIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.MechanismIn.ReadIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read mechanism_input.dat</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="IO_data.MechanismIn.WriteIn">
+<code class="descname">WriteIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#MechanismIn.WriteIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.MechanismIn.WriteIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write mechanism_input.dat</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.PerformanceOut">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">PerformanceOut</code><a class="reference internal" href="_modules/IO_data.html#PerformanceOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.PerformanceOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles data from general_output.txt</p>
+<dl class="method">
+<dt id="IO_data.PerformanceOut.ReadOut">
+<code class="descname">ReadOut</code><span class="sig-paren">(</span><em>fldr</em>, <em>surf_spec_names</em>, <em>gas_spec_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#PerformanceOut.ReadOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.PerformanceOut.ReadOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read general_output.txt</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.ProcstatOut">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">ProcstatOut</code><a class="reference internal" href="_modules/IO_data.html#ProcstatOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.ProcstatOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles data from procstat_output.txt</p>
+<dl class="method">
+<dt id="IO_data.ProcstatOut.ReadOut">
+<code class="descname">ReadOut</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#ProcstatOut.ReadOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.ProcstatOut.ReadOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read procstat_output.txt</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.Reaction">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">Reaction</code><a class="reference internal" href="_modules/IO_data.html#Reaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.Reaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reaction in mechanism_input.dat</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.SimIn">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">SimIn</code><a class="reference internal" href="_modules/IO_data.html#SimIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.SimIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles input from simulation_input.dat</p>
+<dl class="method">
+<dt id="IO_data.SimIn.ReadIn">
+<code class="descname">ReadIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#SimIn.ReadIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.SimIn.ReadIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read simulation_input.dat</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="IO_data.SimIn.WriteIn">
+<code class="descname">WriteIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#SimIn.WriteIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.SimIn.WriteIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write simulation_input.dat</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.SpecnumOut">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">SpecnumOut</code><a class="reference internal" href="_modules/IO_data.html#SpecnumOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.SpecnumOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles data from specnum_output.txt</p>
+<dl class="method">
+<dt id="IO_data.SpecnumOut.ReadOut">
+<code class="descname">ReadOut</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#SpecnumOut.ReadOut"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.SpecnumOut.ReadOut" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read specnum_output.txt</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.StateIn">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">StateIn</code><a class="reference internal" href="_modules/IO_data.html#StateIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.StateIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles input from state_input.dat</p>
+<dl class="method">
+<dt id="IO_data.StateIn.ReadIn">
+<code class="descname">ReadIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#StateIn.ReadIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.StateIn.ReadIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read state_input.dat</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="IO_data.StateIn.WriteIn">
+<code class="descname">WriteIn</code><span class="sig-paren">(</span><em>fldr</em>, <em>surf_spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#StateIn.WriteIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.StateIn.WriteIn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write state_input.dat</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.cluster_variant">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">cluster_variant</code><a class="reference internal" href="_modules/IO_data.html#cluster_variant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.cluster_variant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Variant of a cluster in energetics_input.dat</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="IO_data.rxn_variant">
+<em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">rxn_variant</code><a class="reference internal" href="_modules/IO_data.html#rxn_variant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.rxn_variant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Variant of a reaction in mechanism_input.dat</p>
+</dd></dl>
+
 </div>
 
 
@@ -65,11 +237,8 @@
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="compile_zacros.html"
-                        title="previous chapter">Getting Started</a></p>
-  <h4>Next topic</h4>
   <p class="topless"><a href="Lattice.html"
-                        title="next chapter">The Lattice class</a></p>
+                        title="previous chapter">KMC lattice</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -101,10 +270,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Lattice.html" title="The Lattice class"
-             >next</a> |</li>
-        <li class="right" >
-          <a href="compile_zacros.html" title="Getting Started"
+          <a href="Lattice.html" title="KMC lattice"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>

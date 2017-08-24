@@ -128,8 +128,10 @@
 <div class="viewcode-block" id="kmc_traj.ReadAllOutput"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadAllOutput">[docs]</a>    <span class="k">def</span> <span class="nf">ReadAllOutput</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">build_lattice</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Read all Zacros output files</span>
-<span class="sd">        build_lattice :     True - builds a Lattice object from lattice_output.txt</span>
-<span class="sd">                            This allows you to plot the lattice, but takes time to construct</span>
+<span class="sd">    </span>
+<span class="sd">        :param build_lattice :     True - builds a Lattice object</span>
+<span class="sd">                            False - reads lattice_output.txt as text only</span>
+<span class="sd">        </span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ReadAllInput</span><span class="p">()</span>
 
@@ -164,8 +166,8 @@
     
 <div class="viewcode-block" id="kmc_traj.ReadProp"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadProp">[docs]</a>    <span class="k">def</span> <span class="nf">ReadProp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Mode</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Mode = 0: Read Prop_output.bin, instantaneous propensities</span>
-<span class="sd">        Mode = 1: Read PropCounter_output.bin, time integrated propensities used for accurate time averages</span>
+<span class="sd">        :param Mode: 0 - Read Prop_output.bin, instantaneous propensities</span>
+<span class="sd">         1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">Mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>     <span class="c1"># Instantaneous propensities</span>
@@ -268,7 +270,8 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Adjust the pre-exponential ratios of all elementary reactions</span>
-<span class="sd">        delta_sdf: list or vector of ratios to apply</span>
+<span class="sd">        </span>
+<span class="sd">        :param delta_sdf: list or vector of ratios to apply</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">rxn_ind</span> <span class="o">=</span> <span class="mi">0</span>
@@ -283,7 +286,8 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Given a time, look up the index of the smallest time greater than or equal to that time</span>
-<span class="sd">        t :     time to search for</span>
+<span class="sd">        </span>
+<span class="sd">        :param t:     time to search for</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -300,6 +304,8 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get the information necessary to linearly interpolate data between time points</span>
+<span class="sd">        </span>
+<span class="sd">        :param t:</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -330,6 +336,12 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Take two trajectories and append them</span>
+<span class="sd">        </span>
+<span class="sd">        :param run1: First trajectory - a kmc_traj object</span>
+<span class="sd">        </span>
+<span class="sd">        :param run2: Second trajectory - a kmc_traj object</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: A kmc_traj object that has the trajectories appended</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">sandwich</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">run1</span><span class="p">)</span>
@@ -360,6 +372,8 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Plot surface species profiles versus time - output in surf_spec_vs_time.png in the directory with the Zacros run</span>
+<span class="sd">        </span>
+<span class="sd">        :param site_norm: Normalizing factor for the coverages (e.g. nubmer of top sites). Default value if 1.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">site_norm</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -396,6 +410,12 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Plot a bar graph of elementary step frequencies versus time - output in elem_step_freqs.png in the directory with the Zacros run</span>
+<span class="sd">        </span>
+<span class="sd">        :param window: Beginning and ending fraction of the trajectory over which to count steps.</span>
+<span class="sd">        </span>
+<span class="sd">        :param time_norm: True - normalizes event frequencies by time. False - Plots total event firings.</span>
+<span class="sd">        </span>
+<span class="sd">        :param site_norm: Normalization factor for event frequencies.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">start_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_search</span><span class="p">(</span><span class="n">window</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>

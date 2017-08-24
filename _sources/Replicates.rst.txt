@@ -1,7 +1,5 @@
-The Replicates class
+Multiple trajectories
 ==========================================
 
 .. automodule:: Replicates
-
-.. autoclass:: Replicates
     :members:

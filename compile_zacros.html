@@ -56,13 +56,15 @@
             
   <div class="section" id="compiling-modified-zacros-executable">
 <h1>Compiling modified Zacros executable<a class="headerlink" href="#compiling-modified-zacros-executable" title="Permalink to this headline">¶</a></h1>
+<p>Some of the Zacros Wrapper functionality depends on additional output files which are not included in Zacros 1.02. Therefore, Zacros
+must be recompiled with modifications to the input files.</p>
 <div class="section" id="installation-instructions">
 <h2>Installation instructions<a class="headerlink" href="#installation-instructions" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Download the Zacros files from the [Zacros website](<a class="reference external" href="http://www.e-lucid.com/i/software/Zacros.html">http://www.e-lucid.com/i/software/Zacros.html</a>).</li>
-<li>Replace the .f90 files in main folder with the ones in the Zacros_mod folder from the ZacrosWrapper repository.</li>
+<li>Replace the .f90 files in main folder with the ones in the Fortran_src folder from the Zacros-Wrapper repository.</li>
 <li>Compile with cmake following the compiling instructions provided with Zacros. Using cmake ensures that the executable will run on the platform on which it is compiled.</li>
-<li>Rename the executable file (.x in Unix, .exe in Windows) and put it in a directory that the Wrapper can access.</li>
+<li>Rename the executable file (.x in Unix, .exe in Windows) and put it in a directory that the Wrapper can access. You will need to provide a path to the executable when using the Zacros Wrapper.</li>
 </ul>
 </div>
 <div class="section" id="additional-output-files">

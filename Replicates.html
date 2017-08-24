@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>The Replicates class &#8212; Zacros Wrapper 1.0 documentation</title>
+    <title>Multiple trajectories &#8212; Zacros Wrapper 1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -26,8 +26,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Description of the rate constant rescaling functionality" href="Rescaling.html" />
-    <link rel="prev" title="The KMC_Run class" href="KMC_Run.html" /> 
+    <link rel="next" title="Rate Constant Rescaling" href="Rescaling.html" />
+    <link rel="prev" title="Single trajectory" href="KMC_Run.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -40,10 +40,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Rescaling.html" title="Description of the rate constant rescaling functionality"
+          <a href="Rescaling.html" title="Rate Constant Rescaling"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="KMC_Run.html" title="The KMC_Run class"
+          <a href="KMC_Run.html" title="Single trajectory"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>
@@ -55,7 +55,7 @@
           <div class="body" role="main">
             
   <div class="section" id="module-Replicates">
-<span id="the-replicates-class"></span><h1>The Replicates class<a class="headerlink" href="#module-Replicates" title="Permalink to this headline">¶</a></h1>
+<span id="multiple-trajectories"></span><h1>Multiple trajectories<a class="headerlink" href="#module-Replicates" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="Replicates.Replicates">
 <em class="property">class </em><code class="descclassname">Replicates.</code><code class="descname">Replicates</code><a class="reference internal" href="_modules/Replicates.html#Replicates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates" title="Permalink to this definition">¶</a></dt>
@@ -84,11 +84,23 @@ This class handles all of the statistics</p>
 <dt id="Replicates.Replicates.PerformSA">
 <code class="descname">PerformSA</code><span class="sig-paren">(</span><em>delta_t=None</em>, <em>ergodic=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.PerformSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.PerformSA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging</p>
-<p>delta_t :   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.
-ergodic :   True: average the rate over the entire time interval (centered ergodic likelihood ratio)</p>
-<blockquote>
-<div>False: use the rate at the end of the time interval (centered likelihood ratio)</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>delta_t</strong> &#8211; Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.</li>
+<li><strong>ergodic</strong> &#8211; <dl class="docutils">
+<dt>True - average the rate over the entire time interval (centered ergodic likelihood ratio)</dt>
+<dd>False - use the rate at the end of the time interval (centered likelihood ratio)</dd>
+</dl>
 <p>Data between sample points is estimated with linear interpolation</p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -154,10 +166,10 @@ Then, it submits it to the gridengine and waits for them to finish</p>
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
   <p class="topless"><a href="KMC_Run.html"
-                        title="previous chapter">The KMC_Run class</a></p>
+                        title="previous chapter">Single trajectory</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="Rescaling.html"
-                        title="next chapter">Description of the rate constant rescaling functionality</a></p>
+                        title="next chapter">Rate Constant Rescaling</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -189,10 +201,10 @@ Then, it submits it to the gridengine and waits for them to finish</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Rescaling.html" title="Description of the rate constant rescaling functionality"
+          <a href="Rescaling.html" title="Rate Constant Rescaling"
              >next</a> |</li>
         <li class="right" >
-          <a href="KMC_Run.html" title="The KMC_Run class"
+          <a href="KMC_Run.html" title="Single trajectory"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>
