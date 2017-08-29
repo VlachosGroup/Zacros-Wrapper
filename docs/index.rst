@@ -13,11 +13,18 @@ Documentation
 
    Example
    compile_zacros
-   IOdata
-   Lattice
+
+Code
+-----
+   
+.. toctree::
+   :maxdepth: 2
+   
    KMC_Run
    Replicates
    Rescaling
+   Lattice
+   IOdata
 
 
 Indices and tables

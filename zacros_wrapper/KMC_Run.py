@@ -45,6 +45,9 @@ class kmc_traj():
         # Extra analysis variables
         self.gas_prod = None
         
+        # Binary data
+        self.spec_num_int = None
+        
     '''
     ======================================= File input/output methods =======================================
     '''
@@ -78,8 +81,10 @@ class kmc_traj():
     def ReadAllOutput(self, build_lattice=False):
         '''
         Read all Zacros output files
-        build_lattice :     True - builds a Lattice object from lattice_output.txt
-                            This allows you to plot the lattice, but takes time to construct
+    
+        :param build_lattice :     True - builds a Lattice object
+                            False - reads lattice_output.txt as text only
+        
         '''
         self.ReadAllInput()
 
@@ -107,6 +112,8 @@ class kmc_traj():
                 self.ReadProp(1)
             if os.path.isfile(os.path.join(self.Path, 'SA_output.bin')):
                 self.ReadSA()
+            if os.path.isfile(os.path.join(self.Path, 'IntegSpec_output.bin')):
+                self.ReadSpecInt()
 
         else:
             print 'general_output.txt not found in ' + self.Path
@@ -114,8 +121,8 @@ class kmc_traj():
     
     def ReadProp(self, Mode):
         '''
-        Mode = 0: Read Prop_output.bin, instantaneous propensities
-        Mode = 1: Read PropCounter_output.bin, time integrated propensities used for accurate time averages
+        :param Mode: 0 - Read Prop_output.bin, instantaneous propensities
+         1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages
         '''
         dt = np.dtype(np.float64)
         if Mode == 0:     # Instantaneous propensities
@@ -174,6 +181,25 @@ class kmc_traj():
                                         [::self.specnumout.Spacing])
         del virtual_arr
     
+    
+    def ReadSpecInt(self):
+        '''
+        Read integral species counts
+        '''
+        dt = np.dtype(np.float64)
+        virtual_arr = np.memmap(os.path.join(self.Path, 'IntegSpec_output.bin'), dt, "r")
+        n_surf_specs = len( self.simin.surf_spec )
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % n_surf_specs)
+        virtual_arr = virtual_arr[:nNum]
+
+        self.spec_num_int = np.reshape(virtual_arr, [nNum/n_surf_specs, n_surf_specs])
+        self.spec_num_int = np.array(self.spec_num_int[::self.specnumout.Spacing])
+
+        del virtual_arr
+        
+    
+    
     '''
     ======================================= Calculation methods =======================================
     '''
@@ -195,7 +221,7 @@ class kmc_traj():
             subprocess.call([self.exe_file])
             print '--- Zacros run completed ---'
         except:
-            raise Exception('Zacros run failed.')
+            raise Exception('Zacros run in ' + self.Path + ' failed.')
        
     
     def CheckComplete(self):
@@ -218,7 +244,8 @@ class kmc_traj():
         
         '''
         Adjust the pre-exponential ratios of all elementary reactions
-        delta_sdf: list or vector of ratios to apply
+        
+        :param delta_sdf: list or vector of ratios to apply
         '''
         
         rxn_ind = 0
@@ -233,7 +260,8 @@ class kmc_traj():
         
         '''
         Given a time, look up the index of the smallest time greater than or equal to that time
-        t :     time to search for
+        
+        :param t:     time to search for
         '''
         
         if t > self.specnumout.t[-1] or t < 0:
@@ -245,11 +273,32 @@ class kmc_traj():
             
         return ind
         
+    
+    def time_avg_covs(self, t1 = 0, t2 = None):
+        '''
+        Time average surface species counts
         
+        :param t1: Start time for time averaging interval
+        :param t2: End time for time averaging interval, if left as None it will be set as the final time
+        '''
+        
+        if t2 is None:          # Use final time by default
+            t2 = self.specnumout.t[-1]
+        
+        idb_start = self.time_search_interp(t1)
+        idb_end = self.time_search_interp(t2)
+        
+        cov_integ_start = idb_start[1][0] * self.spec_num_int[idb_start[0][0], :] + idb_start[1][1] * self.spec_num_int[idb_start[0][1], :]
+        cov_integ_end = idb_end[1][0] * self.spec_num_int[idb_end[0][0], :] + idb_end[1][1] * self.spec_num_int[idb_end[0][1], :]
+        
+        return ( cov_integ_end  - cov_integ_start ) / (t2 - t1)
+    
     def time_search_interp(self, t):
         
         '''
         Get the information necessary to linearly interpolate data between time points
+        
+        :param t:
         '''
         
         if t > self.specnumout.t[-1] or t < 0:
@@ -280,6 +329,12 @@ class kmc_traj():
         
         '''
         Take two trajectories and append them
+        
+        :param run1: First trajectory - a kmc_traj object
+        
+        :param run2: Second trajectory - a kmc_traj object
+        
+        :returns: A kmc_traj object that has the trajectories appended
         '''
         
         sandwich = copy.deepcopy(run1)
@@ -310,6 +365,8 @@ class kmc_traj():
         
         '''
         Plot surface species profiles versus time - output in surf_spec_vs_time.png in the directory with the Zacros run
+        
+        :param site_norm: Normalizing factor for the coverages (e.g. nubmer of top sites). Default value if 1.
         '''
         
         if site_norm == 1:
@@ -346,6 +403,12 @@ class kmc_traj():
         
         '''
         Plot a bar graph of elementary step frequencies versus time - output in elem_step_freqs.png in the directory with the Zacros run
+        
+        :param window: Beginning and ending fraction of the trajectory over which to count steps.
+        
+        :param time_norm: True - normalizes event frequencies by time. False - Plots total event firings.
+        
+        :param site_norm: Normalization factor for event frequencies.
         '''
         
         start_ind = self.time_search(window[0] * self.specnumout.t[-1])

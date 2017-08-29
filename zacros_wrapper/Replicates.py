@@ -11,7 +11,6 @@ from Helper import *
 import time
 import scipy
 
-
 class Replicates:
 
     '''
@@ -110,8 +109,8 @@ class Replicates:
                 os.makedirs(fldr)
                 
             self.runtemplate.WriteAllInput()
-            
-        
+                
+    
     def RunAllJobs_parallel_JobArray(self, max_cores = 100, server = 'Squidward', job_name = 'zacros_JA'):
     
         '''
@@ -435,11 +434,12 @@ class Replicates:
         '''
         Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging
         
-        delta_t :   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.
-        ergodic :   True: average the rate over the entire time interval (centered ergodic likelihood ratio)
-                    False: use the rate at the end of the time interval (centered likelihood ratio)
+        :param delta_t:   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.
         
-        Data between sample points is estimated with linear interpolation
+        :param ergodic:   True - average the rate over the entire time interval (centered ergodic likelihood ratio)
+                    False - use the rate at the end of the time interval (centered likelihood ratio)
+        
+         Data between sample points is estimated with linear interpolation
         '''
         
         self.Set_analysis_varaibles()

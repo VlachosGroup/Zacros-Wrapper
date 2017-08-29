@@ -1,7 +1,5 @@
-The KMC_Run class
+Single trajectory
 ==========================================
 
 .. automodule:: KMC_Run
-
-.. autoclass:: kmc_traj
     :members:

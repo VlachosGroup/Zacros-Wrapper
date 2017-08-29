@@ -1,27 +1,15 @@
-Getting Started
-================
+Compiling modified Zacros executable
+=====================================
 
-
-Getting Started
----------------
-Step 1: Obtain Zacros executable
-
-If you are not doing sensitivity analysis, you don't need to use the new one. If you are doing LRSA, you need modified Zacros files. See the modified zacros page for instructions on how to compile that.
-
-Step 3: Add the Zacros-Wrapper repository to your Python path
-
-Step 2: Configure input in demo file and run
-
-Go to the Demo files in ZacrosWrapper/Demos
-Change variables in the user input section at the top of the desired script. Typically, Path to Zacros executable file, working directory names, and number of processors available must be configured. Inputs vary depending on the script. Descriptions of what each script does are given in the comments.
-Run the demo file.
+Some of the Zacros Wrapper functionality depends on additional output files which are not included in Zacros 1.02. Therefore, Zacros 
+must be recompiled with modifications to the input files.
 
 Installation instructions
 -------------------------
 * Download the Zacros files from the [Zacros website](http://www.e-lucid.com/i/software/Zacros.html).
-* Replace the .f90 files in main folder with the ones in the Zacros_mod folder from the ZacrosWrapper repository.
+* Replace the .f90 files in main folder with the ones in the Fortran_src folder from the Zacros-Wrapper repository.
 * Compile with cmake following the compiling instructions provided with Zacros. Using cmake ensures that the executable will run on the platform on which it is compiled.
-* Rename the executable file (.x in Unix, .exe in Windows) and put it in a directory that the Wrapper can access.
+* Rename the executable file (.x in Unix, .exe in Windows) and put it in a directory that the Wrapper can access. You will need to provide a path to the executable when using the Zacros Wrapper.
 
 
 Additional output files
