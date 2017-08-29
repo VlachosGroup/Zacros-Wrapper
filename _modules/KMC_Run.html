@@ -95,6 +95,9 @@
         <span class="c1"># Extra analysis variables</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gas_prod</span> <span class="o">=</span> <span class="kc">None</span>
         
+        <span class="c1"># Binary data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="kc">None</span>
+        
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    ======================================= File input/output methods =======================================</span>
 <span class="sd">    &#39;&#39;&#39;</span>
@@ -159,6 +162,8 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">ReadProp</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;SA_output.bin&#39;</span><span class="p">)):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">ReadSA</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;IntegSpec_output.bin&#39;</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ReadSpecInt</span><span class="p">()</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span> <span class="s1">&#39;general_output.txt not found in &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Path</span></div>
@@ -225,6 +230,25 @@
                                                     <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">nCluster</span><span class="p">,</span> <span class="n">nCluster</span><span class="p">])</span>
                                         <span class="p">[::</span><span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">Spacing</span><span class="p">])</span>
         <span class="k">del</span> <span class="n">virtual_arr</span></div>
+    
+    
+<div class="viewcode-block" id="kmc_traj.ReadSpecInt"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadSpecInt">[docs]</a>    <span class="k">def</span> <span class="nf">ReadSpecInt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Read integral species counts</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;IntegSpec_output.bin&#39;</span><span class="p">),</span> <span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+        <span class="n">n_surf_specs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">)</span>
+        <span class="n">nNum</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">nNum</span> <span class="o">=</span> <span class="n">nNum</span> <span class="o">-</span> <span class="p">(</span><span class="n">nNum</span> <span class="o">%</span> <span class="n">n_surf_specs</span><span class="p">)</span>
+        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="p">[:</span><span class="n">nNum</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">n_surf_specs</span><span class="p">,</span> <span class="n">n_surf_specs</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span><span class="p">[::</span><span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">Spacing</span><span class="p">])</span>
+
+        <span class="k">del</span> <span class="n">virtual_arr</span></div>
+        
+    
     
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    ======================================= Calculation methods =======================================</span>
@@ -299,7 +323,26 @@
             
         <span class="k">return</span> <span class="n">ind</span></div>
         
+    
+<div class="viewcode-block" id="kmc_traj.time_avg_covs"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.time_avg_covs">[docs]</a>    <span class="k">def</span> <span class="nf">time_avg_covs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">t2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Time average surface species counts</span>
+<span class="sd">        </span>
+<span class="sd">        :param t1: Start time for time averaging interval</span>
+<span class="sd">        :param t2: End time for time averaging interval, if left as None it will be set as the final time</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         
+        <span class="k">if</span> <span class="n">t2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>          <span class="c1"># Use final time by default</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        
+        <span class="n">idb_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_search_interp</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
+        <span class="n">idb_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_search_interp</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+        
+        <span class="n">cov_integ_start</span> <span class="o">=</span> <span class="n">idb_start</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span><span class="p">[</span><span class="n">idb_start</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">idb_start</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span><span class="p">[</span><span class="n">idb_start</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span>
+        <span class="n">cov_integ_end</span> <span class="o">=</span> <span class="n">idb_end</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span><span class="p">[</span><span class="n">idb_end</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">idb_end</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span><span class="p">[</span><span class="n">idb_end</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">:]</span>
+        
+        <span class="k">return</span> <span class="p">(</span> <span class="n">cov_integ_end</span>  <span class="o">-</span> <span class="n">cov_integ_start</span> <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span></div>
+    
 <div class="viewcode-block" id="kmc_traj.time_search_interp"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.time_search_interp">[docs]</a>    <span class="k">def</span> <span class="nf">time_search_interp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>

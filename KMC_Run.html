@@ -177,6 +177,12 @@ spec_color_list :           List of colors to use for different species, will cy
 </dd></dl>
 
 <dl class="method">
+<dt id="KMC_Run.kmc_traj.ReadSpecInt">
+<code class="descname">ReadSpecInt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadSpecInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadSpecInt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read integral species counts</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="KMC_Run.kmc_traj.Run_sim">
 <code class="descname">Run_sim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.Run_sim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.Run_sim" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call the Zacros executable and run the simulation</p>
@@ -186,6 +192,24 @@ spec_color_list :           List of colors to use for different species, will cy
 <dt id="KMC_Run.kmc_traj.WriteAllInput">
 <code class="descname">WriteAllInput</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.WriteAllInput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.WriteAllInput" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write all Zacros input files</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="KMC_Run.kmc_traj.time_avg_covs">
+<code class="descname">time_avg_covs</code><span class="sig-paren">(</span><em>t1=0</em>, <em>t2=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.time_avg_covs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.time_avg_covs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time average surface species counts</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>t1</strong> &#8211; Start time for time averaging interval</li>
+<li><strong>t2</strong> &#8211; End time for time averaging interval, if left as None it will be set as the final time</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="staticmethod">
