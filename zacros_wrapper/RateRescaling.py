@@ -154,7 +154,7 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
     return cum_batch
     
 
-def ProcessStepFreqs(run, stiff_cut = 40.0, equilib_cut = 0.05):        # Change to allow for irreversible reactions
+def ProcessStepFreqs(run, stiff_cut = 100.0, equilib_cut = 0.1):        # Change to allow for irreversible reactions
     
     '''
     Takes an average KMC trajectory and assesses the reaction frequencies to identify fast reactions

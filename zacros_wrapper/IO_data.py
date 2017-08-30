@@ -730,11 +730,13 @@ class MechanismIn(object):
                     txt.write('\n')
 
                 if not rxn.gas_reacs_prods is None:
-                    txt.write('  {} {} {}\n'.format('gas_reacs_prods',
-                              str(rxn.gas_reacs_prods[0]),
-                              str(rxn.gas_reacs_prods[1])))
+                    txt.write('  gas_reacs_prods')
+                    for j in range(0,len(rxn.gas_reacs_prods)):
+						txt.write(' ' + str(rxn.gas_reacs_prods[j]))
+                    txt.write('\n')
 
                 txt.write('  initial\n')
+				
                 for j in range( rxn.sites ):
                     txt.write(rxn.initial[j] + '\n')
 
