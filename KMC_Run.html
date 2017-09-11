@@ -68,7 +68,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>delta_sdf</strong> &#8211; list or vector of ratios to apply</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>delta_sdf</strong> &#8211; list or vector of ratios to apply. Must have length equal to the number of reactions.</td>
 </tr>
 </tbody>
 </table>
@@ -159,7 +159,8 @@ spec_color_list :           List of colors to use for different species, will cy
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.ReadProp">
 <code class="descname">ReadProp</code><span class="sig-paren">(</span><em>Mode</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadProp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadProp" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
+<dd><p>Read binary files with propenisty information</p>
+<table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
@@ -179,13 +180,14 @@ spec_color_list :           List of colors to use for different species, will cy
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.ReadSpecInt">
 <code class="descname">ReadSpecInt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadSpecInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadSpecInt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read integral species counts</p>
+<dd><p>Read time integrated species counts</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="KMC_Run.kmc_traj.Run_sim">
 <code class="descname">Run_sim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.Run_sim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.Run_sim" title="Permalink to this definition">¶</a></dt>
-<dd><p>Call the Zacros executable and run the simulation</p>
+<dd><p>Call the Zacros executable and run the simulation. self.exe_file must have been initialized
+with the full file path of the Zacros executable.</p>
 </dd></dl>
 
 <dl class="method">
@@ -215,7 +217,7 @@ spec_color_list :           List of colors to use for different species, will cy
 <dl class="staticmethod">
 <dt id="KMC_Run.kmc_traj.time_sandwich">
 <em class="property">static </em><code class="descname">time_sandwich</code><span class="sig-paren">(</span><em>run1</em>, <em>run2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.time_sandwich"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.time_sandwich" title="Permalink to this definition">¶</a></dt>
-<dd><p>Take two trajectories and append them</p>
+<dd><p>Take two trajectories and append them together.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -256,6 +258,11 @@ spec_color_list :           List of colors to use for different species, will cy
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>t</strong> &#8211; </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A 2-item list of 2-items each in the order: Index of time point less than or equal to t,
+index of time point greater than or equal to t
+weighting factor for lower point
+weighting factor for higher point</td>
 </tr>
 </tbody>
 </table>

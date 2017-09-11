@@ -23,7 +23,7 @@ Single_trajectory.py analyzes a single Zacros trajectory and plots some data.
 .. literalinclude:: ../examples/Single_trajectory.py
    :language: python
     
-This produces several .png with data within the folder with the Zacros files.
+This produces several .png images with data within the folder with the Zacros files.
 
 Running and analyzing multiple trajectories
 ---------------------------------------------

@@ -76,27 +76,29 @@
 <span class="sd">        Initialize class variables</span>
 <span class="sd">        &#39;&#39;&#39;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">path</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">exe_file</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">path</span>                        <span class="c1"># Path to the folder with the Zacros input and output files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exe_file</span> <span class="o">=</span> <span class="kc">None</span>                    <span class="c1"># Path to the Zacros executable</span>
         
         <span class="c1"># Input variables</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">simin</span> <span class="o">=</span> <span class="n">SimIn</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mechin</span> <span class="o">=</span> <span class="n">MechanismIn</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">clusterin</span> <span class="o">=</span> <span class="n">ClusterIn</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lat</span> <span class="o">=</span> <span class="n">Lattice</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">statein</span> <span class="o">=</span> <span class="n">StateIn</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simin</span> <span class="o">=</span> <span class="n">SimIn</span><span class="p">()</span>                    <span class="c1"># data from simulation_input.dat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mechin</span> <span class="o">=</span> <span class="n">MechanismIn</span><span class="p">()</span>             <span class="c1"># data from mechanism_input.dat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clusterin</span> <span class="o">=</span> <span class="n">ClusterIn</span><span class="p">()</span>            <span class="c1"># data from energetics_input.dat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lat</span> <span class="o">=</span> <span class="n">Lattice</span><span class="p">()</span>                    <span class="c1"># data from lattice_input.dat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">statein</span> <span class="o">=</span> <span class="n">StateIn</span><span class="p">()</span>                <span class="c1"># data from state_input.dat</span>
         
         <span class="c1"># Output variables</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">genout</span> <span class="o">=</span> <span class="n">PerformanceOut</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span> <span class="o">=</span> <span class="n">SpecnumOut</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">procstatout</span> <span class="o">=</span> <span class="n">ProcstatOut</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">histout</span> <span class="o">=</span> <span class="n">HistoryOut</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genout</span> <span class="o">=</span> <span class="n">PerformanceOut</span><span class="p">()</span>          <span class="c1"># data from general_output.txt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span> <span class="o">=</span> <span class="n">SpecnumOut</span><span class="p">()</span>          <span class="c1"># data from specnum_output.txt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">procstatout</span> <span class="o">=</span> <span class="n">ProcstatOut</span><span class="p">()</span>        <span class="c1"># data from procstat_output.txt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">histout</span> <span class="o">=</span> <span class="n">HistoryOut</span><span class="p">()</span>             <span class="c1"># data from history_output.txt</span>
         
         <span class="c1"># Extra analysis variables</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gas_prod</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gas_prod</span> <span class="o">=</span> <span class="kc">None</span>                    <span class="c1"># string with the name of the product (gas) species, used to compute the rate</span>
+        
+        <span class="c1"># Missing other variables obtained from binary files...</span>
         
         <span class="c1"># Binary data</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="kc">None</span>    
         
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    ======================================= File input/output methods =======================================</span>
@@ -133,8 +135,7 @@
 <span class="sd">        Read all Zacros output files</span>
 <span class="sd">    </span>
 <span class="sd">        :param build_lattice :     True - builds a Lattice object</span>
-<span class="sd">                            False - reads lattice_output.txt as text only</span>
-<span class="sd">        </span>
+<span class="sd">            False - reads lattice_output.txt as text only</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ReadAllInput</span><span class="p">()</span>
 
@@ -171,8 +172,10 @@
     
 <div class="viewcode-block" id="kmc_traj.ReadProp"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadProp">[docs]</a>    <span class="k">def</span> <span class="nf">ReadProp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Mode</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Read binary files with propenisty information</span>
+<span class="sd">        </span>
 <span class="sd">        :param Mode: 0 - Read Prop_output.bin, instantaneous propensities</span>
-<span class="sd">         1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages</span>
+<span class="sd">            1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">Mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>     <span class="c1"># Instantaneous propensities</span>
@@ -234,7 +237,7 @@
     
 <div class="viewcode-block" id="kmc_traj.ReadSpecInt"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadSpecInt">[docs]</a>    <span class="k">def</span> <span class="nf">ReadSpecInt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Read integral species counts</span>
+<span class="sd">        Read time integrated species counts</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;IntegSpec_output.bin&#39;</span><span class="p">),</span> <span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
@@ -258,7 +261,8 @@
 <div class="viewcode-block" id="kmc_traj.Run_sim"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.Run_sim">[docs]</a>    <span class="k">def</span> <span class="nf">Run_sim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Call the Zacros executable and run the simulation</span>
+<span class="sd">        Call the Zacros executable and run the simulation. self.exe_file must have been initialized</span>
+<span class="sd">        with the full file path of the Zacros executable.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span>
@@ -295,7 +299,7 @@
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Adjust the pre-exponential ratios of all elementary reactions</span>
 <span class="sd">        </span>
-<span class="sd">        :param delta_sdf: list or vector of ratios to apply</span>
+<span class="sd">        :param delta_sdf: list or vector of ratios to apply. Must have length equal to the number of reactions.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="n">rxn_ind</span> <span class="o">=</span> <span class="mi">0</span>
@@ -349,6 +353,10 @@
 <span class="sd">        Get the information necessary to linearly interpolate data between time points</span>
 <span class="sd">        </span>
 <span class="sd">        :param t:</span>
+<span class="sd">        :returns: A 2-item list of 2-items each in the order: Index of time point less than or equal to t,</span>
+<span class="sd">            index of time point greater than or equal to t</span>
+<span class="sd">            weighting factor for lower point</span>
+<span class="sd">            weighting factor for higher point</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -378,7 +386,7 @@
 <div class="viewcode-block" id="kmc_traj.time_sandwich"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.time_sandwich">[docs]</a>    <span class="k">def</span> <span class="nf">time_sandwich</span><span class="p">(</span><span class="n">run1</span><span class="p">,</span> <span class="n">run2</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Take two trajectories and append them</span>
+<span class="sd">        Take two trajectories and append them together. </span>
 <span class="sd">        </span>
 <span class="sd">        :param run1: First trajectory - a kmc_traj object</span>
 <span class="sd">        </span>

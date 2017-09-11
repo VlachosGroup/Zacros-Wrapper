@@ -204,7 +204,7 @@
     <span class="k">return</span> <span class="n">cum_batch</span></div>
     
 
-<div class="viewcode-block" id="ProcessStepFreqs"><a class="viewcode-back" href="../Rescaling.html#RateRescaling.ProcessStepFreqs">[docs]</a><span class="k">def</span> <span class="nf">ProcessStepFreqs</span><span class="p">(</span><span class="n">run</span><span class="p">,</span> <span class="n">stiff_cut</span> <span class="o">=</span> <span class="mf">40.0</span><span class="p">,</span> <span class="n">equilib_cut</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span>        <span class="c1"># Change to allow for irreversible reactions</span>
+<div class="viewcode-block" id="ProcessStepFreqs"><a class="viewcode-back" href="../Rescaling.html#RateRescaling.ProcessStepFreqs">[docs]</a><span class="k">def</span> <span class="nf">ProcessStepFreqs</span><span class="p">(</span><span class="n">run</span><span class="p">,</span> <span class="n">stiff_cut</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span> <span class="n">equilib_cut</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">):</span>        <span class="c1"># Change to allow for irreversible reactions</span>
     
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Takes an average KMC trajectory and assesses the reaction frequencies to identify fast reactions</span>

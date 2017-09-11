@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="File input/output functions" href="IOdata.html" />
+    <link rel="next" title="Single trajectory" href="KMC_Run.html" />
     <link rel="prev" title="Examples" href="Example.html" /> 
   </head>
   <body role="document">
@@ -40,7 +40,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="IOdata.html" title="File input/output functions"
+          <a href="KMC_Run.html" title="Single trajectory"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="Example.html" title="Examples"
@@ -61,14 +61,14 @@ must be recompiled with modifications to the input files.</p>
 <div class="section" id="installation-instructions">
 <h2>Installation instructions<a class="headerlink" href="#installation-instructions" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Download the Zacros files from the [Zacros website](<a class="reference external" href="http://www.e-lucid.com/i/software/Zacros.html">http://www.e-lucid.com/i/software/Zacros.html</a>).</li>
+<li>Download the Zacros files from the <a class="reference external" href="http://www.e-lucid.com/i/software/Zacros.html">Zacros website</a>.</li>
 <li>Replace the .f90 files in main folder with the ones in the Fortran_src folder from the Zacros-Wrapper repository.</li>
 <li>Compile with cmake following the compiling instructions provided with Zacros. Using cmake ensures that the executable will run on the platform on which it is compiled.</li>
 <li>Rename the executable file (.x in Unix, .exe in Windows) and put it in a directory that the Wrapper can access. You will need to provide a path to the executable when using the Zacros Wrapper.</li>
 </ul>
 </div>
-<div class="section" id="additional-output-files">
-<h2>Additional output files<a class="headerlink" href="#additional-output-files" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="additional-zacros-output-files">
+<h2>Additional Zacros output files<a class="headerlink" href="#additional-zacros-output-files" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="32%" />
@@ -104,30 +104,30 @@ must be recompiled with modifications to the input files.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster">
-<h2>Compiling on [Farber](<a class="reference external" href="http://farber.hpc.udel.edu/">http://farber.hpc.udel.edu/</a>) (University of Delaware computing cluster)<a class="headerlink" href="#compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster" title="Permalink to this headline">¶</a></h2>
-<p>If you wish to compile Zacros on Farber you will need to make some configurational changes as the default compile settings are very inefficient.</p>
+<div class="section" id="compiling-on-farber-http-farber-hpc-udel-edu">
+<h2>Compiling on <cite>Farber &lt;http://farber.hpc.udel.edu/&gt;</cite><a class="headerlink" href="#compiling-on-farber-http-farber-hpc-udel-edu" title="Permalink to this headline">¶</a></h2>
+<p>Farber is a University of Delaware computing cluster. If you wish to compile Zacros on Farber you will need to make some configurational changes as the default compile settings are very inefficient.</p>
 <ul class="simple">
 <li>Import the intel compiler: <code class="docutils literal"><span class="pre">vpkg_require</span> <span class="pre">intel/2016</span></code></li>
 <li><code class="docutils literal"><span class="pre">export</span> <span class="pre">CMAKE_Fortran_COMPILER=ifort</span></code></li>
 <li>Usual installation</li>
 </ul>
-<p>``
-cd path/to/source/of/Zacros
+<div class="highlight-unix"><div class="highlight"><pre><span></span>cd path/to/source/of/Zacros
 mkdir build # If it does not exist yet
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-``</p>
+</pre></div>
+</div>
 <ul class="simple">
 <li>Instead of <code class="docutils literal"><span class="pre">make</span></code> as usual, type:  <code class="docutils literal"><span class="pre">ccmake</span></code> .</li>
 <li>Once within the ccmake, press <code class="docutils literal"><span class="pre">t</span></code> for advanced mode, then set the following flags</li>
 </ul>
-<p>``
-CMAKE_BUILD_TYPE=Release</p>
-<p>OMP_NUM_PROCS=1</p>
-<p>OpenMP_Fortran_FLAGS=-qopenmp</p>
-<p>CMAKE_Fortran_COMPILER=ifort
-``</p>
+<div class="highlight-unix"><div class="highlight"><pre><span></span>CMAKE_BUILD_TYPE=Release
+OMP_NUM_PROCS=1
+OpenMP_Fortran_FLAGS=-qopenmp
+CMAKE_Fortran_COMPILER=ifort
+</pre></div>
+</div>
 <ul class="simple">
 <li>Press <code class="docutils literal"><span class="pre">c</span></code> to configure, and then <code class="docutils literal"><span class="pre">g</span></code> to generate and exit. Finally: <code class="docutils literal"><span class="pre">make</span></code></li>
 </ul>
@@ -144,8 +144,8 @@ CMAKE_BUILD_TYPE=Release</p>
   <ul>
 <li><a class="reference internal" href="#">Compiling modified Zacros executable</a><ul>
 <li><a class="reference internal" href="#installation-instructions">Installation instructions</a></li>
-<li><a class="reference internal" href="#additional-output-files">Additional output files</a></li>
-<li><a class="reference internal" href="#compiling-on-farber-http-farber-hpc-udel-edu-university-of-delaware-computing-cluster">Compiling on [Farber](http://farber.hpc.udel.edu/) (University of Delaware computing cluster)</a></li>
+<li><a class="reference internal" href="#additional-zacros-output-files">Additional Zacros output files</a></li>
+<li><a class="reference internal" href="#compiling-on-farber-http-farber-hpc-udel-edu">Compiling on <cite>Farber &lt;http://farber.hpc.udel.edu/&gt;</cite></a></li>
 </ul>
 </li>
 </ul>
@@ -154,8 +154,8 @@ CMAKE_BUILD_TYPE=Release</p>
   <p class="topless"><a href="Example.html"
                         title="previous chapter">Examples</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="IOdata.html"
-                        title="next chapter">File input/output functions</a></p>
+  <p class="topless"><a href="KMC_Run.html"
+                        title="next chapter">Single trajectory</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -187,7 +187,7 @@ CMAKE_BUILD_TYPE=Release</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="IOdata.html" title="File input/output functions"
+          <a href="KMC_Run.html" title="Single trajectory"
              >next</a> |</li>
         <li class="right" >
           <a href="Example.html" title="Examples"
