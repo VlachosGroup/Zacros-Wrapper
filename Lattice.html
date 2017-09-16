@@ -27,7 +27,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Reading/writing Zacros input/output" href="IOdata.html" />
-    <link rel="prev" title="Rate Constant Rescaling" href="Rescaling.html" /> 
+    <link rel="prev" title="Thermodynamics calculator" href="thermo.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -43,7 +43,7 @@
           <a href="IOdata.html" title="Reading/writing Zacros input/output"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="Rescaling.html" title="Rate Constant Rescaling"
+          <a href="thermo.html" title="Thermodynamics calculator"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>
@@ -66,18 +66,56 @@
 <dt id="Lattice.Lattice.Build_neighbor_list">
 <code class="descname">Build_neighbor_list</code><span class="sig-paren">(</span><em>cut=3.0</em>, <em>cut_mat=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Lattice.html#Lattice.Build_neighbor_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Lattice.Lattice.Build_neighbor_list" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds the neighbor list based on distances between sites</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cut</strong> &#8211; Maximum distance between nearest neighbor sites or their periodic images.</li>
+<li><strong>cut_mat</strong> &#8211; List of nearest neighbor cutoff distances between different site types. If empty, it will assume the same distance for 
+all site types.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="Lattice.Lattice.PlotLattice">
 <code class="descname">PlotLattice</code><span class="sig-paren">(</span><em>cutoff=3.0, plot_neighbs=False, type_symbols=['o', 's', '^', 'v', '&lt;', '&gt;', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Lattice.html#Lattice.PlotLattice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Lattice.Lattice.PlotLattice" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a pyplot object with the lattice graphed on it</p>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cutoff</strong> &#8211; Maximum distance to draw connections between nearest neighbor sites.
+This prevents drawing line segments between sites which are neighbors only though their periodic images.</li>
+<li><strong>plot_neighbs</strong> &#8211; Flag to plot line segments between lattice sites which are first nearest neighbors to each other</li>
+<li><strong>type_symbols</strong> &#8211; List of symbols for each lattice site type.</li>
+<li><strong>ms</strong> &#8211; Marker size</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">pyplot object with the lattice graphed on it</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="Lattice.Lattice.ReadIn">
 <code class="descname">ReadIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Lattice.html#Lattice.ReadIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Lattice.Lattice.ReadIn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read lattice_input.dat</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fldr</strong> &#8211; Folder directory from which to read lattice_input.dat</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -90,6 +128,14 @@
 <dt id="Lattice.Lattice.WriteIn">
 <code class="descname">WriteIn</code><span class="sig-paren">(</span><em>fldr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Lattice.html#Lattice.WriteIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Lattice.Lattice.WriteIn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write lattice_input.dat</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fldr</strong> &#8211; Folder directory from which to read lattice_input.dat</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -102,18 +148,46 @@
 <dt id="Lattice.Lattice.coord_shift">
 <code class="descname">coord_shift</code><span class="sig-paren">(</span><em>a_ind</em>, <em>b_ind</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Lattice.html#Lattice.coord_shift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Lattice.Lattice.coord_shift" title="Permalink to this definition">¶</a></dt>
 <dd><p>Give the coordinates of the periodic image of B which is closest to A</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>a_ind</strong> &#8211; Index of atom A</li>
+<li><strong>b_ind</strong> &#8211; Index of atom B</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="Lattice.Lattice.set_cart_coords">
 <code class="descname">set_cart_coords</code><span class="sig-paren">(</span><em>cc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Lattice.html#Lattice.set_cart_coords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Lattice.Lattice.set_cart_coords" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the Cartesian and fractional coordinates</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fc</strong> &#8211; n x 3 array (or list of lists) of Cartesian coordinates to set for each atom</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="Lattice.Lattice.set_frac_coords">
 <code class="descname">set_frac_coords</code><span class="sig-paren">(</span><em>fc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Lattice.html#Lattice.set_frac_coords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Lattice.Lattice.set_frac_coords" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the fractional and Cartesian coordinates</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fc</strong> &#8211; n x 3 array (or list of lists) of fractional coordinates to set for each atom</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -127,8 +201,8 @@
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="Rescaling.html"
-                        title="previous chapter">Rate Constant Rescaling</a></p>
+  <p class="topless"><a href="thermo.html"
+                        title="previous chapter">Thermodynamics calculator</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="IOdata.html"
                         title="next chapter">Reading/writing Zacros input/output</a></p>
@@ -166,7 +240,7 @@
           <a href="IOdata.html" title="Reading/writing Zacros input/output"
              >next</a> |</li>
         <li class="right" >
-          <a href="Rescaling.html" title="Rate Constant Rescaling"
+          <a href="thermo.html" title="Thermodynamics calculator"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
       </ul>

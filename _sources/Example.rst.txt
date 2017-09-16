@@ -11,8 +11,6 @@ This script reads VASP data and computes parameters for the input files.
 
 .. literalinclude:: ../examples/DFTtoThermoMain.py
    :language: python
-    
-This produces ...
 
 
 Analyzing a single trajectory
@@ -46,9 +44,8 @@ Rate constant rescaling and steady state detection
 -----------------------------------------------------
 
 Scale_SS_Main.py takes Zacros input files and runs the statistical procedure described in our publication.
-Parallelization is used to run multiple trajectories simultaneously.
+Parallelization is used to run multiple trajectories simultaneously. By default, it will use MPI parallelization, but 
+the flag ``parallel_mode`` can be set to use the gridengine submission scripts on Squidward or Farber.
 
-.. literalinclude:: ../examples/Scale_SS_Main.py
+.. literalinclude:: ../examples/Rescale_and_steady_state.py
    :language: python
-    
-This produces ...

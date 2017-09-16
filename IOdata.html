@@ -168,6 +168,72 @@ represents the name of the nth Reaction-Variant</p>
 <dd><p>Reaction in mechanism_input.dat</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="IO_data.Read_propensities">
+<code class="descclassname">IO_data.</code><code class="descname">Read_propensities</code><span class="sig-paren">(</span><em>path</em>, <em>nRxn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#Read_propensities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.Read_propensities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read propenisty data from output files. The initial time point: At t = 0 or after 0 events is wrong because
+it is recorded before the first propensities are calculated. Instead, they are erroneously all zeros and should
+not be used for averaging. The rest are correct.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Mode</strong> &#8211; 0 - Read Prop_output.bin, instantaneous propensities
+1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Matrix of time integrated surface species populations</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="IO_data.Read_time_integrated_propensities">
+<code class="descclassname">IO_data.</code><code class="descname">Read_time_integrated_propensities</code><span class="sig-paren">(</span><em>path</em>, <em>nRxn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#Read_time_integrated_propensities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.Read_time_integrated_propensities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read propenisty data from output files. The initial time point: At t = 0 or after 0 events is wrong because
+it is recorded before the first propensities are calculated. Instead, they are erroneously all zeros and should
+not be used for averaging. The rest are correct.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Mode</strong> &#8211; 0 - Read Prop_output.bin, instantaneous propensities
+1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Matrix of time integrated surface species populations</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="IO_data.Read_time_integrated_species">
+<code class="descclassname">IO_data.</code><code class="descname">Read_time_integrated_species</code><span class="sig-paren">(</span><em>path</em>, <em>n_surf_specs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#Read_time_integrated_species"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.Read_time_integrated_species" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read time integrated species counts</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Matrix of time integrated surface species populations</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="IO_data.Read_trajectory_derivatives">
+<code class="descclassname">IO_data.</code><code class="descname">Read_trajectory_derivatives</code><span class="sig-paren">(</span><em>path</em>, <em>nRxn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/IO_data.html#Read_trajectory_derivatives"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.Read_trajectory_derivatives" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read SA_output.bin - get trajectory derivatives for use in likelihood ratio sensitivity analysis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Matrix of trajectory derivatives</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="class">
 <dt id="IO_data.SimIn">
 <em class="property">class </em><code class="descclassname">IO_data.</code><code class="descname">SimIn</code><a class="reference internal" href="_modules/IO_data.html#SimIn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#IO_data.SimIn" title="Permalink to this definition">¶</a></dt>

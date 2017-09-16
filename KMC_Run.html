@@ -151,39 +151,6 @@ spec_color_list :           List of colors to use for different species, will cy
 </dd></dl>
 
 <dl class="method">
-<dt id="KMC_Run.kmc_traj.ReadCluster">
-<code class="descname">ReadCluster</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadCluster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadCluster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read clusterocc.bin</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="KMC_Run.kmc_traj.ReadProp">
-<code class="descname">ReadProp</code><span class="sig-paren">(</span><em>Mode</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadProp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadProp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read binary files with propenisty information</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Mode</strong> &#8211; 0 - Read Prop_output.bin, instantaneous propensities
-1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="KMC_Run.kmc_traj.ReadSA">
-<code class="descname">ReadSA</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadSA" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read SA_output.bin - get trajectory derivatives for use in likelihood ratio sensitivity analysis</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="KMC_Run.kmc_traj.ReadSpecInt">
-<code class="descname">ReadSpecInt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.ReadSpecInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.ReadSpecInt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read time integrated species counts</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="KMC_Run.kmc_traj.Run_sim">
 <code class="descname">Run_sim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.Run_sim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.Run_sim" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call the Zacros executable and run the simulation. self.exe_file must have been initialized
@@ -257,7 +224,7 @@ with the full file path of the Zacros executable.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>t</strong> &#8211; </td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>t</strong> &#8211; Time at which you want to compute interpolated data</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A 2-item list of 2-items each in the order: Index of time point less than or equal to t,
 index of time point greater than or equal to t

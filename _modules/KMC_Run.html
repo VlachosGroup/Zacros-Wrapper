@@ -60,7 +60,7 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">re</span> <span class="k">as</span> <span class="nn">_re</span>
 
-<span class="kn">from</span> <span class="nn">Helper</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">IO_data</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">Lattice</span> <span class="k">import</span> <span class="n">Lattice</span>
 
@@ -98,7 +98,11 @@
         <span class="c1"># Missing other variables obtained from binary files...</span>
         
         <span class="c1"># Binary data</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="kc">None</span>    
+        <span class="bp">self</span><span class="o">.</span><span class="n">prop</span> <span class="o">=</span> <span class="kc">None</span>                        <span class="c1"># data from propensities_output.txt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">propCounter</span> <span class="o">=</span> <span class="kc">None</span>                 <span class="c1"># data from timeintprop_output.txt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">W_sen_anal</span> <span class="o">=</span> <span class="kc">None</span>                  <span class="c1"># data from trajderiv_output.txt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="kc">None</span>                <span class="c1"># data from timeintspecs_output.txt</span>
+        
         
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    ======================================= File input/output methods =======================================</span>
@@ -144,7 +148,8 @@
             <span class="c1"># Standard output files</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">ReadOut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">gas_spec</span> <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">ReadOut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">procstatout</span><span class="o">.</span><span class="n">ReadOut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;procstat_output.txt&#39;</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">procstatout</span><span class="o">.</span><span class="n">ReadOut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span>
             
             <span class="k">if</span> <span class="n">build_lattice</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">lat</span><span class="o">.</span><span class="n">Read_lattice_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">)</span>
@@ -155,102 +160,15 @@
             <span class="n">nSites</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">RawTxt</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span>
             
             <span class="bp">self</span><span class="o">.</span><span class="n">histout</span><span class="o">.</span><span class="n">ReadOut</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">nSites</span><span class="p">)</span>
-            
-            <span class="c1"># Extra binary files</span>
-            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;Prop_output.bin&#39;</span><span class="p">)):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ReadProp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;PropCounter_output.bin&#39;</span><span class="p">)):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ReadProp</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;SA_output.bin&#39;</span><span class="p">)):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ReadSA</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;IntegSpec_output.bin&#39;</span><span class="p">)):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ReadSpecInt</span><span class="p">()</span>
+
+            <span class="c1"># Extra output files</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">prop</span> <span class="o">=</span> <span class="n">Read_propensities</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">RxnNameList</span> <span class="p">)</span> <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">propCounter</span> <span class="o">=</span> <span class="n">Read_time_integrated_propensities</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">RxnNameList</span> <span class="p">)</span> <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">W_sen_anal</span> <span class="o">=</span> <span class="n">Read_trajectory_derivatives</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">RxnNameList</span> <span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="n">Read_time_integrated_species</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">))</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span> <span class="s1">&#39;general_output.txt not found in &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Path</span></div>
-    
-    
-<div class="viewcode-block" id="kmc_traj.ReadProp"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadProp">[docs]</a>    <span class="k">def</span> <span class="nf">ReadProp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Mode</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Read binary files with propenisty information</span>
-<span class="sd">        </span>
-<span class="sd">        :param Mode: 0 - Read Prop_output.bin, instantaneous propensities</span>
-<span class="sd">            1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">Mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>     <span class="c1"># Instantaneous propensities</span>
-            <span class="n">FileName</span> <span class="o">=</span> <span class="s1">&#39;Prop_output.bin&#39;</span>
-        <span class="k">elif</span> <span class="n">Mode</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>   <span class="c1"># Integral propensities</span>
-            <span class="n">FileName</span> <span class="o">=</span> <span class="s1">&#39;PropCounter_output.bin&#39;</span>
-
-        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">FileName</span><span class="p">),</span> <span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
-        <span class="n">nRxn</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">RxnNameList</span> <span class="p">)</span>
-        <span class="n">nNum</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">nNum</span> <span class="o">=</span> <span class="n">nNum</span> <span class="o">-</span> <span class="p">(</span><span class="n">nNum</span> <span class="o">%</span> <span class="n">nRxn</span><span class="p">)</span>
-        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="p">[:</span><span class="n">nNum</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">Mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">prop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">nRxn</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">prop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prop</span><span class="p">[::</span><span class="bp">self</span><span class="o">.</span><span class="n">procstatout</span><span class="o">.</span><span class="n">Spacing</span><span class="p">])</span>
-            
-        <span class="k">if</span> <span class="n">Mode</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">propCounter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">nRxn</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">propCounter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">propCounter</span><span class="p">[::</span><span class="bp">self</span><span class="o">.</span><span class="n">procstatout</span><span class="o">.</span><span class="n">Spacing</span><span class="p">])</span>
-        <span class="k">del</span> <span class="n">virtual_arr</span></div>
-
-<div class="viewcode-block" id="kmc_traj.ReadSA"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadSA">[docs]</a>    <span class="k">def</span> <span class="nf">ReadSA</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Read SA_output.bin - get trajectory derivatives for use in likelihood ratio sensitivity analysis</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">FileName</span> <span class="o">=</span> <span class="s1">&#39;SA_output.bin&#39;</span>
-        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="n">FileName</span><span class="p">)):</span>
-            <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span>
-                                                   <span class="n">FileName</span><span class="p">),</span> <span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
-            <span class="n">nRxn</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">Nu</span><span class="p">)</span>
-            <span class="n">nNum</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">nNum</span> <span class="o">=</span> <span class="n">nNum</span> <span class="o">-</span> <span class="p">(</span><span class="n">nNum</span> <span class="o">%</span> <span class="n">nRxn</span><span class="p">)</span>
-            <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="p">[:</span><span class="n">nNum</span><span class="p">]</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">W_sen_anal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">nRxn</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">W_sen_anal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">W_sen_anal</span><span class="p">[::</span><span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">Spacing</span><span class="p">])</span>
-
-            <span class="k">del</span> <span class="n">virtual_arr</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span> <span class="s1">&#39;No sensitivity analysis output file&#39;</span></div>
-            
-            
-<div class="viewcode-block" id="kmc_traj.ReadCluster"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadCluster">[docs]</a>    <span class="k">def</span> <span class="nf">ReadCluster</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Read clusterocc.bin</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;clusterocc.bin&#39;</span><span class="p">),</span> <span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
-        <span class="n">nCluster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clusterin</span><span class="o">.</span><span class="n">get_num_clusters</span><span class="p">()</span>
-        <span class="n">nNum</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">nNum</span> <span class="o">=</span> <span class="n">nNum</span> <span class="o">-</span> <span class="p">(</span><span class="n">nNum</span> <span class="o">%</span> <span class="n">nCluster</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span>
-                                                    <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">nCluster</span><span class="p">,</span> <span class="n">nCluster</span><span class="p">])</span>
-                                        <span class="p">[::</span><span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">Spacing</span><span class="p">])</span>
-        <span class="k">del</span> <span class="n">virtual_arr</span></div>
-    
-    
-<div class="viewcode-block" id="kmc_traj.ReadSpecInt"><a class="viewcode-back" href="../KMC_Run.html#KMC_Run.kmc_traj.ReadSpecInt">[docs]</a>    <span class="k">def</span> <span class="nf">ReadSpecInt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Read time integrated species counts</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Path</span><span class="p">,</span> <span class="s1">&#39;IntegSpec_output.bin&#39;</span><span class="p">),</span> <span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
-        <span class="n">n_surf_specs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">)</span>
-        <span class="n">nNum</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">nNum</span> <span class="o">=</span> <span class="n">nNum</span> <span class="o">-</span> <span class="p">(</span><span class="n">nNum</span> <span class="o">%</span> <span class="n">n_surf_specs</span><span class="p">)</span>
-        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="p">[:</span><span class="n">nNum</span><span class="p">]</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">n_surf_specs</span><span class="p">,</span> <span class="n">n_surf_specs</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spec_num_int</span><span class="p">[::</span><span class="bp">self</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">Spacing</span><span class="p">])</span>
-
-        <span class="k">del</span> <span class="n">virtual_arr</span></div>
-        
     
     
     <span class="sd">&#39;&#39;&#39;</span>
@@ -352,7 +270,7 @@
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get the information necessary to linearly interpolate data between time points</span>
 <span class="sd">        </span>
-<span class="sd">        :param t:</span>
+<span class="sd">        :param t: Time at which you want to compute interpolated data</span>
 <span class="sd">        :returns: A 2-item list of 2-items each in the order: Index of time point less than or equal to t,</span>
 <span class="sd">            index of time point greater than or equal to t</span>
 <span class="sd">            weighting factor for lower point</span>

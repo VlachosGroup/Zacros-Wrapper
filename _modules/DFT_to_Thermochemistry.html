@@ -1,0 +1,635 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="Python">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>DFT_to_Thermochemistry &#8212; Zacros Wrapper 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for DFT_to_Thermochemistry</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Calculate thermodynamic data (S298, H298, and Cp(T)</span>
+<span class="sd">    from ab initio DFT data (energies and frequencies)</span>
+<span class="sd">    providng input thermodynamics files for</span>
+<span class="sd">    KMC (Zacros) and MKM (Chemkin and Matlab)</span>
+
+<span class="sd">    Gerhard R Wittreich, P.E.</span>
+<span class="sd">    Created on Fri Mar 31 2017</span>
+<span class="sd">    </span>
+<span class="sd">    author  wittregr</span>
+<span class="sd">    </span>
+<span class="sd">    Adopted from Matlab code written and modified by mVassili Vorotnikov and Geun Ho Gu</span>
+<span class="sd">    </span>
+<span class="sd">    This program contains the class objects used to read energy, vibration and</span>
+<span class="sd">    molecular configuration data and determine the standard entropy and enthalpy</span>
+<span class="sd">    and heat capacities at various temperatures.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">_np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="k">import</span> <span class="n">pi</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">ase.io</span> <span class="k">as</span> <span class="nn">_ase</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">scipy.interpolate</span> <span class="k">as</span> <span class="nn">_sp</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="n">constant</span> <span class="k">as</span> <span class="n">c</span>
+
+
+<span class="k">class</span> <span class="nc">Particle</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="n">Cp_Range</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">1500</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="n">VibScalingFactor</span> <span class="o">=</span> <span class="mi">1</span>         <span class="c1"># Vibrational Scaling Factor</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">Base_path</span><span class="p">,</span> <span class="n">Tstp</span><span class="o">=</span><span class="mf">298.15</span><span class="p">):</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Fill object with species name and associated thermodynamic data</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]])</span>         <span class="c1"># Species name</span>
+        <span class="k">if</span> <span class="s1">&#39;numh&#39;</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numc&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">carbon</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numc&#39;</span><span class="p">]])</span>       <span class="c1"># No. of C atoms</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">carbon</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numh&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hydrogen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numh&#39;</span><span class="p">]])</span>     <span class="c1"># No. of H atoms</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hydrogen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numo&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">oxygen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numo&#39;</span><span class="p">]])</span>       <span class="c1"># No. of O atoms</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">oxygen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numn&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nitrogen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numn&#39;</span><span class="p">]])</span>     <span class="c1"># No. of N atoms</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nitrogen</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;mw&#39;</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">MW</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;mw&#39;</span><span class="p">]])</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">NA</span><span class="o">/</span><span class="mi">1000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">MW</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carbon</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">MW_carbon</span> <span class="o">+</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">hydrogen</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">MW_hydorgen</span> <span class="o">+</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">oxygen</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">MW_oxygen</span> <span class="o">+</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">nitrogen</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">MW_nitrogen</span><span class="p">)</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">NA</span><span class="o">/</span><span class="mi">1000</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Inertia&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">totengpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">|/&#39;</span><span class="p">,</span>
+                                           <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;totengpath&#39;</span><span class="p">]])</span><span class="o">.</span>
+                                           <span class="n">strip</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">etotal</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;etotal&#39;</span><span class="p">]])</span>   <span class="c1"># Total energy</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;edisp&#39;</span><span class="p">]]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edisp</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">edisp</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;edisp&#39;</span><span class="p">]])</span>     <span class="c1"># Dispersion energy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numvibfreq</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;numvibfreq&#39;</span><span class="p">]])</span>  <span class="c1"># No. vib frequencies</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;phase&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="kc">None</span>                       <span class="c1"># Phase (G=gas, S=surface)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vibfreq</span> <span class="o">=</span> <span class="p">[]</span>                           <span class="c1"># Vibration frequencies</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">numvibfreq</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vibfreq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Particle</span><span class="o">.</span><span class="n">VibScalingFactor</span> <span class="o">*</span>
+                                <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;vibfreq&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vibfreq</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vibfreq</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Base_path</span> <span class="o">=</span> <span class="n">Base_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Tstp</span> <span class="o">=</span> <span class="n">Tstp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ThermoProperties</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">ThermoProperties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate all thermodynamic properties from input data</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Determine_Phase</span><span class="p">()</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get rotational data from VASP CONTCAR for gas species using</span>
+<span class="sd">        Atomic Simulation Environment (ASE) libraries for python</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">==</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;Inertia&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">I3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Inertia</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Base_path</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">totengpath</span><span class="p">,</span>
+                                        <span class="s1">&#39;CONTCAR&#39;</span><span class="p">)</span>
+                <span class="n">VASP</span> <span class="o">=</span> <span class="n">_ase</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">I3</span> <span class="o">=</span> <span class="n">VASP</span><span class="o">.</span><span class="n">get_moments_of_inertia</span><span class="p">()</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">A2_to_m2</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">amu_to_kg</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">MW</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">VASP</span><span class="o">.</span><span class="n">get_masses</span><span class="p">())</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">NA</span><span class="o">/</span><span class="mf">1000.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T_I</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">h1</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mi">8</span><span class="o">*</span><span class="n">_np</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">kb1</span><span class="p">)</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calulcate common frequency data for vibrational components</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vibfreq</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">c2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">h1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span> <span class="o">/</span> <span class="n">c</span><span class="o">.</span><span class="n">kb1</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Call Entropy method to calculate standard state entropy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Calc_Entropy</span><span class="p">()</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Call Heat Capacity method to calculate heat capacities at the</span>
+<span class="sd">        temperature range specified by Cp_Range</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Calc_HeatCapacities</span><span class="p">()</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Call Enthalpy method to calculate standard state enthalpy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Calc_Enthalpy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">Determine_Phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Determine species phase if one is not provided</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;surface&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">islinear</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="s1">&#39;G&#39;</span>
+
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;sigma&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="s1">&#39;G&#39;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            This should proabbaly result in an error condition vs supplying</span>
+<span class="sd">            &#39;S&#39; as a default value</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span>
+
+    <span class="k">def</span> <span class="nf">Calc_Entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate the vibrational, rotational and translational components and</span>
+<span class="sd">        total entropy of a species at standard conditions</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate vibrational component of entropy for gas and surface species</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Tstp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_vib</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">R1</span> <span class="o">*</span> <span class="nb">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span>
+                                     <span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="n">T</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span>
+                                     <span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">_np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="n">T</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_vib</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">_np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="n">T</span><span class="p">))))</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate rotational and translational components of entropy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">==</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Gas phase calculation</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">islinear</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Non-linear species</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="n">I</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I3</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_rot</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">*</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">2.</span> <span class="o">+</span> <span class="mf">1.</span><span class="o">/</span><span class="mf">2.</span> <span class="o">*</span>
+                                        <span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">pi</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">T_I</span><span class="o">**</span><span class="mi">3</span><span class="o">*</span><span class="n">I</span><span class="p">)</span> <span class="o">-</span>
+                                        <span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">q_rot</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">I</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">*</span>\
+                    <span class="p">(</span><span class="n">T</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">T_I</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Linear species</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="n">I</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">I3</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_rot</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span> <span class="o">+</span> <span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">T</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">T_I</span><span class="o">*</span><span class="n">I</span><span class="p">)</span> <span class="o">-</span>
+                                        <span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">q_rot</span> <span class="o">=</span> <span class="p">(</span><span class="n">T</span><span class="o">*</span><span class="n">I</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">T_I</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="mi">100000</span>  <span class="c1"># Presure of 1 atm or 100000 Pa</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_trans</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">*</span><span class="p">(</span><span class="mf">5.</span><span class="o">/</span><span class="mf">2.</span> <span class="o">+</span> <span class="mf">3.</span><span class="o">/</span><span class="mf">2.</span> <span class="o">*</span>
+                                      <span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">MW</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">h1</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span>
+                                      <span class="mf">5.</span><span class="o">/</span><span class="mf">2.</span><span class="o">*</span><span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">kb1</span><span class="o">*</span><span class="n">T</span><span class="p">)</span> <span class="o">-</span>
+                                      <span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;A_st&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">q_trans2D</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_st</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">MW</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">kb1</span><span class="o">*</span><span class="n">T</span><span class="p">)</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">h1</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Surface phase calculation</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_rot</span> <span class="o">=</span> <span class="mf">0.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_trans</span> <span class="o">=</span> <span class="mf">0.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_rot</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sum of all contributions to entropy for total entropy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_vib</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_rot</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">S_Tstp_trans</span>
+
+    <span class="k">def</span> <span class="nf">Calc_HeatCapacities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate the vibrational, rotational and translational components and</span>
+<span class="sd">        total heat capacity of a species for a range of temperatures</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate vibrational contribution to heat capacity for temperature</span>
+<span class="sd">        range specified in Cp_Range for linear and non-linear species</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">zz</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">)):</span>
+            <span class="n">zz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">[</span><span class="n">x</span><span class="p">]))</span>
+        <span class="n">zz</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">zz</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cp_vib</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">zz</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                                  <span class="n">_np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">zz</span><span class="p">)),</span>
+                                     <span class="n">_np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">_np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">zz</span><span class="p">),</span> <span class="mi">2</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">==</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Translational and rotational Gas phase calculation</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Cp_trans</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">3.</span><span class="o">/</span><span class="mf">2.</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">islinear</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Non-Linear species</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Cp_rot</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">3.</span><span class="o">/</span><span class="mf">2.</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Linear species</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Cp_rot</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Surface species</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Cp_rot</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Cp_trans</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">))</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sum all contribution to heat capacity for total heat capapcity</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cp</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Cp_trans</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cp_rot</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cp_vib</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">Calc_Enthalpy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Tstp</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate zero-point energy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zpe</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">h2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">NA</span><span class="o">/</span><span class="mi">1000</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate vibrational component of enthalpy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_vib</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">kb2</span> <span class="o">*</span>\
+            <span class="nb">sum</span><span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">*</span><span class="n">_np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="n">T</span><span class="p">),</span>
+                           <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">_np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="o">/</span><span class="n">T</span><span class="p">))))</span> <span class="o">*</span>\
+            <span class="n">c</span><span class="o">.</span><span class="n">NA</span><span class="o">/</span><span class="mi">1000</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate translational and rotational component of enthalpy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">==</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Gas phase calculation</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_trans</span> <span class="o">=</span> <span class="mf">3.</span><span class="o">/</span><span class="mf">2.</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">*</span><span class="n">T</span><span class="o">/</span><span class="mi">1000</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">islinear</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Non-linear species</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_rot</span> <span class="o">=</span> <span class="mf">3.</span><span class="o">/</span><span class="mf">2.</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">*</span><span class="n">T</span><span class="o">/</span><span class="mi">1000</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Linear species</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_rot</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">*</span><span class="n">T</span><span class="o">/</span><span class="mi">1000</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pv_Tstp</span> <span class="o">=</span> <span class="mf">1.</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">*</span><span class="n">T</span><span class="o">/</span><span class="mi">1000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Surface phase calculation</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_trans</span> <span class="o">=</span> <span class="mf">0.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_rot</span> <span class="o">=</span> <span class="mf">0.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pv_Tstp</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sum all contribution to enthalpy for total enthalpy</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dfth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">etotal</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">R2</span><span class="o">*</span><span class="n">c</span><span class="o">.</span><span class="n">NA</span><span class="o">/</span><span class="mi">1000</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">zpe</span> <span class="o">+</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_vib</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_trans</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">E_Tstp_rot</span> <span class="o">+</span>\
+            <span class="bp">self</span><span class="o">.</span><span class="n">pv_Tstp</span>
+
+
+<div class="viewcode-block" id="Reference"><a class="viewcode-back" href="../thermo.html#DFT_to_Thermochemistry.Reference">[docs]</a><span class="k">class</span> <span class="nc">Reference</span><span class="p">(</span><span class="n">Particle</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    SubClass object to add specific fields for reference species</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">Base_path</span><span class="p">,</span> <span class="n">Tstp</span><span class="o">=</span><span class="mf">298.15</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;sigma&#39;</span><span class="p">]])</span>            <span class="c1"># Sigma</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;islinear&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">islinear</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;islinear&#39;</span><span class="p">]])</span>   <span class="c1"># Is molecule linear?</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">linear</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;hf298nist&#39;</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hf298nist</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;hf298nist&#39;</span><span class="p">]])</span>  <span class="c1"># NIST Std enthpy</span>
+        <span class="k">if</span> <span class="s1">&#39;inertia&#39;</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;inertia&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Inertia</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;inertia&#39;</span><span class="p">]])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Inertia</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">upper</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;phase&#39;</span><span class="p">]])</span>      <span class="c1"># Phase</span>
+        <span class="k">if</span> <span class="s1">&#39;a_st&#39;</span> <span class="ow">in</span> <span class="nb">dict</span> <span class="ow">and</span> <span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;a_st&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">A_st</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;a_st&#39;</span><span class="p">]])</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Reference</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">Base_path</span><span class="p">,</span> <span class="n">Tstp</span><span class="o">=</span><span class="mf">298.15</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">BasisSet</span><span class="p">(</span><span class="n">RefSpecies</span><span class="p">):</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">b_nist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">b_dfth</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">RefSpecies</span><span class="p">)):</span>
+            <span class="n">A</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">RefSpecies</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">carbon</span><span class="p">,</span> <span class="n">RefSpecies</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">hydrogen</span><span class="p">,</span>
+                      <span class="n">RefSpecies</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">oxygen</span><span class="p">,</span> <span class="n">RefSpecies</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">nitrogen</span><span class="p">])</span>
+            <span class="n">b_nist</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">RefSpecies</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">hf298nist</span><span class="p">])</span>
+            <span class="n">b_dfth</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">RefSpecies</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">dfth</span><span class="p">])</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">b_nist</span><span class="p">)</span> <span class="o">-</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">b_dfth</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Target"><a class="viewcode-back" href="../thermo.html#DFT_to_Thermochemistry.Target">[docs]</a><span class="k">class</span> <span class="nc">Target</span><span class="p">(</span><span class="n">Particle</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    SubClass object to add specific fields for target surface species</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">Base_path</span><span class="p">,</span> <span class="n">Tstp</span><span class="o">=</span><span class="mf">298.15</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surface</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;surface&#39;</span><span class="p">]])</span>          <span class="c1"># Surface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">functional</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;functional&#39;</span><span class="p">]])</span>    <span class="c1"># Functional</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kpoints</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;kpoints&#39;</span><span class="p">]])</span>          <span class="c1"># k-Points</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vibfreqpath</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;vibfreqpath&#39;</span><span class="p">]])</span>  <span class="c1"># Unused</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="kc">None</span>                                  <span class="c1"># Phase</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Target</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">Base_path</span><span class="p">,</span> <span class="n">Tstp</span><span class="o">=</span><span class="mf">298.15</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">ReferenceDFT</span><span class="p">(</span><span class="n">Species</span><span class="p">,</span> <span class="n">Surface</span><span class="p">,</span> <span class="n">Basis</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">Species</span><span class="p">)):</span>
+            <span class="n">Molecule</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">carbon</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">hydrogen</span><span class="p">,</span>
+                                  <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">oxygen</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">nitrogen</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">phase</span> <span class="o">==</span> <span class="s1">&#39;G&#39;</span><span class="p">:</span>
+                <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">hf_Tstp</span> <span class="o">=</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">dfth</span> <span class="o">+</span>
+                                      <span class="n">_np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Molecule</span><span class="p">,</span> <span class="n">Basis</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="s1">&#39;edisp&#39;</span><span class="p">):</span>
+                    <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">convedisp</span> <span class="o">=</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">edisp</span> <span class="o">*</span>
+                                            <span class="n">c</span><span class="o">.</span><span class="n">ev_atom_2_kcal_mol</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">Slab</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">y</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">Surface</span> <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span>
+                             <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">surface</span><span class="p">),</span>
+                            <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">Slab</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="nb">print</span> <span class="s1">&#39;Error&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">hf_Tstp</span> <span class="o">=</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">dfth</span> <span class="o">+</span>
+                                          <span class="n">_np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Molecule</span><span class="p">,</span> <span class="n">Basis</span><span class="p">)</span> <span class="o">-</span>
+                                          <span class="n">Slab</span><span class="o">.</span><span class="n">etotal</span> <span class="o">*</span>
+                                          <span class="n">c</span><span class="o">.</span><span class="n">ev_atom_2_kcal_mol</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="s1">&#39;edisp&#39;</span><span class="p">):</span>
+                        <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">convedisp</span> <span class="o">=</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">edisp</span> <span class="o">*</span>
+                                                <span class="n">c</span><span class="o">.</span><span class="n">ev_atom_2_kcal_mol</span> <span class="o">-</span>
+                                                <span class="n">Slab</span><span class="o">.</span><span class="n">edisp</span> <span class="o">*</span>
+                                                <span class="n">c</span><span class="o">.</span><span class="n">ev_atom_2_kcal_mol</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">Species</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Target.CreateThermdat"><a class="viewcode-back" href="../thermo.html#DFT_to_Thermochemistry.Target.CreateThermdat">[docs]</a>    <span class="k">def</span> <span class="nf">CreateThermdat</span><span class="p">(</span><span class="n">Species</span><span class="p">,</span> <span class="n">Base_path</span><span class="p">,</span> <span class="n">Output</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculate the seven coefficients for the NASA polynomials for two</span>
+<span class="sd">        temperature ranges and output the results in a Chemkin format thermdat</span>
+<span class="sd">        file</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">T_mid</span> <span class="o">=</span> <span class="mi">500</span>
+        <span class="n">Tstp</span> <span class="o">=</span> <span class="n">Species</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Tstp</span>
+
+        <span class="k">def</span> <span class="nf">HS_NASA</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            7-coefficient NASA polynomials for enthalpy and entropy</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">Enthalpy</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">T</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> \
+                <span class="n">a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="mi">4</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="mi">5</span>
+            <span class="n">Entropy</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">_np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">T</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> \
+                <span class="n">a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="mi">3</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">*</span><span class="n">T</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="mi">4</span>
+            <span class="k">return</span><span class="p">[</span><span class="n">Enthalpy</span><span class="p">,</span> <span class="n">Entropy</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">Species</span><span class="p">)):</span>
+            <span class="n">T_rng_low</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">),</span> <span class="n">T_mid</span><span class="p">,</span> <span class="mi">1600</span><span class="p">)</span>
+            <span class="n">T_rng_high</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">T_mid</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">),</span> <span class="mi">4000</span><span class="p">)</span>
+            <span class="n">T_func</span> <span class="o">=</span> <span class="n">_sp</span><span class="o">.</span><span class="n">InterpolatedUnivariateSpline</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">,</span>
+                                                      <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">Cp</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Fit coefficients A1-A5 to heat capacity data</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">T_rng_low</span><span class="p">,</span>
+                                           <span class="n">T_func</span><span class="p">(</span><span class="n">T_rng_low</span><span class="p">),</span> <span class="mi">4</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">T_rng_high</span><span class="p">,</span>
+                                            <span class="n">T_func</span><span class="p">(</span><span class="n">T_rng_high</span><span class="p">),</span> <span class="mi">4</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Correct A1 high temperature range coefficient to eliminate</span>
+<span class="sd">            discontinuity between high and low temperature range polynomials</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> \
+                <span class="p">(</span><span class="n">_np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">T_mid</span><span class="p">)</span> <span class="o">-</span>
+                 <span class="n">_np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">T_mid</span><span class="p">))</span>
+
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Determine A6 coefficient for enthalpy calculations</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">a6_high</span> <span class="o">=</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">hf_Tstp</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">/</span><span class="n">Tstp</span><span class="o">*</span><span class="mi">1000</span> <span class="o">-</span>
+                       <span class="n">HS_NASA</span><span class="p">(</span><span class="n">Tstp</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">Tstp</span>
+            <span class="n">a6_low</span> <span class="o">=</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">hf_Tstp</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span><span class="o">/</span><span class="n">Tstp</span><span class="o">*</span><span class="mi">1000</span> <span class="o">-</span>
+                      <span class="n">HS_NASA</span><span class="p">(</span><span class="n">Tstp</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">Tstp</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Correct A6 high temperature range coefficient to eliminate</span>
+<span class="sd">            discontinuity between high and low temperature range polynomials</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">a6_high_delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">HS_NASA</span><span class="p">(</span><span class="n">T_mid</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span>
+                             <span class="n">a6_low</span><span class="o">/</span><span class="n">T_mid</span><span class="p">)</span> <span class="o">-</span> \
+                            <span class="p">(</span><span class="n">HS_NASA</span><span class="p">(</span><span class="n">T_mid</span><span class="p">,</span>
+                             <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">a6_high</span><span class="o">/</span><span class="n">T_mid</span><span class="p">)</span>
+            <span class="n">a6_high</span> <span class="o">=</span> <span class="n">a6_high</span> <span class="o">+</span> <span class="n">a6_high_delta</span> <span class="o">*</span> <span class="n">T_mid</span>
+            <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">,</span> <span class="n">a6_high</span><span class="p">)</span>
+            <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">,</span> <span class="n">a6_low</span><span class="p">)</span>
+
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Determine A7 coefficient for entropy calculations</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">a7_high</span> <span class="o">=</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">S_Tstp</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span> <span class="o">-</span> \
+                <span class="n">HS_NASA</span><span class="p">(</span><span class="n">Tstp</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">a7_low</span> <span class="o">=</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">S_Tstp</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">R1</span> <span class="o">-</span> \
+                <span class="n">HS_NASA</span><span class="p">(</span><span class="n">Tstp</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Correct A7 high temperature range coefficient to eliminate</span>
+<span class="sd">            discontinuity between high and low temperature range polynomials</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">a7_high_delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">HS_NASA</span><span class="p">(</span><span class="n">T_mid</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span>
+                             <span class="n">a7_low</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">HS_NASA</span><span class="p">(</span><span class="n">T_mid</span><span class="p">,</span>
+                                        <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">a7_high</span><span class="p">)</span>
+            <span class="n">a7_high</span> <span class="o">=</span> <span class="n">a7_high</span> <span class="o">+</span> <span class="n">a7_high_delta</span>
+            <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">,</span> <span class="n">a7_high</span><span class="p">)</span>
+            <span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">,</span> <span class="n">a7_low</span><span class="p">)</span>
+
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Write the species name, seven NASA coefficients for both a high and</span>
+<span class="sd">        a low temperature range and other data in the Chemkin thermdat</span>
+<span class="sd">        file format</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Base_path</span><span class="p">,</span> <span class="n">Output</span><span class="p">))</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Base_path</span><span class="p">,</span> <span class="n">Output</span><span class="p">))</span>
+        <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Base_path</span><span class="p">,</span> <span class="n">Output</span><span class="p">,</span> <span class="s1">&#39;thermdat&#39;</span><span class="p">)</span>
+        <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">fid</span><span class="o">.</span><span class="n">truncate</span><span class="p">()</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Write thermdat file header</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;THERMO ALL</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">Species</span><span class="p">)):</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Write header line for each species on line 1</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%-16s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%-8s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%1s%-4i</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">carbon</span><span class="p">))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%1s%-4i</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;O&#39;</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">oxygen</span><span class="p">))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%1s%-4i</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">hydrogen</span><span class="p">))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%1s%-4i</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">nitrogen</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;(S)&#39;</span><span class="p">):</span>
+                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;G&#39;</span><span class="p">)</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%10.0f%10.0f%8.0f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">),</span>
+                                             <span class="nb">max</span><span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">Cp_Range</span><span class="p">),</span>
+                                             <span class="n">T_mid</span><span class="p">))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%6s%1i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Write first five NASA coefficients for</span>
+<span class="sd">            low temperature range on line 2</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">):</span>
+                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%15E</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">[</span><span class="n">x</span><span class="p">]))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%4s%1i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Write final two NASA coefficients for</span>
+<span class="sd">            low temperature range on line 2</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%15E</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">a_low</span><span class="p">[</span><span class="n">x</span><span class="o">+</span><span class="mi">4</span><span class="p">]))</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Write first three NASA coeficients for</span>
+<span class="sd">            high temperature range on line 3</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%15E</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">[</span><span class="n">x</span><span class="p">]))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%4s%1i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Write final four NASA coefficients for</span>
+<span class="sd">            high temperature range on line 4</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+                <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%15E</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">Species</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">a_high</span><span class="p">[</span><span class="n">x</span><span class="o">+</span><span class="mi">3</span><span class="p">]))</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%19s%1i</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Write file footer and close the file</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">fid</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;END</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">fid</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span><span class="p">(</span><span class="n">Species</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Surface"><a class="viewcode-back" href="../thermo.html#DFT_to_Thermochemistry.Surface">[docs]</a><span class="k">class</span> <span class="nc">Surface</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Class object to populate slab energies for surfaces</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]])</span>          <span class="c1"># Surface name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">etotal</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;etotal&#39;</span><span class="p">]])</span>    <span class="c1"># Total energy-DFT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">edisp</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;edisp&#39;</span><span class="p">]])</span>      <span class="c1"># Dispersion energy-DFT</span></div>
+
+
+<span class="k">def</span> <span class="nf">DFTFileRead</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+    <span class="n">fid</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="n">dict_array</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">dict_array</span><span class="p">)):</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="n">dict_array</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="k">return</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Marcel Nunez.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

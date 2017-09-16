@@ -69,44 +69,38 @@ must be recompiled with modifications to the input files.</p>
 </div>
 <div class="section" id="additional-zacros-output-files">
 <h2>Additional Zacros output files<a class="headerlink" href="#additional-zacros-output-files" title="Permalink to this headline">¶</a></h2>
+<p>Data in each file is in the form of a matrix of doubles. Each row corresponds to a time point.
+Time points are the same as in specnum_output.txt. Columns correspond to
+different elementary steps (first 3 files) or surface species (timeintspecs_output.txt).</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="32%" />
-<col width="68%" />
+<col width="34%" />
+<col width="66%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head">file name</th>
-<th class="head">description</th>
+<tr class="row-odd"><th class="head">File name</th>
+<th class="head">Description</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>PropCounter_output.bin</td>
-<td>integral propensities, used for better averaging</td>
+<tr class="row-even"><td>propensities_output.txt</td>
+<td>Instantaneous reaction propensities</td>
 </tr>
-<tr class="row-odd"><td>Prop_output.bin</td>
-<td>reaction propensities</td>
+<tr class="row-odd"><td>timeintprop_output.txt</td>
+<td>Time integrated reaction propensities</td>
 </tr>
-<tr class="row-even"><td>Hist.bin</td>
-<td>lattice states</td>
+<tr class="row-even"><td>trajderiv_output.txt</td>
+<td>Trajectory derivatives</td>
 </tr>
-<tr class="row-odd"><td>E.bin</td>
-<td>lattice energy</td>
-</tr>
-<tr class="row-even"><td>clusterocc.bin</td>
-<td>cluster counts</td>
-</tr>
-<tr class="row-odd"><td>SA_output.bin</td>
-<td>trajectory derivatives</td>
-</tr>
-<tr class="row-even"><td>specnum_output.bin</td>
-<td>surface species populations</td>
+<tr class="row-odd"><td>timeintspecs_output.txt</td>
+<td>Time integrated surface species counts</td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="section" id="compiling-on-farber-http-farber-hpc-udel-edu">
-<h2>Compiling on <cite>Farber &lt;http://farber.hpc.udel.edu/&gt;</cite><a class="headerlink" href="#compiling-on-farber-http-farber-hpc-udel-edu" title="Permalink to this headline">¶</a></h2>
-<p>Farber is a University of Delaware computing cluster. If you wish to compile Zacros on Farber you will need to make some configurational changes as the default compile settings are very inefficient.</p>
+<div class="section" id="compiling-on-farber">
+<h2>Compiling on Farber<a class="headerlink" href="#compiling-on-farber" title="Permalink to this headline">¶</a></h2>
+<p><cite>Farber &lt;http://farber.hpc.udel.edu/&gt;</cite> is a University of Delaware computing cluster. If you wish to compile Zacros on Farber you will need to make some configurational changes as the default compile settings are very inefficient.</p>
 <ul class="simple">
 <li>Import the intel compiler: <code class="docutils literal"><span class="pre">vpkg_require</span> <span class="pre">intel/2016</span></code></li>
 <li><code class="docutils literal"><span class="pre">export</span> <span class="pre">CMAKE_Fortran_COMPILER=ifort</span></code></li>
@@ -145,7 +139,7 @@ CMAKE_Fortran_COMPILER=ifort
 <li><a class="reference internal" href="#">Compiling modified Zacros executable</a><ul>
 <li><a class="reference internal" href="#installation-instructions">Installation instructions</a></li>
 <li><a class="reference internal" href="#additional-zacros-output-files">Additional Zacros output files</a></li>
-<li><a class="reference internal" href="#compiling-on-farber-http-farber-hpc-udel-edu">Compiling on <cite>Farber &lt;http://farber.hpc.udel.edu/&gt;</cite></a></li>
+<li><a class="reference internal" href="#compiling-on-farber">Compiling on Farber</a></li>
 </ul>
 </li>
 </ul>

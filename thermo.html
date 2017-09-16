@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="Python">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Thermodynamics calculator &#8212; Zacros Wrapper 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="KMC lattice" href="Lattice.html" />
+    <link rel="prev" title="Rate Constant Rescaling" href="Rescaling.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Lattice.html" title="KMC lattice"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Rescaling.html" title="Rate Constant Rescaling"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-DFT_to_Thermochemistry">
+<span id="thermodynamics-calculator"></span><h1>Thermodynamics calculator<a class="headerlink" href="#module-DFT_to_Thermochemistry" title="Permalink to this headline">¶</a></h1>
+<p>Calculate thermodynamic data (S298, H298, and Cp(T)
+from ab initio DFT data (energies and frequencies)
+providng input thermodynamics files for
+KMC (Zacros) and MKM (Chemkin and Matlab)</p>
+<p>Gerhard R Wittreich, P.E.
+Created on Fri Mar 31 2017</p>
+<p>author  wittregr</p>
+<p>Adopted from Matlab code written and modified by mVassili Vorotnikov and Geun Ho Gu</p>
+<p>This program contains the class objects used to read energy, vibration and
+molecular configuration data and determine the standard entropy and enthalpy
+and heat capacities at various temperatures.</p>
+<dl class="class">
+<dt id="DFT_to_Thermochemistry.Reference">
+<em class="property">class </em><code class="descclassname">DFT_to_Thermochemistry.</code><code class="descname">Reference</code><span class="sig-paren">(</span><em>data</em>, <em>dict</em>, <em>Base_path</em>, <em>Tstp=298.15</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/DFT_to_Thermochemistry.html#Reference"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DFT_to_Thermochemistry.Reference" title="Permalink to this definition">¶</a></dt>
+<dd><p>SubClass object to add specific fields for reference species</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="DFT_to_Thermochemistry.Surface">
+<em class="property">class </em><code class="descclassname">DFT_to_Thermochemistry.</code><code class="descname">Surface</code><span class="sig-paren">(</span><em>data</em>, <em>dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/DFT_to_Thermochemistry.html#Surface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DFT_to_Thermochemistry.Surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class object to populate slab energies for surfaces</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="DFT_to_Thermochemistry.Target">
+<em class="property">class </em><code class="descclassname">DFT_to_Thermochemistry.</code><code class="descname">Target</code><span class="sig-paren">(</span><em>data</em>, <em>dict</em>, <em>Base_path</em>, <em>Tstp=298.15</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/DFT_to_Thermochemistry.html#Target"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DFT_to_Thermochemistry.Target" title="Permalink to this definition">¶</a></dt>
+<dd><p>SubClass object to add specific fields for target surface species</p>
+<dl class="staticmethod">
+<dt id="DFT_to_Thermochemistry.Target.CreateThermdat">
+<em class="property">static </em><code class="descname">CreateThermdat</code><span class="sig-paren">(</span><em>Species</em>, <em>Base_path</em>, <em>Output</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/DFT_to_Thermochemistry.html#Target.CreateThermdat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DFT_to_Thermochemistry.Target.CreateThermdat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the seven coefficients for the NASA polynomials for two
+temperature ranges and output the results in a Chemkin format thermdat
+file</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Rescaling.html"
+                        title="previous chapter">Rate Constant Rescaling</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Lattice.html"
+                        title="next chapter">KMC lattice</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/thermo.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Lattice.html" title="KMC lattice"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Rescaling.html" title="Rate Constant Rescaling"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Zacros Wrapper 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Marcel Nunez.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.
+    </div>
+  </body>
+</html>

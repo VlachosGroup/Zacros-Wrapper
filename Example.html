@@ -166,7 +166,6 @@ the parameters (mostly directories) at the top of the script under the &#8220;Us
 <span class="k">print</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span>
 </pre></div>
 </div>
-<p>This produces ...</p>
 </div>
 <div class="section" id="analyzing-a-single-trajectory">
 <h2>Analyzing a single trajectory<a class="headerlink" href="#analyzing-a-single-trajectory" title="Permalink to this headline">¶</a></h2>
@@ -303,7 +302,8 @@ jobs spread over multiple nodes (i.e. &gt; 16 cores).</p>
 <div class="section" id="rate-constant-rescaling-and-steady-state-detection">
 <h2>Rate constant rescaling and steady state detection<a class="headerlink" href="#rate-constant-rescaling-and-steady-state-detection" title="Permalink to this headline">¶</a></h2>
 <p>Scale_SS_Main.py takes Zacros input files and runs the statistical procedure described in our publication.
-Parallelization is used to run multiple trajectories simultaneously.</p>
+Parallelization is used to run multiple trajectories simultaneously. By default, it will use MPI parallelization, but
+the flag <code class="docutils literal"><span class="pre">parallel_mode</span></code> can be set to use the gridengine submission scripts on Squidward or Farber.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read Zacros input files from a folder and then perform rate constant rescaling in a different folder</span>
 
 <span class="kn">import</span> <span class="nn">zacros_wrapper</span> <span class="kn">as</span> <span class="nn">zw</span>
@@ -318,12 +318,14 @@ Parallelization is used to run multiple trajectories simultaneously.</p>
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>                 <span class="c1"># Make commands safe for MPI parallelization</span>
 	
-    <span class="n">z</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">RateRescaling</span><span class="p">()</span>
-    <span class="n">z</span><span class="o">.</span><span class="n">scale_parent_fldr</span> <span class="o">=</span> <span class="n">RunPath</span>
-    <span class="n">z</span><span class="o">.</span><span class="n">ReachSteadyStateAndRescale</span><span class="p">(</span><span class="n">product_spec</span><span class="p">,</span> <span class="n">KMC_source</span><span class="p">,</span> <span class="n">exe_file</span><span class="p">,</span> <span class="n">n_runs</span> <span class="o">=</span> <span class="n">number_of_runs</span><span class="p">,</span> <span class="n">platform</span> <span class="o">=</span> <span class="s1">&#39;Squidward&#39;</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">kmc_traj</span><span class="p">(</span><span class="n">path</span> <span class="o">=</span> <span class="n">KMC_source</span><span class="p">)</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">gas_prod</span> <span class="o">=</span> <span class="n">product_spec</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">exe_file</span> <span class="o">=</span> <span class="n">exe_file</span>
+    <span class="n">x</span><span class="o">.</span><span class="n">ReadAllInput</span><span class="p">()</span>
+    <span class="n">final_data</span> <span class="o">=</span> <span class="n">zw</span><span class="o">.</span><span class="n">ReachSteadyStateAndRescale</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">RunPath</span><span class="p">,</span> <span class="n">n_runs</span> <span class="o">=</span> <span class="mi">96</span><span class="p">,</span> 
+        <span class="n">n_batches</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">max_iterations</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">parallel_mode</span> <span class="o">=</span> <span class="s1">&#39;MPI&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This produces ...</p>
 </div>
 </div>
 

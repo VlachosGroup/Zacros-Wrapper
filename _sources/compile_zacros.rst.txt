@@ -15,28 +15,26 @@ Installation instructions
 Additional Zacros output files
 -------------------------------
 
-+------------------------+--------------------------------------------------+
-| file name              | description                                      |
-+========================+==================================================+
-| PropCounter_output.bin | integral propensities, used for better averaging |
-+------------------------+--------------------------------------------------+
-| Prop_output.bin        | reaction propensities                            |
-+------------------------+--------------------------------------------------+
-| Hist.bin               | lattice states                                   |
-+------------------------+--------------------------------------------------+
-| E.bin                  | lattice energy                                   |
-+------------------------+--------------------------------------------------+
-| clusterocc.bin         | cluster counts                                   |
-+------------------------+--------------------------------------------------+
-| SA_output.bin          | trajectory derivatives                           |
-+------------------------+--------------------------------------------------+
-| specnum_output.bin     | surface species populations                      |
-+------------------------+--------------------------------------------------+
+Data in each file is in the form of a matrix of doubles. Each row corresponds to a time point.
+Time points are the same as in specnum_output.txt. Columns correspond to
+different elementary steps (first 3 files) or surface species (timeintspecs_output.txt).
 
-Compiling on `Farber <http://farber.hpc.udel.edu/>`
----------------------------------------------------------------------------------------------
++--------------------------+--------------------------------------------------+
+| File name                | Description                                      |
++==========================+==================================================+
+| propensities_output.txt  | Instantaneous reaction propensities              |
++--------------------------+--------------------------------------------------+
+| timeintprop_output.txt   | Time integrated reaction propensities            |
++--------------------------+--------------------------------------------------+
+| trajderiv_output.txt     | Trajectory derivatives                           |
++--------------------------+--------------------------------------------------+
+| timeintspecs_output.txt  | Time integrated surface species counts           |
++--------------------------+--------------------------------------------------+
 
-Farber is a University of Delaware computing cluster. If you wish to compile Zacros on Farber you will need to make some configurational changes as the default compile settings are very inefficient.
+Compiling on Farber
+-----------------------
+
+`Farber <http://farber.hpc.udel.edu/>` is a University of Delaware computing cluster. If you wish to compile Zacros on Farber you will need to make some configurational changes as the default compile settings are very inefficient.
 
 * Import the intel compiler: ``vpkg_require intel/2016``
 * ``export CMAKE_Fortran_COMPILER=ifort``

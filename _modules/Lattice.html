@@ -92,6 +92,8 @@
     
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Read lattice_input.dat</span>
+<span class="sd">        </span>
+<span class="sd">        :param fldr: Folder directory from which to read lattice_input.dat</span>
 <span class="sd">        &#39;&#39;&#39;</span>
     
         <span class="bp">self</span><span class="o">.</span><span class="n">lattice_in_txt</span> <span class="o">=</span> <span class="p">[]</span>
@@ -105,6 +107,8 @@
     
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Write lattice_input.dat</span>
+<span class="sd">        </span>
+<span class="sd">        :param fldr: Folder directory from which to read lattice_input.dat</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_only</span><span class="p">:</span>
@@ -122,6 +126,8 @@
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Set the fractional and Cartesian coordinates</span>
+<span class="sd">        </span>
+<span class="sd">        :param fc: n x 3 array (or list of lists) of fractional coordinates to set for each atom </span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="bp">self</span><span class="o">.</span><span class="n">frac_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fc</span><span class="p">)</span>
@@ -132,6 +138,8 @@
     
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Set the Cartesian and fractional coordinates</span>
+<span class="sd">        </span>
+<span class="sd">        :param fc: n x 3 array (or list of lists) of Cartesian coordinates to set for each atom</span>
 <span class="sd">        &#39;&#39;&#39;</span>
     
         <span class="bp">self</span><span class="o">.</span><span class="n">cart_coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
@@ -142,6 +150,10 @@
 
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Give the coordinates of the periodic image of B which is closest to A</span>
+<span class="sd">        </span>
+<span class="sd">        :param a_ind: Index of atom A</span>
+<span class="sd">        </span>
+<span class="sd">        :param b_ind: Index of atom B</span>
 <span class="sd">        &#39;&#39;&#39;</span>
 
         <span class="n">a_coords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cart_coords</span><span class="p">[</span> <span class="n">a_ind</span> <span class="p">,</span> <span class="p">:</span> <span class="p">]</span>
@@ -169,7 +181,16 @@
         <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;|&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="n">ms</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Return a pyplot object with the lattice graphed on it</span>
+<span class="sd">        :param cutoff: Maximum distance to draw connections between nearest neighbor sites.</span>
+<span class="sd">            This prevents drawing line segments between sites which are neighbors only though their periodic images.</span>
+<span class="sd">        </span>
+<span class="sd">        :param plot_neighbs: Flag to plot line segments between lattice sites which are first nearest neighbors to each other</span>
+<span class="sd">        </span>
+<span class="sd">        :param type_symbols: List of symbols for each lattice site type.</span>
+<span class="sd">        </span>
+<span class="sd">        :param ms: Marker size</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: pyplot object with the lattice graphed on it</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_only</span><span class="p">:</span>
@@ -322,6 +343,11 @@
     
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Builds the neighbor list based on distances between sites</span>
+<span class="sd">        </span>
+<span class="sd">        :param cut: Maximum distance between nearest neighbor sites or their periodic images.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cut_mat: List of nearest neighbor cutoff distances between different site types. If empty, it will assume the same distance for </span>
+<span class="sd">            all site types.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
     
         <span class="c1"># Make sure these lists are empty before we start appending</span>

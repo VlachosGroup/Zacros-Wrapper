@@ -23,6 +23,7 @@ Code
    KMC_Run
    Replicates
    Rescaling
+   thermo
    Lattice
    IOdata
 

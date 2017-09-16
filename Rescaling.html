@@ -26,7 +26,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="KMC lattice" href="Lattice.html" />
+    <link rel="next" title="Thermodynamics calculator" href="thermo.html" />
     <link rel="prev" title="Multiple trajectories" href="Replicates.html" /> 
   </head>
   <body role="document">
@@ -40,7 +40,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Lattice.html" title="KMC lattice"
+          <a href="thermo.html" title="Thermodynamics calculator"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="Replicates.html" title="Multiple trajectories"
@@ -66,17 +66,27 @@ Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic 
 
 <dl class="function">
 <dt id="RateRescaling.ReachSteadyStateAndRescale">
-<code class="descclassname">RateRescaling.</code><code class="descname">ReachSteadyStateAndRescale</code><span class="sig-paren">(</span><em>kmc_template</em>, <em>scale_parent_fldr</em>, <em>n_runs=16</em>, <em>n_batches=1000</em>, <em>acf_cut=0.05</em>, <em>include_stiff_reduc=True</em>, <em>max_events=1000</em>, <em>max_iterations=30</em>, <em>ss_inc=2.0</em>, <em>n_samples=100</em>, <em>platform='Squidward'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/RateRescaling.html#ReachSteadyStateAndRescale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#RateRescaling.ReachSteadyStateAndRescale" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">RateRescaling.</code><code class="descname">ReachSteadyStateAndRescale</code><span class="sig-paren">(</span><em>kmc_template</em>, <em>scale_parent_fldr</em>, <em>n_runs=16</em>, <em>n_batches=1000</em>, <em>acf_cut=0.05</em>, <em>include_stiff_reduc=True</em>, <em>max_events=1000</em>, <em>max_iterations=30</em>, <em>ss_inc=2.0</em>, <em>n_samples=100</em>, <em>parallel_mode='Squidward'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/RateRescaling.html#ReachSteadyStateAndRescale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#RateRescaling.ReachSteadyStateAndRescale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handles rate rescaling and continuation of KMC runs</p>
-<p>kmc_template           :     kmc_traj object with information about the physical system
-scale_parent_fldr      :     Working directory
-n_runs                 :     Number of trajectories to run, also the number of processors
-include_stiff_reduc    :     True to allow for scaledown, False to turn this feature off
-max_events             :     Maximum number of events for the first iteration
-max_iterations         :     Maximum number of iterations to use
-ss_inc                 :     Factor to scale the final time by if you have not yet reached steady state
-n_samples              :     Number of time points to sample for each trajectory
-platform               :     Squidward or Farber</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>kmc_template</strong> &#8211; kmc_traj object with information about the physical system</li>
+<li><strong>scale_parent_fldr</strong> &#8211; Working directory</li>
+<li><strong>n_runs</strong> &#8211; Number of trajectories to run, also the number of processors</li>
+<li><strong>include_stiff_reduc</strong> &#8211; True to allow for scaledown, False to turn this feature off</li>
+<li><strong>max_events</strong> &#8211; Maximum number of events for the first iteration</li>
+<li><strong>max_iterations</strong> &#8211; Maximum number of iterations to use</li>
+<li><strong>ss_inc</strong> &#8211; Factor to scale the final time by if you have not yet reached steady state</li>
+<li><strong>n_samples</strong> &#8211; Number of time points to sample for each trajectory</li>
+<li><strong>parallel_mode</strong> &#8211; MPI, Squidward, or Farber</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -97,8 +107,8 @@ platform               :     Squidward or Farber</p>
   <p class="topless"><a href="Replicates.html"
                         title="previous chapter">Multiple trajectories</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="Lattice.html"
-                        title="next chapter">KMC lattice</a></p>
+  <p class="topless"><a href="thermo.html"
+                        title="next chapter">Thermodynamics calculator</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -130,7 +140,7 @@ platform               :     Squidward or Farber</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="Lattice.html" title="KMC lattice"
+          <a href="thermo.html" title="Thermodynamics calculator"
              >next</a> |</li>
         <li class="right" >
           <a href="Replicates.html" title="Multiple trajectories"
