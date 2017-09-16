@@ -3,7 +3,7 @@ import os
 import copy
 
 from Replicates import Replicates
-from Helper import *
+from utils import *
 
 import matplotlib as mat
 import matplotlib.pyplot as plt
@@ -15,15 +15,23 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
     '''
     Handles rate rescaling and continuation of KMC runs
     
-    kmc_template           :     kmc_traj object with information about the physical system
-    scale_parent_fldr      :     Working directory
-    n_runs                 :     Number of trajectories to run, also the number of processors
-    include_stiff_reduc    :     True to allow for scaledown, False to turn this feature off
-    max_events             :     Maximum number of events for the first iteration
-    max_iterations         :     Maximum number of iterations to use
-    ss_inc                 :     Factor to scale the final time by if you have not yet reached steady state
-    n_samples              :     Number of time points to sample for each trajectory
-    platform               :     Squidward or Farber
+    :param kmc_template:            kmc_traj object with information about the physical system
+    
+    :param scale_parent_fldr:       Working directory
+    
+    :param n_runs:                  Number of trajectories to run, also the number of processors
+    
+    :param include_stiff_reduc:     True to allow for scaledown, False to turn this feature off
+    
+    :param max_events:              Maximum number of events for the first iteration
+    
+    :param max_iterations:          Maximum number of iterations to use
+    
+    :param ss_inc:                  Factor to scale the final time by if you have not yet reached steady state
+    
+    :param n_samples:               Number of time points to sample for each trajectory
+    
+    :param platform:                Squidward or Farber
     '''
     
     prev_batch = Replicates()       # Set this if the starting iteration is not 1

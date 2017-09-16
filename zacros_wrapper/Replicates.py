@@ -7,7 +7,7 @@ import sys
 import scipy.stats
 
 from KMC_Run import kmc_traj
-from Helper import *
+from utils import *
 import time
 import scipy
 

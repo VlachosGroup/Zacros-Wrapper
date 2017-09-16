@@ -1,16 +1,20 @@
 
-import os as _os
-import numpy as _np
+import os
+import numpy as np
 import re as _re
 import random as _random
 import linecache as _linecache
-#import DFT_to_Thermochemistry as _thermo
 
-from GRW_constants import constant as _c
-from Helper import ReadWithoutBlankLines as _ReadWithoutBlankLines
-from Helper import ReturnUnique as _ReturnUnique
-from Helper import rawbigcount as _rawbigcount
-#reload(_thermo)
+from utils import constant as _c
+from utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
+from utils import ReturnUnique as _ReturnUnique
+from utils import rawbigcount as _rawbigcount
+
+try:
+    import DFT_to_Thermochemistry as _thermo
+    reload(_thermo)
+except:
+    pass
 
 
 '''
@@ -77,7 +81,7 @@ class SimIn():
         Read simulation_input.dat
         '''
         
-        with open(_os.path.join(fldr, self.fname), 'r') as txt:
+        with open(os.path.join(fldr, self.fname), 'r') as txt:
             RawTxt = txt.readlines()
 
         for i in RawTxt:
@@ -87,14 +91,14 @@ class SimIn():
                     if i.split()[0] == 'temperature':
                         if i.split()[1] == 'ramp':
                             self.TPD = True
-                            self.TPD_start = _np.float(i.split()[2])
-                            self.TPD_ramp = _np.float(i.split()[3])
+                            self.TPD_start = np.float(i.split()[2])
+                            self.TPD_ramp = np.float(i.split()[3])
                         else:
-                            self.T = _np.float(i.split()[1])
+                            self.T = np.float(i.split()[1])
                     elif i.split()[0] == 'pressure':
-                        self.P = _np.float(i.split()[1])
+                        self.P = np.float(i.split()[1])
                     elif i.split()[0] == 'random_seed':
-                        self.Seed = _np.int(i.split()[1])
+                        self.Seed = np.int(i.split()[1])
                     elif i.split()[0] == 'no_restart':
                         self.restart = False
                     elif i.split()[0] == 'gas_specs_names':
@@ -102,19 +106,19 @@ class SimIn():
                         self.n_gas = len(self.gas_spec)
                     elif i.split()[0] == 'gas_energies':
                         for j in i.split()[1:]:
-                            self.gas_eng.append(_np.float(j))
+                            self.gas_eng.append(np.float(j))
                     elif i.split()[0] == 'gas_molec_weights':
                         for j in i.split()[1:]:
-                            self.gas_MW.append(_np.float(j))
+                            self.gas_MW.append(np.float(j))
                     elif i.split()[0] == 'gas_molar_fracs':
                         for j in i.split()[1:]:
-                            self.gas_molfrac.append(_np.float(j))
+                            self.gas_molfrac.append(np.float(j))
                     elif i.split()[0] == 'surf_specs_names':
                         self.surf_spec = i.split()[1:]
                         self.n_surf = len(self.surf_spec)
                     elif i.split()[0] == 'surf_specs_dent':
                         for j in i.split()[1:]:
-                            self.surf_dent.append(_np.int(j))
+                            self.surf_dent.append(np.int(j))
                     elif i.split()[0] == 'event_report':
                         self.event = i.split()[1]
                     elif i.split()[0] == 'snapshots':
@@ -128,14 +132,14 @@ class SimIn():
                             self.SimTime_Max = 'inf'
                         else:
                             self.SimTime_Max =\
-                             _np.float(i.split()[1])
+                             np.float(i.split()[1])
                     elif i.split()[0] == 'max_steps':
                         if i.split()[1] == 'infinity':
                             self.MaxStep = 'inf'
                         else:
                             self.MaxStep = int(i.split()[1])
                     elif i.split()[0] == 'wall_time':
-                        self.WallTime_Max = _np.int(i.split()[1])
+                        self.WallTime_Max = np.int(i.split()[1])
                     elif i.split()[0] == 'finish' or\
                                          i.split()[0] == 'n_gas_species' or\
                                          i.split()[0] == 'n_surf_species':
@@ -148,7 +152,7 @@ class SimIn():
         Write simulation_input.dat
         '''
 
-        with open(_os.path.join(fldr, self.fname), 'w') as txt:
+        with open(os.path.join(fldr, self.fname), 'w') as txt:
             SeedTxt = ''
             if self.Seed is None:
                 _random.seed()
@@ -200,7 +204,7 @@ class SimIn():
             elif self.hist[0] == 'time':
                 txt.write('{:20}{} {} {}\n'.format('snapshots', 'on',
                           self.hist[0],
-                          str(_np.float(self.hist[1]))))
+                          str(np.float(self.hist[1]))))
                           
             if self.procstat[0] == 'off':
                 txt.write('process_statistics  off\n')
@@ -211,7 +215,7 @@ class SimIn():
             elif self.procstat[0] == 'time':
                 txt.write('{:20}{} {} {}\n'.format('process_statistics', 'on',
                           self.procstat[0],
-                          str(_np.float(self.procstat[1]))))
+                          str(np.float(self.procstat[1]))))
 
             if self.specnum[0] == 'off':
                 txt.write('species_numbers     off\n')
@@ -222,7 +226,7 @@ class SimIn():
             elif self.specnum[0] == 'time':
                 txt.write('{:20}{} {} {}\n'.format('species_numbers', 'on',
                           self.specnum[0],
-                          str(_np.float(self.specnum[1]))))
+                          str(np.float(self.specnum[1]))))
             txt.write('{:20}{}\n\n'.format('event_report',
                       self.event))
 
@@ -311,8 +315,8 @@ class ClusterIn(object):
             var = []
             for s in self.cluster_list:
                 var.append(s.nVariant)
-            var = _np.array(var)
-            C_index = _np.argmin(var.cumsum() < Cluster_Num)
+            var = np.array(var)
+            C_index = np.argmin(var.cumsum() < Cluster_Num)
             V_index = Cluster_Num - sum(var[0:C_index]) - 1
         else:
             C_index = V_index = -1
@@ -334,7 +338,7 @@ class ClusterIn(object):
         Read energetics_input.dat
         '''
         
-        RawTxt = _ReadWithoutBlankLines(_os.path.join(fldr, self.fname), CommentLines=False)
+        RawTxt = _ReadWithoutBlankLines(os.path.join(fldr, self.fname), CommentLines=False)
         nLines = len(RawTxt)
     
         nClusters = 0
@@ -342,7 +346,7 @@ class ClusterIn(object):
             if RawTxt[i].split()[0] == 'cluster':
                 nClusters += 1
     
-        ClusterInd = _np.array([ [0, 0] ] * nClusters)
+        ClusterInd = np.array([ [0, 0] ] * nClusters)
         Count = 0
         for i in range(0, nLines):
             if RawTxt[i].split()[0] == 'cluster':
@@ -381,13 +385,13 @@ class ClusterIn(object):
             if n_variants == 0:
             
                 n_variants = 1
-                variantInd = _np.array([[0, 0]]*n_variants)
+                variantInd = np.array([[0, 0]]*n_variants)
                 variantInd[0, 0] = ClusterInd[j, 0] + 1
                 variantInd[0, 1] = ClusterInd[j, 1]
                 
             else:
             
-                variantInd = _np.array([[0, 0]]*n_variants)
+                variantInd = np.array([[0, 0]]*n_variants)
                 Count = 0
                 for i in range(ClusterInd[j, 0]+1, ClusterInd[j, 1]):
                     if RawTxt[i].split()[0] == 'variant':
@@ -419,7 +423,7 @@ class ClusterIn(object):
         Write energetics_input.dat
         '''
     
-        with open(_os.path.join(fldr, self.fname), 'w') as txt:
+        with open(os.path.join(fldr, self.fname), 'w') as txt:
         
             txt.write('energetics\n\n')
             
@@ -547,8 +551,8 @@ class MechanismIn(object):
             var = []
             for s in self.Reaction:
                 var.append(s.nVariant)
-            var = _np.array(var)
-            R_index = _np.argmin(var.cumsum() < Reaction_Num)
+            var = np.array(var)
+            R_index = np.argmin(var.cumsum() < Reaction_Num)
             V_index = Reaction_Num - sum(var[0:R_index]) - 1
         else:
             R_index = V_index = -1
@@ -561,7 +565,7 @@ class MechanismIn(object):
         Read mechanism_input.dat
         '''
         
-        RawTxt = _ReadWithoutBlankLines(_os.path.join(fldr, self.fname), CommentLines=True)
+        RawTxt = _ReadWithoutBlankLines(os.path.join(fldr, self.fname), CommentLines=True)
         nLines = len(RawTxt)
         StiffCorrLine = -1
     
@@ -581,10 +585,10 @@ class MechanismIn(object):
                 self.include_scaledown = True
     
         if StiffCorrLine != -1:
-            scaledown_factor_list = [_np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
+            scaledown_factor_list = [np.float(i) for i in RawTxt[StiffCorrLine+2].split(':')[1].split()]
     
         # Identify which lines of text are for each reaction
-        MechInd = _np.array([[0, 0]]*n_rxns)
+        MechInd = np.array([[0, 0]]*n_rxns)
         Count = 0
         for i in range(nLines):
     
@@ -646,14 +650,14 @@ class MechanismIn(object):
                 n_variants = 1
                 
                 # Find the beginning and end of the reaction information
-                variantInd = _np.array([[0, 0]]*n_variants)
+                variantInd = np.array([[0, 0]]*n_variants)
                 variantInd[0, 0] = MechInd[j, 0] + 1 
                 variantInd[0, 1] = MechInd[j, 1]
                 
             else:
                     
                 # Find beginning and ending lines for each variant
-                variantInd = _np.array([[0, 0]]*n_variants)
+                variantInd = np.array([[0, 0]]*n_variants)
                 Count  = 0
                 for i in range(MechInd[j, 0] + 1, MechInd[j, 1]):
                     if RawTxt[i].split()[0] == 'variant':
@@ -699,7 +703,7 @@ class MechanismIn(object):
         Write mechanism_input.dat
         '''
 
-        with open(_os.path.join(fldr, self.fname), 'w') as txt:
+        with open(os.path.join(fldr, self.fname), 'w') as txt:
         
             txt.write('mechanism\n\n')
             
@@ -787,7 +791,7 @@ class MechanismIn(object):
         
         Assumes that each reaction has only 1 variant (MPN)
         '''
-        filepath = _os.path.join(fldr, 'Zacros_Species_Energy.txt')
+        filepath = os.path.join(fldr, 'Zacros_Species_Energy.txt')
         [lines, dict] = _thermo.DFTFileRead(filepath)
         T_species = []
         for s in lines[3:]:
@@ -862,11 +866,11 @@ class MechanismIn(object):
                     Non-activated adsorbtion
                     '''
                     fwd_pre = T_species[x].A_st /\
-                        _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
+                        np.sqrt(2*np.pi * MW_gas * _c.kb1*T)\
                         * 1e5
 
                     rev_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
-                        _np.product(q_vib_surf) * _c.kb1 * T/_c.h1
+                        np.product(q_vib_surf) * _c.kb1 * T/_c.h1
 
                 elif not self.rxn_list[x].gas_reacs_prods is None and\
                         int(self.rxn_list[x].gas_reacs_prods[1]) == 1:
@@ -875,11 +879,11 @@ class MechanismIn(object):
                     Non-activated desorbtion
                     '''
                     rev_pre = T_species[x].A_st /\
-                        _np.sqrt(2*_np.pi * MW_gas * _c.kb1*T)\
+                        np.sqrt(2*np.pi * MW_gas * _c.kb1*T)\
                         * 1e5
 
                     fwd_pre = q_vib_gas * q_rot_gas * q_trans2D_gas /\
-                        _np.product(q_vib_surf) *\
+                        np.product(q_vib_surf) *\
                         _c.kb1 * T/_c.h1
                 else:
                     '''
@@ -934,8 +938,8 @@ class MechanismIn(object):
                              for e in T_species
                              if e.name == self.rxn_list[x].gas_reacs_prods[0])
                     fwd_pre = q_vib_TST/Q_gas * A_st /\
-                        _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
-                    rev_pre = q_vib_TST/_np.product(q_vib_surf) *\
+                        np.sqrt(2*np.pi*MW_gas*_c.kb1*T)*1e5
+                    rev_pre = q_vib_TST/np.product(q_vib_surf) *\
                         (_c.kb1*T/_c.h1)
                 elif not self.rxn_list[x].gas_reacs_prods is None and\
                         int(self.rxn_list[x].gas_reacs_prods[1]) == 1:
@@ -958,8 +962,8 @@ class MechanismIn(object):
                                                   if e.name ==
                                                   surf_species[y][1]))
                     rev_pre = q_vib_TST/Q_gas * A_st /\
-                        _np.sqrt(2*_np.pi*MW_gas*_c.kb1*T)*1e5
-                    fwd_pre = q_vib_TST/_np.product(q_vib_surf) *\
+                        np.sqrt(2*np.pi*MW_gas*_c.kb1*T)*1e5
+                    fwd_pre = q_vib_TST/np.product(q_vib_surf) *\
                         (_c.kb1*T/_c.h1)
                 else:
                     '''
@@ -977,7 +981,7 @@ class MechanismIn(object):
                                  T_species[TST_Slab].etotal)
                             q_vib_surf.append(next(e.q_vib for e in T_species
                                               if e.name == surf_species[y][1]))
-                    q_vib_reactants = _np.product(q_vib_surf)
+                    q_vib_reactants = np.product(q_vib_surf)
                     fwd_pre = q_vib_TST/q_vib_reactants * (_c.kb1*T/_c.h1)
 
                     q_vib_prod = []
@@ -987,7 +991,7 @@ class MechanismIn(object):
                             q_vib_prod.append(next(e.q_vib for e in T_species
                                                    if e.name ==
                                                    surf_prod[y][1]))
-                    q_vib_products = _np.product(q_vib_prod)
+                    q_vib_products = np.product(q_vib_prod)
                     rev_pre = q_vib_TST/q_vib_products * (_c.kb1*T/_c.h1)
                     
             # Modify reaction data
@@ -1020,9 +1024,9 @@ class StateIn(object):
         Read state_input.dat
         '''
 
-        if _os.path.isfile(_os.path.join(fldr, 'state_input.dat')):
+        if os.path.isfile(os.path.join(fldr, 'state_input.dat')):
         
-            with open(_os.path.join(fldr, 'state_input.dat'), 'r') as Txt:
+            with open(os.path.join(fldr, 'state_input.dat'), 'r') as Txt:
                 RawTxt = Txt.readlines()
                 
             self.Struct = []
@@ -1045,14 +1049,14 @@ class StateIn(object):
             pass
 
         elif self.Type == 'StateInput':
-            with open(_os.path.join(fldr, self.fname), 'w') as txt:
+            with open(os.path.join(fldr, self.fname), 'w') as txt:
                 for i in self.Struct:
                     txt.write(i + '\n')
 
         elif self.Type == 'history':
 
             Lattice = self.Struct
-            UniqSpec = _np.unique(Lattice[_np.not_equal(
+            UniqSpec = np.unique(Lattice[np.not_equal(
                     Lattice[:, 2], 0), 1])
             nAds = len(UniqSpec)
             SpecIden = [0] * nAds
@@ -1066,7 +1070,7 @@ class StateIn(object):
                         SpecIden[i] = Lattice[j, 2]
 
             if nAds > 0:
-                with open(_os.path.join(fldr, self.fname), 'w') as txt:
+                with open(os.path.join(fldr, self.fname), 'w') as txt:
                     txt.write('initial_state\n')
                     for i in range(0, nAds):
                         txt.write('  seed_on_sites  {:10}'.
@@ -1114,21 +1118,21 @@ class PerformanceOut(object):
         n_surf = len(surf_spec_names)
         n_gas = len(gas_spec_names)
         
-        with open(_os.path.join(fldr, self.fname), 'r') as txt:
+        with open(os.path.join(fldr, self.fname), 'r') as txt:
             RawTxt = txt.readlines()
     
         for i in range(0, len(RawTxt)):
             if _re.search('Number of elementary steps:', RawTxt[i]):
-                self.nRxn = _np.int(RawTxt[i].split(':')[1])
+                self.nRxn = np.int(RawTxt[i].split(':')[1])
             elif _re.search('Current KMC time:', RawTxt[i]):
-                self.t_final = _np.float(RawTxt[i].split(':')[1])
+                self.t_final = np.float(RawTxt[i].split(':')[1])
             elif _re.search('Events occurred:', RawTxt[i]):
                 self.events_occurred =\
-                _np.float(RawTxt[i].split(':')[1])
+                np.float(RawTxt[i].split(':')[1])
             elif _re.search('Elapsed CPU time:', RawTxt[i]):
                 after_colon = RawTxt[i].split(':')[1]
                 self.CPU_time =\
-                    _np.float(after_colon.split(' ')[-2])
+                    np.float(after_colon.split(' ')[-2])
             elif _re.search('Reaction network:', RawTxt[i]):
                 RxnStartLine = i + 2
     
@@ -1192,12 +1196,12 @@ class ProcstatOut(object):
         '''
         Read procstat_output.txt
         '''
-        MaxLen = _np.int(2e4)
-        with open(_os.path.join(fldr, self.fname), 'r') as txt:
+        MaxLen = np.int(2e4)
+        with open(os.path.join(fldr, self.fname), 'r') as txt:
             RawTxt = txt.readlines()
 
         if len(RawTxt) - 1 > MaxLen * 3:  # Procstat uses 3 lines per outputs
-            Spacing = _np.int(_np.floor((len(RawTxt) - 1)/(MaxLen*3)))
+            Spacing = np.int(np.floor((len(RawTxt) - 1)/(MaxLen*3)))
             RawTxt2 = []
             for i in range(0, MaxLen):
                 RawTxt2.append(RawTxt[i*Spacing*3+1])
@@ -1210,15 +1214,15 @@ class ProcstatOut(object):
         t = []
         events = []
         for i in range(0, len(RawTxt2)/3):
-            t.append(_np.float(RawTxt2[i*3].split()[3]))
+            t.append(np.float(RawTxt2[i*3].split()[3]))
             eventsTemp = RawTxt2[i*3+2].split()[1:]
             for j in range(0, len(eventsTemp)):
-                eventsTemp[j] = _np.int(eventsTemp[j])
+                eventsTemp[j] = np.int(eventsTemp[j])
             events.append(eventsTemp)
 
         self.Spacing = Spacing
-        self.t = _np.asarray(t)
-        self.events = _np.asarray(events)
+        self.t = np.asarray(t)
+        self.events = np.asarray(events)
 
 
 class SpecnumOut(object):
@@ -1247,12 +1251,12 @@ class SpecnumOut(object):
         '''
         Read specnum_output.txt
         '''
-        MaxLen = _np.int(2e4)
-        with open(_os.path.join(fldr, self.fname), 'r') as txt:
+        MaxLen = np.int(2e4)
+        with open(os.path.join(fldr, self.fname), 'r') as txt:
             RawTxt = txt.readlines()
 
         if len(RawTxt) - 1 > MaxLen:
-            Spacing = _np.int(_np.floor((len(RawTxt)-1)/MaxLen))
+            Spacing = np.int(np.floor((len(RawTxt)-1)/MaxLen))
             RawTxt2 = []
             for i in range(0, MaxLen):
                 RawTxt2.append(RawTxt[i*Spacing+1])
@@ -1268,22 +1272,22 @@ class SpecnumOut(object):
 
         for i in range(0, len(RawTxt2)):
             LineSplit = RawTxt2[i].split()
-            nEvents.append(_np.int(LineSplit[1]))
-            t.append(_np.float(LineSplit[2]))
-            T.append(_np.float(LineSplit[3]))
-            E.append(_np.float(LineSplit[4]))
+            nEvents.append(np.int(LineSplit[1]))
+            t.append(np.float(LineSplit[2]))
+            T.append(np.float(LineSplit[3]))
+            E.append(np.float(LineSplit[4]))
             specTemp = LineSplit[5:]
             for j in range(0, len(specTemp)):
-                specTemp[j] = _np.int(specTemp[j])
+                specTemp[j] = np.int(specTemp[j])
             spec.append(specTemp)
             
         # Store data in class variables
         self.Spacing = Spacing
-        self.nEvents = _np.asarray(nEvents)
-        self.t = _np.asarray(t)
-        self.T = _np.asarray(T)
-        self.E = _np.asarray(E)
-        self.spec = _np.asarray(spec)
+        self.nEvents = np.asarray(nEvents)
+        self.t = np.asarray(t)
+        self.T = np.asarray(T)
+        self.E = np.asarray(E)
+        self.spec = np.asarray(spec)
     
 
 class HistoryOut():
@@ -1308,10 +1312,10 @@ class HistoryOut():
         nSites: number of lattice sites, obtained from lattice_output.txt
         '''
         
-        HistPath = _os.path.join(fldr, self.fname)
+        HistPath = os.path.join(fldr, self.fname)
         
         # Check if file exists
-        if not _os.path.isfile(HistPath):
+        if not os.path.isfile(HistPath):
             return
 
         nLines = _rawbigcount(HistPath)
@@ -1321,7 +1325,7 @@ class HistoryOut():
         self.snap_times = []
 
         for snap_ind in range(self.n_snapshots):
-            snap_data = _np.array([[0]*4]*nSites)
+            snap_data = np.array([[0]*4]*nSites)
             _linecache.clearcache()
             snap_header = _linecache.getline(HistPath, 8 + snap_ind *
                                              (nSites+2)-1).split()
@@ -1338,8 +1342,161 @@ def StateInc(i):
         inc = ''
     elif _re.search('on time', i):
         state = 'time'
-        inc = _np.float(i.split()[3])
+        inc = np.float(i.split()[3])
     elif _re.search('on event', i):
         state = 'event'
-        inc = _np.int(i.split()[3])
+        if len(i.split()) < 4:
+            inc = 1
+        else:
+            inc = np.int(i.split()[3])
     return (state, inc)
+    
+    
+def Read_propensities(path, nRxn):
+    '''
+    Read propenisty data from output files. The initial time point: At t = 0 or after 0 events is wrong because
+    it is recorded before the first propensities are calculated. Instead, they are erroneously all zeros and should
+    not be used for averaging. The rest are correct.        
+    
+    :param Mode: 0 - Read Prop_output.bin, instantaneous propensities
+        1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages
+        
+    :returns: Matrix of time integrated surface species populations
+    '''
+    
+    if os.path.isfile(os.path.join(path, 'Prop_output.bin')):
+    
+        dt = np.dtype(np.float64)
+        virtual_arr = np.memmap(os.path.join(path, 'Prop_output.bin'), dt, "r")
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % nRxn)
+        virtual_arr = virtual_arr[:nNum]
+    
+        prop = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
+
+        del virtual_arr
+        
+    elif os.path.isfile(os.path.join(path, 'propensities_output.txt')):
+    
+        with open(os.path.join(path, 'propensities_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+        prop = []
+        for i in range(len(RawTxt)):
+            
+            LineSplit = RawTxt[i].split()
+            line_data = []
+            if len(LineSplit) > 0:
+                for dub in LineSplit:
+                    line_data.append(np.float(dub))
+                prop.append(line_data)
+        
+    return np.array(prop)
+    
+
+def Read_time_integrated_propensities(path, nRxn):
+    '''
+    Read propenisty data from output files. The initial time point: At t = 0 or after 0 events is wrong because
+    it is recorded before the first propensities are calculated. Instead, they are erroneously all zeros and should
+    not be used for averaging. The rest are correct.        
+    
+    :param Mode: 0 - Read Prop_output.bin, instantaneous propensities
+        1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages
+        
+    :returns: Matrix of time integrated surface species populations
+    '''
+    
+    if os.path.isfile(os.path.join(path, 'PropCounter_output.bin')):
+    
+        dt = np.dtype(np.float64)
+        virtual_arr = np.memmap(os.path.join(path, FileName), dt, "r")
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % nRxn)
+        virtual_arr = virtual_arr[:nNum]
+    
+        propCounter = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
+            
+        del virtual_arr
+    
+    elif os.path.isfile(os.path.join(path, 'timeintprop_output.txt')):
+    
+        with open(os.path.join(path, 'timeintprop_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+        propCounter = []
+        for i in range(len(RawTxt)):
+            
+            LineSplit = RawTxt[i].split()
+            line_data = []
+            if len(LineSplit) > 0:
+                for dub in LineSplit:
+                    line_data.append(np.float(dub))
+                propCounter.append(line_data)
+        
+    return np.array(propCounter)
+
+    
+def Read_trajectory_derivatives(path, nRxn):
+    '''
+    Read SA_output.bin - get trajectory derivatives for use in likelihood ratio sensitivity analysis
+    
+    :returns: Matrix of trajectory derivatives
+    '''
+    dt = np.dtype(np.float64)
+    FileName = 'SA_output.bin'
+    if os.path.isfile(os.path.join(path, FileName)):
+        virtual_arr = np.memmap(os.path.join(path,
+                                               FileName), dt, "r")
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % nRxn)
+        virtual_arr = virtual_arr[:nNum]
+
+        W_sen_anal = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
+
+        del virtual_arr
+    
+    elif os.path.isfile(os.path.join(path, 'trajderiv_output.txt')):
+        with open(os.path.join(path, 'trajderiv_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+        W_sen_anal = []
+        for i in range(len(RawTxt)):
+            
+            LineSplit = RawTxt[i].split()
+            line_data = []
+            if len(LineSplit) > 0:
+                for dub in LineSplit:
+                    line_data.append(np.float(dub))
+                W_sen_anal.append(line_data)
+        
+    return np.array(W_sen_anal)
+
+
+def Read_time_integrated_species(path, n_surf_specs):
+    '''
+    Read time integrated species counts
+    
+    :returns: Matrix of time integrated surface species populations
+    '''
+    
+    if os.path.isfile(os.path.join(path, 'IntegSpec_output.bin')):
+        dt = np.dtype(np.float64)
+        virtual_arr = np.memmap(os.path.join(path, 'IntegSpec_output.bin'), dt, "r")
+        nNum = virtual_arr.shape[0]
+        nNum = nNum - (nNum % n_surf_specs)
+        virtual_arr = virtual_arr[:nNum]
+
+        spec_num_int = np.reshape(virtual_arr, [nNum/n_surf_specs, n_surf_specs])
+
+        del virtual_arr
+    elif os.path.isfile(os.path.join(path, 'timeintspecs_output.txt')): 
+        with open(os.path.join(path, 'timeintspecs_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+        spec_num_int = []
+        for i in range(len(RawTxt)):
+            
+            LineSplit = RawTxt[i].split()
+            line_data = []
+            if len(LineSplit) > 0:
+                for dub in LineSplit:
+                    line_data.append(np.float(dub))
+                spec_num_int.append(line_data)
+        
+    return np.array(spec_num_int)

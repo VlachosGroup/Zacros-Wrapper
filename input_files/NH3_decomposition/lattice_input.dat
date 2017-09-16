@@ -7,7 +7,7 @@ cell_vectors       # in row format
    0.0 68.3712   
    
 # repeat_cell       3  5
-repeat_cell       1  1    #
+repeat_cell       10  10    #
 
 n_site_types      19
 site_type_names   adlayer_fcc adlayer_hcp adlayer_top adlayer_top_corner adlayer_top_edge base_fcc base_hcp base_top lower_edge2_hcp_fcc lower_edge_fcc_fcc lower_edge_fcc_hcp lower_edge_hcp_fcc lower_edge_hcp_hcp step_100 step_110 upper_edge_fcc_fcc upper_edge_fcc_hcp upper_edge_hcp_fcc upper_edge_hcp_hcp

@@ -35,7 +35,7 @@ import ase.io as _ase
 import re
 import scipy.interpolate as _sp
 import datetime
-from GRW_constants import constant as c
+from utils import constant as c
 
 
 class Particle(object):

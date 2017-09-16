@@ -42,6 +42,8 @@ class Lattice:
     
         '''
         Read lattice_input.dat
+        
+        :param fldr: Folder directory from which to read lattice_input.dat
         '''
     
         self.lattice_in_txt = []
@@ -55,6 +57,8 @@ class Lattice:
     
         '''
         Write lattice_input.dat
+        
+        :param fldr: Folder directory from which to read lattice_input.dat
         '''
         
         if self.text_only:
@@ -72,6 +76,8 @@ class Lattice:
         
         '''
         Set the fractional and Cartesian coordinates
+        
+        :param fc: n x 3 array (or list of lists) of fractional coordinates to set for each atom 
         '''
         
         self.frac_coords = np.array(fc)
@@ -82,6 +88,8 @@ class Lattice:
     
         '''
         Set the Cartesian and fractional coordinates
+        
+        :param fc: n x 3 array (or list of lists) of Cartesian coordinates to set for each atom
         '''
     
         self.cart_coords = np.array(cc)
@@ -92,6 +100,10 @@ class Lattice:
 
         '''
         Give the coordinates of the periodic image of B which is closest to A
+        
+        :param a_ind: Index of atom A
+        
+        :param b_ind: Index of atom B
         '''
 
         a_coords = self.cart_coords[ a_ind , : ]
@@ -119,7 +131,16 @@ class Lattice:
         'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms = 4):
         
         '''
-        Return a pyplot object with the lattice graphed on it
+        :param cutoff: Maximum distance to draw connections between nearest neighbor sites.
+            This prevents drawing line segments between sites which are neighbors only though their periodic images.
+        
+        :param plot_neighbs: Flag to plot line segments between lattice sites which are first nearest neighbors to each other
+        
+        :param type_symbols: List of symbols for each lattice site type.
+        
+        :param ms: Marker size
+        
+        :returns: pyplot object with the lattice graphed on it
         '''
         
         if self.text_only:
@@ -272,6 +293,11 @@ class Lattice:
     
         '''
         Builds the neighbor list based on distances between sites
+        
+        :param cut: Maximum distance between nearest neighbor sites or their periodic images.
+        
+        :param cut_mat: List of nearest neighbor cutoff distances between different site types. If empty, it will assume the same distance for 
+            all site types.
         '''
     
         # Make sure these lists are empty before we start appending

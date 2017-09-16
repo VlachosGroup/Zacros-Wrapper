@@ -10,7 +10,7 @@ import subprocess
 import copy
 import re as _re
 
-from Helper import *
+from utils import *
 from IO_data import *
 from Lattice import Lattice
 
@@ -26,27 +26,33 @@ class kmc_traj():
         Initialize class variables
         '''
 
-        self.Path = path
-        self.exe_file = None
+        self.Path = path                        # Path to the folder with the Zacros input and output files
+        self.exe_file = None                    # Path to the Zacros executable
         
         # Input variables
-        self.simin = SimIn()
-        self.mechin = MechanismIn()
-        self.clusterin = ClusterIn()
-        self.lat = Lattice()
-        self.statein = StateIn()
+        self.simin = SimIn()                    # data from simulation_input.dat
+        self.mechin = MechanismIn()             # data from mechanism_input.dat
+        self.clusterin = ClusterIn()            # data from energetics_input.dat
+        self.lat = Lattice()                    # data from lattice_input.dat
+        self.statein = StateIn()                # data from state_input.dat
         
         # Output variables
-        self.genout = PerformanceOut()
-        self.specnumout = SpecnumOut()
-        self.procstatout = ProcstatOut()
-        self.histout = HistoryOut()
+        self.genout = PerformanceOut()          # data from general_output.txt
+        self.specnumout = SpecnumOut()          # data from specnum_output.txt
+        self.procstatout = ProcstatOut()        # data from procstat_output.txt
+        self.histout = HistoryOut()             # data from history_output.txt
         
         # Extra analysis variables
-        self.gas_prod = None
+        self.gas_prod = None                    # string with the name of the product (gas) species, used to compute the rate
+        
+        # Missing other variables obtained from binary files...
         
         # Binary data
-        self.spec_num_int = None
+        self.prop = None                        # data from propensities_output.txt
+        self.propCounter = None                 # data from timeintprop_output.txt
+        self.W_sen_anal = None                  # data from trajderiv_output.txt
+        self.spec_num_int = None                # data from timeintspecs_output.txt
+        
         
     '''
     ======================================= File input/output methods =======================================
@@ -83,8 +89,7 @@ class kmc_traj():
         Read all Zacros output files
     
         :param build_lattice :     True - builds a Lattice object
-                            False - reads lattice_output.txt as text only
-        
+            False - reads lattice_output.txt as text only
         '''
         self.ReadAllInput()
 
@@ -93,7 +98,8 @@ class kmc_traj():
             # Standard output files
             self.genout.ReadOut(self.Path, self.simin.surf_spec, self.simin.gas_spec )
             self.specnumout.ReadOut(self.Path)
-            self.procstatout.ReadOut(self.Path)
+            if os.path.isfile(os.path.join(self.Path, 'procstat_output.txt')):
+                self.procstatout.ReadOut(self.Path)
             
             if build_lattice:
                 self.lat.Read_lattice_output(self.Path)
@@ -104,100 +110,15 @@ class kmc_traj():
             nSites = len(RawTxt) - 2
             
             self.histout.ReadOut(self.Path, nSites)
-            
-            # Extra binary files
-            if os.path.isfile(os.path.join(self.Path, 'Prop_output.bin')):
-                self.ReadProp(0)
-            if os.path.isfile(os.path.join(self.Path, 'PropCounter_output.bin')):
-                self.ReadProp(1)
-            if os.path.isfile(os.path.join(self.Path, 'SA_output.bin')):
-                self.ReadSA()
-            if os.path.isfile(os.path.join(self.Path, 'IntegSpec_output.bin')):
-                self.ReadSpecInt()
+
+            # Extra output files
+            self.prop = Read_propensities(self.Path, len( self.genout.RxnNameList ) )
+            self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
+            self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
+            self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
 
         else:
             print 'general_output.txt not found in ' + self.Path
-    
-    
-    def ReadProp(self, Mode):
-        '''
-        :param Mode: 0 - Read Prop_output.bin, instantaneous propensities
-         1 - Read PropCounter_output.bin, time integrated propensities used for accurate time averages
-        '''
-        dt = np.dtype(np.float64)
-        if Mode == 0:     # Instantaneous propensities
-            FileName = 'Prop_output.bin'
-        elif Mode == 1:   # Integral propensities
-            FileName = 'PropCounter_output.bin'
-
-        virtual_arr = np.memmap(os.path.join(self.Path, FileName), dt, "r")
-        nRxn = len( self.genout.RxnNameList )
-        nNum = virtual_arr.shape[0]
-        nNum = nNum - (nNum % nRxn)
-        virtual_arr = virtual_arr[:nNum]
-
-        if Mode == 0:
-            self.prop = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
-            self.prop = np.array(self.prop[::self.procstatout.Spacing])
-            
-        if Mode == 1:
-            self.propCounter = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
-            self.propCounter = np.array(self.propCounter[::self.procstatout.Spacing])
-        del virtual_arr
-
-    def ReadSA(self):
-        '''
-        Read SA_output.bin - get trajectory derivatives for use in likelihood ratio sensitivity analysis
-        '''
-        dt = np.dtype(np.float64)
-        FileName = 'SA_output.bin'
-        if os.path.isfile(os.path.join(self.Path, FileName)):
-            virtual_arr = np.memmap(os.path.join(self.Path,
-                                                   FileName), dt, "r")
-            nRxn = len(self.genout.Nu)
-            nNum = virtual_arr.shape[0]
-            nNum = nNum - (nNum % nRxn)
-            virtual_arr = virtual_arr[:nNum]
-
-            self.W_sen_anal = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
-            self.W_sen_anal = np.array(self.W_sen_anal[::self.specnumout.Spacing])
-
-            del virtual_arr
-        else:
-            print 'No sensitivity analysis output file'
-            
-            
-    def ReadCluster(self):
-        '''
-        Read clusterocc.bin
-        '''
-        dt = np.dtype(np.int32)
-        virtual_arr = np.memmap(os.path.join(self.Path, 'clusterocc.bin'), dt, "r")
-        nCluster = self.clusterin.get_num_clusters()
-        nNum = virtual_arr.shape[0]
-        nNum = nNum - (nNum % nCluster)
-        self.cluster = np.array(np.reshape(virtual_arr,
-                                                    [nNum/nCluster, nCluster])
-                                        [::self.specnumout.Spacing])
-        del virtual_arr
-    
-    
-    def ReadSpecInt(self):
-        '''
-        Read integral species counts
-        '''
-        dt = np.dtype(np.float64)
-        virtual_arr = np.memmap(os.path.join(self.Path, 'IntegSpec_output.bin'), dt, "r")
-        n_surf_specs = len( self.simin.surf_spec )
-        nNum = virtual_arr.shape[0]
-        nNum = nNum - (nNum % n_surf_specs)
-        virtual_arr = virtual_arr[:nNum]
-
-        self.spec_num_int = np.reshape(virtual_arr, [nNum/n_surf_specs, n_surf_specs])
-        self.spec_num_int = np.array(self.spec_num_int[::self.specnumout.Spacing])
-
-        del virtual_arr
-        
     
     
     '''
@@ -208,7 +129,8 @@ class kmc_traj():
     def Run_sim(self):
         
         '''
-        Call the Zacros executable and run the simulation
+        Call the Zacros executable and run the simulation. self.exe_file must have been initialized
+        with the full file path of the Zacros executable.
         '''
         
         os.chdir(self.Path)
@@ -245,7 +167,7 @@ class kmc_traj():
         '''
         Adjust the pre-exponential ratios of all elementary reactions
         
-        :param delta_sdf: list or vector of ratios to apply
+        :param delta_sdf: list or vector of ratios to apply. Must have length equal to the number of reactions.
         '''
         
         rxn_ind = 0
@@ -298,7 +220,11 @@ class kmc_traj():
         '''
         Get the information necessary to linearly interpolate data between time points
         
-        :param t:
+        :param t: Time at which you want to compute interpolated data
+        :returns: A 2-item list of 2-items each in the order: Index of time point less than or equal to t,
+            index of time point greater than or equal to t
+            weighting factor for lower point
+            weighting factor for higher point
         '''
         
         if t > self.specnumout.t[-1] or t < 0:
@@ -328,7 +254,7 @@ class kmc_traj():
     def time_sandwich(run1, run2):
         
         '''
-        Take two trajectories and append them
+        Take two trajectories and append them together. 
         
         :param run1: First trajectory - a kmc_traj object
         
