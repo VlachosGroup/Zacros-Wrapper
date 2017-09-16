@@ -58,13 +58,13 @@ For users familiar with the Zacros software, our package offers ease-of-use
 as well as additional analysis functionality. Modified source files for
 Zacros are included which produce additional output files that are used by the wrapper.</p>
 <ul class="simple">
-<li>Documentation available at <a class="reference external" href="http://vlachosgroup.github.io/Zacros-Wrapper/">http://vlachosgroup.github.io/Zacros-Wrapper/</a> (under development)</li>
+<li>Documentation available at <a class="reference external" href="http://vlachosgroup.github.io/Zacros-Wrapper/">http://vlachosgroup.github.io/Zacros-Wrapper/</a></li>
 <li>Download or clone source code from the  <a class="reference external" href="https://github.com/VlachosGroup/Zacros-Wrapper/">Github repository</a></li>
 </ul>
 <div class="section" id="key-features">
 <h2>Key features<a class="headerlink" href="#key-features" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Run KMC simulations with parallel processing (uses <a class="reference external" href="http://pythonhosted.org/mpi4py/">mpi4py</a> or job submission scripts for University of Delaware clusters)</li>
+<li>Run KMC simulations with parallel processing</li>
 <li>Rescale rate constants of fast, equilibrated reactions to accelerate simulation</li>
 <li>Perform parameteric sensitivity analysis using the likelihood ratio method</li>
 </ul>
@@ -78,12 +78,19 @@ Zacros are included which produce additional output files that are used by the w
 </ul>
 </div>
 <div class="section" id="related-publications">
-<h2>Related publications<a class="headerlink" href="#related-publications" title="Permalink to this headline">¶</a></h2>
+<h2>Related Publications<a class="headerlink" href="#related-publications" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><ol class="first upperalpha" start="13">
-<li>Nunez, T.A. Robie, and D.G Vlachos, “Acceleration and Sensitivity Analysis of Lattice Kinetic Monte Carlo Simulations Using Parallel Processing and Rate Constant Rescaling” (in preparation)</li>
+<li>Nunez, T.A. Robie, D.G. Vlachos, &#8220;Acceleration and Sensitivity Analysis of Lattice Kinetic Monte Carlo Simulations Using Parallel Processsing and Rate Constant Rescaling&#8221;, Journal of Chemical Physics, (under revision).</li>
 </ol>
 </li>
+</ul>
+</div>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="http://pythonhosted.org/mpi4py/">mpi4py</a> : Used for parallelization of multiple trajectories.</li>
+<li><a class="reference external" href="https://wiki.fysik.dtu.dk/ase/">Atomic simualtion environment</a> : Used to convert ab initio data to input parameters.</li>
 </ul>
 </div>
 <div class="section" id="getting-started">
@@ -148,7 +155,8 @@ Zacros are included which produce additional output files that are used by the w
 <li><a class="reference internal" href="#">Python wrapper for the Zacros kinetic Monte Carlo (KMC) code</a><ul>
 <li><a class="reference internal" href="#key-features">Key features</a></li>
 <li><a class="reference internal" href="#developers">Developers</a></li>
-<li><a class="reference internal" href="#related-publications">Related publications</a></li>
+<li><a class="reference internal" href="#related-publications">Related Publications</a></li>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li><a class="reference internal" href="#getting-started">Getting Started</a></li>
 <li><a class="reference internal" href="#documentation">Documentation</a></li>
 <li><a class="reference internal" href="#code">Code</a></li>
