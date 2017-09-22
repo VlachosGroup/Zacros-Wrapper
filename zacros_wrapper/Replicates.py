@@ -6,7 +6,7 @@ import copy
 import sys
 import scipy.stats
 
-from KMC_Run import kmc_traj
+from KMC_Run import *
 from utils import *
 import time
 import scipy
@@ -14,23 +14,22 @@ import scipy
 class Replicates:
 
     '''
-    Has data from muliple trajectories with the same input, but different 
+    Performs statistical data analysis for muliple kMC trajectories with the same input, but different 
     random seeds and possibly different initial states
-    This class handles all of the statistics
     '''
     
     def __init__(self):
-             
+        
+        '''
+        Initialize data structures
+        '''
+        
         # General info
         self.ParentFolder = None
         self.runtemplate = None                             # Use this to build replicate jobs
         self.runAvg = None            # Values are averages of all runs from runList
         self.avg_updated = False        # Whether we need to update the trajectory averages
-        self.n_runs = 0
-        self.N_batches = 1000       # Used to be 1000
-        self.Nbpt = None
-        self.batch_length = None    # Length of time in one batch
-        self.gas_product = None
+        self.n_trajectories = 0
         
         # Input data for different trajectories
         self.run_dirs = []
@@ -47,15 +46,23 @@ class Replicates:
         self.traj_derivs = None
         self.events_total = None
         self.CPU_total = None
+        self.time_avg_covs = None
         
-        # Needed for computing the rates
+        # Rate analysis
+        self.N_batches = 1000       # Used to be 1000
+        self.Nbpt = None
+        self.batch_length = None    # Length of time in one batch
+        self.gas_product = None
         self.gas_prod_ind = None
         self.TOF_stoich = None
         
-        # Analysis
-        self.rates_data = None
-        self.TOF = None
-        self.TOF_error = None
+        # Rate and autocorrelation data
+        self.rate = None
+        self.rate_CI = None
+        self.ACF = None
+        self.ACF_CI = None
+        
+        # Sensitivity indices
         self.NSC = None
         self.NSC_ci = None
     
@@ -70,10 +77,11 @@ class Replicates:
         self.gas_product = kmc_temp.gas_prod
         
     
-    def BuildJobFiles(self, init_states = []):
+    def BuildJobFiles(self, init_states = None):
         
         '''
-        Builds folders with Zacros input files. The only difference is the random seed.
+        Builds folders with Zacros input files. Each trajectory is assigned a different random seed.
+        :param init_states: List of intial states for each trajectory.
         '''
         
         if not os.path.exists(self.ParentFolder):
@@ -87,7 +95,7 @@ class Replicates:
         
         # Go through the directories and write input files for trajectories with
         # different random seeds and possibly different initial states
-        for i in range(self.n_runs):
+        for i in range(self.n_trajectories):
             
             # Set the random seed
             self.runtemplate.simin.Seed = seed
@@ -100,7 +108,7 @@ class Replicates:
             self.run_dirs.append(fldr)
             
             # Set initial state
-            if not init_states == []:
+            if not init_states is None:
                 self.runtemplate.statein.Type = 'history'
                 self.runtemplate.statein.Struct = init_states[i]
                 
@@ -111,12 +119,15 @@ class Replicates:
             self.runtemplate.WriteAllInput()
                 
     
-    def RunAllJobs_parallel_JobArray(self, max_cores = 100, server = 'Squidward', job_name = 'zacros_JA'):
+    def RunAllTrajectories_JobArray(self, max_cores = 100, server = 'Squidward', job_name = 'zacros_JA'):
     
         '''
         Runs a job array on Squidward or Farber
         Writes the .qs file with certain parameters changed
         Then, it submits it to the gridengine and waits for them to finish
+        :param max_cores: Maximum number of cores to use
+        :param server: Name of the server. Squidward and Farber are supported.
+        :param job_name: Name of the job to put in the submit file.
         '''
     
         sys.stdout.write('Running parallel jobs\n')
@@ -133,7 +144,7 @@ class Replicates:
         else:
             raise Exception('Unrecognized server for parallel runs')
         
-        n_cores = np.min([max_cores, self.n_runs])           
+        n_cores = np.min([max_cores, self.n_trajectories])           
         
         with open(os.path.join(self.ParentFolder, 'zacros_submit_JA.qs'), 'w') as txt:
             
@@ -147,7 +158,7 @@ class Replicates:
                 txt.write('#\n')
                 txt.write('\n')
                 txt.write('#$ -N ' + job_name + ' 					#This is the name of the job array\n')
-                txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
+                txt.write('#$ -t 1-' + str(self.n_trajectories) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
                 txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
                 txt.write('#$ -pe threads 1 -l mem_free=2G              #Change the last field to the number of processors desired per task\n')
                 txt.write('#\n')
@@ -175,7 +186,7 @@ class Replicates:
                 txt.write('# Now append whatever commands you use to run your OpenMP code:\n')
                 txt.write('time ' + self.runtemplate.exe_file)
             
-            else:       # Squidward
+            if server == 'Squidward': 
             
                 txt.write('#!/bin/bash\n')
                 txt.write('#$ -cwd\n')
@@ -184,9 +195,9 @@ class Replicates:
                 txt.write('#\n')
                 txt.write('\n')
                 txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
-                txt.write('#$ -t 1-' + str(self.n_runs) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
+                txt.write('#$ -t 1-' + str(self.n_trajectories) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
                 txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
-                txt.write('#$ -pe openmpi-smp 2 -l mem_free=1G			#Change the last field to the number of processors desired per task\n')
+                txt.write('#$ -pe openmpi-smp 1 -l mem_free=1G			#Change the last field to the number of processors desired per task\n')
                 txt.write('\n')
                 txt.write('job_file=\'' + os.path.join(self.ParentFolder, 'dir_list.txt') + '\'\n')
                 txt.write('#Change to the job directory\n')
@@ -194,6 +205,9 @@ class Replicates:
                 txt.write('cd "$job_path" #SGE_TASK_ID is the task number in the range <task_start_index> to <task_stop_index>\n')
                 txt.write('\n\n')
                 txt.write('time ' + self.runtemplate.exe_file)
+    
+            else:
+                raise NameError('Server name not recognized.')
     
         # Call to system to submit the job array
         os.chdir(self.ParentFolder)
@@ -204,8 +218,6 @@ class Replicates:
         check_num = 1
         while not all_jobs_done:
             time.sleep(60)
-            #sys.stdout.write('Checking to see if jobs are complete: ' + str(check_num) + '\n')
-            #sys.stdout.flush()
             check_num += 1
             all_jobs_done = True
             for fldr in self.run_dirs:
@@ -220,7 +232,7 @@ class Replicates:
     def RunAllJobs_serial(self):       # Serial version of running all jobs
 
         '''
-        Runs all Zacros jobs in serial
+        Runs all trajectories in serial
         '''
     
         # loop over array of directories and execute the Zacros executable in that folder
@@ -253,7 +265,7 @@ class Replicates:
                 if dummy_run.CheckComplete():
                     self.run_dirs.append(full_direct)
                     
-            self.n_runs = len(self.run_dirs)
+            self.n_trajectories = len(self.run_dirs)
         
         # Create arrays for data
         # Use input data from runtemplate to properly size the arrays
@@ -268,10 +280,10 @@ class Replicates:
         self.CPU_total = []
         self.time_avg_covs = []                   # surface species coverage based on time integral not including empty site
         
-        for i in range(self.n_runs):
-            print self.run_dirs[i]
+        for traj_dir in self.run_dirs:
+
             # Switch to folder and read output files
-            dummy_run.Path = self.run_dirs[i]
+            dummy_run.Path = traj_dir
             dummy_run.ReadAllOutput()
             self.runtemplate = dummy_run            # so we have an example
             
@@ -293,7 +305,7 @@ class Replicates:
             
             self.events_total.append( dummy_run.genout.events_occurred )
             self.CPU_total.append( dummy_run.genout.CPU_time )
-            self.time_avg_covs.append(dummy_run.time_avg_covs())
+            self.time_avg_covs.append(dummy_run.spec_num_int)
         
         # Convert the data from lists to arrays
         self.species_pops = np.array(self.species_pops)
@@ -308,28 +320,6 @@ class Replicates:
         self.runAvg = copy.deepcopy(dummy_run)      # Initialize run average with information from dummyrun
         self.avg_updated = False
         
-
-    def Set_analysis_varaibles(self):
-    
-        '''
-        Compute varaibles needed for the analysis, based on the input
-        '''
-    
-        # Find index of product molecule
-        try:
-            self.gas_prod_ind = len( self.runAvg.simin.surf_spec ) + self.runAvg.simin.gas_spec.index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
-        except:
-            raise Exception('Product species ' + self.gas_product + ' not found.')
-
-        # Find the stochiometry of the product molecule for each reaction         
-        nRxns = len(self.runAvg.genout.RxnNameList)
-        self.TOF_stoich = np.zeros(nRxns)
-        for i, elem_stoich in enumerate(self.runAvg.genout.Nu):
-            self.TOF_stoich[i] = elem_stoich[self.gas_prod_ind]
-            
-        self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_runs + 2 ] )            # Set the number of batches per trajectory
-        self.batch_length = self.t_vec[-1] / self.Nbpt
-        
         
     def AverageRuns(self):
         
@@ -342,10 +332,10 @@ class Replicates:
         
         self.runAvg.specnumout.spec = np.mean(self.species_pops, axis = 0)
         self.runAvg.procstatout.events = np.mean(self.rxn_freqs, axis = 0)
-        self.runAvg.prop = np.mean(self.propensities, axis = 0)
-        self.runAvg.t_int_cov = np.mean(self.time_avg_covs,axis = 0)
-		
-		
+        if not self.runAvg.prop is None:
+            self.runAvg.prop = np.mean(self.propensities, axis = 0)
+        if not self.runAvg.spec_num_int is None:
+            self.runAvg.spec_num_int = np.mean(self.time_avg_covs,axis = 0)
         if not self.runAvg.propCounter is None:
             self.runAvg.propCounter = np.mean(self.Props_integ, axis = 0)
         
@@ -355,20 +345,47 @@ class Replicates:
 		
         self.avg_updated = True
         
-    
-    def Compute_ACF(self, include_ACF = True):
+        
+    def Compute_batch_data(self, n_batches_total = 1000):
     
         '''
-        Compute reaction rate and autocorrelation function (ACF) using batch means
+        Compute varaibles needed for the analysis, based on the input
+        '''
+        self.N_batches = n_batches_total
+        # Find index of product molecule
+        try:
+            self.gas_prod_ind = len( self.runAvg.simin.surf_spec ) + self.runAvg.simin.gas_spec.index(self.gas_product)           # Find the index of the product species and adjust index to account for surface species
+        except:
+            raise Exception('Product species ' + self.gas_product + ' not found.')
+
+        # Find the stochiometry of the product molecule for each reaction         
+        nRxns = len(self.runAvg.genout.RxnNameList)
+        self.TOF_stoich = np.zeros(nRxns)
+        for i, elem_stoich in enumerate(self.runAvg.genout.Nu):
+            self.TOF_stoich[i] = elem_stoich[self.gas_prod_ind]
+            
+        self.Nbpt = np.max( [ 3 , (self.N_batches-1) / self.n_trajectories + 2 ] )            # Set the number of batches per trajectory
+        self.batch_length = self.t_vec[-1] / self.Nbpt
+        
+        
+    def Compute_rate(self, include_ACF_CI = True):
+    
+        '''
+        Use batch means to compute the reaction rate (and confidence interval)
+        Also compute the autocorrelation function (ACF) (and confidence interval)
+        
+        :params include_ACF_CI: Whether to use statistical bootstrapping to compute confidence intervals.
+            This takes some CPU time.
+        :returns: The rate
         '''
         
         if not self.avg_updated:
             self.AverageRuns()
         
-        self.Set_analysis_varaibles()
+        self.Compute_batch_data()
             
         bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt + 1)
-        rate_data = np.zeros([self.n_runs, self.Nbpt])
+        rate_data = np.zeros([self.n_trajectories, self.Nbpt])
         
         for i in range(self.Nbpt):
         
@@ -385,35 +402,36 @@ class Replicates:
         Compute confidence in the rate (assuming IID)
         '''
         
-        alldata = rate_data[:,1::]
-        alldata = alldata.reshape(np.prod(alldata.shape))
+        all_batch_rates = rate_data[:,1::]
+        all_batch_rates = all_batch_rates.flatten()
 
         confidence=0.90
-        n = len(alldata)
-        mean_rate, se = np.mean(alldata), scipy.stats.sem(alldata)
-        rate_ci = se * scipy.stats.t._ppf((1+confidence)/2., n - 1)
+        n = len(all_batch_rates)
+        self.rate, se = np.mean(all_batch_rates), scipy.stats.sem(all_batch_rates)
+        self.rate_CI = se * scipy.stats.t._ppf((1+confidence)/2., n - 1)
         
         '''
-        Compute ACF
+        Compute autocorrelation function
         '''
         
         # Compute the autocorrelation function for the batch means of the rate
         c1 = rate_data[:,1:-1:]
-        c1 = c1.reshape( np.prod(c1.shape) )
+        c1 = c1.flatten()
         c2 = rate_data[:,2::]
-        c2 = c2.reshape( np.prod(c2.shape) )
+        c2 = c2.flatten()
         
         
-        if np.var(alldata) == 0:        # Covers the case where we have zero rate
-            ACF = None
-            ACF_ci = None
+        if np.var(all_batch_rates) == 0:        # If the variance of the batch means is zero, autocorrelation cannot be computed.
+            self.ACF = None
+            self.ACF_CI = None
         else:
-            ACF = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.var(alldata)
+        
+            self.ACF = ( np.mean(c1 * c2) - np.mean(c1) * np.mean(c2) ) / np.var(all_batch_rates)
 
-            if include_ACF:
+            if include_ACF_CI:
             
                 '''
-                Compute error bounds on ACF
+                Compute confidence interval for ACF
                 '''
                 
                 N_boot = 100
@@ -423,19 +441,21 @@ class Replicates:
                     subpop_inds = np.random.randint(len(c1), size=len(c1))
                     c1_new = c1[subpop_inds]
                     c2_new = c2[subpop_inds]
-                    ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new) ) / np.var(alldata)
-                    #ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(alldata) ** 2 ) / np.var(alldata)
-                    #ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate
+                    ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new) ) / np.var(all_batch_rates)
                     
                 ACF_dist = sorted(ACF_dist)
                 ACF_high = ACF_dist[int(0.95 * N_boot)]
                 ACF_low = ACF_dist[int(0.05 * N_boot)]
-                ACF_ci = (ACF_high - ACF_low) / 2
+                self.ACF_CI = (ACF_high - ACF_low) / 2
         
-        return {'Rate': mean_rate, 'Rate_ci': rate_ci, 'ACF': ACF, 'ACF_ci': ACF_ci}
+        # Rescale error bars on the rate based on the ACF
+        if not self.ACF is None:
+            pass
+        
+        return self.rate
         
         
-    def PerformSA(self, delta_t = None, ergodic = True):          # Need implement time point interpolation
+    def PerformSA(self, delta_t = None, ergodic = True, dp_per_bin = 10):          # Need implement time point interpolation
         
         '''
         Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging
@@ -448,7 +468,7 @@ class Replicates:
          Data between sample points is estimated with linear interpolation
         '''
         
-        self.Set_analysis_varaibles()
+        self.Compute_batch_data()
         
         # Use entire trajectory length as the default time window
         if delta_t is None:
@@ -462,18 +482,18 @@ class Replicates:
             print 'Final time: ' + str(self.t_vec[-1])
             raise Exception('Time window is too large. Insufficient sampling.')
         
-        dp_per_bin = 10
+        
         bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt * dp_per_bin + 1)
         
         dp_per_traj = dp_per_bin * (self.Nbpt-1) + 1 
-        rate_data_erg = np.zeros( self.n_runs * dp_per_traj  )
-        W_data_all = np.zeros([ self.traj_derivs.shape[2] , self.n_runs * dp_per_traj ] )
-        fW_data = np.zeros( self.n_runs * dp_per_traj )
+        rate_data_erg = np.zeros( self.n_trajectories * dp_per_traj  )
+        W_data_all = np.zeros([ self.traj_derivs.shape[2] , self.n_trajectories * dp_per_traj ] )
+        fW_data = np.zeros( self.n_trajectories * dp_per_traj )
         rate_contributions_all = np.zeros(self.traj_derivs.shape[2])
          
         
         data_ind = 0
-        for traj_ind in range(self.n_runs):
+        for traj_ind in range(self.n_trajectories):
             for i in range(dp_per_traj):
             
                 idb_start = self.runAvg.time_search_interp( bin_edges[i] )
@@ -499,10 +519,10 @@ class Replicates:
                 data_ind += 1
         
         # Normalize rate contributions by the number of data points
-        rate_contributions_all = rate_contributions_all / ( self.n_runs * dp_per_traj )
+        rate_contributions_all = rate_contributions_all / ( self.n_trajectories * dp_per_traj )
         
         # Combine forward and reverse reactions
-        W_data = np.zeros([self.runAvg.mechin.get_num_rxns(), self.n_runs * dp_per_traj])
+        W_data = np.zeros([self.runAvg.mechin.get_num_rxns(), self.n_trajectories * dp_per_traj])
         rate_contributions = np.zeros(self.runAvg.Reactions['nrxns'])
         ind = 0
         for i in range(self.runAvg.mechin.get_num_rxns()):
@@ -523,15 +543,15 @@ class Replicates:
         W_mean = np.zeros(self.runAvg.Reactions['nrxns'])
         NSCs = np.zeros(self.runAvg.Reactions['nrxns'])
         
-        for dp in range( self.n_runs * dp_per_traj ):
+        for dp in range( self.n_trajectories * dp_per_traj ):
             mean_rate = mean_rate + rate_data_erg[dp]
             W_mean = W_mean + W_data[ : , dp ]
             NSCs = NSCs + rate_data_erg[dp] * W_data[ : , dp ]
             
         # Normalize means
-        mean_rate = mean_rate / ( self.n_runs * dp_per_traj )
-        W_mean = W_mean / ( self.n_runs * dp_per_traj )
-        NSCs = NSCs / ( self.n_runs * dp_per_traj )
+        mean_rate = mean_rate / ( self.n_trajectories * dp_per_traj )
+        W_mean = W_mean / ( self.n_trajectories * dp_per_traj )
+        NSCs = NSCs / ( self.n_trajectories * dp_per_traj )
         
         NSCs = NSCs - W_mean * mean_rate + rate_contributions       # Convert from ELR to CELR
         NSCs = NSCs / mean_rate     # normalize 
@@ -547,7 +567,7 @@ class Replicates:
         for i in range(N_boot):
         
             # Prepare new set of data
-            subpop_inds = np.random.randint(self.n_runs * dp_per_traj, size = self.n_runs * dp_per_traj )
+            subpop_inds = np.random.randint(self.n_trajectories * dp_per_traj, size = self.n_trajectories * dp_per_traj )
             
             rate_data_erg_sub = rate_data_erg[subpop_inds]
             W_sub = W_data[:, subpop_inds]
@@ -557,15 +577,15 @@ class Replicates:
             W_mean = np.zeros(self.runAvg.mechin.get_num_rxns())
             NSCsub = np.zeros(self.runAvg.mechin.get_num_rxns())
             
-            for dp in range( self.n_runs * dp_per_traj ):
+            for dp in range( self.n_trajectories * dp_per_traj ):
                 mean_rate = mean_rate + rate_data_erg_sub[dp]
                 W_mean = W_mean + W_sub[ : , dp ]
                 NSCsub = NSCsub + rate_data_erg_sub[dp] * W_sub[ : , dp ]
                 
             # Normalize means
-            mean_rate = mean_rate / ( self.n_runs * dp_per_traj )
-            W_mean = W_mean / ( self.n_runs * dp_per_traj )
-            NSCsub = NSCsub / ( self.n_runs * dp_per_traj )
+            mean_rate = mean_rate / ( self.n_trajectories * dp_per_traj )
+            W_mean = W_mean / ( self.n_trajectories * dp_per_traj )
+            NSCsub = NSCsub / ( self.n_trajectories * dp_per_traj )
             
             NSCsub = NSCsub - W_mean * mean_rate + rate_contributions       # Convert from ELR to CELR
             NSCsub = NSCsub / mean_rate     # normalize 
@@ -637,45 +657,45 @@ class Replicates:
                     txt.write(rxn.name + '_' + vrnt.name + '\t' + '{0:.3f} +- \t'.format(self.NSC[ind]) + '\n')
                 
             
+def append_replicates(batch1, batch2):
+    
+    '''
+    Append two sets of trajectories
+    
+    :returns: Replicates object with all trajectories appended
+    '''
+    
+    sand = copy.deepcopy(batch2)
+    
+    sand.t_vec = np.hstack( [ batch1.t_vec, batch2.t_vec[1::] + batch1.t_vec[-1]] ) 
+    
+    #sand.History_final_snaps = batch2.History_final_snaps          # history will already have been copied
+    sand.events_total = batch1.events_total + batch2.events_total
+    sand.CPU_total = batch1.CPU_total + batch2.CPU_total
+    
+    # Cumulative data structures
+    
+    # Add data from the end of the first calculation to the second calculation
+    for traj_ind in range(batch2.n_trajectories):
+        for time_ind in range(len(batch2.t_vec)):
+        
+            for rxn_ind in range( sand.rxn_freqs.shape[2] ):
+        
+                sand.rxn_freqs[traj_ind, time_ind, rxn_ind] += batch1.rxn_freqs[traj_ind, -1, rxn_ind]
+                sand.Props_integ[traj_ind, time_ind, rxn_ind] += batch1.Props_integ[traj_ind, -1, rxn_ind]
+                sand.traj_derivs[traj_ind, time_ind, rxn_ind] += batch1.traj_derivs[traj_ind, -1, rxn_ind]
             
-    @staticmethod
-    def time_sandwich(batch1, batch2):
+            # Add to the end for gas phase populations
+            for spec_ind in range( len( batch2.runAvg.simin.surf_spec ) , len( batch2.runAvg.simin.surf_spec ) + len( batch2.runAvg.simin.gas_spec ) ):
+                sand.species_pops[traj_ind, time_ind, spec_ind] += batch1.species_pops[traj_ind, -1, spec_ind]
+    
+    # Combine the data
+    sand.species_pops = np.concatenate( [batch1.species_pops, sand.species_pops[:,1::,:]], axis = 1 )
+    sand.rxn_freqs = np.concatenate( [batch1.rxn_freqs, sand.rxn_freqs[:,1::,:]], axis = 1 )
+    sand.propensities = np.concatenate( [batch1.propensities, sand.propensities[:,1::,:]], axis = 1 )
+    sand.Props_integ = np.concatenate( [batch1.Props_integ, sand.Props_integ[:,1::,:]], axis = 1 )
+    sand.traj_derivs = np.concatenate( [batch1.traj_derivs, sand.traj_derivs[:,1::,:]], axis = 1 )
+    
+    sand.avg_updated = False
         
-        '''
-        Append two sets of trajectories
-        '''
-        
-        sand = copy.deepcopy(batch2)
-        
-        sand.t_vec = np.hstack( [ batch1.t_vec, batch2.t_vec[1::] + batch1.t_vec[-1]] ) 
-        
-        #sand.History_final_snaps = batch2.History_final_snaps          # history will already have been copied
-        sand.events_total = batch1.events_total + batch2.events_total
-        sand.CPU_total = batch1.CPU_total + batch2.CPU_total
-        
-        # Cumulative data structures
-        
-        # Add data from the end of the first calculation to the second calculation
-        for traj_ind in range(batch2.n_runs):
-            for time_ind in range(len(batch2.t_vec)):
-            
-                for rxn_ind in range( sand.rxn_freqs.shape[2] ):
-            
-                    sand.rxn_freqs[traj_ind, time_ind, rxn_ind] += batch1.rxn_freqs[traj_ind, -1, rxn_ind]
-                    sand.Props_integ[traj_ind, time_ind, rxn_ind] += batch1.Props_integ[traj_ind, -1, rxn_ind]
-                    sand.traj_derivs[traj_ind, time_ind, rxn_ind] += batch1.traj_derivs[traj_ind, -1, rxn_ind]
-                
-                # Add to the end for gas phase populations
-                for spec_ind in range( len( batch2.runAvg.simin.surf_spec ) , len( batch2.runAvg.simin.surf_spec ) + len( batch2.runAvg.simin.gas_spec ) ):
-                    sand.species_pops[traj_ind, time_ind, spec_ind] += batch1.species_pops[traj_ind, -1, spec_ind]
-        
-        # Combine the data
-        sand.species_pops = np.concatenate( [batch1.species_pops, sand.species_pops[:,1::,:]], axis = 1 )
-        sand.rxn_freqs = np.concatenate( [batch1.rxn_freqs, sand.rxn_freqs[:,1::,:]], axis = 1 )
-        sand.propensities = np.concatenate( [batch1.propensities, sand.propensities[:,1::,:]], axis = 1 )
-        sand.Props_integ = np.concatenate( [batch1.Props_integ, sand.Props_integ[:,1::,:]], axis = 1 )
-        sand.traj_derivs = np.concatenate( [batch1.traj_derivs, sand.traj_derivs[:,1::,:]], axis = 1 )
-        
-        sand.avg_updated = False
-            
-        return sand
+    return sand

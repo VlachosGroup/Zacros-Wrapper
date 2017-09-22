@@ -91,6 +91,9 @@ class kmc_traj():
         :param build_lattice :     True - builds a Lattice object
             False - reads lattice_output.txt as text only
         '''
+        
+        #print 'Reading kMC trajectory data from ' + self.Path
+        
         self.ReadAllInput()
 
         if self.CheckComplete():
@@ -248,39 +251,6 @@ class kmc_traj():
         high_frac = 1.0 - low_frac
         
         return [[ind_leq, ind_geq], [low_frac, high_frac]]
-    
-        
-    @staticmethod
-    def time_sandwich(run1, run2):
-        
-        '''
-        Take two trajectories and append them together. 
-        
-        :param run1: First trajectory - a kmc_traj object
-        
-        :param run2: Second trajectory - a kmc_traj object
-        
-        :returns: A kmc_traj object that has the trajectories appended
-        '''
-        
-        sandwich = copy.deepcopy(run1)
-        sandwich.genout.t_final = run1.genout.t_final + run2.genout.t_final
-        sandwich.genout.events_occurred = run1.genout.events_occurred + run2.genout.events_occurred
-        sandwich.genout.CPU_time = run1.genout.CPU_time + run2.genout.CPU_time
-        
-        sandwich.specnumout.t = np.concatenate([run1.specnumout.t, run2.specnumout.t[1::] + run1.specnumout.t[-1] * np.ones( len(run2.specnumout.t)-1 )])
-        
-        n_surf_specs = len( self.simin.surf_spec )
-        run2.specnumout.spec[1::, n_surf_specs : ] = run2.specnumout.spec[1::, n_surf_specs : ] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.specnumout.spec[-1, n_surf_specs : ]] )        
-        sandwich.specnumout.spec = np.vstack([run1.specnumout.spec, run2.specnumout.spec[1::,:] ])
-        sandwich.prop = np.vstack([run1.prop, run2.prop[1::,:] ])
-        sandwich.procstatout.events = np.vstack( [run1.procstatout.events, run2.procstatout.events[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.procstatout.events[-1,:]] ) ] )
-        sandwich.propCounter = np.vstack( [run1.propCounter, run2.propCounter[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.propCounter[-1,:]]  ) ] )
-        sandwich.W_sen_anal  = np.vstack( [run1.W_sen_anal, run2.W_sen_anal[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.W_sen_anal[-1,:]]  ) ] )      
-        
-        sandwich.History = [ run1.History[0], run2.History[-1] ]
-        
-        return sandwich
     
 
     '''
@@ -463,3 +433,35 @@ class kmc_traj():
                 
             plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)))
             plt.close()
+            
+
+def append_trajectories(run1, run2):
+    
+    '''
+    Take two trajectories and append them together. 
+    
+    :param run1: First trajectory - a kmc_traj object
+    
+    :param run2: Second trajectory - a kmc_traj object which continues the simulation where the first one terminated
+    
+    :returns: A kmc_traj object that has the trajectories appended
+    '''
+    
+    combo = copy.deepcopy(run1)
+    combo.genout.t_final = run1.genout.t_final + run2.genout.t_final
+    combo.genout.events_occurred = run1.genout.events_occurred + run2.genout.events_occurred
+    combo.genout.CPU_time = run1.genout.CPU_time + run2.genout.CPU_time
+    
+    combo.specnumout.t = np.concatenate([run1.specnumout.t, run2.specnumout.t[1::] + run1.specnumout.t[-1] * np.ones( len(run2.specnumout.t)-1 )])
+    
+    n_surf_specs = len( self.simin.surf_spec )
+    run2.specnumout.spec[1::, n_surf_specs : ] = run2.specnumout.spec[1::, n_surf_specs : ] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.specnumout.spec[-1, n_surf_specs : ]] )        
+    combo.specnumout.spec = np.vstack([run1.specnumout.spec, run2.specnumout.spec[1::,:] ])
+    combo.prop = np.vstack([run1.prop, run2.prop[1::,:] ])
+    combo.procstatout.events = np.vstack( [run1.procstatout.events, run2.procstatout.events[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.procstatout.events[-1,:]] ) ] )
+    combo.propCounter = np.vstack( [run1.propCounter, run2.propCounter[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.propCounter[-1,:]]  ) ] )
+    combo.W_sen_anal  = np.vstack( [run1.W_sen_anal, run2.W_sen_anal[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.W_sen_anal[-1,:]]  ) ] )      
+    
+    combo.History = [ run1.History[0], run2.History[-1] ]
+    
+    return combo

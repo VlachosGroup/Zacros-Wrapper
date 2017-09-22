@@ -12,6 +12,9 @@ number_of_runs = 96
 
 if __name__ == '__main__':                 # Make commands safe for MPI parallelization
 	
-    z = zw.RateRescaling()
-    z.scale_parent_fldr = RunPath
-    z.ReachSteadyStateAndRescale(product_spec, KMC_source, exe_file, n_runs = number_of_runs, platform = 'Squidward')
+    x = zw.kmc_traj(path = KMC_source)
+    x.gas_prod = product_spec
+    x.exe_file = exe_file
+    x.ReadAllInput()
+    final_data = zw.ReachSteadyStateAndRescale(x, RunPath, n_runs = 96, 
+        n_batches = 1000, n_samples = 100, max_iterations = 10, parallel_mode = 'MPI')

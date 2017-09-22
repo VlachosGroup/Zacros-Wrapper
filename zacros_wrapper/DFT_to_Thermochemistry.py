@@ -1,32 +1,20 @@
 # -*- coding: utf-8 -*-
 '''
-         -----------------------------------------------------
-          Calculate thermodynamic data (S298, H298, and Cp(T)
-          from ab initio DFT data (energies and frequencies)
-              providng input thermodynamics files for
-             KMC (Zacros) and MKM (Chemkin and Matlab)
+    Calculate thermodynamic data (S298, H298, and Cp(T)
+    from ab initio DFT data (energies and frequencies)
+    providng input thermodynamics files for
+    KMC (Zacros) and MKM (Chemkin and Matlab)
 
-                     Vlachos Research Group
-                Chemical and Biomolecular Egineering
-                      University of Delaware
-
-                     Gerhard R Wittreich, P.E.
-          -----------------------------------------------------
-
-Created on Fri Mar 31 16:20:43 2017
-
-@author: wittregr
-
-Adopted from Matlab code written and modified by:
-
-                     Vassili Vorotnikov
-                            and
-                         Geun Ho Gu
-
- This program contains the class objects used to read energy, vibration and
- molecular configuration data and determine the standard entropy and enthalpy
- and heat capacities at various temperatures.
-
+    Gerhard R Wittreich, P.E.
+    Created on Fri Mar 31 2017
+    
+    author  wittregr
+    
+    Adopted from Matlab code written and modified by mVassili Vorotnikov and Geun Ho Gu
+    
+    This program contains the class objects used to read energy, vibration and
+    molecular configuration data and determine the standard entropy and enthalpy
+    and heat capacities at various temperatures.
 '''
 import numpy as _np
 from numpy import pi

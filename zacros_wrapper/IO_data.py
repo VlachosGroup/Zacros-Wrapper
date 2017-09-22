@@ -1375,6 +1375,7 @@ def Read_propensities(path, nRxn):
         prop = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
 
         del virtual_arr
+        return np.array(prop)
         
     elif os.path.isfile(os.path.join(path, 'propensities_output.txt')):
     
@@ -1389,8 +1390,10 @@ def Read_propensities(path, nRxn):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 prop.append(line_data)
-        
-    return np.array(prop)
+        return np.array(prop)
+    
+    else:
+        return None
     
 
 def Read_time_integrated_propensities(path, nRxn):
@@ -1408,7 +1411,7 @@ def Read_time_integrated_propensities(path, nRxn):
     if os.path.isfile(os.path.join(path, 'PropCounter_output.bin')):
     
         dt = np.dtype(np.float64)
-        virtual_arr = np.memmap(os.path.join(path, FileName), dt, "r")
+        virtual_arr = np.memmap(os.path.join(path, 'PropCounter_output.bin'), dt, "r")
         nNum = virtual_arr.shape[0]
         nNum = nNum - (nNum % nRxn)
         virtual_arr = virtual_arr[:nNum]
@@ -1416,6 +1419,7 @@ def Read_time_integrated_propensities(path, nRxn):
         propCounter = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
             
         del virtual_arr
+        return np.array(propCounter)
     
     elif os.path.isfile(os.path.join(path, 'timeintprop_output.txt')):
     
@@ -1431,7 +1435,9 @@ def Read_time_integrated_propensities(path, nRxn):
                     line_data.append(np.float(dub))
                 propCounter.append(line_data)
         
-    return np.array(propCounter)
+        return np.array(propCounter)
+    else:    
+        return None
 
     
 def Read_trajectory_derivatives(path, nRxn):
@@ -1452,6 +1458,7 @@ def Read_trajectory_derivatives(path, nRxn):
         W_sen_anal = np.reshape(virtual_arr, [nNum/nRxn, nRxn])
 
         del virtual_arr
+        return np.array(W_sen_anal)
     
     elif os.path.isfile(os.path.join(path, 'trajderiv_output.txt')):
         with open(os.path.join(path, 'trajderiv_output.txt'), 'r') as txt:
@@ -1465,8 +1472,9 @@ def Read_trajectory_derivatives(path, nRxn):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 W_sen_anal.append(line_data)
-        
-    return np.array(W_sen_anal)
+        return np.array(W_sen_anal)
+    else:    
+        return None
 
 
 def Read_time_integrated_species(path, n_surf_specs):
@@ -1486,6 +1494,8 @@ def Read_time_integrated_species(path, n_surf_specs):
         spec_num_int = np.reshape(virtual_arr, [nNum/n_surf_specs, n_surf_specs])
 
         del virtual_arr
+        return np.array(spec_num_int)
+        
     elif os.path.isfile(os.path.join(path, 'timeintspecs_output.txt')): 
         with open(os.path.join(path, 'timeintspecs_output.txt'), 'r') as txt:
             RawTxt = txt.readlines()
@@ -1498,5 +1508,7 @@ def Read_time_integrated_species(path, n_surf_specs):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 spec_num_int.append(line_data)
+        return np.array(spec_num_int)
         
-    return np.array(spec_num_int)
+    else:    
+        return None
