@@ -450,7 +450,10 @@ class Replicates:
         
         # Rescale error bars on the rate based on the ACF
         if not self.ACF is None:
-            pass
+            var_scale = 1
+            for i in range(1,self.Nbpt):
+                var_scale = var_scale + 2 * ( 1 - i / ( self.Nbpt - 1 ) ) * self.ACF ** i
+            self.rate_CI = self.rate_CI * np.sqrt( var_scale )   
         
         return self.rate
         
@@ -523,13 +526,13 @@ class Replicates:
         
         # Combine forward and reverse reactions
         W_data = np.zeros([self.runAvg.mechin.get_num_rxns(), self.n_trajectories * dp_per_traj])
-        rate_contributions = np.zeros(self.runAvg.Reactions['nrxns'])
+        rate_contributions = np.zeros(self.runAvg.mechin.get_num_rxns())
         ind = 0
         for i in range(self.runAvg.mechin.get_num_rxns()):
             
             rxn_and_var = self.runAvg.mechin.get_rxn_var_inds(i)
             
-            if self.runAvg.rxn_list[rxn_and_var[0]].is_reversible:
+            if self.runAvg.mechin.rxn_list[rxn_and_var[0]].is_reversible:
                 W_data[i, :] = W_data_all[ind, :] + W_data_all[ind+1, :]
                 rate_contributions[i] = rate_contributions_all[ind] + rate_contributions_all[ind+1]
                 ind += 2
@@ -540,8 +543,8 @@ class Replicates:
         
         # Calculate NSCs
         mean_rate = 0
-        W_mean = np.zeros(self.runAvg.Reactions['nrxns'])
-        NSCs = np.zeros(self.runAvg.Reactions['nrxns'])
+        W_mean = np.zeros( self.runAvg.mechin.get_num_rxns() )
+        NSCs = np.zeros(self.runAvg.mechin.get_num_rxns())
         
         for dp in range( self.n_trajectories * dp_per_traj ):
             mean_rate = mean_rate + rate_data_erg[dp]
@@ -599,6 +602,9 @@ class Replicates:
             NSC_dist_high = NSC_dist[int(0.95 * N_boot)]
             NSC_dist_low = NSC_dist[int(0.05 * N_boot)]
             NSC_ci[rxn_ind] = (NSC_dist_high - NSC_dist_low) / 2
+        
+        self.NSC = NSCs
+        self.NSC_ci = NSC_ci
         
         
     def PlotSensitivities(self, NSC_cut = 0.05): 

@@ -195,7 +195,7 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
     return cum_batch
     
 
-def ProcessStepFreqs(run, stiff_cut = 100.0, equilib_cut = 0.1):        # Change to allow for irreversible reactions
+def ProcessStepFreqs(run, stiff_cut = 100.0, delta = 0.05, equilib_cut = 0.1):        # Change to allow for irreversible reactions
     
     '''
     Takes an average KMC trajectory and assesses the reaction frequencies to identify fast reactions
@@ -237,13 +237,15 @@ def ProcessStepFreqs(run, stiff_cut = 100.0, equilib_cut = 0.1):        # Change
     # Adjust fast reactions closer to the slow scale
     for i in fast_rxns:
         N_f = tot_freqs[i] / float(slow_scale)              # number of fast events per rare event
-        #alpha_UB = N_f .* delta ./ log(1 ./ delta) + 1             # Chatterjee formula
-        delta_sdf[i] = np.min([1.0, stiff_cut / N_f])
+        #alpha_UB = N_f * delta / np.log(1 / delta) + 1             # Chatterjee formula
+        
+        #delta_sdf[i] = np.min([1.0, np.max([stiff_cut / N_f, 1. / alpha_UB ]) ])
+        delta_sdf[i] = np.min([1.0, stiff_cut / N_f ])
         
     return {'delta_sdf': delta_sdf, 'rxn_speeds': rxn_speeds, 'tot': tot_freqs, 'net': net_freqs}
     
     
-def ReadScaledown(RunPath, plot_analysis = False, fldrs_cut = None, verbose = False, product = None, n_batches = 1000):
+def ReadScaledown(RunPath, fldrs_cut = None, product = None, n_batches = 1000):
     
     '''
     Read a scaledown that has already been run
@@ -279,22 +281,22 @@ def ReadScaledown(RunPath, plot_analysis = False, fldrs_cut = None, verbose = Fa
             
         cum_batch.N_batches = n_batches
         cum_batch.gas_product = product
-        acf_data = cum_batch.Compute_ACF()
+        acf_data = cum_batch.Compute_rate()
         print 'Iteration ' + str(ind)
         print 'Batches per trajectory: ' + str(cum_batch.Nbpt)
-        print 'Batch length ' + str(cum_batch.batch_length)
-        print 'Rate: ' + str(acf_data['Rate'])
-        print 'Rate CI: ' + str(acf_data['Rate_ci'])
-        print 'ACF: ' + str(acf_data['ACF'])
-        print 'ACF CI: ' + str(acf_data['ACF_ci'])
+        print 'Batch length (s): ' + str(cum_batch.batch_length)
+        print 'Rate: ' + str(cum_batch.rate)
+        print 'Rate confidence interval: ' + str(cum_batch.rate_CI)
+        print 'Autocorrelation: ' + str(cum_batch.ACF)
+        print 'Autocorrelation confidence: ' + str(cum_batch.ACF_CI)
 
         print '\n'
         
         batch_lengths.append(cum_batch.batch_length)
-        rates_vec.append(acf_data['Rate'])
-        rates_vec_ci.append(acf_data['Rate_ci'])
-        acf_vec.append(acf_data['ACF'])
-        acf_vec_ci.append(acf_data['ACF_ci'])
+        rates_vec.append(cum_batch.rate)
+        rates_vec_ci.append(cum_batch.rate_CI)
+        acf_vec.append(cum_batch.ACF)
+        acf_vec_ci.append(cum_batch.ACF_CI)
             
     print batch_lengths
     print rates_vec
