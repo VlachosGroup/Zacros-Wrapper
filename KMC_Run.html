@@ -56,6 +56,27 @@
             
   <div class="section" id="module-KMC_Run">
 <span id="single-trajectory"></span><h1>Single trajectory<a class="headerlink" href="#module-KMC_Run" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="KMC_Run.append_trajectories">
+<code class="descclassname">KMC_Run.</code><code class="descname">append_trajectories</code><span class="sig-paren">(</span><em>run1</em>, <em>run2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#append_trajectories"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.append_trajectories" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take two trajectories and append them together.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>run1</strong> &#8211; First trajectory - a kmc_traj object</li>
+<li><strong>run2</strong> &#8211; Second trajectory - a kmc_traj object which continues the simulation where the first one terminated</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A kmc_traj object that has the trajectories appended</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="class">
 <dt id="KMC_Run.kmc_traj">
 <em class="property">class </em><code class="descclassname">KMC_Run.</code><code class="descname">kmc_traj</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj" title="Permalink to this definition">¶</a></dt>
@@ -175,27 +196,6 @@ with the full file path of the Zacros executable.</p>
 <li><strong>t1</strong> &#8211; Start time for time averaging interval</li>
 <li><strong>t2</strong> &#8211; End time for time averaging interval, if left as None it will be set as the final time</li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="KMC_Run.kmc_traj.time_sandwich">
-<em class="property">static </em><code class="descname">time_sandwich</code><span class="sig-paren">(</span><em>run1</em>, <em>run2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/KMC_Run.html#kmc_traj.time_sandwich"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#KMC_Run.kmc_traj.time_sandwich" title="Permalink to this definition">¶</a></dt>
-<dd><p>Take two trajectories and append them together.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>run1</strong> &#8211; First trajectory - a kmc_traj object</li>
-<li><strong>run2</strong> &#8211; Second trajectory - a kmc_traj object</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A kmc_traj object that has the trajectories appended</p>
 </td>
 </tr>
 </tbody>

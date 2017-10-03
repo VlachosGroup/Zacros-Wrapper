@@ -59,9 +59,8 @@
 <dl class="class">
 <dt id="Replicates.Replicates">
 <em class="property">class </em><code class="descclassname">Replicates.</code><code class="descname">Replicates</code><a class="reference internal" href="_modules/Replicates.html#Replicates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Has data from muliple trajectories with the same input, but different 
-random seeds and possibly different initial states
-This class handles all of the statistics</p>
+<dd><p>Performs statistical data analysis for muliple kMC trajectories with the same input, but different 
+random seeds and possibly different initial states</p>
 <dl class="method">
 <dt id="Replicates.Replicates.AverageRuns">
 <code class="descname">AverageRuns</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.AverageRuns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.AverageRuns" title="Permalink to this definition">¶</a></dt>
@@ -70,19 +69,39 @@ This class handles all of the statistics</p>
 
 <dl class="method">
 <dt id="Replicates.Replicates.BuildJobFiles">
-<code class="descname">BuildJobFiles</code><span class="sig-paren">(</span><em>init_states=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.BuildJobFiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.BuildJobFiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds folders with Zacros input files. The only difference is the random seed.</p>
+<code class="descname">BuildJobFiles</code><span class="sig-paren">(</span><em>init_states=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.BuildJobFiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.BuildJobFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds folders with Zacros input files. Each trajectory is assigned a different random seed.
+:param init_states: List of intial states for each trajectory.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="Replicates.Replicates.Compute_ACF">
-<code class="descname">Compute_ACF</code><span class="sig-paren">(</span><em>include_ACF=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.Compute_ACF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.Compute_ACF" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute reaction rate and autocorrelation function (ACF) using batch means</p>
+<dt id="Replicates.Replicates.Compute_batch_data">
+<code class="descname">Compute_batch_data</code><span class="sig-paren">(</span><em>n_batches_total=1000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.Compute_batch_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.Compute_batch_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute varaibles needed for the analysis, based on the input</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Replicates.Replicates.Compute_rate">
+<code class="descname">Compute_rate</code><span class="sig-paren">(</span><em>include_ACF_CI=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.Compute_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.Compute_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use batch means to compute the reaction rate (and confidence interval)
+Also compute the autocorrelation function (ACF) (and confidence interval)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Params include_ACF_CI:</th></tr>
+<tr class="field-odd field"><td>&#160;</td><td class="field-body">Whether to use statistical bootstrapping to compute confidence intervals.
+This takes some CPU time.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The rate</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="Replicates.Replicates.PerformSA">
-<code class="descname">PerformSA</code><span class="sig-paren">(</span><em>delta_t=None</em>, <em>ergodic=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.PerformSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.PerformSA" title="Permalink to this definition">¶</a></dt>
+<code class="descname">PerformSA</code><span class="sig-paren">(</span><em>delta_t=None</em>, <em>ergodic=True</em>, <em>dp_per_bin=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.PerformSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.PerformSA" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -117,23 +136,20 @@ This class handles all of the statistics</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="Replicates.Replicates.RunAllJobs_parallel_JobArray">
-<code class="descname">RunAllJobs_parallel_JobArray</code><span class="sig-paren">(</span><em>max_cores=100</em>, <em>server='Squidward'</em>, <em>job_name='zacros_JA'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.RunAllJobs_parallel_JobArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.RunAllJobs_parallel_JobArray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs a job array on Squidward or Farber
-Writes the .qs file with certain parameters changed
-Then, it submits it to the gridengine and waits for them to finish</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="Replicates.Replicates.RunAllJobs_serial">
 <code class="descname">RunAllJobs_serial</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.RunAllJobs_serial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.RunAllJobs_serial" title="Permalink to this definition">¶</a></dt>
-<dd><p>Runs all Zacros jobs in serial</p>
+<dd><p>Runs all trajectories in serial</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="Replicates.Replicates.Set_analysis_varaibles">
-<code class="descname">Set_analysis_varaibles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.Set_analysis_varaibles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.Set_analysis_varaibles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute varaibles needed for the analysis, based on the input</p>
+<dt id="Replicates.Replicates.RunAllTrajectories_JobArray">
+<code class="descname">RunAllTrajectories_JobArray</code><span class="sig-paren">(</span><em>max_cores=100</em>, <em>server='Squidward'</em>, <em>job_name='zacros_JA'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.RunAllTrajectories_JobArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.RunAllTrajectories_JobArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a job array on Squidward or Farber
+Writes the .qs file with certain parameters changed
+Then, it submits it to the gridengine and waits for them to finish
+:param max_cores: Maximum number of cores to use
+:param server: Name of the server. Squidward and Farber are supported.
+:param job_name: Name of the job to put in the submit file.</p>
 </dd></dl>
 
 <dl class="method">
@@ -148,12 +164,20 @@ Then, it submits it to the gridengine and waits for them to finish</p>
 <dd><p>Write the results of sensitivity analysis into a SA_output.txt</p>
 </dd></dl>
 
-<dl class="staticmethod">
-<dt id="Replicates.Replicates.time_sandwich">
-<em class="property">static </em><code class="descname">time_sandwich</code><span class="sig-paren">(</span><em>batch1</em>, <em>batch2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#Replicates.time_sandwich"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.Replicates.time_sandwich" title="Permalink to this definition">¶</a></dt>
-<dd><p>Append two sets of trajectories</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="Replicates.append_replicates">
+<code class="descclassname">Replicates.</code><code class="descname">append_replicates</code><span class="sig-paren">(</span><em>batch1</em>, <em>batch2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Replicates.html#append_replicates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Replicates.append_replicates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append two sets of trajectories</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Replicates object with all trajectories appended</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>

@@ -58,7 +58,7 @@
 <span id="rate-constant-rescaling"></span><h1>Rate Constant Rescaling<a class="headerlink" href="#module-RateRescaling" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="RateRescaling.ProcessStepFreqs">
-<code class="descclassname">RateRescaling.</code><code class="descname">ProcessStepFreqs</code><span class="sig-paren">(</span><em>run</em>, <em>stiff_cut=100.0</em>, <em>equilib_cut=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/RateRescaling.html#ProcessStepFreqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#RateRescaling.ProcessStepFreqs" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">RateRescaling.</code><code class="descname">ProcessStepFreqs</code><span class="sig-paren">(</span><em>run</em>, <em>stiff_cut=100.0</em>, <em>delta=0.05</em>, <em>equilib_cut=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/RateRescaling.html#ProcessStepFreqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#RateRescaling.ProcessStepFreqs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Takes an average KMC trajectory and assesses the reaction frequencies to identify fast reactions
 Process KMC output and determine how to further scale down reactions
 Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic Monte Carlo simulations through the modification of rate constants, J. Chem. Phys. 132 (2010) 194101.</p>
@@ -66,7 +66,7 @@ Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic 
 
 <dl class="function">
 <dt id="RateRescaling.ReachSteadyStateAndRescale">
-<code class="descclassname">RateRescaling.</code><code class="descname">ReachSteadyStateAndRescale</code><span class="sig-paren">(</span><em>kmc_template</em>, <em>scale_parent_fldr</em>, <em>n_runs=16</em>, <em>n_batches=1000</em>, <em>acf_cut=0.05</em>, <em>include_stiff_reduc=True</em>, <em>max_events=1000</em>, <em>max_iterations=30</em>, <em>ss_inc=2.0</em>, <em>n_samples=100</em>, <em>parallel_mode='Squidward'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/RateRescaling.html#ReachSteadyStateAndRescale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#RateRescaling.ReachSteadyStateAndRescale" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">RateRescaling.</code><code class="descname">ReachSteadyStateAndRescale</code><span class="sig-paren">(</span><em>kmc_template</em>, <em>scale_parent_fldr</em>, <em>n_runs=16</em>, <em>n_batches=1000</em>, <em>acf_cut=0.05</em>, <em>include_stiff_reduc=True</em>, <em>max_events=1000</em>, <em>max_iterations=30</em>, <em>ss_inc=1.0</em>, <em>n_samples=100</em>, <em>parallel_mode='Squidward'</em>, <em>ACF_tol=0.08</em>, <em>rate_tol=0.05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/RateRescaling.html#ReachSteadyStateAndRescale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#RateRescaling.ReachSteadyStateAndRescale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Handles rate rescaling and continuation of KMC runs</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -91,7 +91,7 @@ Uses algorithm from A. Chatterjee, A.F. Voter, Accurate acceleration of kinetic 
 
 <dl class="function">
 <dt id="RateRescaling.ReadScaledown">
-<code class="descclassname">RateRescaling.</code><code class="descname">ReadScaledown</code><span class="sig-paren">(</span><em>RunPath</em>, <em>plot_analysis=False</em>, <em>fldrs_cut=None</em>, <em>verbose=False</em>, <em>product=None</em>, <em>n_batches=1000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/RateRescaling.html#ReadScaledown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#RateRescaling.ReadScaledown" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">RateRescaling.</code><code class="descname">ReadScaledown</code><span class="sig-paren">(</span><em>RunPath</em>, <em>fldrs_cut=None</em>, <em>product=None</em>, <em>n_batches=1000</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/RateRescaling.html#ReadScaledown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#RateRescaling.ReadScaledown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a scaledown that has already been run</p>
 </dd></dl>
 

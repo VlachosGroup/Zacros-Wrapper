@@ -56,7 +56,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">scipy.stats</span>
 
-<span class="kn">from</span> <span class="nn">KMC_Run</span> <span class="k">import</span> <span class="n">kmc_traj</span>
+<span class="kn">from</span> <span class="nn">KMC_Run</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">utils</span> <span class="k">import</span> <span class="o">*</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">scipy</span>
@@ -64,23 +64,22 @@
 <div class="viewcode-block" id="Replicates"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates">[docs]</a><span class="k">class</span> <span class="nc">Replicates</span><span class="p">:</span>
 
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    Has data from muliple trajectories with the same input, but different </span>
+<span class="sd">    Performs statistical data analysis for muliple kMC trajectories with the same input, but different </span>
 <span class="sd">    random seeds and possibly different initial states</span>
-<span class="sd">    This class handles all of the statistics</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-             
+        
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initialize data structures</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
         <span class="c1"># General info</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ParentFolder</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">runtemplate</span> <span class="o">=</span> <span class="kc">None</span>                             <span class="c1"># Use this to build replicate jobs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span> <span class="o">=</span> <span class="kc">None</span>            <span class="c1"># Values are averages of all runs from runList</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">avg_updated</span> <span class="o">=</span> <span class="kc">False</span>        <span class="c1"># Whether we need to update the trajectory averages</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">N_batches</span> <span class="o">=</span> <span class="mi">1000</span>       <span class="c1"># Used to be 1000</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">batch_length</span> <span class="o">=</span> <span class="kc">None</span>    <span class="c1"># Length of time in one batch</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gas_product</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">=</span> <span class="mi">0</span>
         
         <span class="c1"># Input data for different trajectories</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -97,15 +96,23 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">traj_derivs</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">events_total</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">CPU_total</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_avg_covs</span> <span class="o">=</span> <span class="kc">None</span>
         
-        <span class="c1"># Needed for computing the rates</span>
+        <span class="c1"># Rate analysis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N_batches</span> <span class="o">=</span> <span class="mi">1000</span>       <span class="c1"># Used to be 1000</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_length</span> <span class="o">=</span> <span class="kc">None</span>    <span class="c1"># Length of time in one batch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gas_product</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gas_prod_ind</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">TOF_stoich</span> <span class="o">=</span> <span class="kc">None</span>
         
-        <span class="c1"># Analysis</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rates_data</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">TOF</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">TOF_error</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># Rate and autocorrelation data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rate</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rate_CI</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ACF</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ACF_CI</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="c1"># Sensitivity indices</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">NSC</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">NSC_ci</span> <span class="o">=</span> <span class="kc">None</span>
     
@@ -120,10 +127,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">gas_product</span> <span class="o">=</span> <span class="n">kmc_temp</span><span class="o">.</span><span class="n">gas_prod</span></div>
         
     
-<div class="viewcode-block" id="Replicates.BuildJobFiles"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.BuildJobFiles">[docs]</a>    <span class="k">def</span> <span class="nf">BuildJobFiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_states</span> <span class="o">=</span> <span class="p">[]):</span>
+<div class="viewcode-block" id="Replicates.BuildJobFiles"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.BuildJobFiles">[docs]</a>    <span class="k">def</span> <span class="nf">BuildJobFiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init_states</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Builds folders with Zacros input files. The only difference is the random seed.</span>
+<span class="sd">        Builds folders with Zacros input files. Each trajectory is assigned a different random seed.</span>
+<span class="sd">        :param init_states: List of intial states for each trajectory.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ParentFolder</span><span class="p">):</span>
@@ -137,7 +145,7 @@
         
         <span class="c1"># Go through the directories and write input files for trajectories with</span>
         <span class="c1"># different random seeds and possibly different initial states</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span><span class="p">):</span>
             
             <span class="c1"># Set the random seed</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">Seed</span> <span class="o">=</span> <span class="n">seed</span>
@@ -150,7 +158,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fldr</span><span class="p">)</span>
             
             <span class="c1"># Set initial state</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">init_states</span> <span class="o">==</span> <span class="p">[]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">init_states</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">statein</span><span class="o">.</span><span class="n">Type</span> <span class="o">=</span> <span class="s1">&#39;history&#39;</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">statein</span><span class="o">.</span><span class="n">Struct</span> <span class="o">=</span> <span class="n">init_states</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 
@@ -161,12 +169,15 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">WriteAllInput</span><span class="p">()</span></div>
                 
     
-<div class="viewcode-block" id="Replicates.RunAllJobs_parallel_JobArray"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.RunAllJobs_parallel_JobArray">[docs]</a>    <span class="k">def</span> <span class="nf">RunAllJobs_parallel_JobArray</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_cores</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">server</span> <span class="o">=</span> <span class="s1">&#39;Squidward&#39;</span><span class="p">,</span> <span class="n">job_name</span> <span class="o">=</span> <span class="s1">&#39;zacros_JA&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Replicates.RunAllTrajectories_JobArray"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.RunAllTrajectories_JobArray">[docs]</a>    <span class="k">def</span> <span class="nf">RunAllTrajectories_JobArray</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_cores</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">server</span> <span class="o">=</span> <span class="s1">&#39;Squidward&#39;</span><span class="p">,</span> <span class="n">job_name</span> <span class="o">=</span> <span class="s1">&#39;zacros_JA&#39;</span><span class="p">):</span>
     
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Runs a job array on Squidward or Farber</span>
 <span class="sd">        Writes the .qs file with certain parameters changed</span>
 <span class="sd">        Then, it submits it to the gridengine and waits for them to finish</span>
+<span class="sd">        :param max_cores: Maximum number of cores to use</span>
+<span class="sd">        :param server: Name of the server. Squidward and Farber are supported.</span>
+<span class="sd">        :param job_name: Name of the job to put in the submit file.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
     
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;Running parallel jobs</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -183,7 +194,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Unrecognized server for parallel runs&#39;</span><span class="p">)</span>
         
-        <span class="n">n_cores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">max_cores</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">])</span>           
+        <span class="n">n_cores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">max_cores</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span><span class="p">])</span>           
         
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ParentFolder</span><span class="p">,</span> <span class="s1">&#39;zacros_submit_JA.qs&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">txt</span><span class="p">:</span>
             
@@ -197,7 +208,7 @@
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -N &#39;</span> <span class="o">+</span> <span class="n">job_name</span> <span class="o">+</span> <span class="s1">&#39; 					#This is the name of the job array</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -t 1-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;  							#Assumes task IDs increment by 1; can also increment by another value</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -t 1-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;  							#Assumes task IDs increment by 1; can also increment by another value</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -tc &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">n_cores</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; 							#This is the total number of tasks to run at any given moment</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -pe threads 1 -l mem_free=2G              #Change the last field to the number of processors desired per task</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -225,7 +236,7 @@
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# Now append whatever commands you use to run your OpenMP code:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;time &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">exe_file</span><span class="p">)</span>
             
-            <span class="k">else</span><span class="p">:</span>       <span class="c1"># Squidward</span>
+            <span class="k">if</span> <span class="n">server</span> <span class="o">==</span> <span class="s1">&#39;Squidward&#39;</span><span class="p">:</span> 
             
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#!/bin/bash</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -cwd</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -234,9 +245,9 @@
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -N zacros_JA 					#This is the name of the job array</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -t 1-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;  							#Assumes task IDs increment by 1; can also increment by another value</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -t 1-&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;  							#Assumes task IDs increment by 1; can also increment by another value</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -tc &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">n_cores</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; 							#This is the total number of tasks to run at any given moment</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -pe openmpi-smp 2 -l mem_free=1G			#Change the last field to the number of processors desired per task</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#$ -pe openmpi-smp 1 -l mem_free=1G			#Change the last field to the number of processors desired per task</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;job_file=</span><span class="se">\&#39;</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ParentFolder</span><span class="p">,</span> <span class="s1">&#39;dir_list.txt&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\&#39;\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;#Change to the job directory</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -244,6 +255,9 @@
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;cd &quot;$job_path&quot; #SGE_TASK_ID is the task number in the range &lt;task_start_index&gt; to &lt;task_stop_index&gt;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
                 <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;time &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtemplate</span><span class="o">.</span><span class="n">exe_file</span><span class="p">)</span>
+    
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s1">&#39;Server name not recognized.&#39;</span><span class="p">)</span>
     
         <span class="c1"># Call to system to submit the job array</span>
         <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ParentFolder</span><span class="p">)</span>
@@ -254,8 +268,6 @@
         <span class="n">check_num</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">while</span> <span class="ow">not</span> <span class="n">all_jobs_done</span><span class="p">:</span>
             <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
-            <span class="c1">#sys.stdout.write(&#39;Checking to see if jobs are complete: &#39; + str(check_num) + &#39;\n&#39;)</span>
-            <span class="c1">#sys.stdout.flush()</span>
             <span class="n">check_num</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">all_jobs_done</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">for</span> <span class="n">fldr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span><span class="p">:</span>
@@ -270,7 +282,7 @@
 <div class="viewcode-block" id="Replicates.RunAllJobs_serial"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.RunAllJobs_serial">[docs]</a>    <span class="k">def</span> <span class="nf">RunAllJobs_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>       <span class="c1"># Serial version of running all jobs</span>
 
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Runs all Zacros jobs in serial</span>
+<span class="sd">        Runs all trajectories in serial</span>
 <span class="sd">        &#39;&#39;&#39;</span>
     
         <span class="c1"># loop over array of directories and execute the Zacros executable in that folder</span>
@@ -303,7 +315,7 @@
                 <span class="k">if</span> <span class="n">dummy_run</span><span class="o">.</span><span class="n">CheckComplete</span><span class="p">():</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">full_direct</span><span class="p">)</span>
                     
-            <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span><span class="p">)</span>
         
         <span class="c1"># Create arrays for data</span>
         <span class="c1"># Use input data from runtemplate to properly size the arrays</span>
@@ -318,10 +330,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">CPU_total</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">time_avg_covs</span> <span class="o">=</span> <span class="p">[]</span>                   <span class="c1"># surface species coverage based on time integral not including empty site</span>
         
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">):</span>
-            <span class="nb">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">traj_dir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span><span class="p">:</span>
+
             <span class="c1"># Switch to folder and read output files</span>
-            <span class="n">dummy_run</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dirs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">dummy_run</span><span class="o">.</span><span class="n">Path</span> <span class="o">=</span> <span class="n">traj_dir</span>
             <span class="n">dummy_run</span><span class="o">.</span><span class="n">ReadAllOutput</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runtemplate</span> <span class="o">=</span> <span class="n">dummy_run</span>            <span class="c1"># so we have an example</span>
             
@@ -343,7 +355,7 @@
             
             <span class="bp">self</span><span class="o">.</span><span class="n">events_total</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">dummy_run</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">events_occurred</span> <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">CPU_total</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">dummy_run</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">CPU_time</span> <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">time_avg_covs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dummy_run</span><span class="o">.</span><span class="n">time_avg_covs</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_avg_covs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dummy_run</span><span class="o">.</span><span class="n">spec_num_int</span><span class="p">)</span>
         
         <span class="c1"># Convert the data from lists to arrays</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">species_pops</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">species_pops</span><span class="p">)</span>
@@ -358,28 +370,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">dummy_run</span><span class="p">)</span>      <span class="c1"># Initialize run average with information from dummyrun</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">avg_updated</span> <span class="o">=</span> <span class="kc">False</span></div>
         
-
-<div class="viewcode-block" id="Replicates.Set_analysis_varaibles"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.Set_analysis_varaibles">[docs]</a>    <span class="k">def</span> <span class="nf">Set_analysis_varaibles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Compute varaibles needed for the analysis, based on the input</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-    
-        <span class="c1"># Find index of product molecule</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">gas_prod_ind</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">gas_spec</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gas_product</span><span class="p">)</span>           <span class="c1"># Find the index of the product species and adjust index to account for surface species</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Product species &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gas_product</span> <span class="o">+</span> <span class="s1">&#39; not found.&#39;</span><span class="p">)</span>
-
-        <span class="c1"># Find the stochiometry of the product molecule for each reaction         </span>
-        <span class="n">nRxns</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">RxnNameList</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">TOF_stoich</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nRxns</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">elem_stoich</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">Nu</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">TOF_stoich</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">elem_stoich</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gas_prod_ind</span><span class="p">]</span>
-            
-        <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span> <span class="p">[</span> <span class="mi">3</span> <span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_batches</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">+</span> <span class="mi">2</span> <span class="p">]</span> <span class="p">)</span>            <span class="c1"># Set the number of batches per trajectory</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">batch_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span></div>
-        
         
 <div class="viewcode-block" id="Replicates.AverageRuns"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.AverageRuns">[docs]</a>    <span class="k">def</span> <span class="nf">AverageRuns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         
@@ -392,10 +382,10 @@
         
         <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">specnumout</span><span class="o">.</span><span class="n">spec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">species_pops</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">procstatout</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">prop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">propensities</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">t_int_cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_avg_covs</span><span class="p">,</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
-		
-		
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">prop</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">prop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">propensities</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">spec_num_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_avg_covs</span><span class="p">,</span><span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">propCounter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">propCounter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
         
@@ -405,20 +395,47 @@
 		
         <span class="bp">self</span><span class="o">.</span><span class="n">avg_updated</span> <span class="o">=</span> <span class="kc">True</span></div>
         
-    
-<div class="viewcode-block" id="Replicates.Compute_ACF"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.Compute_ACF">[docs]</a>    <span class="k">def</span> <span class="nf">Compute_ACF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_ACF</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        
+<div class="viewcode-block" id="Replicates.Compute_batch_data"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.Compute_batch_data">[docs]</a>    <span class="k">def</span> <span class="nf">Compute_batch_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_batches_total</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
     
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Compute reaction rate and autocorrelation function (ACF) using batch means</span>
+<span class="sd">        Compute varaibles needed for the analysis, based on the input</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N_batches</span> <span class="o">=</span> <span class="n">n_batches_total</span>
+        <span class="c1"># Find index of product molecule</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gas_prod_ind</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">gas_spec</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gas_product</span><span class="p">)</span>           <span class="c1"># Find the index of the product species and adjust index to account for surface species</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Product species &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gas_product</span> <span class="o">+</span> <span class="s1">&#39; not found.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Find the stochiometry of the product molecule for each reaction         </span>
+        <span class="n">nRxns</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">RxnNameList</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">TOF_stoich</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nRxns</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">elem_stoich</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">genout</span><span class="o">.</span><span class="n">Nu</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">TOF_stoich</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">elem_stoich</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">gas_prod_ind</span><span class="p">]</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span> <span class="p">[</span> <span class="mi">3</span> <span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N_batches</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">+</span> <span class="mi">2</span> <span class="p">]</span> <span class="p">)</span>            <span class="c1"># Set the number of batches per trajectory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span></div>
+        
+        
+<div class="viewcode-block" id="Replicates.Compute_rate"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.Compute_rate">[docs]</a>    <span class="k">def</span> <span class="nf">Compute_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_ACF_CI</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Use batch means to compute the reaction rate (and confidence interval)</span>
+<span class="sd">        Also compute the autocorrelation function (ACF) (and confidence interval)</span>
+<span class="sd">        </span>
+<span class="sd">        :params include_ACF_CI: Whether to use statistical bootstrapping to compute confidence intervals.</span>
+<span class="sd">            This takes some CPU time.</span>
+<span class="sd">        :returns: The rate</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg_updated</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">AverageRuns</span><span class="p">()</span>
         
-        <span class="bp">self</span><span class="o">.</span><span class="n">Set_analysis_varaibles</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Compute_batch_data</span><span class="p">()</span>
             
         <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">rate_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span><span class="p">])</span>
+        <span class="n">rate_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span><span class="p">])</span>
         
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span><span class="p">):</span>
         
@@ -435,35 +452,36 @@
 <span class="sd">        Compute confidence in the rate (assuming IID)</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
-        <span class="n">alldata</span> <span class="o">=</span> <span class="n">rate_data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::]</span>
-        <span class="n">alldata</span> <span class="o">=</span> <span class="n">alldata</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">alldata</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="n">all_batch_rates</span> <span class="o">=</span> <span class="n">rate_data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::]</span>
+        <span class="n">all_batch_rates</span> <span class="o">=</span> <span class="n">all_batch_rates</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
         <span class="n">confidence</span><span class="o">=</span><span class="mf">0.90</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alldata</span><span class="p">)</span>
-        <span class="n">mean_rate</span><span class="p">,</span> <span class="n">se</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">alldata</span><span class="p">),</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sem</span><span class="p">(</span><span class="n">alldata</span><span class="p">)</span>
-        <span class="n">rate_ci</span> <span class="o">=</span> <span class="n">se</span> <span class="o">*</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">_ppf</span><span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">confidence</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_batch_rates</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="p">,</span> <span class="n">se</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">all_batch_rates</span><span class="p">),</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sem</span><span class="p">(</span><span class="n">all_batch_rates</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rate_CI</span> <span class="o">=</span> <span class="n">se</span> <span class="o">*</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">_ppf</span><span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">confidence</span><span class="p">)</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Compute ACF</span>
+<span class="sd">        Compute autocorrelation function</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
         <span class="c1"># Compute the autocorrelation function for the batch means of the rate</span>
         <span class="n">c1</span> <span class="o">=</span> <span class="n">rate_data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
-        <span class="n">c1</span> <span class="o">=</span> <span class="n">c1</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="p">)</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">c1</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         <span class="n">c2</span> <span class="o">=</span> <span class="n">rate_data</span><span class="p">[:,</span><span class="mi">2</span><span class="p">::]</span>
-        <span class="n">c2</span> <span class="o">=</span> <span class="n">c2</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">c2</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="p">)</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">c2</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         
         
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">alldata</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>        <span class="c1"># Covers the case where we have zero rate</span>
-            <span class="n">ACF</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">ACF_ci</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">all_batch_rates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>        <span class="c1"># If the variance of the batch means is zero, autocorrelation cannot be computed.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ACF</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ACF_CI</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">ACF</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1</span> <span class="o">*</span> <span class="n">c2</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">alldata</span><span class="p">)</span>
+        
+            <span class="bp">self</span><span class="o">.</span><span class="n">ACF</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1</span> <span class="o">*</span> <span class="n">c2</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c2</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">all_batch_rates</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">include_ACF</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">include_ACF_CI</span><span class="p">:</span>
             
                 <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">                Compute error bounds on ACF</span>
+<span class="sd">                Compute confidence interval for ACF</span>
 <span class="sd">                &#39;&#39;&#39;</span>
                 
                 <span class="n">N_boot</span> <span class="o">=</span> <span class="mi">100</span>
@@ -473,19 +491,24 @@
                     <span class="n">subpop_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c1</span><span class="p">))</span>
                     <span class="n">c1_new</span> <span class="o">=</span> <span class="n">c1</span><span class="p">[</span><span class="n">subpop_inds</span><span class="p">]</span>
                     <span class="n">c2_new</span> <span class="o">=</span> <span class="n">c2</span><span class="p">[</span><span class="n">subpop_inds</span><span class="p">]</span>
-                    <span class="n">ACF_dist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1_new</span> <span class="o">*</span> <span class="n">c2_new</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1_new</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c2_new</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">alldata</span><span class="p">)</span>
-                    <span class="c1">#ACF_dist[i] = ( np.mean(c1_new * c2_new) - np.mean(alldata) ** 2 ) / np.var(alldata)</span>
-                    <span class="c1">#ACF_dist[i] = np.mean(c1_new * c2_new) - np.mean(c1_new) * np.mean(c2_new)              # test not normalizing the rate</span>
+                    <span class="n">ACF_dist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1_new</span> <span class="o">*</span> <span class="n">c2_new</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c1_new</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c2_new</span><span class="p">)</span> <span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">all_batch_rates</span><span class="p">)</span>
                     
                 <span class="n">ACF_dist</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ACF_dist</span><span class="p">)</span>
                 <span class="n">ACF_high</span> <span class="o">=</span> <span class="n">ACF_dist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.95</span> <span class="o">*</span> <span class="n">N_boot</span><span class="p">)]</span>
                 <span class="n">ACF_low</span> <span class="o">=</span> <span class="n">ACF_dist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.05</span> <span class="o">*</span> <span class="n">N_boot</span><span class="p">)]</span>
-                <span class="n">ACF_ci</span> <span class="o">=</span> <span class="p">(</span><span class="n">ACF_high</span> <span class="o">-</span> <span class="n">ACF_low</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ACF_CI</span> <span class="o">=</span> <span class="p">(</span><span class="n">ACF_high</span> <span class="o">-</span> <span class="n">ACF_low</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
         
-        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;Rate&#39;</span><span class="p">:</span> <span class="n">mean_rate</span><span class="p">,</span> <span class="s1">&#39;Rate_ci&#39;</span><span class="p">:</span> <span class="n">rate_ci</span><span class="p">,</span> <span class="s1">&#39;ACF&#39;</span><span class="p">:</span> <span class="n">ACF</span><span class="p">,</span> <span class="s1">&#39;ACF_ci&#39;</span><span class="p">:</span> <span class="n">ACF_ci</span><span class="p">}</span></div>
+        <span class="c1"># Rescale error bars on the rate based on the ACF</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ACF</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">var_scale</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span><span class="p">):</span>
+                <span class="n">var_scale</span> <span class="o">=</span> <span class="n">var_scale</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">)</span> <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ACF</span> <span class="o">**</span> <span class="n">i</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rate_CI</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate_CI</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="n">var_scale</span> <span class="p">)</span>   
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span></div>
         
         
-<div class="viewcode-block" id="Replicates.PerformSA"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.PerformSA">[docs]</a>    <span class="k">def</span> <span class="nf">PerformSA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta_t</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ergodic</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>          <span class="c1"># Need implement time point interpolation</span>
+<div class="viewcode-block" id="Replicates.PerformSA"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.PerformSA">[docs]</a>    <span class="k">def</span> <span class="nf">PerformSA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta_t</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ergodic</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">dp_per_bin</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>          <span class="c1"># Need implement time point interpolation</span>
         
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging</span>
@@ -498,7 +521,7 @@
 <span class="sd">         Data between sample points is estimated with linear interpolation</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         
-        <span class="bp">self</span><span class="o">.</span><span class="n">Set_analysis_varaibles</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Compute_batch_data</span><span class="p">()</span>
         
         <span class="c1"># Use entire trajectory length as the default time window</span>
         <span class="k">if</span> <span class="n">delta_t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -512,18 +535,18 @@
             <span class="nb">print</span> <span class="s1">&#39;Final time: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Time window is too large. Insufficient sampling.&#39;</span><span class="p">)</span>
         
-        <span class="n">dp_per_bin</span> <span class="o">=</span> <span class="mi">10</span>
+        
         <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span> <span class="o">*</span> <span class="n">dp_per_bin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         
         <span class="n">dp_per_traj</span> <span class="o">=</span> <span class="n">dp_per_bin</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nbpt</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> 
-        <span class="n">rate_data_erg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span>  <span class="p">)</span>
-        <span class="n">W_data_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span> <span class="bp">self</span><span class="o">.</span><span class="n">traj_derivs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">]</span> <span class="p">)</span>
-        <span class="n">fW_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+        <span class="n">rate_data_erg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span>  <span class="p">)</span>
+        <span class="n">W_data_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span> <span class="bp">self</span><span class="o">.</span><span class="n">traj_derivs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">]</span> <span class="p">)</span>
+        <span class="n">fW_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
         <span class="n">rate_contributions_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">traj_derivs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
          
         
         <span class="n">data_ind</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">traj_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">traj_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dp_per_traj</span><span class="p">):</span>
             
                 <span class="n">idb_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">time_search_interp</span><span class="p">(</span> <span class="n">bin_edges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">)</span>
@@ -549,17 +572,17 @@
                 <span class="n">data_ind</span> <span class="o">+=</span> <span class="mi">1</span>
         
         <span class="c1"># Normalize rate contributions by the number of data points</span>
-        <span class="n">rate_contributions_all</span> <span class="o">=</span> <span class="n">rate_contributions_all</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+        <span class="n">rate_contributions_all</span> <span class="o">=</span> <span class="n">rate_contributions_all</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
         
         <span class="c1"># Combine forward and reverse reactions</span>
-        <span class="n">W_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span><span class="p">])</span>
-        <span class="n">rate_contributions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">Reactions</span><span class="p">[</span><span class="s1">&#39;nrxns&#39;</span><span class="p">])</span>
+        <span class="n">W_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span><span class="p">])</span>
+        <span class="n">rate_contributions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">())</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">()):</span>
             
             <span class="n">rxn_and_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_rxn_var_inds</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
             
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">rxn_list</span><span class="p">[</span><span class="n">rxn_and_var</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">is_reversible</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">rxn_list</span><span class="p">[</span><span class="n">rxn_and_var</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">is_reversible</span><span class="p">:</span>
                 <span class="n">W_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">W_data_all</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">W_data_all</span><span class="p">[</span><span class="n">ind</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
                 <span class="n">rate_contributions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rate_contributions_all</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">+</span> <span class="n">rate_contributions_all</span><span class="p">[</span><span class="n">ind</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
                 <span class="n">ind</span> <span class="o">+=</span> <span class="mi">2</span>
@@ -570,18 +593,18 @@
         
         <span class="c1"># Calculate NSCs</span>
         <span class="n">mean_rate</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">W_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">Reactions</span><span class="p">[</span><span class="s1">&#39;nrxns&#39;</span><span class="p">])</span>
-        <span class="n">NSCs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">Reactions</span><span class="p">[</span><span class="s1">&#39;nrxns&#39;</span><span class="p">])</span>
+        <span class="n">W_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">()</span> <span class="p">)</span>
+        <span class="n">NSCs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">())</span>
         
-        <span class="k">for</span> <span class="n">dp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">):</span>
+        <span class="k">for</span> <span class="n">dp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">):</span>
             <span class="n">mean_rate</span> <span class="o">=</span> <span class="n">mean_rate</span> <span class="o">+</span> <span class="n">rate_data_erg</span><span class="p">[</span><span class="n">dp</span><span class="p">]</span>
             <span class="n">W_mean</span> <span class="o">=</span> <span class="n">W_mean</span> <span class="o">+</span> <span class="n">W_data</span><span class="p">[</span> <span class="p">:</span> <span class="p">,</span> <span class="n">dp</span> <span class="p">]</span>
             <span class="n">NSCs</span> <span class="o">=</span> <span class="n">NSCs</span> <span class="o">+</span> <span class="n">rate_data_erg</span><span class="p">[</span><span class="n">dp</span><span class="p">]</span> <span class="o">*</span> <span class="n">W_data</span><span class="p">[</span> <span class="p">:</span> <span class="p">,</span> <span class="n">dp</span> <span class="p">]</span>
             
         <span class="c1"># Normalize means</span>
-        <span class="n">mean_rate</span> <span class="o">=</span> <span class="n">mean_rate</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
-        <span class="n">W_mean</span> <span class="o">=</span> <span class="n">W_mean</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
-        <span class="n">NSCs</span> <span class="o">=</span> <span class="n">NSCs</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+        <span class="n">mean_rate</span> <span class="o">=</span> <span class="n">mean_rate</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+        <span class="n">W_mean</span> <span class="o">=</span> <span class="n">W_mean</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+        <span class="n">NSCs</span> <span class="o">=</span> <span class="n">NSCs</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
         
         <span class="n">NSCs</span> <span class="o">=</span> <span class="n">NSCs</span> <span class="o">-</span> <span class="n">W_mean</span> <span class="o">*</span> <span class="n">mean_rate</span> <span class="o">+</span> <span class="n">rate_contributions</span>       <span class="c1"># Convert from ELR to CELR</span>
         <span class="n">NSCs</span> <span class="o">=</span> <span class="n">NSCs</span> <span class="o">/</span> <span class="n">mean_rate</span>     <span class="c1"># normalize </span>
@@ -597,7 +620,7 @@
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_boot</span><span class="p">):</span>
         
             <span class="c1"># Prepare new set of data</span>
-            <span class="n">subpop_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+            <span class="n">subpop_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
             
             <span class="n">rate_data_erg_sub</span> <span class="o">=</span> <span class="n">rate_data_erg</span><span class="p">[</span><span class="n">subpop_inds</span><span class="p">]</span>
             <span class="n">W_sub</span> <span class="o">=</span> <span class="n">W_data</span><span class="p">[:,</span> <span class="n">subpop_inds</span><span class="p">]</span>
@@ -607,15 +630,15 @@
             <span class="n">W_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">())</span>
             <span class="n">NSCsub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">get_num_rxns</span><span class="p">())</span>
             
-            <span class="k">for</span> <span class="n">dp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">):</span>
+            <span class="k">for</span> <span class="n">dp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">):</span>
                 <span class="n">mean_rate</span> <span class="o">=</span> <span class="n">mean_rate</span> <span class="o">+</span> <span class="n">rate_data_erg_sub</span><span class="p">[</span><span class="n">dp</span><span class="p">]</span>
                 <span class="n">W_mean</span> <span class="o">=</span> <span class="n">W_mean</span> <span class="o">+</span> <span class="n">W_sub</span><span class="p">[</span> <span class="p">:</span> <span class="p">,</span> <span class="n">dp</span> <span class="p">]</span>
                 <span class="n">NSCsub</span> <span class="o">=</span> <span class="n">NSCsub</span> <span class="o">+</span> <span class="n">rate_data_erg_sub</span><span class="p">[</span><span class="n">dp</span><span class="p">]</span> <span class="o">*</span> <span class="n">W_sub</span><span class="p">[</span> <span class="p">:</span> <span class="p">,</span> <span class="n">dp</span> <span class="p">]</span>
                 
             <span class="c1"># Normalize means</span>
-            <span class="n">mean_rate</span> <span class="o">=</span> <span class="n">mean_rate</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
-            <span class="n">W_mean</span> <span class="o">=</span> <span class="n">W_mean</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
-            <span class="n">NSCsub</span> <span class="o">=</span> <span class="n">NSCsub</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_runs</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+            <span class="n">mean_rate</span> <span class="o">=</span> <span class="n">mean_rate</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+            <span class="n">W_mean</span> <span class="o">=</span> <span class="n">W_mean</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
+            <span class="n">NSCsub</span> <span class="o">=</span> <span class="n">NSCsub</span> <span class="o">/</span> <span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_trajectories</span> <span class="o">*</span> <span class="n">dp_per_traj</span> <span class="p">)</span>
             
             <span class="n">NSCsub</span> <span class="o">=</span> <span class="n">NSCsub</span> <span class="o">-</span> <span class="n">W_mean</span> <span class="o">*</span> <span class="n">mean_rate</span> <span class="o">+</span> <span class="n">rate_contributions</span>       <span class="c1"># Convert from ELR to CELR</span>
             <span class="n">NSCsub</span> <span class="o">=</span> <span class="n">NSCsub</span> <span class="o">/</span> <span class="n">mean_rate</span>     <span class="c1"># normalize </span>
@@ -628,7 +651,10 @@
             <span class="n">NSC_dist</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">NSC_sam</span><span class="p">[:,</span><span class="n">rxn_ind</span><span class="p">])</span>
             <span class="n">NSC_dist_high</span> <span class="o">=</span> <span class="n">NSC_dist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.95</span> <span class="o">*</span> <span class="n">N_boot</span><span class="p">)]</span>
             <span class="n">NSC_dist_low</span> <span class="o">=</span> <span class="n">NSC_dist</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.05</span> <span class="o">*</span> <span class="n">N_boot</span><span class="p">)]</span>
-            <span class="n">NSC_ci</span><span class="p">[</span><span class="n">rxn_ind</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">NSC_dist_high</span> <span class="o">-</span> <span class="n">NSC_dist_low</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span></div>
+            <span class="n">NSC_ci</span><span class="p">[</span><span class="n">rxn_ind</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">NSC_dist_high</span> <span class="o">-</span> <span class="n">NSC_dist_low</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">NSC</span> <span class="o">=</span> <span class="n">NSCs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">NSC_ci</span> <span class="o">=</span> <span class="n">NSC_ci</span></div>
         
         
 <div class="viewcode-block" id="Replicates.PlotSensitivities"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.PlotSensitivities">[docs]</a>    <span class="k">def</span> <span class="nf">PlotSensitivities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">NSC_cut</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">):</span> 
@@ -684,51 +710,51 @@
             <span class="n">ind</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">rxn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">mechin</span><span class="o">.</span><span class="n">rxn_list</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">vrnt</span> <span class="ow">in</span> <span class="n">rxn</span><span class="o">.</span><span class="n">variant_list</span><span class="p">:</span>
-                    <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">rxn</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">vrnt</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{0:.3f}</span><span class="s1"> +- </span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NSC</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
+                    <span class="n">txt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">rxn</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">vrnt</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{0:.3f}</span><span class="s1"> +- </span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NSC</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div></div>
                 
             
+<div class="viewcode-block" id="append_replicates"><a class="viewcode-back" href="../Replicates.html#Replicates.append_replicates">[docs]</a><span class="k">def</span> <span class="nf">append_replicates</span><span class="p">(</span><span class="n">batch1</span><span class="p">,</span> <span class="n">batch2</span><span class="p">):</span>
+    
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Append two sets of trajectories</span>
+<span class="sd">    </span>
+<span class="sd">    :returns: Replicates object with all trajectories appended</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">sand</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">batch2</span><span class="p">)</span>
+    
+    <span class="n">sand</span><span class="o">.</span><span class="n">t_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">[</span> <span class="n">batch1</span><span class="o">.</span><span class="n">t_vec</span><span class="p">,</span> <span class="n">batch2</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="mi">1</span><span class="p">::]</span> <span class="o">+</span> <span class="n">batch1</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="p">)</span> 
+    
+    <span class="c1">#sand.History_final_snaps = batch2.History_final_snaps          # history will already have been copied</span>
+    <span class="n">sand</span><span class="o">.</span><span class="n">events_total</span> <span class="o">=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">events_total</span> <span class="o">+</span> <span class="n">batch2</span><span class="o">.</span><span class="n">events_total</span>
+    <span class="n">sand</span><span class="o">.</span><span class="n">CPU_total</span> <span class="o">=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">CPU_total</span> <span class="o">+</span> <span class="n">batch2</span><span class="o">.</span><span class="n">CPU_total</span>
+    
+    <span class="c1"># Cumulative data structures</span>
+    
+    <span class="c1"># Add data from the end of the first calculation to the second calculation</span>
+    <span class="k">for</span> <span class="n">traj_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch2</span><span class="o">.</span><span class="n">n_trajectories</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">time_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batch2</span><span class="o">.</span><span class="n">t_vec</span><span class="p">)):</span>
+        
+            <span class="k">for</span> <span class="n">rxn_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="n">sand</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">):</span>
+        
+                <span class="n">sand</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">time_ind</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span>
+                <span class="n">sand</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">time_ind</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span>
+                <span class="n">sand</span><span class="o">.</span><span class="n">traj_derivs</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">time_ind</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">traj_derivs</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span>
             
-    <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="Replicates.time_sandwich"><a class="viewcode-back" href="../Replicates.html#Replicates.Replicates.time_sandwich">[docs]</a>    <span class="k">def</span> <span class="nf">time_sandwich</span><span class="p">(</span><span class="n">batch1</span><span class="p">,</span> <span class="n">batch2</span><span class="p">):</span>
+            <span class="c1"># Add to the end for gas phase populations</span>
+            <span class="k">for</span> <span class="n">spec_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span> <span class="n">batch2</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">)</span> <span class="p">,</span> <span class="nb">len</span><span class="p">(</span> <span class="n">batch2</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span> <span class="n">batch2</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">gas_spec</span> <span class="p">)</span> <span class="p">):</span>
+                <span class="n">sand</span><span class="o">.</span><span class="n">species_pops</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">time_ind</span><span class="p">,</span> <span class="n">spec_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">species_pops</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">spec_ind</span><span class="p">]</span>
+    
+    <span class="c1"># Combine the data</span>
+    <span class="n">sand</span><span class="o">.</span><span class="n">species_pops</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">species_pops</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">species_pops</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
+    <span class="n">sand</span><span class="o">.</span><span class="n">rxn_freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
+    <span class="n">sand</span><span class="o">.</span><span class="n">propensities</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">propensities</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">propensities</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
+    <span class="n">sand</span><span class="o">.</span><span class="n">Props_integ</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
+    <span class="n">sand</span><span class="o">.</span><span class="n">traj_derivs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">traj_derivs</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">traj_derivs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
+    
+    <span class="n">sand</span><span class="o">.</span><span class="n">avg_updated</span> <span class="o">=</span> <span class="kc">False</span>
         
-        <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Append two sets of trajectories</span>
-<span class="sd">        &#39;&#39;&#39;</span>
-        
-        <span class="n">sand</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">batch2</span><span class="p">)</span>
-        
-        <span class="n">sand</span><span class="o">.</span><span class="n">t_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span> <span class="p">[</span> <span class="n">batch1</span><span class="o">.</span><span class="n">t_vec</span><span class="p">,</span> <span class="n">batch2</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="mi">1</span><span class="p">::]</span> <span class="o">+</span> <span class="n">batch1</span><span class="o">.</span><span class="n">t_vec</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="p">)</span> 
-        
-        <span class="c1">#sand.History_final_snaps = batch2.History_final_snaps          # history will already have been copied</span>
-        <span class="n">sand</span><span class="o">.</span><span class="n">events_total</span> <span class="o">=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">events_total</span> <span class="o">+</span> <span class="n">batch2</span><span class="o">.</span><span class="n">events_total</span>
-        <span class="n">sand</span><span class="o">.</span><span class="n">CPU_total</span> <span class="o">=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">CPU_total</span> <span class="o">+</span> <span class="n">batch2</span><span class="o">.</span><span class="n">CPU_total</span>
-        
-        <span class="c1"># Cumulative data structures</span>
-        
-        <span class="c1"># Add data from the end of the first calculation to the second calculation</span>
-        <span class="k">for</span> <span class="n">traj_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch2</span><span class="o">.</span><span class="n">n_runs</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">time_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batch2</span><span class="o">.</span><span class="n">t_vec</span><span class="p">)):</span>
-            
-                <span class="k">for</span> <span class="n">rxn_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="n">sand</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="p">):</span>
-            
-                    <span class="n">sand</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">time_ind</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span>
-                    <span class="n">sand</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">time_ind</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span>
-                    <span class="n">sand</span><span class="o">.</span><span class="n">traj_derivs</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">time_ind</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">traj_derivs</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span>
-                
-                <span class="c1"># Add to the end for gas phase populations</span>
-                <span class="k">for</span> <span class="n">spec_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span> <span class="n">batch2</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">)</span> <span class="p">,</span> <span class="nb">len</span><span class="p">(</span> <span class="n">batch2</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">surf_spec</span> <span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span> <span class="n">batch2</span><span class="o">.</span><span class="n">runAvg</span><span class="o">.</span><span class="n">simin</span><span class="o">.</span><span class="n">gas_spec</span> <span class="p">)</span> <span class="p">):</span>
-                    <span class="n">sand</span><span class="o">.</span><span class="n">species_pops</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="n">time_ind</span><span class="p">,</span> <span class="n">spec_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">batch1</span><span class="o">.</span><span class="n">species_pops</span><span class="p">[</span><span class="n">traj_ind</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">spec_ind</span><span class="p">]</span>
-        
-        <span class="c1"># Combine the data</span>
-        <span class="n">sand</span><span class="o">.</span><span class="n">species_pops</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">species_pops</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">species_pops</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
-        <span class="n">sand</span><span class="o">.</span><span class="n">rxn_freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">rxn_freqs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
-        <span class="n">sand</span><span class="o">.</span><span class="n">propensities</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">propensities</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">propensities</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
-        <span class="n">sand</span><span class="o">.</span><span class="n">Props_integ</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">Props_integ</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
-        <span class="n">sand</span><span class="o">.</span><span class="n">traj_derivs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">batch1</span><span class="o">.</span><span class="n">traj_derivs</span><span class="p">,</span> <span class="n">sand</span><span class="o">.</span><span class="n">traj_derivs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">::,:]],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="p">)</span>
-        
-        <span class="n">sand</span><span class="o">.</span><span class="n">avg_updated</span> <span class="o">=</span> <span class="kc">False</span>
-            
-        <span class="k">return</span> <span class="n">sand</span></div></div>
+    <span class="k">return</span> <span class="n">sand</span></div>
 </pre></div>
 
           </div>

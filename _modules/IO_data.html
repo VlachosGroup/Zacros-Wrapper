@@ -1425,6 +1425,7 @@
         <span class="n">prop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">nRxn</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">])</span>
 
         <span class="k">del</span> <span class="n">virtual_arr</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span>
         
     <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;propensities_output.txt&#39;</span><span class="p">)):</span>
     
@@ -1439,8 +1440,10 @@
                 <span class="k">for</span> <span class="n">dub</span> <span class="ow">in</span> <span class="n">LineSplit</span><span class="p">:</span>
                     <span class="n">line_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">(</span><span class="n">dub</span><span class="p">))</span>
                 <span class="n">prop</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line_data</span><span class="p">)</span>
-        
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span>
+    
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
     
 
 <div class="viewcode-block" id="Read_time_integrated_propensities"><a class="viewcode-back" href="../IOdata.html#IO_data.Read_time_integrated_propensities">[docs]</a><span class="k">def</span> <span class="nf">Read_time_integrated_propensities</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">):</span>
@@ -1458,7 +1461,7 @@
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;PropCounter_output.bin&#39;</span><span class="p">)):</span>
     
         <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">FileName</span><span class="p">),</span> <span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+        <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">memmap</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;PropCounter_output.bin&#39;</span><span class="p">),</span> <span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
         <span class="n">nNum</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">nNum</span> <span class="o">=</span> <span class="n">nNum</span> <span class="o">-</span> <span class="p">(</span><span class="n">nNum</span> <span class="o">%</span> <span class="n">nRxn</span><span class="p">)</span>
         <span class="n">virtual_arr</span> <span class="o">=</span> <span class="n">virtual_arr</span><span class="p">[:</span><span class="n">nNum</span><span class="p">]</span>
@@ -1466,6 +1469,7 @@
         <span class="n">propCounter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">nRxn</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">])</span>
             
         <span class="k">del</span> <span class="n">virtual_arr</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">propCounter</span><span class="p">)</span>
     
     <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;timeintprop_output.txt&#39;</span><span class="p">)):</span>
     
@@ -1481,7 +1485,9 @@
                     <span class="n">line_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">(</span><span class="n">dub</span><span class="p">))</span>
                 <span class="n">propCounter</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line_data</span><span class="p">)</span>
         
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">propCounter</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">propCounter</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>    
+        <span class="k">return</span> <span class="kc">None</span></div>
 
     
 <div class="viewcode-block" id="Read_trajectory_derivatives"><a class="viewcode-back" href="../IOdata.html#IO_data.Read_trajectory_derivatives">[docs]</a><span class="k">def</span> <span class="nf">Read_trajectory_derivatives</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">):</span>
@@ -1502,6 +1508,7 @@
         <span class="n">W_sen_anal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">nRxn</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">])</span>
 
         <span class="k">del</span> <span class="n">virtual_arr</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">W_sen_anal</span><span class="p">)</span>
     
     <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;trajderiv_output.txt&#39;</span><span class="p">)):</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;trajderiv_output.txt&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">txt</span><span class="p">:</span>
@@ -1515,8 +1522,9 @@
                 <span class="k">for</span> <span class="n">dub</span> <span class="ow">in</span> <span class="n">LineSplit</span><span class="p">:</span>
                     <span class="n">line_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">(</span><span class="n">dub</span><span class="p">))</span>
                 <span class="n">W_sen_anal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line_data</span><span class="p">)</span>
-        
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">W_sen_anal</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">W_sen_anal</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>    
+        <span class="k">return</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="Read_time_integrated_species"><a class="viewcode-back" href="../IOdata.html#IO_data.Read_time_integrated_species">[docs]</a><span class="k">def</span> <span class="nf">Read_time_integrated_species</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">n_surf_specs</span><span class="p">):</span>
@@ -1536,6 +1544,8 @@
         <span class="n">spec_num_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">virtual_arr</span><span class="p">,</span> <span class="p">[</span><span class="n">nNum</span><span class="o">/</span><span class="n">n_surf_specs</span><span class="p">,</span> <span class="n">n_surf_specs</span><span class="p">])</span>
 
         <span class="k">del</span> <span class="n">virtual_arr</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spec_num_int</span><span class="p">)</span>
+        
     <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;timeintspecs_output.txt&#39;</span><span class="p">)):</span> 
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;timeintspecs_output.txt&#39;</span><span class="p">),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">txt</span><span class="p">:</span>
             <span class="n">RawTxt</span> <span class="o">=</span> <span class="n">txt</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
@@ -1548,8 +1558,10 @@
                 <span class="k">for</span> <span class="n">dub</span> <span class="ow">in</span> <span class="n">LineSplit</span><span class="p">:</span>
                     <span class="n">line_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">(</span><span class="n">dub</span><span class="p">))</span>
                 <span class="n">spec_num_int</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spec_num_int</span><span class="p">)</span>
         
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spec_num_int</span><span class="p">)</span></div>
+    <span class="k">else</span><span class="p">:</span>    
+        <span class="k">return</span> <span class="kc">None</span></div>
 </pre></div>
 
           </div>
