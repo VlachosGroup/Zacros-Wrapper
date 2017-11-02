@@ -273,8 +273,8 @@ class Lattice:
             # Site coordinates
             txt.write('site_coordinates \t # fractional coordinates (x,y) in row format\n')
             for i in range(0, len(self.site_type_inds)):
-                txt.write('\t {0:.3f} \t'.format(self.frac_coords[i,0]))
-                txt.write('{0:.3f} \n'.format(self.frac_coords[i,1]))
+                txt.write('\t {0:.5f} \t'.format(self.frac_coords[i,0]))
+                txt.write('{0:.5f} \n'.format(self.frac_coords[i,1]))
             txt.write('\n')
             
             # Site neighboring structure

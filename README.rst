@@ -24,7 +24,8 @@ Developers
 
 Related Publications
 ---------------------
-* M. Nunez, T.A. Robie, D.G. Vlachos, "Acceleration and Sensitivity Analysis of Lattice Kinetic Monte Carlo Simulations Using Parallel Processsing and Rate Constant Rescaling", Journal of Chemical Physics, (under revision).
+* `M. Nunez, T.A. Robie, D.G. Vlachos, J. Chem. Phys. 147, 164103 (2017). <http://aip.scitation.org/doi/full/10.1063/1.4998926>`_
+
 
 Dependencies
 -------------

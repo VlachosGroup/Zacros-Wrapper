@@ -45,13 +45,15 @@ class kmc_traj():
         # Extra analysis variables
         self.gas_prod = None                    # string with the name of the product (gas) species, used to compute the rate
         
-        # Missing other variables obtained from binary files...
+        # Missing other variables obtained from additional output files...??
         
-        # Binary data
+        # Additional output
         self.prop = None                        # data from propensities_output.txt
         self.propCounter = None                 # data from timeintprop_output.txt
         self.W_sen_anal = None                  # data from trajderiv_output.txt
         self.spec_num_int = None                # data from timeintspecs_output.txt
+        self.TS_site_props_list = None
+        self.TS_site_props_ss = None            # steady state site propensities
         
         
     '''
@@ -119,7 +121,15 @@ class kmc_traj():
             self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
             self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
             self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
+            self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
 
+            if not self.TS_site_props_list is None:
+                
+                if self.histout.snap_times[-1] == 0.:   # only 1 entry in history output
+                    self.TS_site_props_ss = self.TS_site_props_list[-1]
+                else:
+                    self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
+            
         else:
             print 'general_output.txt not found in ' + self.Path
     

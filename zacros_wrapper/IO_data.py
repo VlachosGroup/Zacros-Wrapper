@@ -1329,7 +1329,7 @@ class HistoryOut():
             _linecache.clearcache()
             snap_header = _linecache.getline(HistPath, 8 + snap_ind *
                                              (nSites+2)-1).split()
-            self.snap_times.append(snap_header[3])
+            self.snap_times.append(np.float(snap_header[3]))
             for i in range(0, nSites):
                 snap_data[i, :] = _linecache.getline(HistPath, 8 + snap_ind *
                                                      (nSites+2)+i).split()
@@ -1512,3 +1512,38 @@ def Read_time_integrated_species(path, n_surf_specs):
         
     else:    
         return None
+        
+        
+def Read_time_integrated_site_props(path, nSites, nRxn, nSnaps ):
+    '''
+    Read time integrated site propensities
+    
+    :returns: List of [nSites x nRxn] matrices, one for each snapshot
+    '''
+    
+    
+    fname = os.path.join(path, 'TIsiteprops_output.txt')
+    if os.path.isfile(fname):
+        with open(fname, 'r') as txt:
+            RawTxt = txt.readlines()
+    
+        TS_site_props_list = []
+        line_count = 0
+        for snap_ind in range(nSnaps):
+            
+            prop_array = np.zeros([nSites, nRxn])
+            for site_ind in range(nSites):
+                x = RawTxt[line_count].split()
+                for rxn_ind in range(nRxn):
+                    prop_array[site_ind, rxn_ind] = x[rxn_ind]
+                line_count += 1
+                
+            line_count += 1
+                
+            TS_site_props_list.append(prop_array)    
+        
+        return TS_site_props_list
+        
+    else:
+        return None
+            

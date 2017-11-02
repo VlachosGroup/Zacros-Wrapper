@@ -47,6 +47,7 @@ class Replicates:
         self.events_total = None
         self.CPU_total = None
         self.time_avg_covs = None
+        self.TS_site_props_sss = None
         
         # Rate analysis
         self.N_batches = 1000       # Used to be 1000
@@ -279,6 +280,7 @@ class Replicates:
         self.events_total = []
         self.CPU_total = []
         self.time_avg_covs = []                   # surface species coverage based on time integral not including empty site
+        self.TS_site_props_sss = []
         
         for traj_dir in self.run_dirs:
 
@@ -306,6 +308,7 @@ class Replicates:
             self.events_total.append( dummy_run.genout.events_occurred )
             self.CPU_total.append( dummy_run.genout.CPU_time )
             self.time_avg_covs.append(dummy_run.spec_num_int)
+            self.TS_site_props_sss.append(dummy_run.TS_site_props_ss)
         
         # Convert the data from lists to arrays
         self.species_pops = np.array(self.species_pops)
@@ -316,6 +319,7 @@ class Replicates:
         self.events_total = np.array(self.events_total)
         self.CPU_total = np.array(self.CPU_total)
         self.time_avg_covs = np.array(self.time_avg_covs)
+        self.TS_site_props_sss = np.array(self.TS_site_props_sss)
         
         self.runAvg = copy.deepcopy(dummy_run)      # Initialize run average with information from dummyrun
         self.avg_updated = False
@@ -338,6 +342,8 @@ class Replicates:
             self.runAvg.spec_num_int = np.mean(self.time_avg_covs,axis = 0)
         if not self.runAvg.propCounter is None:
             self.runAvg.propCounter = np.mean(self.Props_integ, axis = 0)
+        if not self.runAvg.TS_site_props_ss is None:
+            self.runAvg.TS_site_props_ss = np.mean(self.TS_site_props_sss, axis = 0)
         
         self.runAvg.genout.events_occurred = np.mean(self.events_total)
         self.runAvg.genout.CPU_time = np.mean(self.CPU_total)
