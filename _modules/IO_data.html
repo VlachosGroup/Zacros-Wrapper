@@ -1379,7 +1379,7 @@
             <span class="n">_linecache</span><span class="o">.</span><span class="n">clearcache</span><span class="p">()</span>
             <span class="n">snap_header</span> <span class="o">=</span> <span class="n">_linecache</span><span class="o">.</span><span class="n">getline</span><span class="p">(</span><span class="n">HistPath</span><span class="p">,</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">snap_ind</span> <span class="o">*</span>
                                              <span class="p">(</span><span class="n">nSites</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">snap_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">snap_header</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">snap_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">(</span><span class="n">snap_header</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nSites</span><span class="p">):</span>
                 <span class="n">snap_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">_linecache</span><span class="o">.</span><span class="n">getline</span><span class="p">(</span><span class="n">HistPath</span><span class="p">,</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">snap_ind</span> <span class="o">*</span>
                                                      <span class="p">(</span><span class="n">nSites</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
@@ -1562,6 +1562,41 @@
         
     <span class="k">else</span><span class="p">:</span>    
         <span class="k">return</span> <span class="kc">None</span></div>
+        
+        
+<div class="viewcode-block" id="Read_time_integrated_site_props"><a class="viewcode-back" href="../IOdata.html#IO_data.Read_time_integrated_site_props">[docs]</a><span class="k">def</span> <span class="nf">Read_time_integrated_site_props</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">nSites</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">,</span> <span class="n">nSnaps</span> <span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Read time integrated site propensities</span>
+<span class="sd">    </span>
+<span class="sd">    :returns: List of [nSites x nRxn] matrices, one for each snapshot</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    
+    <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;TIsiteprops_output.txt&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">txt</span><span class="p">:</span>
+            <span class="n">RawTxt</span> <span class="o">=</span> <span class="n">txt</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+    
+        <span class="n">TS_site_props_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">line_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">snap_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nSnaps</span><span class="p">):</span>
+            
+            <span class="n">prop_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">nSites</span><span class="p">,</span> <span class="n">nRxn</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">site_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nSites</span><span class="p">):</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">RawTxt</span><span class="p">[</span><span class="n">line_count</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">rxn_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nRxn</span><span class="p">):</span>
+                    <span class="n">prop_array</span><span class="p">[</span><span class="n">site_ind</span><span class="p">,</span> <span class="n">rxn_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">rxn_ind</span><span class="p">]</span>
+                <span class="n">line_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+            <span class="n">line_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+            <span class="n">TS_site_props_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prop_array</span><span class="p">)</span>    
+        
+        <span class="k">return</span> <span class="n">TS_site_props_list</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+            
 </pre></div>
 
           </div>
