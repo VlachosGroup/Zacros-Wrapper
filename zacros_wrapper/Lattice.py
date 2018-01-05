@@ -34,7 +34,7 @@ class Lattice:
         self.site_type_inds = []
         self.frac_coords = []
         self.cart_coords = []
-        self.neighbor_list = []
+        self.neighbor_list = []     # sites are indexed starting with 0
         self.cell_list = []     # self, north, northeast, east, or southeast
 
         
@@ -231,8 +231,11 @@ class Lattice:
             neighbs = line[5::]
             for site_2 in neighbs:
                 if int(site_2) > 0:         # Zeros are placeholders in the output file
-                    self.neighbor_list.append([site_ind+1, int(site_2)])
-        
+                    self.neighbor_list.append([site_ind, int(site_2)-1])
+        print len(self.site_type_inds)
+        print self.cart_coords.shape
+        print self.neighbor_list
+        #raise NameError('stop')
         # Convert to fractional coordinates
         self.frac_coords = np.dot(self.cart_coords, np.linalg.inv(self.lattice_matrix))
     

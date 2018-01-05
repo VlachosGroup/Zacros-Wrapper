@@ -451,9 +451,7 @@ def append_trajectories(run1, run2):
     Take two trajectories and append them together. 
     
     :param run1: First trajectory - a kmc_traj object
-    
     :param run2: Second trajectory - a kmc_traj object which continues the simulation where the first one terminated
-    
     :returns: A kmc_traj object that has the trajectories appended
     '''
     
@@ -464,14 +462,17 @@ def append_trajectories(run1, run2):
     
     combo.specnumout.t = np.concatenate([run1.specnumout.t, run2.specnumout.t[1::] + run1.specnumout.t[-1] * np.ones( len(run2.specnumout.t)-1 )])
     
-    n_surf_specs = len( self.simin.surf_spec )
+    n_surf_specs = len( run1.simin.surf_spec )
     run2.specnumout.spec[1::, n_surf_specs : ] = run2.specnumout.spec[1::, n_surf_specs : ] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.specnumout.spec[-1, n_surf_specs : ]] )        
     combo.specnumout.spec = np.vstack([run1.specnumout.spec, run2.specnumout.spec[1::,:] ])
     combo.prop = np.vstack([run1.prop, run2.prop[1::,:] ])
     combo.procstatout.events = np.vstack( [run1.procstatout.events, run2.procstatout.events[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.procstatout.events[-1,:]] ) ] )
     combo.propCounter = np.vstack( [run1.propCounter, run2.propCounter[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.propCounter[-1,:]]  ) ] )
     combo.W_sen_anal  = np.vstack( [run1.W_sen_anal, run2.W_sen_anal[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.W_sen_anal[-1,:]]  ) ] )      
+
+    hist_t_total = run1.histout.snap_times[-1] + run2.histout.snap_times[-1]
+    combo.TS_site_props_ss = ( run1.TS_site_props_ss * run1.histout.snap_times[-1] + run2.TS_site_props_ss * run2.histout.snap_times[-1] ) / hist_t_total
     
-    combo.History = [ run1.History[0], run2.History[-1] ]
+    #combo.History = [ run1.History[0], run2.History[-1] ]
     
     return combo

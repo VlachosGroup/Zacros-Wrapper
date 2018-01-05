@@ -16,7 +16,6 @@ KMC_source = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/stiff_inpu
 RunPath = '/home/vlachos/mpnunez/ZacrosWrapper/sample_systems/AtoB/ScaledownV3'
 product_spec = 'B'                                  # product species
 number_of_runs = 96
-gas_stoich = np.array([-1, 1])
 ''' -------------------------------------------- '''
 
 if __name__ == '__main__':                 # Need this line to make parallelization work

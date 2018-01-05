@@ -187,7 +187,7 @@ class Replicates:
                 txt.write('# Now append whatever commands you use to run your OpenMP code:\n')
                 txt.write('time ' + self.runtemplate.exe_file)
             
-            if server == 'Squidward': 
+            elif server == 'Squidward': 
             
                 txt.write('#!/bin/bash\n')
                 txt.write('#$ -cwd\n')
@@ -195,7 +195,7 @@ class Replicates:
                 txt.write('#$ -S /bin/bash\n')
                 txt.write('#\n')
                 txt.write('\n')
-                txt.write('#$ -N zacros_JA 					#This is the name of the job array\n')
+                txt.write('#$ -N ' + job_name + ' 					#This is the name of the job array\n')
                 txt.write('#$ -t 1-' + str(self.n_trajectories) + '  							#Assumes task IDs increment by 1; can also increment by another value\n')
                 txt.write('#$ -tc ' + str(n_cores) + ' 							#This is the total number of tasks to run at any given moment\n')
                 txt.write('#$ -pe openmpi-smp 1 -l mem_free=1G			#Change the last field to the number of processors desired per task\n')
@@ -211,7 +211,7 @@ class Replicates:
                 raise NameError('Server name not recognized.')
     
         # Call to system to submit the job array
-        os.chdir(self.ParentFolder)
+        os.chdir(self.ParentFolder)     # Change into the directory so output files will be there
         os.system('qsub ' + os.path.join(self.ParentFolder, 'zacros_submit_JA.qs'))
     
         # Wait for jobs to be done
@@ -319,7 +319,7 @@ class Replicates:
         self.events_total = np.array(self.events_total)
         self.CPU_total = np.array(self.CPU_total)
         self.time_avg_covs = np.array(self.time_avg_covs)
-        self.TS_site_props_sss = np.array(self.TS_site_props_sss)
+        self.TS_site_props_sss = np.array(self.TS_site_props_sss) 
         
         self.runAvg = copy.deepcopy(dummy_run)      # Initialize run average with information from dummyrun
         self.avg_updated = False
@@ -347,7 +347,7 @@ class Replicates:
         
         self.runAvg.genout.events_occurred = np.mean(self.events_total)
         self.runAvg.genout.CPU_time = np.mean(self.CPU_total)
-        
+        self.runAvg.TS_site_props_ss = np.mean(self.TS_site_props_sss, axis = 0)
 		
         self.avg_updated = True
         
@@ -468,12 +468,9 @@ class Replicates:
         
         '''
         Perform likelihood ratio sensitivity analysis with a combination of time and trajectory averaging
-        
         :param delta_t:   Size of the time window used for likelihood ratio sensitivity analysis. By default, it is the size of a batch.
-        
         :param ergodic:   True - average the rate over the entire time interval (centered ergodic likelihood ratio)
                     False - use the rate at the end of the time interval (centered likelihood ratio)
-        
          Data between sample points is estimated with linear interpolation
         '''
         
@@ -617,7 +614,6 @@ class Replicates:
         
         '''
         Plot the results of sensitivity analysis
-        
         NSC_cut : Reactions with normalized sensitivity coefficients (NSC) below this limit will not be plotted
         '''
         
@@ -673,7 +669,6 @@ def append_replicates(batch1, batch2):
     
     '''
     Append two sets of trajectories
-    
     :returns: Replicates object with all trajectories appended
     '''
     
@@ -707,6 +702,7 @@ def append_replicates(batch1, batch2):
     sand.propensities = np.concatenate( [batch1.propensities, sand.propensities[:,1::,:]], axis = 1 )
     sand.Props_integ = np.concatenate( [batch1.Props_integ, sand.Props_integ[:,1::,:]], axis = 1 )
     sand.traj_derivs = np.concatenate( [batch1.traj_derivs, sand.traj_derivs[:,1::,:]], axis = 1 )
+    sand.TS_site_props_sss = ( batch1.TS_site_props_sss * batch1.t_vec[-1] + batch2.TS_site_props_sss * batch2.t_vec[-1] ) / (batch1.t_vec[-1] + batch2.t_vec[-1])
     
     sand.avg_updated = False
         

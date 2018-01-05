@@ -279,7 +279,7 @@ class cluster_variant():
 
     def __init__(self):
     
-        self.name = ''
+        self.name = 'var'
         self.site_types = None
         self.graph_multiplicity = 1
         self.cluster_eng = 0.0
@@ -492,7 +492,7 @@ class rxn_variant():
 
     def __init__(self):
     
-        self.name = ''
+        self.name = 'var'
         self.site_types = None              # site types
         self.pre_expon = None               # pre-exponential factor
         self.pe_ratio = None                # partial equilibrium ratio
