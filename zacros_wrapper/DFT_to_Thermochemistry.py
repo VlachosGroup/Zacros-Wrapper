@@ -1,20 +1,32 @@
 # -*- coding: utf-8 -*-
 '''
-    Calculate thermodynamic data (S298, H298, and Cp(T)
-    from ab initio DFT data (energies and frequencies)
-    providng input thermodynamics files for
-    KMC (Zacros) and MKM (Chemkin and Matlab)
+         -----------------------------------------------------
+          Calculate thermodynamic data (S298, H298, and Cp(T)
+          from ab initio DFT data (energies and frequencies)
+              providng input thermodynamics files for
+             KMC (Zacros) and MKM (Chemkin and Matlab)
 
-    Gerhard R Wittreich, P.E.
-    Created on Fri Mar 31 2017
-    
-    author  wittregr
-    
-    Adopted from Matlab code written and modified by mVassili Vorotnikov and Geun Ho Gu
-    
-    This program contains the class objects used to read energy, vibration and
-    molecular configuration data and determine the standard entropy and enthalpy
-    and heat capacities at various temperatures.
+                     Vlachos Research Group
+                Chemical and Biomolecular Egineering
+                      University of Delaware
+
+                     Gerhard R Wittreich, P.E.
+          -----------------------------------------------------
+
+Created on Fri Mar 31 16:20:43 2017
+
+@author: wittregr
+
+Adopted from Matlab code written and modified by:
+
+                     Vassili Vorotnikov
+                            and
+                         Geun Ho Gu
+
+ This program contains the class objects used to read energy, vibration and
+ molecular configuration data and determine the standard entropy and enthalpy
+ and heat capacities at various temperatures.
+
 '''
 import numpy as _np
 from numpy import pi
@@ -23,7 +35,7 @@ import ase.io as _ase
 import re
 import scipy.interpolate as _sp
 import datetime
-from utils import constant as c
+from GRW_constants import constant as c
 
 
 class Particle(object):
@@ -61,15 +73,18 @@ class Particle(object):
                        self.hydrogen * c.MW_hydorgen +
                        self.oxygen * c.MW_oxygen +
                        self.nitrogen * c.MW_nitrogen)/c.NA/1000
-        if not hasattr(self, 'Inertia'):
+        if not hasattr(self, 'Inertia') and 'totengpath' in dict:
             self.totengpath = os.path.join(*re.split(r'\\|/',
                                            str(data[dict['totengpath']]).
                                            strip('.').strip('\\')))
-        self.etotal = float(data[dict['etotal']])   # Total energy
-        if data[dict['edisp']] == '':
-            self.edisp = float(0)
-        else:
+        if 'etotal' in dict:
+            self.etotal = float(data[dict['etotal']])   # Total energy
+        if 'hf_tstp' in dict:
+            self.hf_Tstp = float(data[dict['hf_tstp']])
+        if 'edisp' in dict and data[dict['edisp']] != '':
             self.edisp = float(data[dict['edisp']])     # Dispersion energy
+        else:
+            self.edisp = float(0)
         self.numvibfreq = int(data[dict['numvibfreq']])  # No. vib frequencies
         if not hasattr(self, 'phase'):
             self.phase = None                       # Phase (G=gas, S=surface)
@@ -124,7 +139,8 @@ class Particle(object):
         '''
         Call Enthalpy method to calculate standard state enthalpy
         '''
-        self.Calc_Enthalpy()
+        if not hasattr(self, 'hf_Tstp'):
+            self.Calc_Enthalpy()
 
     def Determine_Phase(self):
         '''
@@ -195,7 +211,7 @@ class Particle(object):
                                       5./2.*_np.log(c.kb1*T) -
                                       _np.log(p))
             if hasattr(self, 'A_st'):
-                self.q_trans2D = self.A_st * (2*pi*self.MW*c.kb1*T)/c.h1**2
+                self.q_trans2D = self.A_st * (2*_np.pi*self.MW*c.kb1*T)/c.h1**2
         else:
             '''
             Surface phase calculation
@@ -229,6 +245,7 @@ class Particle(object):
             Translational and rotational Gas phase calculation
             '''
             self.Cp_trans = _np.array([3./2.]*len(self.Cp_Range))
+            self.Cv2Cp = 1
             if self.islinear == 0:
                 '''
                 Non-Linear species
@@ -245,10 +262,11 @@ class Particle(object):
             '''
             self.Cp_rot = _np.array([0.]*len(self.Cp_Range))
             self.Cp_trans = _np.array([0.]*len(self.Cp_Range))
+            self.Cv2Cp = 0
         '''
         Sum all contribution to heat capacity for total heat capapcity
         '''
-        self.Cp = c.R1*(self.Cp_trans + self.Cp_rot + self.Cp_vib + 1)
+        self.Cp = c.R1*(self.Cp_trans + self.Cp_rot + self.Cp_vib + self.Cv2Cp)
 
     def Calc_Enthalpy(self):
         T = self.Tstp
@@ -303,11 +321,11 @@ class Reference(Particle):
     SubClass object to add specific fields for reference species
     '''
     def __init__(self, data, dict, Base_path, Tstp=298.15):
-        if data[dict['sigma']] != '':
+        if 'sigma' in dict and data[dict['sigma']] != '':
             self.sigma = int(data[dict['sigma']])            # Sigma
         else:
             self.sigma = int(0)
-        if data[dict['islinear']] != '':
+        if 'islinear' in dict and data[dict['islinear']] != '':
             self.islinear = int(data[dict['islinear']])   # Is molecule linear?
         else:
             self.linear = int(-1)
@@ -321,7 +339,7 @@ class Reference(Particle):
         self.phase = str.upper(data[dict['phase']])      # Phase
         if 'a_st' in dict and data[dict['a_st']] != '':
             self.A_st = float(data[dict['a_st']])
-        super(Reference, self).__init__(data, dict, Base_path, Tstp=298.15)
+        super(Reference, self).__init__(data, dict, Base_path, Tstp)
 
     @staticmethod
     def BasisSet(RefSpecies):
@@ -347,7 +365,7 @@ class Target(Particle):
         self.kpoints = str(data[dict['kpoints']])          # k-Points
         self.vibfreqpath = str(data[dict['vibfreqpath']])  # Unused
         self.phase = None                                  # Phase
-        super(Target, self).__init__(data, dict, Base_path, Tstp=298.15)
+        super(Target, self).__init__(data, dict, Base_path, Tstp)
 
     @staticmethod
     def ReferenceDFT(Species, Surface, Basis):
@@ -470,21 +488,24 @@ class Target(Particle):
         Write thermdat file header
         '''
         fid.write('THERMO ALL\n')
+        fid.write('%10.0f%10.0f%10.0f\n' % (min(Species[x].Cp_Range),
+                                            T_mid,
+                                            max(Species[x].Cp_Range)))
         for s in range(0, _np.size(Species)):
             '''
             Write header line for each species on line 1
             '''
             fid.write('%-16s' % (Species[s].name))
             fid.write('%-8s' % (datetime.date.today().strftime('%Y%m%d')))
-            fid.write('%1s%-4i' % ('C', Species[s].carbon))
-            fid.write('%1s%-4i' % ('O', Species[s].oxygen))
-            fid.write('%1s%-4i' % ('H', Species[s].hydrogen))
-            fid.write('%1s%-4i' % ('N', Species[s].nitrogen))
+            fid.write('%1s%4i' % ('C', Species[s].carbon))
+            fid.write('%1s%4i' % ('H', Species[s].hydrogen))
+            fid.write('%1s%4i' % ('O', Species[s].oxygen))
+            fid.write('%1s%4i' % ('N', Species[s].nitrogen))
             if Species[s].name.find('(S)'):
                 fid.write('S')
             else:
                 fid.write('G')
-            fid.write('%10.0f%10.0f%8.0f' % (min(Species[x].Cp_Range),
+            fid.write('%10.1f%10.1f%8.1f' % (min(Species[x].Cp_Range),
                                              max(Species[x].Cp_Range),
                                              T_mid))
             fid.write('%6s%1i\n' % ('', 1))
@@ -493,27 +514,27 @@ class Target(Particle):
             low temperature range on line 2
             '''
             for x in range(0, 5):
-                fid.write('%15E' % (Species[s].a_low[x]))
+                fid.write('%15E' % (Species[s].a_high[x]))
             fid.write('%4s%1i\n' % ('', 2))
             '''
             Write final two NASA coefficients for
             low temperature range on line 2
             '''
             for x in range(0, 2):
-                fid.write('%15E' % (Species[s].a_low[x+4]))
+                fid.write('%15E' % (Species[s].a_high[x+5]))
             '''
             Write first three NASA coeficients for
             high temperature range on line 3
             '''
             for x in range(0, 3):
-                fid.write('%15E' % (Species[s].a_high[x]))
+                fid.write('%15E' % (Species[s].a_low[x]))
             fid.write('%4s%1i\n' % ('', 3))
             '''
             Write final four NASA coefficients for
             high temperature range on line 4
             '''
             for x in range(0, 4):
-                fid.write('%15E' % (Species[s].a_high[x+3]))
+                fid.write('%15E' % (Species[s].a_low[x+3]))
             fid.write('%19s%1i\n' % ('', 4))
         '''
         Write file footer and close the file
