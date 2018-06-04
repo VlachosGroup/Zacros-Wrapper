@@ -2,22 +2,15 @@ import numpy as np
 import os
 import copy
 
-from Replicates import *
+from Replicates import Replicates
 from utils import *
 
 import matplotlib as mat
 import matplotlib.pyplot as plt
-
-try:
-    from mpi4py import MPI      # Import MPI if available
-except:
-    pass
-    
-    
+  
 def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_batches = 1000, 
                                 acf_cut = 0.05, include_stiff_reduc = True, max_events = int(1e3), 
-                                max_iterations = 30, ss_inc = 1.0, n_samples = 100, parallel_mode = 'Squidward',
-                                ACF_tol = 0.08, rate_tol = 0.05):
+                                max_iterations = 30, ss_inc = 2.0, n_samples = 100, platform = 'Squidward'):
 
     '''
     Handles rate rescaling and continuation of KMC runs
@@ -38,18 +31,11 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
     
     :param n_samples:               Number of time points to sample for each trajectory
     
-    :param parallel_mode:           MPI, Squidward, or Farber
+    :param platform:                Squidward or Farber
     '''
     
-    if parallel_mode == 'MPI':
-        try:
-            COMM = MPI.COMM_WORLD
-            COMM.Barrier()
-        except:
-            raise NameError('mpi4py dependency has not been imported.')
-    
     prev_batch = Replicates()       # Set this if the starting iteration is not 1
-    initial_states = None
+    initial_states = []
     
     # Placeholder variables
     if not os.path.exists(scale_parent_fldr):
@@ -73,7 +59,7 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         # Create object for batch
         cur_batch = Replicates()
         cur_batch.ParentFolder = iter_fldr
-        cur_batch.n_trajectories = n_runs
+        cur_batch.n_runs = n_runs
         cur_batch.N_batches = n_batches
         cur_batch.Set_kmc_template(kmc_template)        # Set template KMC trajectory
         
@@ -111,68 +97,29 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
             initial_states = prev_batch.History_final_snaps
         
         # Run jobs and read output
-        if parallel_mode == 'MPI':
-            if COMM.rank == 0:
-                cur_batch.BuildJobFiles(init_states = initial_states)
-                
-            # Collect whatever has to be done in a list. Here we'll just collect a list of
-            # numbers. Only the first rank has to do this.
-            if COMM.rank == 0:
-                jobs = cur_batch.run_dirs
-                jobs = [jobs[_i::COMM.size] for _i in range(COMM.size)]             # Split into however many cores are available.
-            else:
-                jobs = None
-            
-            jobs = COMM.scatter(jobs, root=0)           # Scatter jobs across cores.
-            
-            # Now each rank just does its jobs and collects everything in a results list.
-            # Make sure to not use super big objects in there as they will be pickled to be
-            # exchanged over MPI.
-            for job in jobs:
-                cur_batch.runtemplate.Path = job
-                cur_batch.runtemplate.Run_sim()  
-                
-        else:
-            cur_batch.BuildJobFiles(init_states = initial_states)
-            cur_batch.RunAllTrajectories_JobArray(server = parallel_mode, job_name = 'Iteration_' + str(iteration) )
-            
+        cur_batch.BuildJobFiles(init_states = initial_states)
+        cur_batch.RunAllJobs_parallel_JobArray(server = platform, job_name = 'Iteration_' + str(iteration) )
         cur_batch.ReadMultipleRuns()
         
         if iteration == 1:
             cum_batch = copy.deepcopy(cur_batch)
         else:
-            cum_batch = append_replicates(prev_batch, cur_batch)         # combine with previous data
+            cum_batch = Replicates.time_sandwich(prev_batch, cur_batch)         # combine with previous data          
         
         # Test steady-state
         cum_batch.AverageRuns()
-        acf_data = cum_batch.Compute_rate()
+        acf_data = cum_batch.Compute_ACF()
+        is_steady_state = False
+        if not acf_data['ACF'] is None:
+            if acf_data['ACF'] + acf_data['ACF_ci'] < 0.08:
+                is_steady_state = True
         
-        print '\nIteration ' + str(iteration)
-        print 'Batches per trajectory: ' + str(cum_batch.Nbpt)
-        print 'Batch length (s): ' + str(cum_batch.batch_length)
-        print 'Rate: ' + str(cum_batch.rate)
-        print 'Rate confidence interval: ' + str(cum_batch.rate_CI)
-        print 'Autocorrelation: ' + str(cum_batch.ACF)
-        print 'Autocorrelation confidence: ' + str(cum_batch.ACF_CI)
-        
-        # Test if autocorrelation function has converged
-        
-        if cum_batch.ACF is None:
-            decorrelated = False
+        # Make sure the error in the rate is less than 5% of the rate
+        if acf_data['Rate'] == 0:
+            is_steady_state = False
         else:
-            decorrelated = ( cum_batch.ACF + cum_batch.ACF_CI < ACF_tol)
-        
-        # Test if rate is computed with sufficient accuracy
-        if cum_batch.rate == 0:
-            rate_accurate = False
-        else:
-            rate_accurate = (cum_batch.rate_CI / cum_batch.rate < rate_tol)
-        
-        print 'Decorrelated? ' + str(decorrelated)
-        print 'Rate accurate? ' + str(rate_accurate)
-        print '\n'
-        
-        is_steady_state = decorrelated and rate_accurate
+            if acf_data['Rate_ci'] / acf_data['Rate'] > 0.05:
+                is_steady_state = False
         
         # Record information about the iteration
         cum_batch.runAvg.PlotGasSpecVsTime()
@@ -182,6 +129,26 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         cur_batch.runAvg.PlotElemStepFreqs()
         scaledown_data = ProcessStepFreqs(cur_batch.runAvg)         # compute change in scaledown factors based on simulation result
         delta_sdf = scaledown_data['delta_sdf']
+
+        ## Record iteartion data in output file
+        #with open(os.path.join(iter_fldr, 'Iteration_' + str(iteration) + '_summary.txt'), 'w') as txt:  
+        #    
+        #    txt.write('----- Iteration #' + str(iteration) + ' -----\n')
+        #    txt.write('t_final: {0:.3E} \n'.format(cum_batch.runAvg.Specnum['t'][-1]))
+        #    txt.write('steady-state: ' + str(is_steady_state) + '\n')
+        #    
+        #    txt.write('Reaction name \t')
+        #    txt.write('Scaledown factor \t')
+        #    txt.write('Reaction speed \t')
+        #    txt.write('Total firings \t')
+        #    txt.write('Net firings \n')
+        #
+        #    for rxn_ind in range(len(cum_batch.runAvg.Reactions['names'])):
+        #        txt.write(cum_batch.runAvg.Reactions['names'][rxn_ind] + '\t')
+        #        txt.write('{0:.3E} \t'.format(delta_sdf[rxn_ind]))
+        #        txt.write(scaledown_data['rxn_speeds'][rxn_ind] + '\t')
+        #        txt.write('{0:.3E} \t'.format(scaledown_data['tot'][rxn_ind]))
+        #        txt.write('{0:.3E} \n'.format(scaledown_data['net'][rxn_ind]))
         
         # Update scaledown factors
         for ind in range(len(SDF_vec)):
@@ -191,11 +158,11 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         
         prev_batch = copy.deepcopy(cum_batch)
         iteration += 1
-
+        #is_steady_state = False
     return cum_batch
     
 
-def ProcessStepFreqs(run, stiff_cut = 100.0, delta = 0.05, equilib_cut = 0.1):        # Change to allow for irreversible reactions
+def ProcessStepFreqs(run, stiff_cut = 100.0, equilib_cut = 0.1):        # Change to allow for irreversible reactions
     
     '''
     Takes an average KMC trajectory and assesses the reaction frequencies to identify fast reactions
@@ -237,15 +204,13 @@ def ProcessStepFreqs(run, stiff_cut = 100.0, delta = 0.05, equilib_cut = 0.1):  
     # Adjust fast reactions closer to the slow scale
     for i in fast_rxns:
         N_f = tot_freqs[i] / float(slow_scale)              # number of fast events per rare event
-        #alpha_UB = N_f * delta / np.log(1 / delta) + 1             # Chatterjee formula
-        
-        #delta_sdf[i] = np.min([1.0, np.max([stiff_cut / N_f, 1. / alpha_UB ]) ])
-        delta_sdf[i] = np.min([1.0, stiff_cut / N_f ])
+        #alpha_UB = N_f .* delta ./ log(1 ./ delta) + 1             # Chatterjee formula
+        delta_sdf[i] = np.min([1.0, stiff_cut / N_f])
         
     return {'delta_sdf': delta_sdf, 'rxn_speeds': rxn_speeds, 'tot': tot_freqs, 'net': net_freqs}
     
     
-def ReadScaledown(RunPath, fldrs_cut = None, product = None, n_batches = 1000):
+def ReadScaledown(RunPath, plot_analysis = False, fldrs_cut = None, verbose = False, product = None, n_batches = 1000):
     
     '''
     Read a scaledown that has already been run
@@ -277,26 +242,26 @@ def ReadScaledown(RunPath, fldrs_cut = None, product = None, n_batches = 1000):
         if ind == 1:
             cum_batch = x
         else:
-            cum_batch = append_replicates(cum_batch, x)
+            cum_batch = Replicates.time_sandwich(cum_batch, x)
             
         cum_batch.N_batches = n_batches
         cum_batch.gas_product = product
-        acf_data = cum_batch.Compute_rate()
+        acf_data = cum_batch.Compute_ACF()
         print 'Iteration ' + str(ind)
         print 'Batches per trajectory: ' + str(cum_batch.Nbpt)
-        print 'Batch length (s): ' + str(cum_batch.batch_length)
-        print 'Rate: ' + str(cum_batch.rate)
-        print 'Rate confidence interval: ' + str(cum_batch.rate_CI)
-        print 'Autocorrelation: ' + str(cum_batch.ACF)
-        print 'Autocorrelation confidence: ' + str(cum_batch.ACF_CI)
+        print 'Batch length ' + str(cum_batch.batch_length)
+        print 'Rate: ' + str(acf_data['Rate'])
+        print 'Rate CI: ' + str(acf_data['Rate_ci'])
+        print 'ACF: ' + str(acf_data['ACF'])
+        print 'ACF CI: ' + str(acf_data['ACF_ci'])
 
         print '\n'
         
         batch_lengths.append(cum_batch.batch_length)
-        rates_vec.append(cum_batch.rate)
-        rates_vec_ci.append(cum_batch.rate_CI)
-        acf_vec.append(cum_batch.ACF)
-        acf_vec_ci.append(cum_batch.ACF_CI)
+        rates_vec.append(acf_data['Rate'])
+        rates_vec_ci.append(acf_data['Rate_ci'])
+        acf_vec.append(acf_data['ACF'])
+        acf_vec_ci.append(acf_data['ACF_ci'])
             
     print batch_lengths
     print rates_vec

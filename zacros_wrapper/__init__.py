@@ -5,6 +5,6 @@ import matplotlib.pyplot as plt
 from utils import *
 from IO_data import *
 from Lattice import Lattice
-from KMC_Run import *
+from KMC_Run import kmc_traj
 from Replicates import Replicates
 from RateRescaling import *
