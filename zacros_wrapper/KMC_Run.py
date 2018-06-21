@@ -52,8 +52,8 @@ class kmc_traj():
         self.propCounter = None                 # data from timeintprop_output.txt
         self.W_sen_anal = None                  # data from trajderiv_output.txt
         self.spec_num_int = None                # data from timeintspecs_output.txt
-        self.TS_site_props_list = None
-        self.TS_site_props_ss = None            # steady state site propensities
+        #self.TS_site_props_list = None
+        #self.TS_site_props_ss = None            # steady state site propensities
         
         
     '''
@@ -121,7 +121,8 @@ class kmc_traj():
             self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
             self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
             self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
-            self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
+            #self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
+			'''
 
             if not self.TS_site_props_list is None:
                 
@@ -129,7 +130,7 @@ class kmc_traj():
                     self.TS_site_props_ss = self.TS_site_props_list[-1]
                 else:
                     self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
-            
+            '''
         else:
             print 'general_output.txt not found in ' + self.Path
     
@@ -471,7 +472,7 @@ def append_trajectories(run1, run2):
     combo.W_sen_anal  = np.vstack( [run1.W_sen_anal, run2.W_sen_anal[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.W_sen_anal[-1,:]]  ) ] )      
 
     hist_t_total = run1.histout.snap_times[-1] + run2.histout.snap_times[-1]
-    combo.TS_site_props_ss = ( run1.TS_site_props_ss * run1.histout.snap_times[-1] + run2.TS_site_props_ss * run2.histout.snap_times[-1] ) / hist_t_total
+    #combo.TS_site_props_ss = ( run1.TS_site_props_ss * run1.histout.snap_times[-1] + run2.TS_site_props_ss * run2.histout.snap_times[-1] ) / hist_t_total
     
     #combo.History = [ run1.History[0], run2.History[-1] ]
     
