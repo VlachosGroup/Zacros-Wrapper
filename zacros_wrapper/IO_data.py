@@ -1386,10 +1386,10 @@ def Read_propensities(path, nRxn):
             if i >= 1:
 				LineSplit = RawTxt[i].split()
 				line_data = []
-            if len(LineSplit) > 0:
-                for dub in LineSplit:
-                    line_data.append(np.float(dub))
-                prop.append(line_data)
+				if len(LineSplit) > 0:
+					for dub in LineSplit:
+						line_data.append(np.float(dub))
+					prop.append(line_data)
         return np.array(prop)
     
     else:
