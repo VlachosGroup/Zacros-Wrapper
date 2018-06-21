@@ -1383,9 +1383,9 @@ def Read_propensities(path, nRxn):
             RawTxt = txt.readlines()
         prop = []
         for i in range(len(RawTxt)):
-            
-            LineSplit = RawTxt[i].split()
-            line_data = []
+            if i >= 1:
+				LineSplit = RawTxt[i].split()
+				line_data = []
             if len(LineSplit) > 0:
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
