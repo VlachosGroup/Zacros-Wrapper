@@ -45,13 +45,15 @@ class kmc_traj():
         # Extra analysis variables
         self.gas_prod = None                    # string with the name of the product (gas) species, used to compute the rate
         
-        # Missing other variables obtained from binary files...
+        # Missing other variables obtained from additional output files...??
         
-        # Binary data
+        # Additional output
         self.prop = None                        # data from propensities_output.txt
         self.propCounter = None                 # data from timeintprop_output.txt
         self.W_sen_anal = None                  # data from trajderiv_output.txt
         self.spec_num_int = None                # data from timeintspecs_output.txt
+        self.TS_site_props_list = None
+        self.TS_site_props_ss = None            # steady state site propensities
         
         
     '''
@@ -91,6 +93,9 @@ class kmc_traj():
         :param build_lattice :     True - builds a Lattice object
             False - reads lattice_output.txt as text only
         '''
+        
+        #print 'Reading kMC trajectory data from ' + self.Path
+        
         self.ReadAllInput()
 
         if self.CheckComplete():
@@ -116,7 +121,15 @@ class kmc_traj():
             self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
             self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
             self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
+            self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
 
+            if not self.TS_site_props_list is None:
+                
+                if self.histout.snap_times[-1] == 0.:   # only 1 entry in history output
+                    self.TS_site_props_ss = self.TS_site_props_list[-1]
+                else:
+                    self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
+            
         else:
             print 'general_output.txt not found in ' + self.Path
     
@@ -248,39 +261,6 @@ class kmc_traj():
         high_frac = 1.0 - low_frac
         
         return [[ind_leq, ind_geq], [low_frac, high_frac]]
-    
-        
-    @staticmethod
-    def time_sandwich(run1, run2):
-        
-        '''
-        Take two trajectories and append them together. 
-        
-        :param run1: First trajectory - a kmc_traj object
-        
-        :param run2: Second trajectory - a kmc_traj object
-        
-        :returns: A kmc_traj object that has the trajectories appended
-        '''
-        
-        sandwich = copy.deepcopy(run1)
-        sandwich.genout.t_final = run1.genout.t_final + run2.genout.t_final
-        sandwich.genout.events_occurred = run1.genout.events_occurred + run2.genout.events_occurred
-        sandwich.genout.CPU_time = run1.genout.CPU_time + run2.genout.CPU_time
-        
-        sandwich.specnumout.t = np.concatenate([run1.specnumout.t, run2.specnumout.t[1::] + run1.specnumout.t[-1] * np.ones( len(run2.specnumout.t)-1 )])
-        
-        n_surf_specs = len( self.simin.surf_spec )
-        run2.specnumout.spec[1::, n_surf_specs : ] = run2.specnumout.spec[1::, n_surf_specs : ] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.specnumout.spec[-1, n_surf_specs : ]] )        
-        sandwich.specnumout.spec = np.vstack([run1.specnumout.spec, run2.specnumout.spec[1::,:] ])
-        sandwich.prop = np.vstack([run1.prop, run2.prop[1::,:] ])
-        sandwich.procstatout.events = np.vstack( [run1.procstatout.events, run2.procstatout.events[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.procstatout.events[-1,:]] ) ] )
-        sandwich.propCounter = np.vstack( [run1.propCounter, run2.propCounter[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.propCounter[-1,:]]  ) ] )
-        sandwich.W_sen_anal  = np.vstack( [run1.W_sen_anal, run2.W_sen_anal[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.W_sen_anal[-1,:]]  ) ] )      
-        
-        sandwich.History = [ run1.History[0], run2.History[-1] ]
-        
-        return sandwich
     
 
     '''
@@ -456,11 +436,43 @@ class kmc_traj():
                 x = np.array(x_list)
                 y = np.array(y_list)                
                 
-                plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 6.5, markeredgewidth = 0.0, label=spec_label_list[ind])
+                plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 3, label=spec_label_list[ind])
             
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
-            #plt.legend(frameon=False, loc=1)
-			#plt.legend(frameon=False, loc=4)
+            plt.legend(frameon=False, loc=4)
                 
             plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)))
             plt.close()
+            
+
+def append_trajectories(run1, run2):
+    
+    '''
+    Take two trajectories and append them together. 
+    
+    :param run1: First trajectory - a kmc_traj object
+    :param run2: Second trajectory - a kmc_traj object which continues the simulation where the first one terminated
+    :returns: A kmc_traj object that has the trajectories appended
+    '''
+    
+    combo = copy.deepcopy(run1)
+    combo.genout.t_final = run1.genout.t_final + run2.genout.t_final
+    combo.genout.events_occurred = run1.genout.events_occurred + run2.genout.events_occurred
+    combo.genout.CPU_time = run1.genout.CPU_time + run2.genout.CPU_time
+    
+    combo.specnumout.t = np.concatenate([run1.specnumout.t, run2.specnumout.t[1::] + run1.specnumout.t[-1] * np.ones( len(run2.specnumout.t)-1 )])
+    
+    n_surf_specs = len( run1.simin.surf_spec )
+    run2.specnumout.spec[1::, n_surf_specs : ] = run2.specnumout.spec[1::, n_surf_specs : ] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.specnumout.spec[-1, n_surf_specs : ]] )        
+    combo.specnumout.spec = np.vstack([run1.specnumout.spec, run2.specnumout.spec[1::,:] ])
+    combo.prop = np.vstack([run1.prop, run2.prop[1::,:] ])
+    combo.procstatout.events = np.vstack( [run1.procstatout.events, run2.procstatout.events[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.procstatout.events[-1,:]] ) ] )
+    combo.propCounter = np.vstack( [run1.propCounter, run2.propCounter[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.propCounter[-1,:]]  ) ] )
+    combo.W_sen_anal  = np.vstack( [run1.W_sen_anal, run2.W_sen_anal[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.W_sen_anal[-1,:]]  ) ] )      
+
+    hist_t_total = run1.histout.snap_times[-1] + run2.histout.snap_times[-1]
+    combo.TS_site_props_ss = ( run1.TS_site_props_ss * run1.histout.snap_times[-1] + run2.TS_site_props_ss * run2.histout.snap_times[-1] ) / hist_t_total
+    
+    #combo.History = [ run1.History[0], run2.History[-1] ]
+    
+    return combo
