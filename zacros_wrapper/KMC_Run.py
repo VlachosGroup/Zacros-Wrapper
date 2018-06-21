@@ -122,15 +122,15 @@ class kmc_traj():
             self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
             self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
             #self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
-			'''
+			
 
-            if not self.TS_site_props_list is None:
+            #if not self.TS_site_props_list is None:
                 
-                if self.histout.snap_times[-1] == 0.:   # only 1 entry in history output
-                    self.TS_site_props_ss = self.TS_site_props_list[-1]
-                else:
-                    self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
-            '''
+                #if self.histout.snap_times[-1] == 0.:   # only 1 entry in history output
+                    #self.TS_site_props_ss = self.TS_site_props_list[-1]
+                #else:
+                    #self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
+            
         else:
             print 'general_output.txt not found in ' + self.Path
     
