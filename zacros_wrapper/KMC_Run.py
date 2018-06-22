@@ -453,7 +453,7 @@ class kmc_traj():
                 x = np.array(x_list)
                 y = np.array(y_list)                
                 
-                plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 3, label=spec_label_list[ind])
+                plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 5.5, markeredgewidth = 0.0, label=spec_label_list[ind])
             
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
             plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':12}, frameon = False)
