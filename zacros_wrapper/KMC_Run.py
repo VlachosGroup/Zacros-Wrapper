@@ -379,8 +379,8 @@ class kmc_traj():
         b_patch = mat.patches.Patch(color = 'blue', label = 'rev')
         g_patch = mat.patches.Patch(color = 'green', label = 'net')
         
-        plt.legend(handles = [r_patch, b_patch, g_patch ], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
-        plt.legend(	['fwd', 'rev', 'net'])
+        plt.legend(labels = ['fwd', 'rev', 'net'], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
+        
                
         plt.tight_layout()
         
