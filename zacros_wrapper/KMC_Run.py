@@ -369,14 +369,20 @@ class kmc_traj():
         xmax = 10**np.ceil(np.max(log_bar_vals))
                 
         plt.xticks(size=20)
-        plt.yticks(size=10)
+        plt.yticks(size=18)
         plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
-        plt.legend(['fwd','bwd','net'],loc=4,prop={'size':20},frameon=False)
+        
+		r_patch = mat.patches.Patch(color = 'red', label = 'fwd')
+		b_patch = mat.patches.Patch(color = 'blue', label = 'rev')
+		g_patch = mat.patches.Patch(color = 'green', label = 'net')
+    
+		plt.legend(handles = [r_patch, b_patch, g_patch ], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':18},frameon=False)
+		
         plt.xlim([xmin, xmax])        
         plt.tight_layout()
         
-        plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'))
+        plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'), bbox_inches = "tight")
         plt.close()
         
         
@@ -442,7 +448,7 @@ class kmc_traj():
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
             plt.legend(spec_label_list, bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':20}, frameon = False)
                 
-            plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)))
+            plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
             
 
