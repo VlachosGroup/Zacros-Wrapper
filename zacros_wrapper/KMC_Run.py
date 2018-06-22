@@ -352,13 +352,13 @@ class kmc_traj():
                     net_freq = abs(fwd_rate - bwd_rate)
                     
                     if fwd_rate > 0:              
-                        plt.barh(ind-0.4, fwd_rate, width, color='r', log = True)
+                        plt.barh(ind-0.4, fwd_rate, width, color='r', log = True, label = 'fwd')
                         bar_vals.append(fwd_rate)
                     if bwd_rate > 0:
-                        plt.barh(ind-0.6, bwd_rate, width, color='b', log = True)
+                        plt.barh(ind-0.6, bwd_rate, width, color='b', log = True, label = 'rev')
                         bar_vals.append(bwd_rate)
                     if net_freq > 0:
-                        plt.barh(ind-0.8, net_freq, width, color='g', log = True)
+                        plt.barh(ind-0.8, net_freq, width, color='g', log = True, label = 'net')
                         bar_vals.append(net_freq)
                     ylabels.append( rxn.name + varnt.name )
                     yvals.append(ind-0.6)
