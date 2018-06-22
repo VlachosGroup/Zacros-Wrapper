@@ -283,11 +283,17 @@ class kmc_traj():
         
         time_vecs = []
         surf_spec_vecs = []
-        for i in range (len( self.simin.surf_spec )):
-            time_vecs.append(self.specnumout.t)
-            surf_spec_vecs.append(self.specnumout.spec[:,i] / float(site_norm))
+        surf_spec_name = []
         
-        PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = self.simin.surf_spec, fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
+        for i in range (len( self.simin.surf_spec )):
+            
+            if np.any(self.specnumout.spec[:,i]): # Pick all the non-zero (observable) speices
+                
+                time_vecs.append(self.specnumout.t)
+                surf_spec_vecs.append(self.specnumout.spec[:,i] / float(site_norm))
+                surf_spec_name.append(self.simin.surf_spec[i])
+        
+        PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = surf_spec_name, fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
     
     
     def PlotGasSpecVsTime(self):
@@ -407,7 +413,7 @@ class kmc_traj():
             plt.close()
         
         
-    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need make marker type consistent with the site type
+    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = colors_pool):       # Need make marker type consistent with the site type
 
         '''
         Create a subfolder called lattice_frames
@@ -450,7 +456,7 @@ class kmc_traj():
                 plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 3, label=spec_label_list[ind])
             
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
-            plt.legend(spec_label_list, bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':12}, frameon = False)
+            plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':12}, frameon = False)
                 
             plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
