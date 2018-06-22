@@ -373,10 +373,10 @@ class kmc_traj():
         plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
         
-        r_patch = mat.patches.Patch(color = 'red')
-        b_patch = mat.patches.Patch(color = 'blue')
-        g_patch = mat.patches.Patch(color = 'green')
-        plt.legend(['fwd', 'rev', 'net'], handles = [r_patch, b_patch, g_patch ], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
+        r_patch = mat.patches.Patch(color = 'red', label = 'fwd')
+        b_patch = mat.patches.Patch(color = 'blue', label = 'rev')
+        g_patch = mat.patches.Patch(color = 'green', label = 'net')
+        plt.legend(handles = [r_patch, b_patch, g_patch ], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
 		
         plt.xlim([xmin, xmax])        
         plt.tight_layout()
