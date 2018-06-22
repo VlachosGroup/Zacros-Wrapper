@@ -374,20 +374,16 @@ class kmc_traj():
         plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
         plt.xlim([xmin, xmax]) 
-        
-        r_patch = mat.patches.Patch(color = 'red', label = 'fwd')
-        b_patch = mat.patches.Patch(color = 'blue', label = 'rev')
-        g_patch = mat.patches.Patch(color = 'green', label = 'net')
+
         
         plt.legend(['fwd', 'rev', 'net'], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
-		 ax = plt.gca()
-		
-		 leg = ax.get_legend()
-		 leg.legendHandles[0].set_color('red')
-		 leg.legendHandles[1].set_color('yellow')
-		 leg.legendHandles[1].set_color('yellow')
         
-               
+        ax = plt.gca()
+        leg = ax.get_legend()
+        leg.legendHandles[0].set_color('red')
+        leg.legendHandles[1].set_color('blue')
+        leg.legendHandles[1].set_color('green')
+        
         plt.tight_layout()
         
         plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'), bbox_inches = "tight")
