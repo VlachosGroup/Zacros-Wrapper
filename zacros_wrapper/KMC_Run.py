@@ -373,10 +373,10 @@ class kmc_traj():
         plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
         
-        r_patch = mat.patches.Patch(color = 'red', label = 'fwd')
-        b_patch = mat.patches.Patch(color = 'blue', label = 'rev')
-        g_patch = mat.patches.Patch(color = 'green', label = 'net')
-        plt.legend(handles = [r_patch, b_patch, g_patch ], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':18},frameon=False)
+        r_patch = mat.patches.Patch(color = 'red')
+        b_patch = mat.patches.Patch(color = 'blue')
+        g_patch = mat.patches.Patch(color = 'green')
+        plt.legend(label = ['fwd', 'rev', 'net'], handles = [r_patch, b_patch, g_patch ], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
 		
         plt.xlim([xmin, xmax])        
         plt.tight_layout()
@@ -445,7 +445,7 @@ class kmc_traj():
                 plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 3, label=spec_label_list[ind])
             
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
-            plt.legend(spec_label_list, bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':20}, frameon = False)
+            plt.legend(spec_label_list, bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':12}, frameon = False)
                 
             plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
