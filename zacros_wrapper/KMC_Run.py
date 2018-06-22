@@ -382,7 +382,7 @@ class kmc_traj():
         leg = ax.get_legend()
         leg.legendHandles[0].set_color('red')
         leg.legendHandles[1].set_color('blue')
-        leg.legendHandles[1].set_color('green')
+        leg.legendHandles[2].set_color('green')
         
         plt.tight_layout()
         
