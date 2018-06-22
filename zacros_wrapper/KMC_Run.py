@@ -335,6 +335,11 @@ class kmc_traj():
         
         store_ind = 0       # index of where the data is stored
         
+		r_patch = mat.patches.Patch(color = 'red', label = 'fwd')
+        b_patch = mat.patches.Patch(color = 'blue', label = 'rev')
+        g_patch = mat.patches.Patch(color = 'green', label = 'net')
+        plt.legend(handles = [r_patch, b_patch, g_patch ], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
+		
         for rxn in self.mechin.rxn_list:
             for varnt in rxn.variant_list:
         
@@ -351,13 +356,13 @@ class kmc_traj():
                     net_freq = abs(fwd_rate - bwd_rate)
                     
                     if fwd_rate > 0:              
-                        plt.barh(ind-0.4, fwd_rate, width, color='r', log = True, label = 'fwd')
+                        plt.barh(ind-0.4, fwd_rate, width, color='r', log = True)
                         bar_vals.append(fwd_rate)
                     if bwd_rate > 0:
-                        plt.barh(ind-0.6, bwd_rate, width, color='b', log = True, label = 'rev')
+                        plt.barh(ind-0.6, bwd_rate, width, color='b', log = True)
                         bar_vals.append(bwd_rate)
                     if net_freq > 0:
-                        plt.barh(ind-0.8, net_freq, width, color='g', log = True, label = 'net')
+                        plt.barh(ind-0.8, net_freq, width, color='g', log = True)
                         bar_vals.append(net_freq)
                     ylabels.append( rxn.name + varnt.name )
                     yvals.append(ind-0.6)
@@ -374,10 +379,7 @@ class kmc_traj():
         plt.yticks(yvals, ylabels)
         plt.xlim([xmin, xmax]) 
 		
-        r_patch = mat.patches.Patch(color = 'red', label = 'fwd')
-        b_patch = mat.patches.Patch(color = 'blue', label = 'rev')
-        g_patch = mat.patches.Patch(color = 'green', label = 'net')
-        plt.legend(handles = [r_patch, b_patch, g_patch ], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
+        
 		
                
         plt.tight_layout()
