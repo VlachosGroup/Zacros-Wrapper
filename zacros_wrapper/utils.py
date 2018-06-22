@@ -152,7 +152,7 @@ def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labe
     plt.ylabel(ylab, size=24)
     
     if not series_labels == []:
-        plt.legend(series_labels, bbox_to_anchor = (1.02,1),loc= 'upper left', prop={'size':20}, frameon=False))
+        plt.legend(series_labels, bbox_to_anchor = (1.02,1),loc= 'upper left', prop={'size':20}, frameon=False)
     plt.tight_layout()
     
     if logscale:
