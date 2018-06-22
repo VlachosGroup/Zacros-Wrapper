@@ -374,9 +374,8 @@ class kmc_traj():
         plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
         plt.xlim([xmin, xmax]) 
-		
         
-		r_patch = mat.patches.Patch(color = 'red')
+        r_patch = mat.patches.Patch(color = 'red')
         b_patch = mat.patches.Patch(color = 'blue')
         g_patch = mat.patches.Patch(color = 'green')
         
