@@ -376,7 +376,7 @@ class kmc_traj():
         xmax = 10**np.ceil(np.max(log_bar_vals))
                 
         plt.xticks(size=20)
-        plt.yticks(size=18)
+        plt.yticks(size=12)
         plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
         plt.xlim([xmin, xmax]) 
