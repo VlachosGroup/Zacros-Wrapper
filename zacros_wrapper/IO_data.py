@@ -10,12 +10,8 @@ from utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
 from utils import ReturnUnique as _ReturnUnique
 from utils import rawbigcount as _rawbigcount
 
-try:
-    import DFT_to_Thermochemistry as _thermo
-    reload(_thermo)
-except:
-    pass
-
+from Thermochemistry.io_.excel import read_excel
+from Thermochemistry.models.empirical.zacros import Zacros
 
 '''
  Class definitions for:
@@ -780,23 +776,20 @@ class MechanismIn(object):
 
             txt.write('#'*80 + '\n\n')
             txt.write('\n\nend_mechanism')
-        
-        
+
     def CalcThermo(self, fldr, T):
         '''
         Calculate the forward activation energy, forward and reverse
         pre-exponential factors and the PE-ratio for each reaction described
         in Mechanism_input.dat using an input file with energies and
         vibrational frequencies for all species and transition states
-        
+
         Assumes that each reaction has only 1 variant (MPN)
         '''
         filepath = os.path.join(fldr, 'Zacros_Species_Energy.txt')
-        [lines, dict] = _thermo.DFTFileRead(filepath)
-        T_species = []
-        for s in lines[3:]:
-            T_species.append(_thermo.Reference(s.split('\t'), dict,
-                                               filepath, T))
+        species_data = read_excel(io=filepath)
+        T_species = [Zacros(**specie_data) for specie_data in species_data]
+
         '''
         Create list of transition state species
         '''
@@ -810,7 +803,6 @@ class MechanismIn(object):
         Recalculate all entries in mechanism_input.dat
         '''
         for x in range(0, len(self.rxn_list)):
-        
             q_vib_surf = []
             Rxn_TST = 'TST' + ('0' + str(x + 1))[-2:]
             TST_index = -1
