@@ -1,0 +1,484 @@
+mechanism
+
+# Automated stiffness reconditioning employed
+# 
+# SDF: 5.50202e-01 	1.00000e+00 	1.00000e+00 	1.00000e+00 	2.84224e-04 	1.00000e+00 	1.00000e+00 	1.00000e+00 	1.00000e+00 	1.00000e+00 	1.00000e+00 	1.00000e+00 	9.15906e-01 	1.00000e+00 	1.00000e+00 	1.00000e+00 	1.00000e+00 	1.00000e+00 	1.00000e+00 	
+
+################################################################################
+
+reversible_step CO_adsorption
+  sites 1
+  gas_reacs_prods CO -1
+  initial
+    1 *     1
+  final
+    1 CO*   1
+
+  variant trc
+    site_types               fcc_hollow_t 
+    pre_expon                1.88012e+07    # Pre-exponential has been rescaled by a factor of 5.50202e-01
+    pe_ratio                 7.90115e-10
+    prox_factor              0.500
+    activ_eng                0.00
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step O2_dissociative_adsorption
+  sites 3
+  neighboring 1-2 2-3
+  gas_reacs_prods O2 -1
+  initial
+    1 *     1
+    2 *     1
+    3 *     1
+  final
+    1 O*    1
+    2 *     1
+    3 O*    1
+
+  variant trc
+    site_types               fcc_hollow_t top_t fcc_hollow_t 
+    pre_expon                9.59147e+07
+    pe_ratio                 1.49824e-09
+    prox_factor              0.500
+    activ_eng                0.00
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step H2_dissociative_adsorption
+  sites 3
+  neighboring 1-2 2-3
+  gas_reacs_prods H2 -1
+  initial
+    1 *     1
+    2 *     1
+    3 *     1
+  final
+    1 H*    1
+    2 *     1
+    3 H*    1
+
+  variant trc
+    site_types               fcc_hollow_t top_t fcc_hollow_t 
+    pre_expon                3.53505e+07
+    pe_ratio                 1.82775e-06
+    prox_factor              0.500
+    activ_eng                0.00
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step CO2_dissociative_adsorption
+  sites 3
+  neighboring 1-2 2-3
+  gas_reacs_prods CO2 -1
+  initial
+    1 *     1
+    2 *     1
+    3 *     1
+  final
+    1 CO*   1
+    2 *     1
+    3 O*    1
+
+  variant trc
+    site_types               fcc_hollow_t top_t fcc_hollow_t 
+    pre_expon                3.17797e+03
+    pe_ratio                 2.48823e-10
+    prox_factor              0.500
+    activ_eng                1.21
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step H2O_adsorption
+  sites 1
+  gas_reacs_prods H2O -1
+  initial
+    1 *    1
+  final
+    1 H2O* 1
+
+  variant trc1
+    site_types               top_t 
+    pre_expon                1.21107e+04    # Pre-exponential has been rescaled by a factor of 2.84224e-04
+    pe_ratio                 4.15362e-09
+    prox_factor              0.500
+    activ_eng                0.00
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step H2O_decomposition
+  sites 2
+  neighboring 1-2
+  initial
+    1 H2O*  1
+    2 *     1
+  final
+    1 OH*   1
+    2 H*    1
+
+  variant trc1
+    site_types               top_t fcc_hollow_t 
+    pre_expon                1.78131e+13
+    pe_ratio                 6.88572e-01
+    prox_factor              0.500
+    activ_eng                0.65
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step OH_decomposition
+  sites 3
+  neighboring 1-2 2-3
+  initial
+    1 *     1
+    2 OH*   1
+    3 *     1
+  final
+    1 O*    1
+    2 *     1
+    3 H*    1
+
+  variant trc1
+    site_types               fcc_hollow_t top_t fcc_hollow_t 
+    pre_expon                2.18252e+13
+    pe_ratio                 1.53190e+00
+    prox_factor              0.500
+    activ_eng                0.82
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step OH_OH_disproportionation
+  sites 4
+  neighboring 1-2 2-3 3-4 4-1
+  initial
+    1 OH*   1
+    2 *     1
+    3 OH*   1
+    4 *     1
+  final
+    1 H2O*  1
+    2 O*    1
+    3 *     1
+    4 *     1
+
+  variant trc1
+    site_types               top_t fcc_hollow_t top_t bridge_t 
+    pre_expon                2.03964e+13
+    pe_ratio                 2.22475e+00
+    prox_factor              0.500
+    activ_eng                0.00
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step CO_OH_disproportionation
+  sites 2
+  neighboring 1-2
+  initial
+    1 CO*    1
+    2 OH*    1
+  final
+    1 *      1
+    2 tCOOH* 1
+
+  variant trc1
+    site_types               fcc_hollow_t top_t 
+    pre_expon                1.57755e+13
+    pe_ratio                 1.25943e+00
+    prox_factor              0.945
+    activ_eng                0.50
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step COOH_decomposition
+  sites 2
+  neighboring 1-2
+  gas_reacs_prods CO2 1
+  initial
+    1 tCOOH* 1
+    2 *      1
+  final
+    1 *      1
+    2 H*     1
+
+  variant trc1
+    site_types               top_t fcc_hollow_t 
+    pre_expon                1.17859e+13
+    pe_ratio                 4.51589e+09
+    prox_factor              0.500
+    activ_eng                0.68
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step COOH_O_disproportionation
+  sites 3
+  neighboring 1-2 2-3
+  gas_reacs_prods CO2 1
+  initial
+    1 tCOOH* 1
+    2 *      1
+    3 O*     1
+  final
+    1 OH*    1
+    2 *      1
+    3 *      1
+
+  variant trc1
+    site_types               top_t bridge_t fcc_hollow_t 
+    pre_expon                1.24481e+13
+    pe_ratio                 2.85010e+09
+    prox_factor              0.500
+    activ_eng                0.42
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step COOH_OH_disproportionation
+  sites 3
+  neighboring 1-2 2-3
+  gas_reacs_prods CO2 1
+  initial
+    1 tCOOH* 1
+    2 *      1
+    3 OH*    1
+  final
+    1 *      1
+    2 *      1
+    3 H2O*   1
+
+  variant trc1
+    site_types               top_t bridge_t top_t 
+    pre_expon                1.35438e+13
+    pe_ratio                 4.03336e+09
+    prox_factor              0.500
+    activ_eng                0.11
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step HCO_formation
+  sites 4
+  neighboring 1-2 1-3 1-4 2-4
+  initial
+    1 *      1
+    2 CO*    1
+    3 H*     1
+    4 *      1
+  final
+    1 HCO**  1
+    2 *      1
+    3 *      1
+    1 HCO**  2
+
+  variant trc1
+    site_types               top_t fcc_hollow_t fcc_hollow_t bridge_t 
+    pre_expon                1.98982e+13    # Pre-exponential has been rescaled by a factor of 9.15906e-01
+    pe_ratio                 1.40793e+00
+    prox_factor              0.945
+    activ_eng                1.34
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step HCOO_formation
+  sites 4
+  neighboring 1-4 2-4 3-4
+  initial
+    1 HCO**  2
+    2 *      1
+    3 O*     1
+    1 HCO**  1
+  final
+    1 HCOO*** 1
+    1 HCOO*** 3
+    2 *       1
+    1 HCOO*** 2
+
+  variant trc1
+    site_types               top_t top_t fcc_hollow_t bridge_t 
+    pre_expon                8.52852e+12
+    pe_ratio                 5.63894e-01
+    prox_factor              0.500
+    activ_eng                1.01
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step HCOO_decomposition
+  sites 4
+  neighboring 1-2 2-3 2-4
+  gas_reacs_prods CO2 1
+  initial
+    1 HCOO*** 1
+    1 HCOO*** 2
+    1 HCOO*** 3
+    2 *       1
+  final
+    1 *       1
+    2 *       1
+    3 *       1
+    4 H*      1
+
+  variant trc1
+    site_types               top_t bridge_t top_t fcc_hollow_t 
+    pre_expon                1.26075e+13
+    pe_ratio                 4.67635e+09
+    prox_factor              0.500
+    activ_eng                0.91
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step HCOO_O_disporportionation
+  sites 4
+  neighboring 1-2 2-3 2-4
+  gas_reacs_prods CO2 1
+  initial
+    1 HCOO*** 1
+    1 HCOO*** 2
+    1 HCOO*** 3
+    2 O*      1
+  final
+    1 OH*     1
+    2 *       1
+    3 *       1
+    4 *       1
+
+  variant trc1
+    site_types               top_t bridge_t top_t fcc_hollow_t 
+    pre_expon                1.28905e+13
+    pe_ratio                 2.95137e+09
+    prox_factor              0.500
+    activ_eng                1.68
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step HCOO_O_disporportionation
+  sites 4
+  neighboring 1-2 2-3 2-4
+  gas_reacs_prods CO2 1
+  initial
+    1 HCOO*** 3
+    1 HCOO*** 2
+    1 HCOO*** 1
+    2 O*      1
+  final
+    1 OH*     1
+    2 *       1
+    3 *       1
+    4 *       1
+
+  variant trc1m
+    site_types               top_t bridge_t top_t fcc_hollow_t 
+    pre_expon                1.28905e+13
+    pe_ratio                 2.95137e+09
+    prox_factor              0.500
+    activ_eng                1.68
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step HCOO_OH_disporportionation
+  sites 5
+  neighboring 1-2 2-3 1-4 4-5
+  gas_reacs_prods CO2 1
+  initial
+    1 HCOO*** 1
+    1 HCOO*** 2
+    1 HCOO*** 3
+    2 *       1
+    3 OH*     1
+  final
+    1 *       1
+    2 *       1
+    3 *       1
+    4 *       1
+    5 H2O*    1
+
+  variant trc1
+    site_types               top_t bridge_t top_t bridge_t top_t 
+    pre_expon                1.97706e+13
+    pe_ratio                 4.17668e+09
+    prox_factor              0.500
+    activ_eng                0.96
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+reversible_step HCOO_OH_disporportionation
+  sites 5
+  neighboring 1-2 2-3 1-4 4-5
+  gas_reacs_prods CO2 1
+  initial
+    1 HCOO*** 3
+    1 HCOO*** 2
+    1 HCOO*** 1
+    2 *       1
+    3 OH*     1
+  final
+    1 *       1
+    2 *       1
+    3 *       1
+    4 *       1
+    5 H2O*    1
+
+  variant trc1m
+    site_types               top_t bridge_t top_t bridge_t top_t 
+    pre_expon                1.97706e+13
+    pe_ratio                 4.17668e+09
+    prox_factor              0.500
+    activ_eng                0.96
+  end_variant
+
+end_reversible_step
+
+################################################################################
+
+
+
+end_mechanism
