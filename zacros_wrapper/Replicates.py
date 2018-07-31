@@ -6,8 +6,8 @@ import copy
 import sys
 import scipy.stats
 
-from .KMC_Run import *
-from .utils import *
+from KMC_Run import *
+from utils import *
 import time
 import scipy
 

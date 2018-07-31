@@ -10,9 +10,9 @@ import subprocess
 import copy
 import re as _re
 
-from .utils import *
-from .IO_data import *
-from .Lattice import Lattice
+from utils import *
+from IO_data import *
+from Lattice import Lattice
 
 class kmc_traj():
     

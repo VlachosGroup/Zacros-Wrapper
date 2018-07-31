@@ -2,8 +2,8 @@ import numpy as np
 import os
 import copy
 
-from .Replicates import *
-from .utils import *
+from Replicates import *
+from utils import *
 
 import matplotlib as mat
 import matplotlib.pyplot as plt

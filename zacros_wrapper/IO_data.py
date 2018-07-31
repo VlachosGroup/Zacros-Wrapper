@@ -11,10 +11,10 @@ sys.path.append(os.path.join(HomePath,'Documents','GitHub'))
 sys.path.append(os.path.join(HomePath,'Documents','GitHub', 'Zacros-Wrapper',
                              'zacros_wrapper'))
 
-from .utils import constant as _c
-from .utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
-from .utils import ReturnUnique as _ReturnUnique
-from .utils import rawbigcount as _rawbigcount
+from utils import constant as _c
+from utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
+from utils import ReturnUnique as _ReturnUnique
+from utils import rawbigcount as _rawbigcount
 
 from Thermochemistry.io_.excel import read_excel
 from Thermochemistry.models.empirical.zacros import Zacros
@@ -739,7 +739,7 @@ class MechanismIn(object):
                     txt.write('  gas_reacs_prods')
                     for j in range(0,len(rxn.gas_reacs_prods)):
                         txt.write(' ' + str(rxn.gas_reacs_prods[j]))
-                        txt.write('\n')
+                    txt.write('\n')
 
                 txt.write('  initial\n')
 				
@@ -857,7 +857,7 @@ class MechanismIn(object):
                                                    surf_prod[y][1]))
 
                 if not self.rxn_list[x].gas_reacs_prods is None and\
-                   int(self.rxn_list[x].gas_reacs_prods[1]) == -1:
+                    int(self.rxn_list[x].gas_reacs_prods[1]) == -1:
                     '''
                     No transition state and a gas reactant
                     Non-activated adsorbtion
@@ -1381,12 +1381,12 @@ def Read_propensities(path, nRxn):
         prop = []
         for i in range(len(RawTxt)):
             if i >= 1:
-				LineSplit = RawTxt[i].split()
-				line_data = []
-				if len(LineSplit) > 0:
-					for dub in LineSplit:
-						line_data.append(np.float(dub))
-					prop.append(line_data)
+                LineSplit = RawTxt[i].split()
+                line_data = []
+                if len(LineSplit) > 0:
+                    for dub in LineSplit:
+                        line_data.append(np.float(dub))
+                        prop.append(line_data)
         return np.array(prop)
     
     else:
