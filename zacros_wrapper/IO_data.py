@@ -5,6 +5,11 @@ import re as _re
 import random as _random
 import linecache as _linecache
 
+HomePath = os.path.expanduser('~')
+sys.path.append(os.path.join(HomePath,'Documents','GitHub'))
+sys.path.append(os.path.join(HomePath,'Documents','GitHub', 'Zacros-Wrapper',
+                             'zacros_wrapper'))
+
 from utils import constant as _c
 from utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
 from utils import ReturnUnique as _ReturnUnique
@@ -732,8 +737,8 @@ class MechanismIn(object):
                 if not rxn.gas_reacs_prods is None:
                     txt.write('  gas_reacs_prods')
                     for j in range(0,len(rxn.gas_reacs_prods)):
-						txt.write(' ' + str(rxn.gas_reacs_prods[j]))
-                    txt.write('\n')
+                        txt.write(' ' + str(rxn.gas_reacs_prods[j]))
+                        txt.write('\n')
 
                 txt.write('  initial\n')
 				
@@ -777,7 +782,7 @@ class MechanismIn(object):
             txt.write('#'*80 + '\n\n')
             txt.write('\n\nend_mechanism')
 
-    def CalcThermo(self, fldr, T):
+    def CalcThermo(self, filepath, T):
         '''
         Calculate the forward activation energy, forward and reverse
         pre-exponential factors and the PE-ratio for each reaction described
@@ -786,7 +791,6 @@ class MechanismIn(object):
 
         Assumes that each reaction has only 1 variant (MPN)
         '''
-        filepath = os.path.join(fldr, 'Zacros_Species_Energy.txt')
         species_data = read_excel(io=filepath)
         T_species = [Zacros(**specie_data) for specie_data in species_data]
 
