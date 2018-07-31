@@ -11,6 +11,7 @@ import os
 HomePath = os.path.expanduser('~')
 sys.path.append(os.path.join(HomePath,'Documents','GitHub'))
 sys.path.append(os.path.join(HomePath,'Documents','GitHub', 'Zacros-Wrapper'))
+sys.path.append(os.path.join(HomePath,'Documents','GitHub', 'Zacros-Wrapper','zacros_wrapper'))
 
 import zacros_wrapper as zw
 
