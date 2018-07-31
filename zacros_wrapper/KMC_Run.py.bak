@@ -10,9 +10,9 @@ import subprocess
 import copy
 import re as _re
 
-from .utils import *
-from .IO_data import *
-from .Lattice import Lattice
+from utils import *
+from IO_data import *
+from Lattice import Lattice
 
 class kmc_traj():
     
@@ -132,7 +132,7 @@ class kmc_traj():
                     #self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
             
         else:
-            print('general_output.txt not found in ' + self.Path)
+            print 'general_output.txt not found in ' + self.Path
     
     
     '''
@@ -153,9 +153,9 @@ class kmc_traj():
             raise Exception('Zacros executable not specified.')        
         
         try:
-            print('--- Zacros run starting ---')
+            print '--- Zacros run starting ---'
             subprocess.call([self.exe_file])
-            print('--- Zacros run completed ---')
+            print '--- Zacros run completed ---'
         except:
             raise Exception('Zacros run in ' + self.Path + ' failed.')
        
@@ -404,7 +404,7 @@ class kmc_traj():
         
         if self.lat.text_only:
         
-            print('Cannot plot lattice. Only text input exists.')
+            print 'Cannot plot lattice. Only text input exists.'
             
         else:
         
@@ -430,11 +430,11 @@ class kmc_traj():
         if not os.path.exists( frame_fldr ):
                 os.makedirs( frame_fldr )
                 
-        print(str(self.histout.n_snapshots) + ' total snapshots')
+        print str(self.histout.n_snapshots) + ' total snapshots'
         
         for frame_num in range(self.histout.n_snapshots):
             
-            print('Draw frame number ' + str(frame_num+1))
+            print 'Draw frame number ' + str(frame_num+1)
             snap = self.histout.snapshots[frame_num]
         
             plt = self.lat.PlotLattice()            # plot the lattice in this frame

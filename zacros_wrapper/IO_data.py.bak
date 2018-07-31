@@ -10,10 +10,10 @@ sys.path.append(os.path.join(HomePath,'Documents','GitHub'))
 sys.path.append(os.path.join(HomePath,'Documents','GitHub', 'Zacros-Wrapper',
                              'zacros_wrapper'))
 
-from .utils import constant as _c
-from .utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
-from .utils import ReturnUnique as _ReturnUnique
-from .utils import rawbigcount as _rawbigcount
+from utils import constant as _c
+from utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
+from utils import ReturnUnique as _ReturnUnique
+from utils import rawbigcount as _rawbigcount
 
 from Thermochemistry.io_.excel import read_excel
 from Thermochemistry.models.empirical.zacros import Zacros
@@ -1079,8 +1079,8 @@ class StateIn(object):
                         txt.write('\n')
                     txt.write('end_initial_state\n')
         else:
-            print('Unrecognized state_input type')
-            print('state_input not written')
+            print 'Unrecognized state_input type'
+            print 'state_input not written'
 
 
 '''

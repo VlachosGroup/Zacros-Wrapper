@@ -6,8 +6,8 @@ import copy
 import sys
 import scipy.stats
 
-from .KMC_Run import *
-from .utils import *
+from KMC_Run import *
+from utils import *
 import time
 import scipy
 
@@ -484,8 +484,8 @@ class Replicates:
             self.AverageRuns()
             
         if delta_t > self.t_vec[-1] or delta_t < 0:
-            print('Time window: ' + str(delta_t))
-            print('Final time: ' + str(self.t_vec[-1]))
+            print 'Time window: ' + str(delta_t)
+            print 'Final time: ' + str(self.t_vec[-1])
             raise Exception('Time window is too large. Insufficient sampling.')
         
         
