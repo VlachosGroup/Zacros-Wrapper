@@ -31,6 +31,7 @@ Dependencies
 -------------
 * `mpi4py <http://pythonhosted.org/mpi4py/>`_ : Used for parallelization of multiple trajectories.
 * `Atomic simualtion environment <https://wiki.fysik.dtu.dk/ase/>`_ : Used to convert ab initio data to input parameters.
+* `pMuTT <https://github.com/VlachosGroup/pMuTT?`_ : Provides thermochemistry and kinetic parameters
 
 
 Getting Started
