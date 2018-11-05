@@ -1,0 +1,28 @@
+#KMC simulation specification
+
+random_seed         5032
+
+temperature         650.00000
+pressure            1.00000
+
+n_gas_species       5
+gas_specs_names     H2O            O2             H2             CO2            CO             
+gas_energies        -1.96000       0.00000        0.00000        -2.80000       0.00000        
+gas_molec_weights   18.01530       31.99890       2.01590        44.00960       28.01020       
+gas_molar_fracs     0.10000        0.00000        0.00000        0.00000        0.05000        
+
+n_surf_species      8
+surf_specs_names    H2O*           OH*            O*             H*             CO*            HCO**          HCOO***        tCOOH*         
+surf_specs_dent     1              1              1              1              1              2              3              1              
+
+snapshots           on time 0.2171
+process_statistics  on time 0.002171
+species_numbers     on time 0.002171
+event_report off
+
+max_steps           infinity
+max_time            0.2171
+
+no_restart
+
+finish

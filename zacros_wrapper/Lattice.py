@@ -34,7 +34,7 @@ class Lattice:
         self.site_type_inds = []
         self.frac_coords = []
         self.cart_coords = []
-        self.neighbor_list = []     # sites are indexed starting with 0
+        self.neighbor_list = []
         self.cell_list = []     # self, north, northeast, east, or southeast
 
         
@@ -128,7 +128,7 @@ class Lattice:
     
     
     def PlotLattice(self, cutoff = 3.0, plot_neighbs = False, type_symbols = ['o','s','^','v', '<', '>', '8', 
-        'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms = 4):
+        'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms = 7):
         
         '''
         :param cutoff: Maximum distance to draw connections between nearest neighbor sites.
@@ -178,7 +178,7 @@ class Lattice:
                 if self.site_type_inds[site_ind] == site_type:
                     is_of_type.append(site_ind)
             
-            plt.plot(self.cart_coords[is_of_type,0], self.cart_coords[is_of_type,1], linestyle='None', marker = type_symbols[(site_type-1) % len(type_symbols)], color = [0.8, 0.8, 0.8], markersize = ms)          # sites  
+            plt.plot(self.cart_coords[is_of_type,0], self.cart_coords[is_of_type,1], linestyle='None', marker = type_symbols[(site_type-1) % len(type_symbols)], color = [0.9, 0.9, 0.9], markersize = ms, markeredgewidth = 0.0)          # sites  
         
         # Choose range to plot
         xmin = np.min(border[:,0])
@@ -231,11 +231,8 @@ class Lattice:
             neighbs = line[5::]
             for site_2 in neighbs:
                 if int(site_2) > 0:         # Zeros are placeholders in the output file
-                    self.neighbor_list.append([site_ind, int(site_2)-1])
-        print len(self.site_type_inds)
-        print self.cart_coords.shape
-        print self.neighbor_list
-        #raise NameError('stop')
+                    self.neighbor_list.append([site_ind+1, int(site_2)])
+        
         # Convert to fractional coordinates
         self.frac_coords = np.dot(self.cart_coords, np.linalg.inv(self.lattice_matrix))
     
@@ -276,8 +273,8 @@ class Lattice:
             # Site coordinates
             txt.write('site_coordinates \t # fractional coordinates (x,y) in row format\n')
             for i in range(0, len(self.site_type_inds)):
-                txt.write('\t {0:.5f} \t'.format(self.frac_coords[i,0]))
-                txt.write('{0:.5f} \n'.format(self.frac_coords[i,1]))
+                txt.write('\t {0:.3f} \t'.format(self.frac_coords[i,0]))
+                txt.write('{0:.3f} \n'.format(self.frac_coords[i,1]))
             txt.write('\n')
             
             # Site neighboring structure

@@ -147,13 +147,13 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         cum_batch.AverageRuns()
         acf_data = cum_batch.Compute_rate()
         
-        print '\nIteration ' + str(iteration)
-        print 'Batches per trajectory: ' + str(cum_batch.Nbpt)
-        print 'Batch length (s): ' + str(cum_batch.batch_length)
-        print 'Rate: ' + str(cum_batch.rate)
-        print 'Rate confidence interval: ' + str(cum_batch.rate_CI)
-        print 'Autocorrelation: ' + str(cum_batch.ACF)
-        print 'Autocorrelation confidence: ' + str(cum_batch.ACF_CI)
+        print('\nIteration ' + str(iteration))
+        print('Batches per trajectory: ' + str(cum_batch.Nbpt))
+        print('Batch length (s): ' + str(cum_batch.batch_length))
+        print('Rate: ' + str(cum_batch.rate))
+        print('Rate confidence interval: ' + str(cum_batch.rate_CI))
+        print('Autocorrelation: ' + str(cum_batch.ACF))
+        print('Autocorrelation confidence: ' + str(cum_batch.ACF_CI))
         
         # Test if autocorrelation function has converged
         
@@ -168,9 +168,9 @@ def ReachSteadyStateAndRescale(kmc_template, scale_parent_fldr, n_runs = 16, n_b
         else:
             rate_accurate = (cum_batch.rate_CI / cum_batch.rate < rate_tol)
         
-        print 'Decorrelated? ' + str(decorrelated)
-        print 'Rate accurate? ' + str(rate_accurate)
-        print '\n'
+        print('Decorrelated? ' + str(decorrelated))
+        print('Rate accurate? ' + str(rate_accurate))
+        print('\n')
         
         is_steady_state = decorrelated and rate_accurate
         
@@ -265,7 +265,7 @@ def ReadScaledown(RunPath, fldrs_cut = None, product = None, n_batches = 1000):
        
         n_folders = fldrs_cut
 
-    print str(n_folders) + ' iterations found'
+    print(str(n_folders) + ' iterations found')
 
     cum_batch = None
     for ind in range(1,n_folders+1):
@@ -282,15 +282,15 @@ def ReadScaledown(RunPath, fldrs_cut = None, product = None, n_batches = 1000):
         cum_batch.N_batches = n_batches
         cum_batch.gas_product = product
         acf_data = cum_batch.Compute_rate()
-        print 'Iteration ' + str(ind)
-        print 'Batches per trajectory: ' + str(cum_batch.Nbpt)
-        print 'Batch length (s): ' + str(cum_batch.batch_length)
-        print 'Rate: ' + str(cum_batch.rate)
-        print 'Rate confidence interval: ' + str(cum_batch.rate_CI)
-        print 'Autocorrelation: ' + str(cum_batch.ACF)
-        print 'Autocorrelation confidence: ' + str(cum_batch.ACF_CI)
+        print('Iteration ' + str(ind))
+        print('Batches per trajectory: ' + str(cum_batch.Nbpt))
+        print('Batch length (s): ' + str(cum_batch.batch_length))
+        print('Rate: ' + str(cum_batch.rate))
+        print('Rate confidence interval: ' + str(cum_batch.rate_CI))
+        print('Autocorrelation: ' + str(cum_batch.ACF))
+        print('Autocorrelation confidence: ' + str(cum_batch.ACF_CI))
 
-        print '\n'
+        print('\n')
         
         batch_lengths.append(cum_batch.batch_length)
         rates_vec.append(cum_batch.rate)
@@ -298,11 +298,11 @@ def ReadScaledown(RunPath, fldrs_cut = None, product = None, n_batches = 1000):
         acf_vec.append(cum_batch.ACF)
         acf_vec_ci.append(cum_batch.ACF_CI)
             
-    print batch_lengths
-    print rates_vec
-    print rates_vec_ci
-    print acf_vec
-    print acf_vec_ci
+    print(batch_lengths)
+    print(rates_vec)
+    print(rates_vec_ci)
+    print(acf_vec)
+    print(acf_vec_ci)
         
             
     return cum_batch

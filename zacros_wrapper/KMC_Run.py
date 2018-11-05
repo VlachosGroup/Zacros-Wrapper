@@ -52,8 +52,8 @@ class kmc_traj():
         self.propCounter = None                 # data from timeintprop_output.txt
         self.W_sen_anal = None                  # data from trajderiv_output.txt
         self.spec_num_int = None                # data from timeintspecs_output.txt
-        self.TS_site_props_list = None
-        self.TS_site_props_ss = None            # steady state site propensities
+        #self.TS_site_props_list = None
+        #self.TS_site_props_ss = None            # steady state site propensities
         
         
     '''
@@ -121,17 +121,18 @@ class kmc_traj():
             self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
             self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
             self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
-            self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
+            #self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
+			
 
-            if not self.TS_site_props_list is None:
+            #if not self.TS_site_props_list is None:
                 
-                if self.histout.snap_times[-1] == 0.:   # only 1 entry in history output
-                    self.TS_site_props_ss = self.TS_site_props_list[-1]
-                else:
-                    self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
+                #if self.histout.snap_times[-1] == 0.:   # only 1 entry in history output
+                    #self.TS_site_props_ss = self.TS_site_props_list[-1]
+                #else:
+                    #self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
             
         else:
-            print 'general_output.txt not found in ' + self.Path
+            print('general_output.txt not found in ' + self.Path)
     
     
     '''
@@ -152,9 +153,9 @@ class kmc_traj():
             raise Exception('Zacros executable not specified.')        
         
         try:
-            print '--- Zacros run starting ---'
+            print('--- Zacros run starting ---')
             subprocess.call([self.exe_file])
-            print '--- Zacros run completed ---'
+            print('--- Zacros run completed ---')
         except:
             raise Exception('Zacros run in ' + self.Path + ' failed.')
        
@@ -282,11 +283,17 @@ class kmc_traj():
         
         time_vecs = []
         surf_spec_vecs = []
-        for i in range (len( self.simin.surf_spec )):
-            time_vecs.append(self.specnumout.t)
-            surf_spec_vecs.append(self.specnumout.spec[:,i] / float(site_norm))
+        surf_spec_name = []
         
-        PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = self.simin.surf_spec, fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
+        for i in range (len( self.simin.surf_spec )):
+            
+            if np.any(self.specnumout.spec[:,i]): # Pick all the non-zero (observable) speices
+                
+                time_vecs.append(self.specnumout.t)
+                surf_spec_vecs.append(self.specnumout.spec[:,i] / float(site_norm))
+                surf_spec_name.append(self.simin.surf_spec[i])
+        
+        PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = surf_spec_name, fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
     
     
     def PlotGasSpecVsTime(self):
@@ -333,7 +340,8 @@ class kmc_traj():
         bar_vals = []
         
         store_ind = 0       # index of where the data is stored
-        
+       
+		
         for rxn in self.mechin.rxn_list:
             for varnt in rxn.variant_list:
         
@@ -368,14 +376,23 @@ class kmc_traj():
         xmax = 10**np.ceil(np.max(log_bar_vals))
                 
         plt.xticks(size=20)
-        plt.yticks(size=10)
+        plt.yticks(size=12)
         plt.xlabel('Frequency',size=24)
         plt.yticks(yvals, ylabels)
-        plt.legend(['fwd','bwd','net'],loc=4,prop={'size':20},frameon=False)
-        plt.xlim([xmin, xmax])        
+        plt.xlim([xmin, xmax]) 
+
+        
+        plt.legend(['fwd', 'rev', 'net'], bbox_to_anchor = (1.05, 1),loc= 'upper left', prop={'size':12},frameon=False)
+        
+        ax = plt.gca()
+        leg = ax.get_legend()
+        leg.legendHandles[0].set_color('red')
+        leg.legendHandles[1].set_color('blue')
+        leg.legendHandles[2].set_color('green')
+        
         plt.tight_layout()
         
-        plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'))
+        plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'), bbox_inches = "tight")
         plt.close()
         
         
@@ -387,7 +404,7 @@ class kmc_traj():
         
         if self.lat.text_only:
         
-            print 'Cannot plot lattice. Only text input exists.'
+            print('Cannot plot lattice. Only text input exists.')
             
         else:
         
@@ -396,7 +413,7 @@ class kmc_traj():
             plt.close()
         
         
-    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = ['b', 'g','r','c','m','y','k']):       # Need make marker type consistent with the site type
+    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = colors_pool):       # Need make marker type consistent with the site type
 
         '''
         Create a subfolder called lattice_frames
@@ -413,11 +430,11 @@ class kmc_traj():
         if not os.path.exists( frame_fldr ):
                 os.makedirs( frame_fldr )
                 
-        print str(self.histout.n_snapshots) + ' total snapshots'
+        print(str(self.histout.n_snapshots) + ' total snapshots')
         
         for frame_num in range(self.histout.n_snapshots):
             
-            print 'Draw frame number ' + str(frame_num+1)
+            print('Draw frame number ' + str(frame_num+1))
             snap = self.histout.snapshots[frame_num]
         
             plt = self.lat.PlotLattice()            # plot the lattice in this frame
@@ -436,12 +453,12 @@ class kmc_traj():
                 x = np.array(x_list)
                 y = np.array(y_list)                
                 
-                plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 3, label=spec_label_list[ind])
+                plt.plot(x, y, linestyle='None', marker = 'o', color = spec_color_list[ind % len(spec_color_list)], markersize = 5.5, markeredgewidth = 0.0, label=spec_label_list[ind])
             
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
-            plt.legend(frameon=False, loc=4)
+            plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':12}, frameon = False)
                 
-            plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)))
+            plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
             
 
@@ -471,7 +488,7 @@ def append_trajectories(run1, run2):
     combo.W_sen_anal  = np.vstack( [run1.W_sen_anal, run2.W_sen_anal[1::,:] + np.dot(np.ones([len(run2.specnumout.t)-1 ,1]), [run1.W_sen_anal[-1,:]]  ) ] )      
 
     hist_t_total = run1.histout.snap_times[-1] + run2.histout.snap_times[-1]
-    combo.TS_site_props_ss = ( run1.TS_site_props_ss * run1.histout.snap_times[-1] + run2.TS_site_props_ss * run2.histout.snap_times[-1] ) / hist_t_total
+    #combo.TS_site_props_ss = ( run1.TS_site_props_ss * run1.histout.snap_times[-1] + run2.TS_site_props_ss * run2.histout.snap_times[-1] ) / hist_t_total
     
     #combo.History = [ run1.History[0], run2.History[-1] ]
     

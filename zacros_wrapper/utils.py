@@ -10,6 +10,14 @@ import copy
 from numpy.matlib import repmat
 
 
+# up to 24 colors stored
+colors_pool = [ 'b','yellowgreen', 'gold', 'lightcoral',
+               'lightskyblue', 'darkgreen', 'orange','salmon',
+               'powderblue','olivedrab', 'burlywood',  'indianred', 
+               'steelblue', 'lawngreen', 'y', 'hotpink',
+               'slategrey', 'palegreen', 'sandybrown', 'tomato',
+               'darkviolet', 'lightgreen', 'tan','maroon']
+
 class constant:
 
     ''' Gas Constants '''
@@ -134,7 +142,7 @@ def PlotOptions():
     mat.rcParams['lines.markersize'] = 12
             
 
-def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labels = [], fname = '', logscale = False):
+def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labels = [], fname = '', logscale = False, spec_color_list = colors_pool):
     
     '''
     Plot multiple series against time
@@ -144,7 +152,7 @@ def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labe
     plt.figure()
     
     for i in range (len(y_series)):
-        plt.plot(x_series[i], y_series[i])
+        plt.plot(x_series[i], y_series[i], color = spec_color_list[i % len(spec_color_list)])
     
     #plt.xticks(size=20)
     #plt.yticks(size=20)
@@ -152,7 +160,7 @@ def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labe
     plt.ylabel(ylab, size=24)
     
     if not series_labels == []:
-        plt.legend(series_labels, loc=4, prop={'size':20}, frameon=False)
+        plt.legend(series_labels, bbox_to_anchor = (1.02,1),loc= 'upper left', prop={'size':12}, frameon=False)
     plt.tight_layout()
     
     if logscale:
@@ -161,7 +169,7 @@ def PlotTimeSeries(x_series, y_series, xlab = 'Time (s)', ylab = '', series_labe
     if fname == '':
         plt.show()
     else:
-        plt.savefig(fname)
+        plt.savefig(fname, bbox_inches = "tight")
         plt.close()
 
 
