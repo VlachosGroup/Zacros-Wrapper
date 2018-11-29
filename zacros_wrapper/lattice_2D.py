@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib as mat
 import matplotlib.pyplot as plt
 from enum import Enum
+from monty.json import MSONable
 
 class SiteType(Enum):
     TOP = 1
@@ -326,23 +327,403 @@ class Lattice2D:
         return np.linalg.norm(mapped_vec), jimage
 
 
-class Site2D:
-    pass
+class Site2D(MSONable):
+    """
+    A generalized *non-periodic* site. This is essentially a composition
+    at a point in space, with some optional properties associated with it. A
+    Composition is used to represent the atoms and occupancy, which allows for
+    disordered site representation. Coords are given in standard cartesian
+    coordinates.
+    """
+
+    position_atol = 1e-5
+
+    def __init__(self, site_type, coords, properties=None):
+        """
+        Create a *non-periodic* site.
+
+        Args:
+            site_type: Site Type (Top, Bridge or Hollow). Use SiteType to
+                define the site_type
+            coords: Cartesian coordinates of site.
+            properties: Properties associated with the site as a dict, e.g.
+                {"magmom": 5}. Defaults to None.
+        """
+        self._site_type = site_type
+        self._coords = coords
+        self._properties = properties if properties else {}
+
+    @property
+    def properties(self):
+        """
+        Returns a view of properties as a dict.
+        """
+        return {k: v for k, v in self._properties.items()}
+
+    def __getattr__(self, a):
+        # overriding getattr doens't play nice with pickle, so we
+        # can't use self._properties
+        p = object.__getattribute__(self, '_properties')
+        if a in p:
+            return p[a]
+        raise AttributeError(a)
+
+    def distance(self, other):
+        """
+        Get distance between two sites.
+
+        Args:
+            other: Other site.
+
+        Returns:
+            Distance (float)
+        """
+        return np.linalg.norm(other.coords - self.coords)
+
+    def distance_from_point(self, pt):
+        """
+        Returns distance between the site and a point in space.
+
+        Args:
+            pt: Cartesian coordinates of point.
+
+        Returns:
+            Distance (float)
+        """
+        return np.linalg.norm(np.array(pt) - self._coords)
+
+    @property
+    def site_type(self):
+        """
+        String representation of species on the site.
+        """
+        return self._site_type
+
+    @property
+    def site_type_string(self):
+        """
+        String representation of species on the site.
+        """
+        d = {SiteType.TOP: 'TOP',
+             SiteType.BRIDGE: 'BRIDGE',
+             SiteType.HOLLOW: 'HOLLOW'}
+        return d[self._site_type]
+
+    @property
+    def coords(self):
+        """
+        A copy of the cartesian coordinates of the site as a numpy array.
+        """
+        return np.copy(self._coords)
+
+
+    @property
+    def x(self):
+        """
+        Cartesian x coordinate
+        """
+        return self._coords[0]
+
+    @property
+    def y(self):
+        """
+        Cartesian y coordinate
+        """
+        return self._coords[1]
+
+    def __eq__(self, other):
+        """
+        Site is equal to another site if the species and occupancies are the
+        same, and the coordinates are the same to some tolerance.  numpy
+        function `allclose` is used to determine if coordinates are close.
+        """
+        if other is None:
+            return False
+        return (self._site_type == other._site_type and
+                np.allclose(self._coords, other._coords,
+                            atol=Site.position_atol) and
+                self._properties == other._properties)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __repr__(self):
+        return "Site: {} ({:.4f}, {:.4f})".format(
+            self.site_type_string, *self._coords)
+
+    def __str__(self):
+        return "{} {}".format(self._coords, self.site_type_string)
+
+    def as_dict(self):
+        """
+        Json-serializable dict representation for Site.
+        """
+        species_list = []
+        d = {"site_type": self._site_type,
+             "xy": [float(c) for c in self._coords],
+             "@module": self.__class__.__module__,
+             "@class": self.__class__.__name__}
+        if self._properties:
+            d["properties"] = self._properties
+        return d
+
+    @classmethod
+    def from_dict(cls, d):
+        """
+        Create Site from dict representation
+        """
+        props = d.get("properties", None)
+        return cls(d["site_type"], d["xyz"], properties=props)
+
+
+class PeriodicSite2D(Site2D, MSONable):
+    """
+    Extension of generic Site object to periodic systems.
+    PeriodicSite includes a lattice system.
+    """
+
+    def __init__(self, site_type, coords, lattice, to_unit_cell=False,
+                 coords_are_cartesian=False, properties=None):
+        """
+        Create a periodic site.
+
+        Args:
+            site_type: Site type (Top, Bridge or Hollow). Use SiteType to
+                define the site_type
+            coords (2x1 array or sequence): Coordinates of site as fractional
+                or cartesian coordinates.
+            lattice: Lattice2D associated with the site
+            to_unit_cell (bool): Translates fractional coordinate to the
+                basic unit cell, i.e. all fractional coordinates satisfy
+                0 <= a < 1. Defaults to False.
+            coords_are_cartesian (bool): Set to True if you are providing
+                cartesian coordinates. Defaults to False.
+            properties (dict): Any Properties associated with the PeriodicSite.
+                Defaults to None.
+        """
+        self._lattice = lattice
+        if coords_are_cartesian:
+            self._fcoords = self._lattice.get_fractional_coords(coords)
+            c_coords = coords
+        else:
+            self._fcoords = coords
+            c_coords = lattice.get_cartesian_coords(coords)
+
+        if to_unit_cell:
+            self._fcoords = np.mod(self._fcoords, 1)
+            c_coords = lattice.get_cartesian_coords(self._fcoords)
+        super(PeriodicSite, self).__init__(site_type, c_coords, properties)
+
+    @property
+    def lattice(self):
+        """
+        The lattice associated with the site.
+        """
+        return self._lattice
+
+    @property
+    def frac_coords(self):
+        """
+        A copy of the fractional coordinates of the site.
+        """
+        return np.copy(self._fcoords)
+
+    @property
+    def a(self):
+        """
+        Fractional a coordinate
+        """
+        return self._fcoords[0]
+
+    @property
+    def b(self):
+        """
+        Fractional b coordinate
+        """
+        return self._fcoords[1]
+
+    @property
+    def to_unit_cell(self):
+        """
+        Copy of PeriodicSite translated to the unit cell.
+        """
+        return PeriodicSite(self._site_type, np.mod(self._fcoords, 1),
+                            self._lattice, properties=self._properties)
+
+    def is_periodic_image(self, other, tolerance=1e-8, check_lattice=True):
+        """
+        Returns True if sites are periodic images of each other.
+
+        Args:
+            other (PeriodicSite): Other site
+            tolerance (float): Tolerance to compare fractional coordinates
+            check_lattice (bool): Whether to check if the two sites have the
+                same lattice.
+
+        Returns:
+            bool: True if sites are periodic images of each other.
+        """
+        if check_lattice and self._lattice != other._lattice:
+            return False
+        if self._site_type != other._site_type:
+            return False
+
+        frac_diff = pbc_diff(self._fcoords, other._fcoords)
+        return np.allclose(frac_diff, [0, 0, 0], atol=tolerance)
+
+    def __eq__(self, other):
+        return self._site_type == other._site_type and \
+            self._lattice == other._lattice and \
+            np.allclose(self._coords, other._coords,
+                        atol=Site2D.position_atol) and \
+            self._properties == other._properties
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def distance_and_image_from_frac_coords(self, fcoords, jimage=None):
+        """
+        Gets distance between site and a fractional coordinate assuming
+        periodic boundary conditions. If the index jimage of two sites atom j
+        is not specified it selects the j image nearest to the i atom and
+        returns the distance and jimage indices in terms of lattice vector
+        translations. If the index jimage of atom j is specified it returns the
+        distance between the i atom and the specified jimage atom, the given
+        jimage is also returned.
+
+        Args:
+            fcoords (3x1 array): fcoords to get distance from.
+            jimage (3x1 array): Specific periodic image in terms of
+                lattice translations, e.g., [1,0,0] implies to take periodic
+                image that is one a-lattice vector away. If jimage is None,
+                the image that is nearest to the site is found.
+
+        Returns:
+            (distance, jimage): distance and periodic lattice translations
+            of the other site for which the distance applies.
+        """
+        return self._lattice.get_distance_and_image(self._fcoords, fcoords,
+                                                    jimage=jimage)
+
+    def distance_and_image(self, other, jimage=None):
+        """
+        Gets distance and instance between two sites assuming periodic boundary
+        conditions. If the index jimage of two sites atom j is not specified it
+        selects the j image nearest to the i atom and returns the distance and
+        jimage indices in terms of lattice vector translations. If the index
+        jimage of atom j is specified it returns the distance between the ith
+        atom and the specified jimage atom, the given jimage is also returned.
+
+        Args:
+            other (PeriodicSite): Other site to get distance from.
+            jimage (3x1 array): Specific periodic image in terms of lattice
+                translations, e.g., [1,0,0] implies to take periodic image
+                that is one a-lattice vector away. If jimage is None,
+                the image that is nearest to the site is found.
+
+        Returns:
+            (distance, jimage): distance and periodic lattice translations
+            of the other site for which the distance applies.
+        """
+        return self.distance_and_image_from_frac_coords(other._fcoords, jimage)
+
+    def distance(self, other, jimage=None):
+        """
+        Get distance between two sites assuming periodic boundary conditions.
+
+        Args:
+            other (PeriodicSite): Other site to get distance from.
+            jimage (3x1 array): Specific periodic image in terms of lattice
+                translations, e.g., [1,0,0] implies to take periodic image
+                that is one a-lattice vector away. If jimage is None,
+                the image that is nearest to the site is found.
+
+        Returns:
+            distance (float): Distance between the two sites
+        """
+        return self.distance_and_image(other, jimage)[0]
+
+    def __repr__(self):
+        return "PeriodicSite: {} ({:.4f}, {:.4f}) [{:.4f}, {:.4f}]".format(
+            self._site_type, self._coords[0], self._coords[1],
+            self._fcoords[0], self._fcoords[1])
+
+    def as_dict(self, verbosity=0):
+        """
+        Json-serializable dict representation of PeriodicSite.
+
+        Args:
+            verbosity (int): Verbosity level. Default of 0 only includes the
+                matrix representation. Set to 1 for more details such as
+                cartesian coordinates, etc.
+        """
+        d = {"site_type": self._site_type,
+             "ab": [float(c) for c in self._fcoords],
+             "lattice": self._lattice.as_dict(verbosity=verbosity),
+             "@module": self.__class__.__module__,
+             "@class": self.__class__.__name__}
+
+        if verbosity > 0:
+            d["xy"] = [float(c) for c in self._coords]
+            d["label"] = self.site_type_string
+
+        if self._properties:
+            d["properties"] = self._properties
+        return d
+
+    @classmethod
+    def from_dict(cls, d, lattice=None):
+        """
+        Create PeriodicSite from dict representation.
+
+        Args:
+            d (dict): dict representation of PeriodicSite
+            lattice: Optional lattice to override lattice specified in d.
+                Useful for ensuring all sites in a structure share the same
+                lattice.
+
+        Returns:
+            PeriodicSite
+        """
+        props = d.get("properties", None)
+        lattice = lattice if lattice else Lattice2D.from_dict(d["lattice"])
+        return cls(d["site_type"], d["ab"], lattice, properties=props)
 
 
 class ZachrosLattice:
-    '''Handles the KMC lattice'''
+    '''Handles the KMC lattice as defined in Zachros.
+    Zachros lattice is sligthly different from the conventional lattice
+    defined in materials science. It has finite size. Zachros code
+    accepts three definitions of lattice.
+        i) Explicit definition of all sites in the finite sized lattice
+        ii) Define periodic cell and set the repetition units
+        iii) Using predefined periodic cell types in Zachros
+    The connectivity of the sites has to be defined to account for
+    neighboring sites in the diffusion and reaction pathways.
+
+    Class initialization supports i) and ii) definitions.
+    To specify lattice in the third format, use static methods.
+
+    Args:
+        lattice (Lattice2D object): Lattice specifying the unit cell
+        sites (PeriodicSite object) list of sites in the unit cell
+        neighbor_list (Connectivity object): Connectivity between sites
+        size (2x1 array): Unit cell repetition units
+    '''
     fname_in = 'lattice_input.dat'
     fname_out = 'lattice_output.txt'
-    
-    def __init__(self, lattice, size, sites, connectivity):
-        ''' Initialize class variables '''
+
+    def __init__(self, lattice, sites, neighbor_list, size=(1,1)):
+        ''' Initialize class variables
+        '''
         
         #self.text_only = True  # If true, only store the text from the input file, if false, store all the complex information
         #self.lattice_in_txt = None
         
-        self._matrix = matrix         # each row is a lattice vector
-        self.repeat = [1,1]
+        self._lattice = lattice
+        self._sites = sites
+        self._neighbour_list = connectivity
+        self._size = size
         self.site_type_names = []
         self.site_type_inds = []
         self.frac_coords = []
