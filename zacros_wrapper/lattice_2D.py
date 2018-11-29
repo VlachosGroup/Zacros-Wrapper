@@ -512,7 +512,7 @@ class PeriodicSite2D(Site2D, MSONable):
         if to_unit_cell:
             self._fcoords = np.mod(self._fcoords, 1)
             c_coords = lattice.get_cartesian_coords(self._fcoords)
-        super(PeriodicSite, self).__init__(site_type, c_coords, properties)
+        super(PeriodicSite2D, self).__init__(site_type, c_coords, properties)
 
     @property
     def lattice(self):
@@ -547,7 +547,7 @@ class PeriodicSite2D(Site2D, MSONable):
         """
         Copy of PeriodicSite translated to the unit cell.
         """
-        return PeriodicSite(self._site_type, np.mod(self._fcoords, 1),
+        return PeriodicSite2D(self._site_type, np.mod(self._fcoords, 1),
                             self._lattice, properties=self._properties)
 
     def is_periodic_image(self, other, tolerance=1e-8, check_lattice=True):
@@ -714,50 +714,56 @@ class ZachrosLattice:
     fname_out = 'lattice_output.txt'
 
     def __init__(self, lattice, sites, neighbor_list, size=(1,1)):
-        ''' Initialize class variables
-        '''
-        
-        #self.text_only = True  # If true, only store the text from the input file, if false, store all the complex information
-        #self.lattice_in_txt = None
-        
-        self._lattice = lattice
-        self._sites = sites
-        self._neighbour_list = connectivity
-        self._size = size
-        self.site_type_names = []
-        self.site_type_inds = []
-        self.frac_coords = []
-        self.cart_coords = []
-        self.neighbor_list = []
-        self.cell_list = [] # self, north, northeast, east, or southeast
+        ''' Initialize class variables '''
 
-        
-    def read_input(self, fldr):
+        self.lattice = lattice
+        self.sites = sites
+        self.neighbour_list = neighbor_list
+        self.size = size
+        #self.site_type_names = []
+        #self.site_type_inds = []
+        #self.frac_coords = []
+        #self.cart_coords = []
+        #self.neighbor_list = []
+        #self.cell_list = [] # self, north, northeast, east, or southeast
+
+    def __str__(self):
+        pass
+
+    @staticmethod
+    def from_string(string):
+        pass
+
+    @staticmethod
+    def from_file(filename):
+        with open(filename) as fp:
+            raw_txt = fp.read()
+            return ZachrosLattice.from_string(raw_txt)
+
+    @classmethod
+    def read_input(cls, fldr):
         '''Read lattice_input.dat
         
         :param fldr: Folder directory from which to read lattice_input.dat
         '''
-        self.lattice_in_txt = []
-        with open(os.path.join(fldr, self.fname_in),'r') as Txt:
-            RawTxt = Txt.readlines()   
-        for i in RawTxt:
-            self.lattice_in_txt.append(i.split('\n')[0])
+        f = os.path.join(fldr, cls.fname_in)
+        return cls.from_file(f)
+
+    def to_file(self, filename):
+        with open(filename, 'wt') as fp:
+            f.write(str(self) + '\n')
 
     def write_input(self, fldr):
         '''Write lattice_input.dat
         
         :param fldr: Folder directory from which to read lattice_input.dat
         '''
-        if self.text_only:
-            with open(os.path.join(fldr, self.fname_in), 'w') as txt:
-                for i in self.lattice_in_txt:
-                    txt.write(i + '\n')
-        else:
-            self.Write_lattice_input(fldr)
+        filename = os.path.join(fldr, self.fname_in)
+        self.to_file(filename)
             
     def set_frac_coords(self, fc):
         '''Set the fractional and Cartesian coordinates
-        
+
         :param fc: n x 3 array (or list of lists) of fractional
             coordinates to set for each atom
         '''
@@ -766,14 +772,14 @@ class ZachrosLattice:
 
     def set_cart_coords(self, cc):
         '''Set the Cartesian and fractional coordinates
-        
+
         :param fc: n x 3 array (or list of lists) of Cartesian
             coordinates to set for each atom
         '''
         self.cart_coords = np.array(cc)
         self.frac_coords = np.dot(self.cart_coords,
                                   np.linalg.inv(self.lattice_matrix))
-        
+
     def coord_shift(self, a_ind, b_ind):
         '''
         Give the coordinates of the periodic image of B which is
@@ -824,10 +830,6 @@ class ZachrosLattice:
         
         :returns: pyplot object with the lattice graphed on it
         '''
-        if self.text_only:
-            raise NameError('Lattice must be built before plotting. '
-                            'Use ReadAllOutput(build_lattice=True)')
-        
         if self.cart_coords == []:
             self.cart_coords = np.dot(self.frac_coords, self.lattice_matrix)
         
@@ -887,9 +889,15 @@ class ZachrosLattice:
         plt.tight_layout()
         
         return plt
-        
-    def read_lattice_output(self, fldr):
+
+    @classmethod
+    def read_output(cls, fldr):
         '''Read lattice_output.txt'''
+        filename = os.path.join(fldr, cls.fname_out)
+        cls.from_file(filename)
+
+
+    def old_read_output(self, fldr):
 
         with open( os.path.join(fldr, self.fname_out), 'r') as txt:
             RawTxt = txt.readlines()           
@@ -923,7 +931,7 @@ class ZachrosLattice:
     
         self.text_only = False
 
-    def write_lattice_input(self, fldr):
+    def old_write_lattice_input(self, fldr):
         '''Write lattice_input.dat'''
     
         with open(os.path.join(fldr, self.fname_in), 'w') as txt:
