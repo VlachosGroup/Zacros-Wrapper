@@ -9,19 +9,339 @@ import os
 import numpy as np
 import matplotlib as mat
 import matplotlib.pyplot as plt
+from enum import Enum
 
-class Lattice:
+class SiteType(Enum):
+    TOP = 1
+    T = 1
+    BRIDGE = 2
+    B = 2
+    HOLLOW = 3
+    H = 3
+
+class Lattice2D:
+    def __init__(self, matrix):
+        m = np.array(matrix, dtype=np.float64).reshape((2, 2))
+        lengths = np.sqrt(np.sum(m ** 2, axis=1))
+        angle = np.dot(m[0], m[1]) / (lengths[0] * lengths[1])
+
+        self._angle = np.arccos(angle) * 180. / np.pi
+        self._lengths = lengths
+        self._matrix = m
+
+    def __format__(self, fmt_spec=''):
+        """
+        Support format printing. Supported formats are:
+
+        1. "l" for a list format that can be easily copied and pasted, e.g.,
+           ".3fl" prints something like
+           "[[10.000, 0.000, 0.000], [0.000, 10.000, 0.000], [0.000, 0.000, 10.000]]"
+        2. "p" for lattice parameters ".1fp" prints something like
+           "{10.0, 10.0, 10.0, 90.0, 90.0, 90.0}"
+        3. Default will simply print a 3x3 matrix form. E.g.,
+           10.000 0.000 0.000
+           0.000 10.000 0.000
+           0.000 0.000 10.000
+        """
+        m = self.matrix.tolist()
+        if fmt_spec.endswith("l"):
+            fmt = "[[{}, {}], [{}, {}]]"
+            fmt_spec = fmt_spec[:-1]
+        elif fmt_spec.endswith("p"):
+            fmt = "{{{}, {}, {}}}"
+            fmt_spec = fmt_spec[:-1]
+            m = self.lengths_and_angle
+        else:
+            fmt = "{} {}\n{} {}"
+        return fmt.format(*[format(c, fmt_spec) for row in m
+                            for c in row])
+
+    def copy(self):
+        """Deep copy of self."""
+        return self.__class__(self.matrix.copy())
+
+    @property
+    def matrix(self):
+        """Copy of matrix representing the Lattice"""
+        return np.copy(self._matrix)
+
+    @property
+    def inv_matrix(self):
+        """
+        Inverse of lattice matrix.
+        """
+        if self._inv_matrix is None:
+            self._inv_matrix = np.linalg.inv(self._matrix)
+        return self._inv_matrix
+
+    def get_cartesian_coords(self, fractional_coords):
+        """
+        Returns the cartesian coordinates given fractional coordinates.
+
+        Args:
+            fractional_coords (3x1 array): Fractional coords.
+
+        Returns:
+            Cartesian coordinates
+        """
+        return np.dot(fractional_coords, self._matrix)
+
+    def get_fractional_coords(self, cart_coords):
+        """
+        Returns the fractional coordinates given cartesian coordinates.
+
+        Args:
+            cart_coords (3x1 array): Cartesian coords.
+
+        Returns:
+            Fractional coordinates.
+        """
+        return np.dot(cart_coords, self.inv_matrix)
+
+    @staticmethod
+    def rectangular(a):
+        """
+        Convenience constructor for a rectangular lattice.
+
+        Args:
+            a (float): The *a* lattice parameter of the rectangular cell.
+
+        Returns:
+            Rectangular lattice of dimensions a x a.
+        """
+        return Lattice2D([[a, 0.0], [0.0, a]])
+
+    @staticmethod
+    def triangular(a):
+        """
+        Convenience constructor for a triangular lattice.
+
+        Args:
+            a (float): The *a* lattice parameter of the triangular cell.
+
+        Returns:
+            Triangular lattice of dimensions a x a.
+        """
+        pass
+
+    @staticmethod
+    def hexagonal(a):
+        """
+        Convenience constructor for a hexagonal lattice.
+
+        Args:
+            a (float): The *a* lattice parameter of the hexagonal cell.
+
+        Returns:
+            Hexagonal lattice of dimensions a x a.
+        """
+        pass
+
+    @staticmethod
+    def from_lengths_and_angle(ab, ang):
+        """
+        Create a Lattice using unit cell lengths and angle (in degrees).
+
+        Args:
+            ab (2x1 array): Lattice parameters, e.g. (4, 5).
+            ang (float): Lattice angle in degrees, e.g., 90.
+
+        Returns:
+            A Lattice with the specified lattice parameters.
+        """
+        return Lattice2D.from_parameters(ab[0], ab[1], ang)
+
+
+    @staticmethod
+    def from_parameters(a, b, alpha):
+        """
+        Create a Lattice using unit cell lengths and angles (in degrees).
+
+        Args:
+            a (float): *a* lattice parameter.
+            b (float): *b* lattice parameter.
+            alpha (float): *alpha* angle in degrees.
+
+        Returns:
+            Lattice with the specified lattice parameters.
+        """
+
+        alpha_r = np.radians(alpha)
+
+        val = np.cos(alpha_r)
+        gamma_star = np.arccos(val)
+
+        vector_a = [a, 0.0]
+        vector_b = [b * np.cos(alpha_r), b * np.sin(alpha_r)]
+
+        return Lattice2D([vector_a, vector_b])
+
+    @classmethod
+    def from_dict(cls, d):
+        """
+        Create a Lattice from a dictionary containing the a, b, and alpha
+        parameters if fmt is None.
+
+        Example:
+
+            Lattice.from_dict(acell=3*[10], rprim=np.eye(3))
+        """
+        if "matrix" in d:
+            return cls(d["matrix"])
+        else:
+            return cls.from_parameters(d["a"], d["b"], d["alpha"])
+
+    @property
+    def angle(self):
+        """
+        Returns the angles (alpha, beta, gamma) of the lattice.
+        """
+        return self._angle
+
+    @property
+    def a(self):
+        """
+        *a* lattice parameter.
+        """
+        return self._lengths[0]
+
+    @property
+    def b(self):
+        """
+        *b* lattice parameter.
+        """
+        return self._lengths[1]
+
+    @property
+    def ab(self):
+        """
+        Lengths of the lattice vectors, i.e. (a, b)
+        """
+        return tuple(self._lengths)
+
+    @property
+    def alpha(self):
+        """
+        Angle alpha of lattice in degrees.
+        """
+        return self._angle
+
+    @property
+    def area(self):
+        """
+        Volume of the unit cell.
+        """
+        m = self._matrix
+        return abs(np.cross(m[0], m[1]))
+
+    @property
+    def lengths_and_angle(self):
+        """
+        Returns (lattice lengths, lattice angles).
+        """
+        return tuple(self._lengths), self._angle
+
+    def __repr__(self):
+        outs = ["Lattice", "    ab : " + " ".join(map(repr, self._lengths)),
+                " angles : " + " ".join(map(repr, self._angles)),
+                " area : " + repr(self.area),
+                "      A : " + " ".join(map(repr, self._matrix[0])),
+                "      B : " + " ".join(map(repr, self._matrix[1]))]
+        return "\n".join(outs)
+
+    def __eq__(self, other):
+        """
+        A lattice is considered to be equal to another if the internal matrix
+        representation satisfies np.allclose(matrix1, matrix2) to be True.
+        """
+        if other is None:
+            return False
+        # shortcut the np.allclose if the memory addresses are the same
+        # (very common in Structure.from_sites)
+        return self is other or np.allclose(self.matrix, other.matrix)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __str__(self):
+        return "\n".join([" ".join(["%.6f" % i for i in row])
+                          for row in self._matrix])
+
+    def as_dict(self, verbosity=0):
+        """""
+        Json-serialization dict representation of the Lattice.
+
+        Args:
+            verbosity (int): Verbosity level. Default of 0 only includes the
+                matrix representation. Set to 1 for more details.
+        """
+
+        d = {"@module": self.__class__.__module__,
+             "@class": self.__class__.__name__,
+             "matrix": self._matrix.tolist()}
+        if verbosity > 0:
+            d.update({
+                "a": float(self.a),
+                "b": float(self.b),
+                "alpha": float(self.alpha),
+                "area": float(self.area)
+            })
+
+        return d
+
+    def get_distance_and_image(self, frac_coords1, frac_coords2, jimage=None):
+        """
+        Gets distance between two frac_coords assuming periodic boundary
+        conditions. If the index jimage is not specified it selects the j
+        image nearest to the i atom and returns the distance and jimage
+        indices in terms of lattice vector translations. If the index jimage
+        is specified it returns the distance between the frac_coords1 and
+        the specified jimage of frac_coords2, and the given jimage is also
+        returned.
+
+        Args:
+            fcoords1 (2x1 array): Reference fcoords to get distance from.
+            fcoords2 (2x1 array): fcoords to get distance from.
+            jimage (2x1 array): Specific periodic image in terms of
+                lattice translations, e.g., [1,0] implies to take periodic
+                image that is one a-lattice vector away. If jimage is None,
+                the image that is nearest to the site is found.
+
+        Returns:
+            (distance, jimage): distance and periodic lattice translations
+            of the other site for which the distance applies. This means that
+            the distance between frac_coords1 and (jimage + frac_coords2) is
+            equal to distance.
+        """
+        if jimage is None:
+            v, d2 = pbc_shortest_vectors(self, frac_coords1, frac_coords2,
+                                         return_d2=True)
+            fc = self.get_fractional_coords(v[0][0]) + frac_coords1 - \
+                 frac_coords2
+            fc = np.array(np.round(fc), dtype=np.int)
+            return np.sqrt(d2[0, 0]), fc
+
+        mapped_vec = self.get_cartesian_coords(jimage + frac_coords2
+                                               - frac_coords1)
+        return np.linalg.norm(mapped_vec), jimage
+
+
+class Site2D:
+    pass
+
+
+class ZachrosLattice:
     '''Handles the KMC lattice'''
     fname_in = 'lattice_input.dat'
     fname_out = 'lattice_output.txt'
     
-    def __init__(self, matrix, coords, cartesian=True):
+    def __init__(self, lattice, size, sites, connectivity):
         ''' Initialize class variables '''
         
-        self.text_only = True  # If true, only store the text from the input file, if false, store all the complex information
-        self.lattice_in_txt = None
+        #self.text_only = True  # If true, only store the text from the input file, if false, store all the complex information
+        #self.lattice_in_txt = None
         
-        self.lattice_matrix = None         # each row is a lattice vector
+        self._matrix = matrix         # each row is a lattice vector
         self.repeat = [1,1]
         self.site_type_names = []
         self.site_type_inds = []
