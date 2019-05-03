@@ -143,8 +143,8 @@ class Lattice:
         :returns: pyplot object with the lattice graphed on it
         '''
         
-        if self.text_only:
-            raise NameError('Lattice must be built before plotting. Use ReadAllOutput(build_lattice=True)')
+        #if self.text_only:
+        #    raise NameError('Lattice must be built before plotting. Use ReadAllOutput(build_lattice=True)')
         
         if self.cart_coords == []:
             self.cart_coords = np.dot(self.frac_coords, self.lattice_matrix)
@@ -347,3 +347,154 @@ class Lattice:
                     self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('southeast')
         
+    def Build_neighbor_list_3d(self, cart_coords_3d, cut_range = (0.9, 1.1)):     # appending lists causes this method to be slow
+    
+        '''
+        Builds the neighbor list based on distances between sites
+        
+        The distance range between nearest neighbor sites or their periodic images. (min, max)
+        cart_coords_3d, n*3 matrix represents the cartesian coordiates of lattice points
+        '''
+        self.cart_coords_3d = cart_coords_3d
+        
+        cut_min = cut_range[0]
+        cut_max = cut_range[1]
+    
+        # Make sure these lists are empty before we start appending
+        self.neighbor_list = []
+        self.cell_list = []     # self, north, northeast, east, or southeast
+
+    
+        n_sites = len(self.site_type_inds)
+        
+        # transform lattice matrix into 3d by adding a 0 column
+        lattice_matrix_3d  = np.concatenate((self.lattice_matrix, np.array([[0],[0]])), axis = 1)
+            
+        # Loop through all sites
+        for site_1 in range(n_sites):
+            for site_2 in range(n_sites):
+            
+                c1 = self.cart_coords_3d[site_1]
+                c2 = self.cart_coords_3d[site_2]
+            
+                c_2_north = c2 + lattice_matrix_3d[1] # move to the north 
+                c_2_northeast = c2 + lattice_matrix_3d[0] + lattice_matrix_3d[1]
+                c_2_east = c2 + lattice_matrix_3d[0] # move to the east
+                c_2_southeast = c2 + lattice_matrix_3d[0] - lattice_matrix_3d[1]
+            
+                if site_1 < site_2:        # check self
+                    if cut_min <= np.linalg.norm( c1 - c2 ) <= cut_max:
+                        self.neighbor_list.append([site_1, site_2])
+                        self.cell_list.append('self')
+                        
+                if cut_min <= np.linalg.norm( c1 - c_2_north ) <= cut_max:
+                    self.neighbor_list.append([site_1, site_2])
+                    self.cell_list.append('north')
+                        
+                if cut_min <= np.linalg.norm( c1 - c_2_northeast ) <= cut_max:
+                    self.neighbor_list.append([site_1, site_2])
+                    self.cell_list.append('northeast')
+                    
+                if cut_min <= np.linalg.norm( c1 - c_2_east ) <= cut_max:
+                    self.neighbor_list.append([site_1, site_2])
+                    self.cell_list.append('east')
+                    
+                if cut_min <= np.linalg.norm( c1 - c_2_southeast ) <= cut_max:
+                    self.neighbor_list.append([site_1, site_2])
+                    self.cell_list.append('southeast')
+                    
+                    
+    def PlotLattice_3d(self, plot_neighbs = True, get_GIF = False, type_symbols = ['o','s','^','v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms = 10):
+        
+        '''
+        :param cutoff: Maximum distance to draw connections between nearest neighbor sites.
+            This prevents drawing line segments between sites which are neighbors only though their periodic images.
+        
+        :param plot_neighbs: Flag to plot line segments between lattice sites which are first nearest neighbors to each other
+        
+        :param type_symbols: List of symbols for each lattice site type.
+        
+        :param ms: Marker size
+        
+        :returns: pyplot object with the lattice graphed on it
+        '''
+        
+        #if self.text_only:
+        #    raise NameError('Lattice must be built before plotting. Use ReadAllOutput(build_lattice=True)')
+        from mpl_toolkits.mplot3d import Axes3D
+        #border = np.dot(np.array([[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0],[0.0,0.0]]), self.lattice_matrix)             
+        
+        font = {'size'   : 16}
+
+        mat.rc('font', **font)
+        mat.rcParams['mathtext.default'] = 'regular'
+        mat.rcParams['text.latex.unicode'] = 'False'
+        mat.rcParams['legend.numpoints'] = 1
+        mat.rcParams['lines.linewidth'] = 2
+        mat.rcParams['xtick.major.size'] = 15
+        mat.rcParams['xtick.major.width'] = 1
+        mat.rcParams['ytick.major.size'] = 15
+        mat.rcParams['ytick.major.width'] = 1
+
+
+        #mat.rcParams['lines.markersize'] = 15
+        
+
+
+        
+        #plt.plot(border[:,0], border[:,1], '--k', linewidth = 2)                  # cell border 
+        def plot_single(y_rotate):
+            
+            z_rotate = 7
+            fig = plt.figure(figsize=(10,10))
+            ax = fig.add_subplot(111, projection='3d')
+            
+            if plot_neighbs:
+                ind = 0
+                for pair in self.neighbor_list:                                             # neighbors
+                    p1 = self.cart_coords_3d[pair[0]]
+                    p2 = self.cart_coords_3d[pair[1]]
+                    if self.cell_list[ind] == 'self':
+                        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], '--k', linewidth = 1)
+                    ind += 1
+    
+            for site_type in range(1, np.max(np.array(self.site_type_inds))+1 ):
+    
+                is_of_type = []
+                
+                for site_ind in range(len(self.site_type_inds)):
+                    if self.site_type_inds[site_ind] == site_type:
+                        is_of_type.append(site_ind)
+                #print(is_of_type)
+                #print(type_symbols[(site_type-1) % len(type_symbols)])
+                ax.scatter(self.cart_coords_3d[is_of_type,0], self.cart_coords_3d[is_of_type,1], self.cart_coords_3d[is_of_type,2],  marker = type_symbols[(site_type-1) % len(type_symbols)], color = 'r' , s = ms)          # sites [0.9, 0.9, 0.9] 
+            
+            # Choose range to plot
+    
+    #        ax.set_xticklabels(size=20)
+    #        ax.set_yticklabels(size=20)
+            ax.set_xlabel('x-coord (ang)', labelpad=15)
+            ax.set_ylabel('y-coord (ang)', labelpad=15)
+            ax.set_zlabel('z-coord (ang)', labelpad=15)
+            ax.tick_params(axis='x', which='major', pad= 1 )
+            ax.tick_params(axis='y', which='major', pad= 1 )
+            ax.tick_params(axis='z', which='major', pad= 3 )
+            ax.view_init(z_rotate, y_rotate)
+    
+            plt.axis('equal')
+            plt.tight_layout()
+            filename= str(y_rotate)+'.png'
+            output_dir = os.path.join(os.getcwd(), 'kmc_lattice')
+            if not os.path.exists(output_dir): os.makedirs(output_dir)    
+
+            fig.savefig(os.path.join(output_dir, filename))
+            plt.close()
+
+    
+        if get_GIF: # plot 20 figures for GIF
+            for angle in range(0,360,5):
+                plot_single(angle)
+        else: plot_single(120)
+
+    
+    
