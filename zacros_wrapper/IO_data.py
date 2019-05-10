@@ -9,8 +9,8 @@ from utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
 from utils import ReturnUnique as _ReturnUnique
 from utils import rawbigcount as _rawbigcount
 
-from pMuTT.io_.excel import read_excel
-from pMuTT.models.empirical.zacros import Zacros
+from pMuTT.io.excel import read_excel
+from pMuTT.empirical.zacros import Zacros
 
 
 '''
@@ -1208,7 +1208,7 @@ class ProcstatOut(object):
 
         t = []
         events = []
-        for i in range(0, len(RawTxt2)/3):
+        for i in range(0, int(len(RawTxt2)/3)):
             t.append(np.float(RawTxt2[i*3].split()[3]))
             eventsTemp = RawTxt2[i*3+2].split()[1:]
             for j in range(0, len(eventsTemp)):
@@ -1317,7 +1317,7 @@ class HistoryOut():
         self.snapshots = []
         self.snap_times = []
 
-        for snap_ind in range(self.n_snapshots):
+        for snap_ind in range(int(self.n_snapshots)):
             snap_data = np.array([[0]*4]*nSites)
             _linecache.clearcache()
             snap_header = _linecache.getline(HistPath, 8 + snap_ind *

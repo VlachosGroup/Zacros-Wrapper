@@ -346,8 +346,28 @@ class Lattice:
                 if np.linalg.norm( c1 - c_2_southeast ) < cut:
                     self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('southeast')
+    
+    def set_cart_coords_3D(self, dz):
+
+        '''
+        Tranform the lattice matrix and lattice points into 3D cartesian coordinates
+        Append the z coordinates based on the site type
+
+        :param fc: n x 3 array (or list of lists) of Cartesian coordinates to set for each atom
+        '''
+
+        # Transform lattice matrix into 3d by adding a 0 column
+        self.lattice_matrix_3d  = np.concatenate((self.lattice_matrix, np.array([[0],[0]])), axis = 1)
         
-    def Build_neighbor_list_3d(self, cart_coords_3d, cut_range = (0.9, 1.1)):     # appending lists causes this method to be slow
+        # Transform lattice points into 3d by adding z coordinates based on their site type 
+        # z = n*dz
+        
+        self.z_values = np.array([self.site_type_inds]) * dz
+        self.cart_coords_3d = np.concatenate((self.cart_coords, z_values), axis =1 )
+
+
+
+    def Build_neighbor_list_3D(self, cart_coords_3d, cut_range = (0.9, 1.1)):     # appending lists causes this method to be slow
     
         '''
         Builds the neighbor list based on distances between sites
@@ -364,12 +384,8 @@ class Lattice:
         self.neighbor_list = []
         self.cell_list = []     # self, north, northeast, east, or southeast
 
-    
         n_sites = len(self.site_type_inds)
         
-        # transform lattice matrix into 3d by adding a 0 column
-        lattice_matrix_3d  = np.concatenate((self.lattice_matrix, np.array([[0],[0]])), axis = 1)
-            
         # Loop through all sites
         for site_1 in range(n_sites):
             for site_2 in range(n_sites):
@@ -377,10 +393,10 @@ class Lattice:
                 c1 = self.cart_coords_3d[site_1]
                 c2 = self.cart_coords_3d[site_2]
             
-                c_2_north = c2 + lattice_matrix_3d[1] # move to the north 
-                c_2_northeast = c2 + lattice_matrix_3d[0] + lattice_matrix_3d[1]
-                c_2_east = c2 + lattice_matrix_3d[0] # move to the east
-                c_2_southeast = c2 + lattice_matrix_3d[0] - lattice_matrix_3d[1]
+                c_2_north = c2 + self.lattice_matrix_3d[1] # move to the north 
+                c_2_northeast = c2 + self.lattice_matrix_3d[0] + self.lattice_matrix_3d[1]
+                c_2_east = c2 + self.lattice_matrix_3d[0] # move to the east
+                c_2_southeast = c2 + self.lattice_matrix_3d[0] - self.lattice_matrix_3d[1]
             
                 if site_1 < site_2:        # check self
                     if cut_min <= np.linalg.norm( c1 - c2 ) <= cut_max:
@@ -404,7 +420,7 @@ class Lattice:
                     self.cell_list.append('southeast')
                     
                     
-    def PlotLattice_3d(self, plot_neighbs = True, get_GIF = False, type_symbols = ['o','s','^','v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms = 10):
+    def PlotLattice3D(self, plot_neighbs = True, get_GIF = False, type_symbols = ['o','s','^','v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms = 10):
         
         '''
         :param cutoff: Maximum distance to draw connections between nearest neighbor sites.
@@ -438,12 +454,9 @@ class Lattice:
 
 
         #mat.rcParams['lines.markersize'] = 15
-        
 
-
-        
         #plt.plot(border[:,0], border[:,1], '--k', linewidth = 2)                  # cell border 
-        def plot_single(y_rotate):
+        def plot_single_frame(y_rotate):
             
             z_rotate = 7
             fig = plt.figure(figsize=(10,10))
@@ -483,18 +496,22 @@ class Lattice:
     
             plt.axis('equal')
             plt.tight_layout()
-            filename= str(y_rotate)+'.png'
-            output_dir = os.path.join(os.getcwd(), 'kmc_lattice')
-            if not os.path.exists(output_dir): os.makedirs(output_dir)    
-
-            fig.savefig(os.path.join(output_dir, filename))
-            plt.close()
+            
+            return fig
 
     
         if get_GIF: # plot 20 figures for GIF
+            output_dir = os.path.join(os.getcwd(), 'lattice_GIF')
+            if not os.path.exists(output_dir): os.makedirs(output_dir)   
             for angle in range(0,360,5):
-                plot_single(angle)
-        else: plot_single(120)
+                fig = plot_single_frame(angle)
+                filename= str(angle)+'.png'
+                fig.savefig(os.path.join(output_dir, filename))
+                plt.close()
+
+        else: 
+            fig = plot_single_frame(120)
+            return fig
 
     
     

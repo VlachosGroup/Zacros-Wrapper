@@ -117,10 +117,11 @@ class kmc_traj():
             self.histout.ReadOut(self.Path, nSites)
 
             # Extra output files
-            self.prop = Read_propensities(self.Path, len( self.genout.RxnNameList ) )
-            self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
-            self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
-            self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
+			# Disable for simplicity
+            #self.prop = Read_propensities(self.Path, len( self.genout.RxnNameList ) )
+            #self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
+            #self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
+            #self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
             #self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
 			
 
@@ -412,7 +413,22 @@ class kmc_traj():
             plt.savefig(os.path.join(self.Path, 'lattice.png'))
             plt.close()
         
+    def PlotLattice3D(self):
+        '''
+        Plot the 3D lattice - output in - output in lattice.png in the run directory
+        '''
+
+        if self.lat.text_only:
         
+            print('Cannot plot lattice. Only text input exists.')
+            
+        else:
+        
+            fig = self.lat.PlotLattice3D()
+            fig.savefig(os.path.join(self.Path, 'lattice.png'))
+            plt.close()
+    
+     
     def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = colors_pool):       # Need make marker type consistent with the site type
 
         '''
@@ -432,7 +448,7 @@ class kmc_traj():
                 
         print(str(self.histout.n_snapshots) + ' total snapshots')
         
-        for frame_num in range(self.histout.n_snapshots):
+        for frame_num in range(int(self.histout.n_snapshots)):
             
             print('Draw frame number ' + str(frame_num+1))
             snap = self.histout.snapshots[frame_num]
