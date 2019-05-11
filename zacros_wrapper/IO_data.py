@@ -4,10 +4,10 @@ import re as _re
 import random as _random
 import linecache as _linecache
 
-from utils import constant as _c
-from utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
-from utils import ReturnUnique as _ReturnUnique
-from utils import rawbigcount as _rawbigcount
+from zacros_wrapper.utils import constant as _c
+from zacros_wrapper.utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
+from zacros_wrapper.utils import ReturnUnique as _ReturnUnique
+from zacros_wrapper.utils import rawbigcount as _rawbigcount
 
 from pMuTT.io.excel import read_excel
 from pMuTT.empirical.zacros import Zacros
@@ -157,7 +157,7 @@ class SimIn():
             txt.write('{:20}{:15}{}\n\n'.format('random_seed',
                       str(self.Seed), SeedTxt))
 
-            # Write out temperature, which depends on TPD or 
+            # Write out temperature, which depends on TPD or
             # constant temperature mode
             if self.TPD:
                 txt.write('{:20}{:5.1f}{:5.1f}\n'.format('temperature\t ramp',

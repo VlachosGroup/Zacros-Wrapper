@@ -23,4 +23,4 @@ SOFTWARE.
 ----------------------------------------------------------------------------------
 
 If used in published work, please cite the following publication
-M. Núñez, T.A. Robie, and D.G Vlachos, “Rapid identification of the rate determining step in complex kinetic systems” (in preparation)
+`M. Nunez, T.A. Robie, D.G. Vlachos, J. Chem. Phys. 147, 164103 (2017). <http://aip.scitation.org/doi/full/10.1063/1.4998926>`_
