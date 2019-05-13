@@ -408,12 +408,11 @@ class kmc_traj():
             print('Cannot plot lattice. Only text input exists.')
 
         else:
-
             plt = self.lat.PlotLattice()
             plt.savefig(os.path.join(self.Path, 'lattice.png'))
             plt.close()
 
-    def PlotLattice3D(self):
+    def PlotLattice3D(self, dz = 1, get_GIF = False):
         '''
         Plot the 3D lattice - output in - output in lattice.png in the run directory
         '''
@@ -423,9 +422,63 @@ class kmc_traj():
             print('Cannot plot lattice. Only text input exists.')
 
         else:
+            self.lat.set_cart_coords_3D(dz)
+            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF)
 
-            fig = self.lat.PlotLattice3D()
-            fig.savefig(os.path.join(self.Path, 'lattice.png'))
+            if not get_GIF: 
+                fig.savefig(os.path.join(self.Path, 'lattice.png'))
+                plt.close()
+
+    def LatticeMovie3D(self, dz = 1, include_neighbor_lines = False, spec_color_list = colors_pool):       # Need make marker type consistent with the site type
+
+        '''
+        Create a subfolder called lattice_frames
+        Create a .png file with a picture of a lattice for every snapshot in history_output.txt
+
+        include_neighbor_lines :    If true, will draw lines between neighboring lattice sites (takes more time)
+        spec_color_list :           List of colors to use for different species, will cycle through if there are more species than colors
+        '''
+        self.lat.set_cart_coords_3D(dz)
+        cart_coords_3d = self.lat.cart_coords_3d
+        spec_label_list = self.simin.surf_spec
+
+        frame_fldr = os.path.join(self.Path, 'lattice_frames_3D')
+        if not os.path.exists( frame_fldr ):
+                os.makedirs( frame_fldr )
+
+        print(str(self.histout.n_snapshots) + ' total snapshots')
+
+        for frame_num in range(int(self.histout.n_snapshots)):
+
+            print('Draw frame number ' + str(frame_num+1))
+            snap = self.histout.snapshots[frame_num]
+
+            fig, ax = self.lat.PlotLattice3D()            # plot the lattice in this frame
+
+
+            for ind in range( len( self.simin.surf_spec ) ):
+
+                # Find all coordinates with species ind occupying it
+                x_list = []
+                y_list = []
+                z_list = []
+
+                for site_ind in range(cart_coords_3d.shape[0]):      # include empty sites
+                    if snap[site_ind,2] == ind+1:
+                        x_list.append(cart_coords_3d[site_ind,0])
+                        y_list.append(cart_coords_3d[site_ind,1])
+                        z_list.append(cart_coords_3d[site_ind,2])
+
+                x = np.array(x_list)
+                y = np.array(y_list)
+                z = np.array(z_list)
+
+                ax.scatter(x, y, z, marker = 'o', color = spec_color_list[ind % len(spec_color_list)], s = 80, label=spec_label_list[ind])
+
+            plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
+            plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':12}, frameon = False)
+
+            fig.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
 
 
