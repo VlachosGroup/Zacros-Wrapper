@@ -458,6 +458,7 @@ class Lattice:
             z_rotate = 7
             fig = plt.figure(figsize=(10, 10))
             ax = fig.add_subplot(111, projection='3d')
+            #ax.set_aspect('equal')
 
             if plot_neighbs:
                 ind = 0
@@ -476,12 +477,27 @@ class Lattice:
                 for site_ind in range(len(self.site_type_inds)):
                     if self.site_type_inds[site_ind] == site_type:
                         is_of_type.append(site_ind)
-                # print(is_of_type)
-                #print(type_symbols[(site_type-1) % len(type_symbols)])
+
                 ax.scatter(self.cart_coords_3d[is_of_type, 0], self.cart_coords_3d[is_of_type, 1], self.cart_coords_3d[is_of_type, 2],  marker=type_symbols[(
                     site_type-1) % len(type_symbols)], color=[0.9, 0.9, 0.9], s=ms)          # sites [0.9, 0.9, 0.9]
 
-            # Choose range to plot
+            '''
+            Set axis in equal scale
+            '''
+            X_scatter = self.cart_coords_3d[:,0]
+            Y_scatter = self.cart_coords_3d[:,1]
+            Z_scatter = self.cart_coords_3d[:,2]
+
+            max_range = np.array([X_scatter.max()-X_scatter.min(), Y_scatter.max()-Y_scatter.min(), Z_scatter.max()-Z_scatter.min()]).max() / 2.0
+
+            mid_x = (X_scatter.max()+X_scatter.min()) * 0.5
+            mid_y = (Y_scatter.max()+Y_scatter.min()) * 0.5
+            ax.set_xlim(mid_x - max_range, mid_x + max_range)
+            ax.set_ylim(mid_y - max_range, mid_y + max_range)
+            ax.set_zlim(Z_scatter.min(), Z_scatter.min() + max_range)
+
+
+
 
     #        ax.set_xticklabels(size=20)
     #        ax.set_yticklabels(size=20)
@@ -493,7 +509,7 @@ class Lattice:
             ax.tick_params(axis='z', which='major', pad=3)
             ax.view_init(z_rotate, y_rotate)
 
-            plt.axis('equal')
+            #plt.axis('equal')
             plt.tight_layout()
 
             return fig, ax
