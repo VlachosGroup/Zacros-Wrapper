@@ -494,7 +494,7 @@ class Lattice:
             mid_y = (Y_scatter.max()+Y_scatter.min()) * 0.5
             ax.set_xlim(mid_x - max_range, mid_x + max_range)
             ax.set_ylim(mid_y - max_range, mid_y + max_range)
-            ax.set_zlim(Z_scatter.min(), Z_scatter.min() + max_range)
+            ax.set_zlim(Z_scatter.min(), Z_scatter.min() + max_range*2)
 
     #        ax.set_xticklabels(size=20)
     #        ax.set_yticklabels(size=20)
