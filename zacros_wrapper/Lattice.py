@@ -418,7 +418,7 @@ class Lattice:
                     self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('southeast')
 
-    def PlotLattice3D(self, plot_neighbs=False, get_GIF=False, type_symbols=['o', 's', '^', 'v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms=100):
+    def PlotLattice3D(self, plot_neighbs=False, get_GIF=False, type_symbols=['o', 's', '^', 'v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms=200):
         '''
         :param cutoff: Maximum distance to draw connections between nearest neighbor sites.
             This prevents drawing line segments between sites which are neighbors only though their periodic images.
@@ -456,7 +456,7 @@ class Lattice:
         def plot_single_frame(y_rotate):
 
             z_rotate = 7
-            fig = plt.figure(figsize=(10, 10))
+            fig = plt.figure(figsize=(8, 8))
             ax = fig.add_subplot(111, projection='3d')
             #ax.set_aspect('equal')
 
@@ -479,7 +479,7 @@ class Lattice:
                         is_of_type.append(site_ind)
 
                 ax.scatter(self.cart_coords_3d[is_of_type, 0], self.cart_coords_3d[is_of_type, 1], self.cart_coords_3d[is_of_type, 2],  marker=type_symbols[(
-                    site_type-1) % len(type_symbols)], color=[0.9, 0.9, 0.9], s=ms)          # sites [0.9, 0.9, 0.9]
+                    site_type-1) % len(type_symbols)], color='lightgrey', s= ms)          # sites [0.9, 0.9, 0.9]
 
             '''
             Set axis in equal scale

@@ -473,10 +473,10 @@ class kmc_traj():
                 y = np.array(y_list)
                 z = np.array(z_list)
 
-                ax.scatter(x, y, z, marker = 'o', color = spec_color_list[ind % len(spec_color_list)], s = 80, label=spec_label_list[ind])
+                ax.scatter(x, y, z, marker = 'o', color = spec_color_list[ind % len(spec_color_list)], alpha = 1, s = 150, label=spec_label_list[ind])
 
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
-            plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':12}, frameon = False)
+            plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
 
             fig.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
