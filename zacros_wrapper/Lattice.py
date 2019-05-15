@@ -496,9 +496,6 @@ class Lattice:
             ax.set_ylim(mid_y - max_range, mid_y + max_range)
             ax.set_zlim(Z_scatter.min(), Z_scatter.min() + max_range)
 
-
-
-
     #        ax.set_xticklabels(size=20)
     #        ax.set_yticklabels(size=20)
             ax.set_xlabel('x-coord (ang)', labelpad=15)
