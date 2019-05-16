@@ -120,7 +120,7 @@ class Lattice:
 
         return image_coords[min_d_ind]
 
-    def PlotLattice(self, cutoff=3.0, plot_neighbs=False, type_symbols=['o', 's', '^', 'v', '<', '>', '8',
+    def PlotLattice(self, cutoff=3.0, plot_neighbs=False, type_symbols=['s', '^', 'v', '<', '>', '8', 'o',
                                                                         'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms=7):
         '''
         :param cutoff: Maximum distance to draw connections between nearest neighbor sites.
@@ -418,7 +418,7 @@ class Lattice:
                     self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('southeast')
 
-    def PlotLattice3D(self, plot_neighbs=False, get_GIF=False, type_symbols=['o', 's', '^', 'v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms=200):
+    def PlotLattice3D(self, plot_neighbs=False, get_GIF=False, type_symbols=['o', 's', '^', 'v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms=100):
         '''
         :param cutoff: Maximum distance to draw connections between nearest neighbor sites.
             This prevents drawing line segments between sites which are neighbors only though their periodic images.
@@ -478,8 +478,7 @@ class Lattice:
                     if self.site_type_inds[site_ind] == site_type:
                         is_of_type.append(site_ind)
 
-                ax.scatter(self.cart_coords_3d[is_of_type, 0], self.cart_coords_3d[is_of_type, 1], self.cart_coords_3d[is_of_type, 2],  marker=type_symbols[(
-                    site_type-1) % len(type_symbols)], color='lightgrey', s= ms)          # sites [0.9, 0.9, 0.9]
+                ax.scatter(self.cart_coords_3d[is_of_type, 0], self.cart_coords_3d[is_of_type, 1], self.cart_coords_3d[is_of_type, 2],  marker= type_symbols[(site_type-1) % len(type_symbols)] , color='lightgrey', s= ms, edgecolors = 'k')   #      # sites [0.9, 0.9, 0.9]
 
             '''
             Set axis in equal scale
@@ -488,13 +487,15 @@ class Lattice:
             Y_scatter = self.cart_coords_3d[:,1]
             Z_scatter = self.cart_coords_3d[:,2]
 
-            max_range = np.array([X_scatter.max()-X_scatter.min(), Y_scatter.max()-Y_scatter.min(), Z_scatter.max()-Z_scatter.min()]).max() / 2.0
+            max_range = np.array([X_scatter.max()-X_scatter.min(), Y_scatter.max()-Y_scatter.min(), Z_scatter.max()-Z_scatter.min()]).max()
 
-            mid_x = (X_scatter.max()+X_scatter.min()) * 0.5
-            mid_y = (Y_scatter.max()+Y_scatter.min()) * 0.5
-            ax.set_xlim(mid_x - max_range, mid_x + max_range)
-            ax.set_ylim(mid_y - max_range, mid_y + max_range)
-            ax.set_zlim(Z_scatter.min(), Z_scatter.min() + max_range*2)
+            #mid_x = (X_scatter.max()+X_scatter.min()) * 0.5
+            #mid_y = (Y_scatter.max()+Y_scatter.min()) * 0.5
+            #ax.set_xlim(mid_x - max_range, mid_x + max_range)
+            #ax.set_ylim(mid_y - max_range, mid_y + max_range)
+            ax.set_xlim(X_scatter.min(), X_scatter.min() + max_range)
+            ax.set_ylim(Y_scatter.min(), Y_scatter.min() + max_range)
+            ax.set_zlim(Z_scatter.min(), Z_scatter.min() + max_range)
 
     #        ax.set_xticklabels(size=20)
     #        ax.set_yticklabels(size=20)
