@@ -472,8 +472,10 @@ class kmc_traj():
                 x = np.array(x_list)
                 y = np.array(y_list)
                 z = np.array(z_list)
+                
                 for xi, yi, zi in zip(x,y,z):
-                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int((zi-1)% len(spec_color_list))],  s = 200, edgecolors = 'k',label=spec_label_list[ind])
+                    layer_i = int(zi -1)
+                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k',label= spec_label_list[ind] + '_l'+str(layer_i))
 
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
             plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
