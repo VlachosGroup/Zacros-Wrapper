@@ -423,7 +423,7 @@ class kmc_traj():
 
         else:
             self.lat.set_cart_coords_3D(dz)
-            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF, type_symbols=['s'])
+            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF, type_symbols=['^'])
 
             if not get_GIF: 
                 fig.savefig(os.path.join(self.Path, 'lattice.png'))
@@ -453,7 +453,7 @@ class kmc_traj():
             print('Draw frame number ' + str(frame_num+1))
             snap = self.histout.snapshots[frame_num]
 
-            fig, ax = self.lat.PlotLattice3D(type_symbols=['s'])            # plot the lattice in this frame
+            fig, ax = self.lat.PlotLattice3D(type_symbols=['^'])            # plot the lattice in this frame
 
 
             for ind in range( len( self.simin.surf_spec ) ):
@@ -473,7 +473,7 @@ class kmc_traj():
                 y = np.array(y_list)
                 z = np.array(z_list)
 
-                ax.scatter(x, y, z, marker = 'o', color = spec_color_list[ind % len(spec_color_list)], alpha = 1, s = 200, label=spec_label_list[ind])
+                ax.scatter(x, y, z, marker = 'o', color = z, cmap = 'viridis', alpha = 1, s = 200, edgecolors = 'k',label=spec_label_list[ind])
 
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
             plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
