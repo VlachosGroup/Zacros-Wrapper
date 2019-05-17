@@ -429,7 +429,7 @@ class kmc_traj():
                 fig.savefig(os.path.join(self.Path, 'lattice.png'))
                 plt.close()
 
-    def LatticeMovie3D(self, dz = 1, include_neighbor_lines = False, spec_color_list = colors_pool):       # Need make marker type consistent with the site type
+    def LatticeMovie3D(self, dz = 1, include_neighbor_lines = False, spec_color_list = ['slateblue', 'green', 'marron','peru']):       # Need make marker type consistent with the site type
 
         '''
         Create a subfolder called lattice_frames
@@ -472,8 +472,8 @@ class kmc_traj():
                 x = np.array(x_list)
                 y = np.array(y_list)
                 z = np.array(z_list)
-
-                ax.scatter(x, y, z, marker = 'o', color = z, cmap = 'viridis', alpha = 1, s = 200, edgecolors = 'k',label=spec_label_list[ind])
+                for xi, yi, zi in zip(x,y,z):
+                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int((zi-1)% len(spec_color_list))],  s = 200, edgecolors = 'k',label=spec_label_list[ind])
 
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
             plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
