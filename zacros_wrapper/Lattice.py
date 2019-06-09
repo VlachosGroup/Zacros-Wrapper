@@ -72,7 +72,7 @@ class Lattice:
         '''
         Set the fractional and Cartesian coordinates
 
-        :param fc: n x 3 array (or list of lists) of fractional coordinates to set for each atom 
+        :param fc: n x 3 array (or list of lists) of fractional coordinates to set for each atom
         '''
 
         self.frac_coords = np.array(fc)
@@ -291,7 +291,7 @@ class Lattice:
 
         :param cut: Maximum distance between nearest neighbor sites or their periodic images.
 
-        :param cut_mat: List of nearest neighbor cutoff distances between different site types. If empty, it will assume the same distance for 
+        :param cut_mat: List of nearest neighbor cutoff distances between different site types. If empty, it will assume the same distance for
             all site types.
         '''
 
@@ -365,14 +365,15 @@ class Lattice:
             (self.cart_coords, self.z_values), axis=1)
 
     # appending lists causes this method to be slow
-    def Build_neighbor_list_3D(self, cart_coords_3d, cut_range=(0.9, 1.1)):
+    def Build_neighbor_list_3D(self, cut_range=(0.9, 1.1), cart_coords_3d = None):
         '''
         Builds the neighbor list based on distances between sites
 
         The distance range between nearest neighbor sites or their periodic images. (min, max)
         cart_coords_3d, n*3 matrix represents the cartesian coordiates of lattice points
         '''
-        self.cart_coords_3d = cart_coords_3d
+        if not cart_coords_3d == None:
+            self.cart_coords_3d = cart_coords_3d
 
         cut_min = cut_range[0]
         cut_max = cut_range[1]
