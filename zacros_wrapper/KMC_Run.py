@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib as mat
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
+import matplotlib.patches as mpatches
 
 # For executable
 import os
@@ -269,7 +270,7 @@ class kmc_traj():
     ==================================== Plotting methods ====================================
     '''
 
-    def PlotSurfSpecVsTime(self, site_norm = 1, savefig = True, incl_total = False):
+    def PlotSurfSpecVsTime(self, site_norm = 1):
 
         '''
         Plot surface species profiles versus time - output in surf_spec_vs_time.png in the directory with the Zacros run
@@ -293,23 +294,11 @@ class kmc_traj():
                 time_vecs.append(self.specnumout.t)
                 surf_spec_vecs.append(self.specnumout.spec[:,i] / float(site_norm))
                 surf_spec_name.append(self.simin.surf_spec[i])
-        
-        if incl_total:
-            
-            time_vecs.append(self.specnumout.t)
-            surf_spec_vecs.append(np.sum(surf_spec_vecs, axis = 0))
-            surf_spec_name.append('Total')
-        
-        if savefig:
 
-            PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = surf_spec_name, fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
-        
-        else: 
-            
-            PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = surf_spec_name)
-        
+        PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = surf_spec_name, fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
 
-    def PlotGasSpecVsTime(self, savefig = True):
+
+    def PlotGasSpecVsTime(self):
 
         '''
         Plot gas phase species profiles versus time - output in gas_spec_vs_time.png in the directory with the Zacros run
@@ -321,16 +310,11 @@ class kmc_traj():
             time_vecs.append(self.specnumout.t)
             gas_spec_vecs.append(self.specnumout.spec[:, i + len( self.simin.surf_spec ) ])
 
-        if savefig:
-            
-            PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'Spec. pop.', series_labels = self.simin.gas_spec, fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
-        
-        else:
-            
-            PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'Spec. pop.', series_labels = self.simin.gas_spec)
-            
+        PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'Spec. pop.', series_labels = self.simin.gas_spec, fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
 
-    def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1, savefig = True):
+
+
+    def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1):
 
         '''
         Plot a bar graph of elementary step frequencies versus time - output in elem_step_freqs.png in the directory with the Zacros run
@@ -410,16 +394,11 @@ class kmc_traj():
 
         plt.tight_layout()
 
-        if savefig:
-            plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'), bbox_inches = "tight")
-            
-        else:
-            plt.show()
-            
+        plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'), bbox_inches = "tight")
         plt.close()
 
 
-    def PlotLattice(self, savefig = True):
+    def PlotLattice(self):
 
         '''
         Plot the lattice - output in lattice.png in the run directory
@@ -431,14 +410,10 @@ class kmc_traj():
 
         else:
             plt = self.lat.PlotLattice()
-            
-            if savefig:
-                plt.savefig(os.path.join(self.Path, 'lattice.png'))
-            else:
-                plt.show()
+            plt.savefig(os.path.join(self.Path, 'lattice.png'))
             plt.close()
 
-    def PlotLattice3D(self, dz = 1, get_GIF = False, savefig = True):
+    def PlotLattice3D(self, dz = 1, get_GIF = False):
         '''
         Plot the 3D lattice - output in - output in lattice.png in the run directory
         '''
@@ -449,16 +424,13 @@ class kmc_traj():
 
         else:
             self.lat.set_cart_coords_3D(dz)
-            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF, type_symbols=['^'])
+            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF, type_symbols=['.'], selected_sites = 'l0')
 
             if not get_GIF: 
-                if savefig:
-                    fig.savefig(os.path.join(self.Path, 'lattice.png'))
-                else:
-                    fig.show()
+                fig.savefig(os.path.join(self.Path, 'lattice.png'))
                 plt.close()
 
-    def LatticeMovie3D(self, dz = 1, include_neighbor_lines = False, spec_color_list = ['slateblue', 'green', 'marron','peru'], savefig = True):       # Need make marker type consistent with the site type
+    def LatticeMovie3D(self, dz = 1, include_neighbor_lines = False, spec_color_list = ['slateblue', 'green', 'marron','peru']):       # Need make marker type consistent with the site type
 
         '''
         Create a subfolder called lattice_frames
@@ -482,7 +454,7 @@ class kmc_traj():
             print('Draw frame number ' + str(frame_num+1))
             snap = self.histout.snapshots[frame_num]
 
-            fig, ax = self.lat.PlotLattice3D(type_symbols=['^'])            # plot the lattice in this frame
+            fig, ax = self.lat.PlotLattice3D(type_symbols=['.'],  selected_sites = 'l0')            # plot the lattice in this frame
 
 
             for ind in range( len( self.simin.surf_spec ) ):
@@ -504,19 +476,24 @@ class kmc_traj():
                 
                 for xi, yi, zi in zip(x,y,z):
                     layer_i = int(zi -1)
-                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k',label= spec_label_list[ind] + '_l'+str(layer_i))
+                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k')
+
+            # Create legend labels 
+            n_layers = int(np.max(z)) 
+            legend_patches = []
+            for li in range(n_layers):
+                layer_name = self.lat.site_type_names[li]
+                legend_patches.append(mpatches.Patch(color=spec_color_list[int(li% len(spec_color_list))], label= spec_label_list[ind] + '_' + layer_name))
+            
 
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
-            plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
+            plt.legend(handles=legend_patches, bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
 
-            if savefig:
-                fig.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
-            else:
-                fig.show()
+            fig.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
 
 
-    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = colors_pool, savefig = True):       # Need make marker type consistent with the site type
+    def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = colors_pool):       # Need make marker type consistent with the site type
 
         '''
         Create a subfolder called lattice_frames
@@ -537,7 +514,7 @@ class kmc_traj():
 
         for frame_num in range(int(self.histout.n_snapshots)):
 
-            #print('Draw frame number ' + str(frame_num+1))
+            print('Draw frame number ' + str(frame_num+1))
             snap = self.histout.snapshots[frame_num]
 
             plt = self.lat.PlotLattice()            # plot the lattice in this frame
@@ -561,10 +538,7 @@ class kmc_traj():
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
             plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', prop = {'size':12}, frameon = False)
 
-            if savefig:
-                plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
-            else:
-                plt.show
+            plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
 
 
