@@ -504,9 +504,6 @@ class kmc_traj():
 
             fig, ax = self.lat.PlotLattice3D(type_symbols=['.'],  selected_sites = 'l0')            # plot the lattice in this frame
 
-
-
-
             for ind in range( len( self.simin.surf_spec ) ):
 
                 # Find all coordinates with species ind occupying it
@@ -566,7 +563,7 @@ class kmc_traj():
 
         for frame_num in range(int(self.histout.n_snapshots)):
 
-            #print('Draw frame number ' + str(frame_num+1))
+            print('Draw frame number ' + str(frame_num+1))
             snap = self.histout.snapshots[frame_num]
 
             plt = self.lat.PlotLattice()            # plot the lattice in this frame
@@ -593,7 +590,7 @@ class kmc_traj():
             if savefig:
                 plt.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             else:
-                plt.show
+                plt.show()
             plt.close()
 
 
