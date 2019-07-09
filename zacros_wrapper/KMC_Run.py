@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib as mat
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
+import matplotlib.patches as mpatches
 
 # For executable
 import os
@@ -293,21 +294,21 @@ class kmc_traj():
                 time_vecs.append(self.specnumout.t)
                 surf_spec_vecs.append(self.specnumout.spec[:,i] / float(site_norm))
                 surf_spec_name.append(self.simin.surf_spec[i])
-        
+
         if incl_total:
-            
+
             time_vecs.append(self.specnumout.t)
             surf_spec_vecs.append(np.sum(surf_spec_vecs, axis = 0))
             surf_spec_name.append('Total')
-        
+
         if savefig:
 
             PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = surf_spec_name, fname = os.path.join(self.Path, 'surf_spec_vs_time.png'))
-        
-        else: 
-            
+
+        else:
+
             PlotTimeSeries(time_vecs, surf_spec_vecs, xlab = 'Time (s)', ylab = ylabel, series_labels = surf_spec_name)
-        
+
 
     def PlotGasSpecVsTime(self, savefig = True):
 
@@ -322,13 +323,13 @@ class kmc_traj():
             gas_spec_vecs.append(self.specnumout.spec[:, i + len( self.simin.surf_spec ) ])
 
         if savefig:
-            
+
             PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'Spec. pop.', series_labels = self.simin.gas_spec, fname = os.path.join(self.Path, 'gas_spec_vs_time.png'))
-        
+
         else:
-            
+
             PlotTimeSeries(time_vecs, gas_spec_vecs, xlab = 'Time (s)', ylab = 'Spec. pop.', series_labels = self.simin.gas_spec)
-            
+
 
     def PlotElemStepFreqs(self, window = [0.0, 1.0], time_norm = False, site_norm = 1, savefig = True):
 
@@ -412,10 +413,10 @@ class kmc_traj():
 
         if savefig:
             plt.savefig(os.path.join(self.Path, 'elem_step_freqs.png'), bbox_inches = "tight")
-            
+
         else:
             plt.show()
-            
+
         plt.close()
 
 
@@ -431,7 +432,26 @@ class kmc_traj():
 
         else:
             plt = self.lat.PlotLattice()
-            
+
+            if savefig:
+                plt.savefig(os.path.join(self.Path, 'lattice.png'))
+            else:
+                plt.show()
+            plt.close()
+
+    def PlotLattice(self, savefig = True):
+
+        '''
+        Plot the lattice - output in lattice.png in the run directory
+        '''
+
+        if self.lat.text_only:
+
+            print('Cannot plot lattice. Only text input exists.')
+
+        else:
+            plt = self.lat.PlotLattice()
+
             if savefig:
                 plt.savefig(os.path.join(self.Path, 'lattice.png'))
             else:
@@ -449,9 +469,9 @@ class kmc_traj():
 
         else:
             self.lat.set_cart_coords_3D(dz)
-            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF, type_symbols=['^'])
+            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF, type_symbols=['.'], selected_sites = 'l0')
 
-            if not get_GIF: 
+            if not get_GIF:
                 if savefig:
                     fig.savefig(os.path.join(self.Path, 'lattice.png'))
                 else:
@@ -482,7 +502,9 @@ class kmc_traj():
             print('Draw frame number ' + str(frame_num+1))
             snap = self.histout.snapshots[frame_num]
 
-            fig, ax = self.lat.PlotLattice3D(type_symbols=['^'])            # plot the lattice in this frame
+            fig, ax = self.lat.PlotLattice3D(type_symbols=['.'],  selected_sites = 'l0')            # plot the lattice in this frame
+
+
 
 
             for ind in range( len( self.simin.surf_spec ) ):
@@ -501,13 +523,20 @@ class kmc_traj():
                 x = np.array(x_list)
                 y = np.array(y_list)
                 z = np.array(z_list)
-                
+
                 for xi, yi, zi in zip(x,y,z):
                     layer_i = int(zi -1)
-                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k',label= spec_label_list[ind] + '_l'+str(layer_i))
+                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k')
 
+            # Create legend labels
+            n_layers = int(np.max(z))
+            legend_patches = []
+            for li in range(n_layers):
+                layer_name = self.lat.site_type_names[li]
+                legend_patches.append(mpatches.Patch(color=spec_color_list[int(li% len(spec_color_list))], label= spec_label_list[ind] + '_' + layer_name))
+
+            plt.legend(handles=legend_patches, bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
-            plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
 
             if savefig:
                 fig.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
