@@ -28,6 +28,7 @@ class Lattice:
         # If true, only store the text from the input file, if false, store all the complex information
         self.text_only = True
         self.lattice_in_txt = None
+        self.lattice_in_line = None
 
         self.lattice_matrix = None         # each row is a lattice vector
         self.repeat = [1, 1]
@@ -46,10 +47,20 @@ class Lattice:
         '''
 
         self.lattice_in_txt = []
+        self.lattice_in_line = []
         with open(os.path.join(fldr, self.fname_in), 'r') as Txt:
             RawTxt = Txt.readlines()
         for i in RawTxt:
             self.lattice_in_txt.append(i.split('\n')[0])
+        
+        # Fill each line into a list
+        for line in self.lattice_in_txt:
+            self.lattice_in_line.append(line.split())
+            # Extract the site_type_names
+            if len(line.split())>0:
+                if line.split()[0] == 'site_type_names':
+                    self.site_type_names = line.split()[1:]
+   
 
     def WriteIn(self, fldr):
         '''
@@ -419,7 +430,7 @@ class Lattice:
                     self.neighbor_list.append([site_1, site_2])
                     self.cell_list.append('southeast')
 
-    def PlotLattice3D(self, plot_neighbs=False, get_GIF=False, type_symbols=['o', 's', '^', 'v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms=10):
+    def PlotLattice3D(self, plot_neighbs=False, get_GIF=False, type_symbols=['o', 's', '^', 'v', '<', '>', '8', 'd', 'D', 'H', 'h', '*', 'p', '+', ',', '.', '1', '2', '3', '4', '_', 'x', '|', 0, 1, 10, 11, 2, 3, 4, 5, 6, 7, 8], ms= 20, selected_sites = []):
         '''
         :param cutoff: Maximum distance to draw connections between nearest neighbor sites.
             This prevents drawing line segments between sites which are neighbors only though their periodic images.
@@ -429,6 +440,8 @@ class Lattice:
         :param type_symbols: List of symbols for each lattice site type.
 
         :param ms: Marker size
+
+        :param selected_sites: the name of site type included in the plotting
 
         :returns: pyplot object with the lattice graphed on it
         '''
@@ -454,6 +467,11 @@ class Lattice:
 
         # plt.plot(border[:,0], border[:,1], '--k', linewidth = 2)                  # cell border
 
+        # Plot only selected site type
+        if selected_sites == []:
+            selected_sites = self.site_type_names    
+        select_site_type_ind = np.where(np.array(self.site_type_names) == selected_sites)[0]
+
         def plot_single_frame(y_rotate):
 
             z_rotate = 30
@@ -471,7 +489,7 @@ class Lattice:
                                  p1[2], p2[2]], '--k', linewidth=1)
                     ind += 1
 
-            for site_type in range(1, np.max(np.array(self.site_type_inds))+1):
+            for site_type in (select_site_type_ind + 1):
 
                 is_of_type = []
 

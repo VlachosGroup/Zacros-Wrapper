@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib as mat
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
+import matplotlib.patches as mpatches
 
 # For executable
 import os
@@ -423,7 +424,7 @@ class kmc_traj():
 
         else:
             self.lat.set_cart_coords_3D(dz)
-            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF, type_symbols=['^'])
+            fig, _ = self.lat.PlotLattice3D(get_GIF = get_GIF, type_symbols=['.'], selected_sites = 'l0')
 
             if not get_GIF: 
                 fig.savefig(os.path.join(self.Path, 'lattice.png'))
@@ -453,7 +454,7 @@ class kmc_traj():
             print('Draw frame number ' + str(frame_num+1))
             snap = self.histout.snapshots[frame_num]
 
-            fig, ax = self.lat.PlotLattice3D(type_symbols=['^'])            # plot the lattice in this frame
+            fig, ax = self.lat.PlotLattice3D(type_symbols=['.'],  selected_sites = 'l0')            # plot the lattice in this frame
 
 
             for ind in range( len( self.simin.surf_spec ) ):
@@ -475,10 +476,18 @@ class kmc_traj():
                 
                 for xi, yi, zi in zip(x,y,z):
                     layer_i = int(zi -1)
-                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k',label= spec_label_list[ind] + '_l'+str(layer_i))
+                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k')
+
+            # Create legend labels 
+            n_layers = int(np.max(z)) 
+            legend_patches = []
+            for li in range(n_layers):
+                layer_name = self.lat.site_type_names[li]
+                legend_patches.append(mpatches.Patch(color=spec_color_list[int(li% len(spec_color_list))], label= spec_label_list[ind] + '_' + layer_name))
+            
 
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
-            plt.legend(bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
+            plt.legend(handles=legend_patches, bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
 
             fig.savefig(os.path.join(frame_fldr, 'Snapshot_' + str(frame_num+1)), bbox_inches = "tight")
             plt.close()
