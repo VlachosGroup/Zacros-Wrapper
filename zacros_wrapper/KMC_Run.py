@@ -478,7 +478,7 @@ class kmc_traj():
                     fig.show()
                 plt.close()
 
-    def LatticeMovie3D(self, dz = 1, include_neighbor_lines = False, spec_color_list = ['slateblue', 'green', 'marron','peru'], savefig = True):       # Need make marker type consistent with the site type
+    def LatticeMovie3D(self, dz = 1, include_neighbor_lines = False, spec_color_list = ['slateblue', 'green', 'maroon','peru'], savefig = True):       # Need make marker type consistent with the site type
 
         '''
         Create a subfolder called lattice_frames
