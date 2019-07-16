@@ -523,7 +523,7 @@ class kmc_traj():
 
                 for xi, yi, zi in zip(x,y,z):
                     layer_i = int(zi -1)
-                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k')
+                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 150, edgecolors = 'k')
 
             # Create legend labels
             n_layers = int(np.max(z))
@@ -587,7 +587,7 @@ class kmc_traj():
 
             for xi, yi, zi in zip(x,y,z):
                 layer_i = int(zi -1)
-                ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k')
+                ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 150, edgecolors = 'k')
 
         # Create legend labels
         n_layers = int(np.max(z))
