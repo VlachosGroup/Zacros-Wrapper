@@ -575,11 +575,11 @@ class kmc_traj():
             y_list = []
             z_list = []
 
-            for site_ind in range(cart_coords_3d.shape[0]):      # include empty sites
+            for site_ind in range(0, cart_coords_3d.shape[0]):      # include empty sites
                 if snap[site_ind,2] == ind+1:
-                    x_list.append(cart_coords_3d[site_ind,0])
-                    y_list.append(cart_coords_3d[site_ind,1])
-                    z_list.append(cart_coords_3d[site_ind,2])
+                    x_list.append(cart_coords_3d[site_ind-1,0])
+                    y_list.append(cart_coords_3d[site_ind-1,1])
+                    z_list.append(cart_coords_3d[site_ind-1,2])
 
             x = np.array(x_list)
             y = np.array(y_list)
