@@ -1035,6 +1035,32 @@ class StateIn(object):
         else:
             self.Type = None
 
+
+    def ReadSeed(self, nSites = 1):
+
+        '''
+        Temporary function to read the state_input.dat with single seeds
+        '''
+
+        # break into lines
+        lines = []
+        for si in self.Struct:
+            lines.append(si.split())
+        # take unempty lines
+        lines = [li for li in lines if len(li) > 0]
+        # take the line with seed indices
+        seed_lines = [li for li in lines if (li[0] == 'seed_on_sites')]
+        seed_indices = np.array([int(si[2]) for si in seed_lines])
+        
+        # save to a snap matrix (nSites by 4)
+        snap_data = np.array([[0]*4]*nSites)
+        snap_data[:,0] = np.arange(1, nSites+1) # 1st column is the site number
+        snap_data[:,1] = np.arange(1, nSites+1) # 2nd column wont be used
+        snap_data[:,3] = 1 # 3rd column dentate number, default is 1
+        snap_data[seed_indices,2] = 1 # 2nd column, occupancy, set as 1
+        self.initialsnap = snap_data
+                
+
     def WriteIn(self, fldr, surf_spec):
 
         '''

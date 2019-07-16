@@ -541,6 +541,70 @@ class kmc_traj():
                 fig.show()
             plt.close()
 
+    def PlotInitialState(self, dz = 1, include_neighbor_lines = False, spec_color_list = ['slateblue', 'green', 'maroon','peru'], savefig = True):       # Need make marker type consistent with the site type
+
+        '''
+        Create a .png file with a picture of a lattice for the initial snapshot given state_input.dat
+
+        include_neighbor_lines :    If true, will draw lines between neighboring lattice sites (takes more time)
+        spec_color_list :           List of colors to use for different species, will cycle through if there are more species than colors
+        '''
+        # Count the number of sites
+        with open( os.path.join(self.Path, 'lattice_output.txt'), 'r') as txt:
+            RawTxt = txt.readlines()
+        nSites = len(RawTxt) - 2
+
+        # Read state_input.data
+        self.statein.ReadSeed(nSites)
+
+        self.lat.set_cart_coords_3D(dz)
+        cart_coords_3d = self.lat.cart_coords_3d
+        spec_label_list = self.simin.surf_spec
+
+        frame_fldr = self.Path
+
+        # Plot the initial snap shot
+        snap = self.statein.initialsnap
+
+        fig, ax = self.lat.PlotLattice3D(type_symbols=['.'],  selected_sites = 'l0')            # plot the lattice in this frame
+
+        for ind in range( len( self.simin.surf_spec ) ):
+
+            # Find all coordinates with species ind occupying it
+            x_list = []
+            y_list = []
+            z_list = []
+
+            for site_ind in range(cart_coords_3d.shape[0]):      # include empty sites
+                if snap[site_ind,2] == ind+1:
+                    x_list.append(cart_coords_3d[site_ind,0])
+                    y_list.append(cart_coords_3d[site_ind,1])
+                    z_list.append(cart_coords_3d[site_ind,2])
+
+            x = np.array(x_list)
+            y = np.array(y_list)
+            z = np.array(z_list)
+
+            for xi, yi, zi in zip(x,y,z):
+                layer_i = int(zi -1)
+                ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 200, edgecolors = 'k')
+
+        # Create legend labels
+        n_layers = int(np.max(z))
+        legend_patches = []
+        for li in range(n_layers):
+            layer_name = self.lat.site_type_names[li]
+            legend_patches.append(mpatches.Patch(color=spec_color_list[int(li% len(spec_color_list))], label= spec_label_list[ind] + '_' + layer_name))
+
+        plt.legend(handles=legend_patches, bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
+        plt.title('Time = 0 ' + ' sec')
+
+        if savefig:
+            fig.savefig(os.path.join(frame_fldr, 'Initial_Snapshot'), bbox_inches = "tight")
+        else:
+            fig.show()
+        plt.close()
+
 
     def LatticeMovie(self, include_neighbor_lines = False, spec_color_list = colors_pool, savefig = True):       # Need make marker type consistent with the site type
 
