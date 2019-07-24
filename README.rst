@@ -19,6 +19,7 @@ Key features
 Developers
 ----------
 * Marcel Nunez (mpnunez28@gmail.com)
+* Yifan Wang (wangyf@udel.edu)
 * Taylor Robie
 * Gerhard Wittreich, P.E.
 
