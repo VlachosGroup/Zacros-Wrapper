@@ -14,7 +14,7 @@ Key features
 ------------
 * Run KMC simulations with parallel processing
 * Rescale rate constants of fast, equilibrated reactions to accelerate simulation
-* Perform parameteric sensitivity analysis using the likelihood ratio method
+* Perform parametric sensitivity analysis using the likelihood ratio method
 
 Developers
 ----------
@@ -31,10 +31,10 @@ Dependencies
 -------------
 * `Atomic simualtion environment <https://wiki.fysik.dtu.dk/ase/>`_ : Used to convert ab initio data to input parameters.
 * `pMuTT <https://github.com/VlachosGroup/pMuTT/>`_ : Provides thermochemistry and kinetic parameters
-* (optinoal) `mpi4py <http://pythonhosted.org/mpi4py/>`_ : Used for MPI parallelization of multiple trajectories. User can also use trivial parallelism with gridengine submit script.
+* (optional) `mpi4py <http://pythonhosted.org/mpi4py/>`_ : Used for MPI parallelization of multiple trajectories. User can also use trivial parallelism with gridengine submit script.
 
 Getting Started
 ----------------
-1. Obtain modified Zacros executable. See Separate page.
+1. Obtain modified Zacros 1.02 executable. See Separate page.
 2. Add the Zacros-Wrapper repository to your PYTHONPATH environment variable.
 3. Configure input in demo file and run.
