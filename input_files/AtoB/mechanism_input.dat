@@ -13,7 +13,7 @@ reversible_step A_adsorption
 	
   variant single
     site_types A_site
-    pre_expon  100000.0
+    pre_expon  100.0
     pe_ratio   0.667
     activ_eng  0.00
 	prox_factor 0.00

@@ -1,9 +1,11 @@
 # Read the output for a Zacros trajectory and plot data
 
 import zacros_wrapper as zw
+import os
 
 ''' ------------ User input section ------------ '''
-RunPath = '/home/vlachos/wangyf/Alumina/mechanismI/5'
+RunPath = os.path.join(os.path.dirname(__file__), '../input_files/AtoB')
+
 ''' -------------------------------------------- '''
 
 ''' Read simulation results '''

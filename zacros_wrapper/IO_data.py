@@ -9,9 +9,11 @@ from zacros_wrapper.utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
 from zacros_wrapper.utils import ReturnUnique as _ReturnUnique
 from zacros_wrapper.utils import rawbigcount as _rawbigcount
 
-from pMuTT.io.excel import read_excel
-from pMuTT.empirical.zacros import Zacros
-
+try:
+    from pMuTT.io.excel import read_excel
+    from pMuTT.empirical.zacros import Zacros
+except:
+    pass
 
 '''
  Class definitions for:
@@ -1385,7 +1387,12 @@ def Read_propensities(path, nRxn):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 prop.append(line_data)
-        return np.array(prop)
+
+
+        prop = np.array(prop)
+        nNum = prop.shape[0]
+        prop = np.reshape(prop, [int(nNum/nRxn), nRxn])
+        return prop
 
     else:
         return None
@@ -1433,7 +1440,11 @@ def Read_time_integrated_propensities(path, nRxn):
                     line_data.append(np.float(dub))
                 propCounter.append(line_data)
 
-        return np.array(propCounter)
+
+        propCounter =  np.array(propCounter)
+        nNum = propCounter.shape[0]
+        propCounter = np.reshape(propCounter, [int(nNum/nRxn), nRxn])
+        return propCounter
     else:
         return None
 
@@ -1471,6 +1482,11 @@ def Read_trajectory_derivatives(path, nRxn):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 W_sen_anal.append(line_data)
+
+
+        W_sen_anal = np.array(W_sen_anal)
+        nNum = W_sen_anal.shape[0]
+        W_sen_anal = np.reshape(W_sen_anal, [int(nNum/nRxn), nRxn])
         return np.array(W_sen_anal)
     else:
         return None
@@ -1509,6 +1525,11 @@ def Read_time_integrated_species(path, n_surf_specs):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 spec_num_int.append(line_data)
+
+
+        spec_num_int = np.array(spec_num_int)
+        nNum = spec_num_int.shape[0]
+        spec_num_int = np.reshape(spec_num_int, [int(nNum/n_surf_specs), n_surf_specs])
         return np.array(spec_num_int)
 
     else:
