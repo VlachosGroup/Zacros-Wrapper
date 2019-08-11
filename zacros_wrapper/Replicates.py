@@ -391,7 +391,7 @@ class Replicates:
         self.Compute_batch_data()
 
         bin_edges = np.linspace(0, self.t_vec[-1], self.Nbpt + 1)
-        rate_data = np.zeros([self.n_trajectories, self.Nbpt])
+        rate_data = np.zeros([int(self.n_trajectories), int(self.Nbpt)])
 
         for i in range(self.Nbpt):
 
