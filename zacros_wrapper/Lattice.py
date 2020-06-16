@@ -393,7 +393,7 @@ class Lattice:
         self.neighbor_list = []
         self.cell_list = []     # self, north, northeast, east, or southeast
 
-        n_sites = len(self.site_type_inds)
+        n_sites = self.cart_coords_3d.shape[0]
 
         # Loop through all sites
         for site_1 in range(n_sites):
