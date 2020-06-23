@@ -519,8 +519,12 @@ class kmc_traj():
                 z = np.array(z_list)
 
                 for xi, yi, zi in zip(x,y,z):
-                    layer_i = int(zi -1)
-                    ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 150, edgecolors = 'k')
+                    if ind==0: #plot Pd
+                        layer_i = int(zi -1)
+                        ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 150, edgecolors = 'k')
+                    if ind==1: #plot CO
+                        layer_i = int(zi -1)
+                        ax.scatter3D(xi, yi, zi, marker = 'D', color = 'crimson',  s = 150, edgecolors = 'k')
 
             # Create legend labels
             n_layers = int(np.max(z))
