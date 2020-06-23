@@ -11,6 +11,7 @@ import subprocess
 import copy
 import re as _re
 
+
 from zacros_wrapper.utils import *
 from zacros_wrapper.IO_data import *
 from zacros_wrapper.Lattice import Lattice
@@ -521,17 +522,23 @@ class kmc_traj():
                 for xi, yi, zi in zip(x,y,z):
                     if ind==0: #plot Pd
                         layer_i = int(zi -1)
-                        ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 150, edgecolors = 'k')
+                        ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 250, edgecolors = 'k')
                     if ind==1: #plot CO
-                        layer_i = int(zi -1)
-                        ax.scatter3D(xi, yi, zi, marker = 'D', color = 'crimson',  s = 150, edgecolors = 'k')
+                        #update z value - current z_list is site type number
+                        PdCO_z=[1.,2.,3.,4.,1.0,1.3333333333333333,1.5,1.6666666666666665,2.0]
+                        sitetype_i= int(zi -5)
+                        zi2=PdCO_z[sitetype_i]+0.5
+                        ax.scatter3D(xi, yi, zi2, marker = '*', color = 'crimson',  s = 150, edgecolors = 'k')
 
             # Create legend labels
             n_layers = int(np.max(z))
             legend_patches = []
-            for li in range(n_layers):
+            for li in range(4):
                 layer_name = self.lat.site_type_names[li]
-                legend_patches.append(mpatches.Patch(color=spec_color_list[int(li% len(spec_color_list))], label= spec_label_list[ind] + '_' + layer_name))
+                legend_patches.append(mpatches.Patch(color=spec_color_list[int(li% len(spec_color_list))], label= spec_label_list[0] + '_' + layer_name))
+            for li in range(4,n_layers):
+                layer_name = self.lat.site_type_names[li]
+                legend_patches.append(mpatches.Patch(color='crimson', label= spec_label_list[1] + '_' + layer_name))
 
             plt.legend(handles=legend_patches, bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
