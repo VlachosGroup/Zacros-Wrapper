@@ -522,13 +522,15 @@ class kmc_traj():
                 for xi, yi, zi in zip(x,y,z):
                     if ind==0: #plot Pd
                         layer_i = int(zi -1)
-                        ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 250, edgecolors = 'k')
+                        ax.scatter3D(xi, yi, zi, marker = 'o', color = spec_color_list[int(layer_i% len(spec_color_list))],  s = 500, edgecolors = 'k', alpha=0.75)
                     if ind==1: #plot CO
                         #update z value - current z_list is site type number
-                        PdCO_z=[1.,2.,3.,4.,1.0,1.3333333333333333,1.5,1.6666666666666665,2.0]
+                        CO_z=[1.0,2.0,1.0, 1.5, 2.0, 1.0, 1.33333333,1.66666667,2.0]
+                        CO_markers=['*','*','P','P','P','X','X','X','X']
+                        CO_colors=['red','red','crimson','crimson','crimson','deeppink','deeppink','deeppink','deeppink']
                         sitetype_i= int(zi -5)
-                        zi2=PdCO_z[sitetype_i]+0.5
-                        ax.scatter3D(xi, yi, zi2, marker = '*', color = 'crimson',  s = 150, edgecolors = 'k')
+                        zi2=CO_z[sitetype_i]*dz+0.35
+                        ax.scatter3D(xi, yi, zi2, marker = CO_markers[sitetype_i], color = CO_colors[sitetype_i],  s = 150, edgecolors = 'k', alpha=0.75)
 
             # Create legend labels
             n_layers = int(np.max(z))
@@ -537,8 +539,9 @@ class kmc_traj():
                 layer_name = self.lat.site_type_names[li]
                 legend_patches.append(mpatches.Patch(color=spec_color_list[int(li% len(spec_color_list))], label= spec_label_list[0] + '_' + layer_name))
             for li in range(4,n_layers):
+                CO_colors=['red','red','crimson','crimson','crimson','deeppink','deeppink','deeppink','deeppink']
                 layer_name = self.lat.site_type_names[li]
-                legend_patches.append(mpatches.Patch(color='crimson', label= spec_label_list[1] + '_' + layer_name))
+                legend_patches.append(mpatches.Patch(color=CO_colors[li-4], label= spec_label_list[1] + '_' + layer_name))
 
             plt.legend(handles=legend_patches, bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
