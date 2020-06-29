@@ -532,16 +532,17 @@ class kmc_traj():
                         zi2=CO_z[sitetype_i]*dz+0.35
                         ax.scatter3D(xi, yi, zi2, marker = CO_markers[sitetype_i], color = CO_colors[sitetype_i],  s = 150, edgecolors = 'k', alpha=0.75)
 
-            # Create legend labels
-            n_layers = int(np.max(z))
+            # Create legend labels            
             legend_patches = []
             for li in range(4):
                 layer_name = self.lat.site_type_names[li]
                 legend_patches.append(mpatches.Patch(color=spec_color_list[int(li% len(spec_color_list))], label= spec_label_list[0] + '_' + layer_name))
-            for li in range(4,n_layers):
-                CO_colors=['red','red','crimson','crimson','crimson','deeppink','deeppink','deeppink','deeppink']
-                layer_name = self.lat.site_type_names[li]
-                legend_patches.append(mpatches.Patch(color=CO_colors[li-4], label= spec_label_list[1] + '_' + layer_name))
+            if z!=[]:
+                n_layers = int(np.max(z))
+                for li in range(4,n_layers):
+                    CO_colors=['red','red','crimson','crimson','crimson','deeppink','deeppink','deeppink','deeppink']
+                    layer_name = self.lat.site_type_names[li]
+                    legend_patches.append(mpatches.Patch(color=CO_colors[li-4], label= spec_label_list[1] + '_' + layer_name))
 
             plt.legend(handles=legend_patches, bbox_to_anchor = (1.02,1), loc = 'upper left', frameon = False)
             plt.title('Time: ' + str(self.histout.snap_times[frame_num]) + ' sec')
