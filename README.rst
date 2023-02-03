@@ -14,7 +14,7 @@ Key features
 ------------
 * Run KMC simulations with parallel processing
 * Rescale rate constants of fast, equilibrated reactions to accelerate simulation
-* Perform parametric sensitivity analysis using the likelihood ratio method
+* Perform parametric sensitivity analysis using the likelihood ratio method (currently unavailable due to changes needed to Zacros source files)
 
 Developers
 ----------
@@ -37,5 +37,6 @@ Dependencies
 Getting Started
 ----------------
 1. Obtain modified Zacros 1.02 executable. See Separate page.
+    - Note: Due to copywrite concerns, these files have been removed.
 2. Add the Zacros-Wrapper repository to your PYTHONPATH environment variable.
 3. Configure input in demo file and run.
