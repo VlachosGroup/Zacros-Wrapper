@@ -53,8 +53,8 @@ class kmc_traj():
         self.propCounter = None                 # data from timeintprop_output.txt
         self.W_sen_anal = None                  # data from trajderiv_output.txt
         self.spec_num_int = None                # data from timeintspecs_output.txt
-        self.TS_site_props_list = None
-        self.TS_site_props_ss = None            # steady state site propensities
+        #self.TS_site_props_list = None
+        #self.TS_site_props_ss = None            # steady state site propensities
 
 
     '''
@@ -95,6 +95,8 @@ class kmc_traj():
             False - reads lattice_output.txt as text only
         '''
 
+        #print 'Reading kMC trajectory data from ' + self.Path
+
         self.ReadAllInput()
 
         if self.CheckComplete():
@@ -117,18 +119,19 @@ class kmc_traj():
 
             # Extra output files
 			# Disable for simplicity
-            self.prop = Read_propensities(self.Path, len( self.genout.RxnNameList ) )
-            self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
-            self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
-            self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
-            self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
+            #self.prop = Read_propensities(self.Path, len( self.genout.RxnNameList ) )
+            #self.propCounter = Read_time_integrated_propensities(self.Path, len( self.genout.RxnNameList ) )
+            #self.W_sen_anal = Read_trajectory_derivatives(self.Path, len( self.genout.RxnNameList ))
+            #self.spec_num_int = Read_time_integrated_species(self.Path, len( self.simin.surf_spec ))
+            #self.TS_site_props_list = Read_time_integrated_site_props(self.Path, nSites, len( self.genout.RxnNameList ), self.histout.n_snapshots )
 
-            if not self.TS_site_props_list is None:
 
-                if self.histout.snap_times[-1] == 0.:   # only 1 entry in history output
-                    self.TS_site_props_ss = self.TS_site_props_list[-1]
-                else:
-                    self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
+            #if not self.TS_site_props_list is None:
+
+                #if self.histout.snap_times[-1] == 0.:   # only 1 entry in history output
+                    #self.TS_site_props_ss = self.TS_site_props_list[-1]
+                #else:
+                    #self.TS_site_props_ss = ( self.TS_site_props_list[-1] - self.TS_site_props_list[0] ) / ( self.histout.snap_times[-1] - self.histout.snap_times[0] )
 
         else:
             print('general_output.txt not found in ' + self.Path)

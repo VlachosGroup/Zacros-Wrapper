@@ -9,11 +9,9 @@ from zacros_wrapper.utils import ReadWithoutBlankLines as _ReadWithoutBlankLines
 from zacros_wrapper.utils import ReturnUnique as _ReturnUnique
 from zacros_wrapper.utils import rawbigcount as _rawbigcount
 
-try:
-    from pMuTT.io.excel import read_excel
-    from pMuTT.empirical.zacros import Zacros
-except:
-    pass
+# from pmutt.io.excel import read_excel
+# from pmutt.empirical.zacros import Zacros
+
 
 '''
  Class definitions for:
@@ -1053,15 +1051,15 @@ class StateIn(object):
         # take the line with seed indices
         seed_lines = [li for li in lines if (li[0] == 'seed_on_sites')]
         seed_indices = np.array([int(si[2]) for si in seed_lines])
-
+        
         # save to a snap matrix (nSites by 4)
         snap_data = np.array([[0]*4]*nSites)
         snap_data[:,0] = np.arange(1, nSites+1) # 1st column is the site number
         snap_data[:,1] = np.arange(1, nSites+1) # 2nd column wont be used
-        snap_data[:,3] = 1 # 4th column dentate number, default is 1
-        snap_data[seed_indices,2] = 1 # 3rd column, occupancy, set as 1
+        snap_data[:,3] = 1 # 3rd column dentate number, default is 1
+        snap_data[seed_indices,2] = 1 # 2nd column, occupancy, set as 1
         self.initialsnap = snap_data
-
+                
 
     def WriteIn(self, fldr, surf_spec):
 
@@ -1413,12 +1411,7 @@ def Read_propensities(path, nRxn):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 prop.append(line_data)
-
-
-        prop = np.array(prop)
-        nNum = prop.shape[0]
-        prop = np.reshape(prop, [int(nNum/nRxn), nRxn])
-        return prop
+        return np.array(prop)
 
     else:
         return None
@@ -1466,11 +1459,7 @@ def Read_time_integrated_propensities(path, nRxn):
                     line_data.append(np.float(dub))
                 propCounter.append(line_data)
 
-
-        propCounter =  np.array(propCounter)
-        nNum = propCounter.shape[0]
-        propCounter = np.reshape(propCounter, [int(nNum/nRxn), nRxn])
-        return propCounter
+        return np.array(propCounter)
     else:
         return None
 
@@ -1508,11 +1497,6 @@ def Read_trajectory_derivatives(path, nRxn):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 W_sen_anal.append(line_data)
-
-
-        W_sen_anal = np.array(W_sen_anal)
-        nNum = W_sen_anal.shape[0]
-        W_sen_anal = np.reshape(W_sen_anal, [int(nNum/nRxn), nRxn])
         return np.array(W_sen_anal)
     else:
         return None
@@ -1551,11 +1535,6 @@ def Read_time_integrated_species(path, n_surf_specs):
                 for dub in LineSplit:
                     line_data.append(np.float(dub))
                 spec_num_int.append(line_data)
-
-
-        spec_num_int = np.array(spec_num_int)
-        nNum = spec_num_int.shape[0]
-        spec_num_int = np.reshape(spec_num_int, [int(nNum/n_surf_specs), n_surf_specs])
         return np.array(spec_num_int)
 
     else:
